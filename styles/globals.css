@@ -1,0 +1,279 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f8fafb;
+  --foreground: #1f2b30;
+  --primary: #5B9A8B;
+  --primary-foreground: #ffffff;
+  --border: #dce4e8;
+}
+
+@layer base {
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+}
+  /* Dental Professional Color Palette - Matte & Clean */
+  --dental-primary: #5B9A8B; /* Soft matte teal */
+  --dental-primary-light: #7FB8A8;
+  --dental-primary-dark: #3D7A6C;
+  --dental-secondary: #8AAAA5; /* Muted seafoam */
+  --dental-accent: #B4CFC8; /* Soft mint */
+  --dental-neutral-50: #F8FAFB;
+  --dental-neutral-100: #EEF2F4;
+  --dental-neutral-200: #DCE4E8;
+  --dental-neutral-300: #C5D3D9;
+  --dental-neutral-400: #9DAEB5;
+  --dental-neutral-500: #6B7F88;
+  --dental-neutral-600: #4D5F68;
+  --dental-neutral-700: #354249;
+  --dental-neutral-800: #1F2B30;
+  --dental-neutral-900: #0F161A;
+  
+  /* System Variables */
+  --font-size: 16px;
+  --background: var(--dental-neutral-50);
+  --foreground: var(--dental-neutral-800);
+  --card: #ffffff;
+  --card-foreground: var(--dental-neutral-800);
+  --popover: #ffffff;
+  --popover-foreground: var(--dental-neutral-800);
+  --primary: var(--dental-primary);
+  --primary-foreground: #ffffff;
+  --secondary: var(--dental-neutral-200);
+  --secondary-foreground: var(--dental-neutral-800);
+  --muted: var(--dental-neutral-100);
+  --muted-foreground: var(--dental-neutral-500);
+  --accent: var(--dental-accent);
+  --accent-foreground: var(--dental-neutral-800);
+  --destructive: #C75450;
+  --destructive-foreground: #ffffff;
+  --border: var(--dental-neutral-200);
+  --input: transparent;
+  --input-background: var(--dental-neutral-100);
+  --switch-background: var(--dental-neutral-300);
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --ring: var(--dental-primary);
+  --chart-1: #5B9A8B;
+  --chart-2: #7FB8A8;
+  --chart-3: #B4CFC8;
+  --chart-4: #8AAAA5;
+  --chart-5: #9DAEB5;
+  --radius: 0.75rem;
+  --sidebar: var(--dental-neutral-800);
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: var(--dental-primary);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--dental-neutral-700);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: var(--dental-neutral-700);
+  --sidebar-ring: var(--dental-primary);
+}
+
+.dark {
+  --background: var(--dental-neutral-900);
+  --foreground: var(--dental-neutral-100);
+  --card: var(--dental-neutral-800);
+  --card-foreground: var(--dental-neutral-100);
+  --popover: var(--dental-neutral-800);
+  --popover-foreground: var(--dental-neutral-100);
+  --primary: var(--dental-primary-light);
+  --primary-foreground: var(--dental-neutral-900);
+  --secondary: var(--dental-neutral-700);
+  --secondary-foreground: var(--dental-neutral-100);
+  --muted: var(--dental-neutral-800);
+  --muted-foreground: var(--dental-neutral-400);
+  --accent: var(--dental-neutral-700);
+  --accent-foreground: var(--dental-neutral-100);
+  --destructive: #E86B67;
+  --destructive-foreground: var(--dental-neutral-900);
+  --border: var(--dental-neutral-700);
+  --input: var(--dental-neutral-700);
+  --ring: var(--dental-primary-light);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/**
+ * Base typography with Inter font
+ */
+@layer base {
+  :where(:not(:has([class*=' text-']), :not(:has([class^='text-'])))) {
+    h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.875rem;
+      font-weight: 600;
+      line-height: 1.3;
+      letter-spacing: -0.02em;
+    }
+
+    h2 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 600;
+      line-height: 1.4;
+      letter-spacing: -0.01em;
+    }
+
+    h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+      line-height: 1.5;
+    }
+
+    h4 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.125rem;
+      font-weight: 600;
+      line-height: 1.5;
+    }
+
+    p {
+      font-size: 1rem;
+      font-weight: 400;
+      line-height: 1.6;
+    }
+
+    label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      line-height: 1.5;
+      letter-spacing: 0.01em;
+    }
+
+    button {
+      font-size: 0.9375rem;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    input, textarea, select {
+      font-size: 0.9375rem;
+      font-weight: 400;
+      line-height: 1.5;
+    }
+  }
+}
+
+html {
+  font-size: var(--font-size);
+}
+
+/* Smooth transitions for interactive elements */
+button, a, input, select, textarea {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Hide scrollbars but keep functionality */
+::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+  display: none;
+}
+
+::-webkit-scrollbar-track {
+  display: none;
+}
+
+::-webkit-scrollbar-thumb {
+  display: none;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  display: none;
+}
+
+/* Hide scrollbars for Firefox */
+* {
+  scrollbar-width: none;
+}
+
+/* Hide scrollbars for IE and Edge */
+* {
+  -ms-overflow-style: none;
+}
+
+/* Opt-in visible scrollbars */
+.scrollbar-visible {
+  scrollbar-width: auto;
+  -ms-overflow-style: auto;
+}
+
+.scrollbar-visible::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+  display: block;
+}
+
+.scrollbar-visible::-webkit-scrollbar-track {
+  background: var(--dental-neutral-100);
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb {
+  background: var(--dental-neutral-300);
+  border-radius: 5px;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background: var(--dental-neutral-400);
+}
