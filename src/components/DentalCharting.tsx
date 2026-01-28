@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Patient, TreatmentRecord } from '../App';
-import { Info, Sparkles, Star, Zap, StickyNote } from 'lucide-react';
+import { Info, Sparkles, Star, Zap, StickyNote, Plus, ChevronDown, ChevronUp, Calendar, Copy } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PatientSearch } from './PatientSearch';
 
@@ -14,6 +14,15 @@ type ToothCondition = {
   toothNumber: number;
   conditions: string[];
   notes: string;
+};
+
+type DentalChart = {
+  id: string;
+  patientId: string | number;
+  patientName: string;
+  createdAt: string;
+  toothConditions: ToothCondition[];
+  summary?: string;
 };
 
 const toothConditionColors: { [key: string]: string } = {
@@ -71,10 +80,12 @@ export function DentalCharting({ patients, treatmentRecords, setTreatmentRecords
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [selectedTooth, setSelectedTooth] = useState<number | null>(null);
   const [toothConditions, setToothConditions] = useState<{ [patientId: string]: ToothCondition[] }>({});
+  const [chartHistory, setChartHistory] = useState<DentalChart[]>([]);
   const [hoveredTooth, setHoveredTooth] = useState<number | null>(null);
   const [clickedTooth, setClickedTooth] = useState<number | null>(null);
   const [showSparkles, setShowSparkles] = useState<number | null>(null);
   const [showNotesModal, setShowNotesModal] = useState(false);
+  const [expandedChartId, setExpandedChartId] = useState<string | null>(null);
 
   // Adult teeth numbering (Universal Numbering System)
   const upperTeeth = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
@@ -179,6 +190,38 @@ export function DentalCharting({ patients, treatmentRecords, setTreatmentRecords
       ...toothConditions,
       [selectedPatient.id]: []
     });
+  };
+
+  const handleAddNewChart = () => {
+    if (!selectedPatient) {
+      alert('Please select a patient first');
+      return;
+    }
+
+    const patientConditions = toothConditions[selectedPatient.id] || [];
+    
+    // Create a new chart entry with timestamp
+    const newChart: DentalChart = {
+      id: Date.now().toString(),
+      patientId: selectedPatient.id,
+      patientName: selectedPatient.name,
+      createdAt: new Date().toISOString(),
+      toothConditions: [...patientConditions],
+      summary: patientConditions
+        .map(c => `Tooth #${c.toothNumber}: ${c.conditions[0]}${c.notes ? ` - ${c.notes}` : ''}`)
+        .join('; ')
+    };
+
+    // Add to chart history
+    setChartHistory([...chartHistory, newChart]);
+    
+    // Clear the current chart for new entries
+    setToothConditions({
+      ...toothConditions,
+      [selectedPatient.id]: []
+    });
+
+    alert('Chart saved successfully! You can now create a new chart.');
   };
 
   const ToothSVG = ({ number, onClick }: { number: number; onClick: () => void }) => {
@@ -642,11 +685,20 @@ export function DentalCharting({ patients, treatmentRecords, setTreatmentRecords
             {/* Save Treatment Record Button */}
             {selectedPatient && (toothConditions[selectedPatient.id]?.length || 0) > 0 && (
               <motion.div
-                className="mt-8 flex justify-center"
+                className="mt-8 flex justify-center gap-4 flex-wrap"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 2.05 }}
               >
+                <motion.button
+                  onClick={handleAddNewChart}
+                  className="px-8 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-lg shadow-lg font-semibold transition-all duration-300 flex items-center gap-2"
+                  whileHover={{ scale: 1.05, boxShadow: "0 10px 25px rgba(59, 130, 246, 0.3)" }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Plus className="w-5 h-5" />
+                  Add New Chart
+                </motion.button>
                 <motion.button
                   onClick={handleSaveTreatmentRecord}
                   className="px-8 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-lg shadow-lg font-semibold transition-all duration-300"
@@ -799,6 +851,120 @@ export function DentalCharting({ patients, treatmentRecords, setTreatmentRecords
               </div>
             </motion.div>
           </div>
+
+          {/* Chart History Section */}
+          {selectedPatient && chartHistory.filter(c => c.patientId === selectedPatient.id).length > 0 && (
+            <motion.div 
+              className="bg-white p-6 rounded-xl shadow-lg border border-purple-100 mb-6 backdrop-blur-sm bg-opacity-90"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <h2 className="mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-2">
+                <Calendar className="w-5 h-5" />
+                Chart History
+              </h2>
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {chartHistory
+                  .filter(c => c.patientId === selectedPatient.id)
+                  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                  .map((chart, index) => (
+                    <motion.div 
+                      key={chart.id}
+                      className="border-2 border-purple-100 rounded-lg overflow-hidden"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.4 + index * 0.05 }}
+                    >
+                      <motion.div
+                        onClick={() => setExpandedChartId(expandedChartId === chart.id ? null : chart.id)}
+                        className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 cursor-pointer transition-all duration-300 flex items-center justify-between"
+                        whileHover={{ scale: 1.01 }}
+                      >
+                        <div className="flex items-center gap-3 flex-1">
+                          <Calendar className="w-5 h-5 text-purple-600" />
+                          <div>
+                            <p className="font-medium text-gray-800">
+                              Chart #{chartHistory.filter(c => c.patientId === selectedPatient.id).length - index}
+                            </p>
+                            <p className="text-xs text-gray-600">
+                              {new Date(chart.createdAt).toLocaleDateString()} at {new Date(chart.createdAt).toLocaleTimeString()}
+                            </p>
+                          </div>
+                        </div>
+                        <motion.div
+                          animate={{ rotate: expandedChartId === chart.id ? 180 : 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          {expandedChartId === chart.id ? (
+                            <ChevronUp className="w-5 h-5 text-purple-600" />
+                          ) : (
+                            <ChevronDown className="w-5 h-5 text-purple-600" />
+                          )}
+                        </motion.div>
+                      </motion.div>
+
+                      {/* Expanded Chart Details */}
+                      <AnimatePresence>
+                        {expandedChartId === chart.id && (
+                          <motion.div 
+                            className="p-4 bg-white border-t-2 border-purple-100"
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <div className="space-y-3">
+                              <div>
+                                <h4 className="font-semibold text-gray-800 mb-2">Tooth Conditions:</h4>
+                                <div className="space-y-2">
+                                  {chart.toothConditions.map((tooth) => (
+                                    <div key={tooth.toothNumber} className="pl-4 border-l-3 border-purple-300">
+                                      <p className="text-sm font-medium text-gray-700">
+                                        Tooth #{tooth.toothNumber}: <span className="text-purple-600">{tooth.conditions.join(', ')}</span>
+                                      </p>
+                                      {tooth.notes && (
+                                        <p className="text-xs text-gray-600 mt-1">
+                                          <span className="font-medium">Notes:</span> {tooth.notes}
+                                        </p>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                              {chart.summary && (
+                                <div className="pt-3 border-t border-gray-200">
+                                  <p className="text-xs text-gray-600">
+                                    <span className="font-medium">Summary:</span> {chart.summary}
+                                  </p>
+                                </div>
+                              )}
+                              <div className="pt-2 flex gap-2">
+                                <motion.button
+                                  onClick={() => {
+                                    // Load this chart back into the current editor
+                                    setToothConditions({
+                                      ...toothConditions,
+                                      [selectedPatient.id]: [...chart.toothConditions]
+                                    });
+                                  }}
+                                  className="flex-1 px-3 py-2 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded transition-all duration-200"
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                >
+                                  <Copy className="w-3 h-3 inline mr-1" />
+                                  Load Chart
+                                </motion.button>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  ))}
+              </div>
+            </motion.div>
+          )}
 
           {/* Notes Modal */}
           <AnimatePresence>

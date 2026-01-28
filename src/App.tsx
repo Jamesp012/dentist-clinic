@@ -7,7 +7,7 @@ import { LandingPage } from './components/ui/LandingPage';
 import { Notifications } from './components/Notifications';
 import { LogOut } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
-import { authAPI, setAuthToken, patientAPI, appointmentAPI, inventoryAPI, referralAPI, announcementAPI } from './api';
+import { authAPI, setAuthToken, patientAPI, appointmentAPI, inventoryAPI, referralAPI, announcementAPI, photoAPI } from './api';
 import { useDataSync } from './hooks/useDataSync';
 
 // Type definitions
@@ -209,6 +209,25 @@ export default function App() {
         localStorage.setItem('user', JSON.stringify(userData));
         localStorage.setItem('token', response.token);
         
+        // Load photos from backend
+        try {
+          const photosData = await photoAPI.getAll();
+          if (photosData && Array.isArray(photosData)) {
+            setPhotos(photosData);
+          }
+        } catch (photoError) {
+          console.log('Could not load photos from backend, using local storage:', photoError);
+          // Fall back to localStorage
+          try {
+            const saved = localStorage.getItem('photos');
+            if (saved) {
+              setPhotos(JSON.parse(saved));
+            }
+          } catch (e) {
+            console.error('Error loading photos from localStorage:', e);
+          }
+        }
+        
         // Check if first-time login
         if (userData.isFirstLogin) {
           setCurrentUser(userData);
@@ -307,6 +326,7 @@ export default function App() {
           referrals={referrals}
           setReferrals={setReferrals}
           photos={photos}
+          setPhotos={setPhotos}
           payments={payments}
           setPayments={setPayments}
           chatMessages={chatMessages}

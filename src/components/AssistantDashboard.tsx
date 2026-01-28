@@ -60,6 +60,7 @@ type AssistantDashboardProps = {
   referrals: Referral[];
   setReferrals: (referrals: Referral[]) => void;
   photos: PhotoUpload[];
+  setPhotos: (photos: PhotoUpload[]) => void;
   payments: Payment[];
   setPayments: (payments: Payment[]) => void;
   chatMessages: ChatMessage[];
@@ -87,6 +88,7 @@ export function AssistantDashboard({
   referrals,
   setReferrals,
   photos,
+  setPhotos,
   payments,
   setPayments,
   chatMessages,
@@ -242,31 +244,71 @@ export function AssistantDashboard({
   const [photoType, setPhotoType] = useState<'before' | 'after' | 'xray'>('before');
   const [photoNotes, setPhotoNotes] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
-  const handlePhotoUpload = () => {
+  const handlePhotoFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file is an image
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
+      }
+      setPhotoFile(file);
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setPhotoUrl(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handlePhotoUpload = async () => {
     if (!selectedPatientForPhoto || !photoUrl) {
-      alert('Please select a patient and provide a photo URL');
+      alert('Please select a patient and provide a photo');
       return;
     }
 
-    const newPhoto: PhotoUpload = {
-      id: Date.now().toString(),
-      patientId: selectedPatientForPhoto,
-      type: photoType,
-      url: photoUrl,
-      date: new Date().toISOString(),
-      notes: photoNotes
-    };
+    setIsUploadingPhoto(true);
+    try {
+      const response = await fetch(`${API_BASE}/photos`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          patientId: selectedPatientForPhoto,
+          type: photoType,
+          url: photoUrl,
+          date: new Date().toISOString().split('T')[0],
+          notes: photoNotes
+        })
+      });
 
-    setPhotos([...photos, newPhoto]);
-    alert('Photo uploaded successfully!');
-    setSelectedPatientForPhoto('');
-    setPhotoType('before');
-    setPhotoNotes('');
-    setPhotoUrl('');
+      if (!response.ok) {
+        throw new Error('Failed to upload photo');
+      }
 
-    if (onDataChanged) {
-      onDataChanged();
+      const newPhoto = await response.json();
+      setPhotos([...photos, newPhoto]);
+      alert('Photo uploaded successfully!');
+      setSelectedPatientForPhoto('');
+      setPhotoType('before');
+      setPhotoNotes('');
+      setPhotoUrl('');
+      setPhotoFile(null);
+
+      if (onDataChanged) {
+        onDataChanged();
+      }
+    } catch (error) {
+      console.error('Photo upload error:', error);
+      alert('Failed to upload photo. Please try again.');
+    } finally {
+      setIsUploadingPhoto(false);
     }
   };
 
@@ -604,15 +646,26 @@ export function AssistantDashboard({
                     {/* Photo URL */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Photo URL
+                        Upload Photo
                       </label>
-                      <input
-                        type="text"
-                        value={photoUrl}
-                        onChange={(e) => setPhotoUrl(e.target.value)}
-                        placeholder="Enter photo URL or image link..."
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                      />
+                      <div className="flex items-center gap-4">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handlePhotoFileSelect}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                        />
+                        {photoFile && (
+                          <div className="text-sm text-gray-600">
+                            ✓ {photoFile.name}
+                          </div>
+                        )}
+                      </div>
+                      {photoUrl && (
+                        <div className="mt-3 relative w-32 h-32 rounded-lg border border-gray-200 overflow-hidden bg-gray-50">
+                          <img src={photoUrl} alt="Preview" className="w-full h-full object-cover" />
+                        </div>
+                      )}
                     </div>
 
                     {/* Notes */}
@@ -632,10 +685,11 @@ export function AssistantDashboard({
                     {/* Upload Button */}
                     <button
                       onClick={handlePhotoUpload}
-                      className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg transition-all duration-200 font-medium flex items-center justify-center gap-2"
+                      disabled={isUploadingPhoto}
+                      className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-400 text-white rounded-lg transition-all duration-200 font-medium flex items-center justify-center gap-2"
                     >
                       <Upload className="w-5 h-5" />
-                      Upload Photo to Patient
+                      {isUploadingPhoto ? 'Uploading...' : 'Upload Photo to Patient'}
                     </button>
                   </div>
 

@@ -191,6 +191,27 @@ export const paymentAPI = {
     }),
 };
 
+// Photo APIs
+export const photoAPI = {
+  getAll: () => fetchWithAuth(`${API_BASE}/photos`),
+  getByPatientId: (patientId) =>
+    fetchWithAuth(`${API_BASE}/photos/patient/${patientId}`),
+  upload: (data) =>
+    fetchWithAuth(`${API_BASE}/photos`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  update: (id, data) =>
+    fetchWithAuth(`${API_BASE}/photos/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  delete: (id) =>
+    fetchWithAuth(`${API_BASE}/photos/${id}`, {
+      method: 'DELETE',
+    }),
+};
+
 // Patient Claiming APIs
 export const patientClaimingAPI = {
   // Search for existing patient records
