@@ -4,10 +4,8 @@ import { AssistantDashboard } from './components/AssistantDashboard';
 import { PatientPortal } from './components/PatientPortal';
 import { AuthPage, User as AuthUser, SignupData } from './components/AuthPage';
 import { LandingPage } from './components/ui/LandingPage';
-import { Notifications } from './components/Notifications';
-import { LogOut } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
-import { authAPI, setAuthToken, patientAPI, appointmentAPI, inventoryAPI, referralAPI, announcementAPI, photoAPI } from './api';
+import { authAPI, setAuthToken, photoAPI } from './api';
 import { useDataSync } from './hooks/useDataSync';
 
 // Type definitions
@@ -124,23 +122,49 @@ export type Announcement = {
   createdBy: string;
 };
 
-export type ServicePrice = {
-  id: string;
-  serviceName: string;
-  description: string;
-  price: number;
-  category: string;
-  duration?: string;
-};
-
 export default function App() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [showLandingPage, setShowLandingPage] = useState(true);
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
-  const [treatmentRecords, setTreatmentRecords] = useState<TreatmentRecord[]>([]);
-  const [referrals, setReferrals] = useState<Referral[]>([]);
+  const [patients, setPatients] = useState<Patient[]>(() => {
+    try {
+      const saved = localStorage.getItem('patients');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [appointments, setAppointments] = useState<Appointment[]>(() => {
+    try {
+      const saved = localStorage.getItem('appointments');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [inventory, setInventory] = useState<InventoryItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('inventory');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [treatmentRecords, setTreatmentRecords] = useState<TreatmentRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem('treatmentRecords');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [referrals, setReferrals] = useState<Referral[]>(() => {
+    try {
+      const saved = localStorage.getItem('referrals');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [photos, setPhotos] = useState<PhotoUpload[]>(() => {
     try {
       const saved = localStorage.getItem('photos');
@@ -149,15 +173,34 @@ export default function App() {
       return [];
     }
   });
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [servicePrices, setServicePrices] = useState<ServicePrice[]>([]);
+  const [payments, setPayments] = useState<Payment[]>(() => {
+    try {
+      const saved = localStorage.getItem('payments');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => {
+    try {
+      const saved = localStorage.getItem('chatMessages');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [announcements, setAnnouncements] = useState<Announcement[]>(() => {
+    try {
+      const saved = localStorage.getItem('announcements');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
 
   // Initialize data sync hook for real-time synchronization
   const { 
-    refreshAll, refreshPatients, refreshAppointments, refreshInventory, 
-    refreshReferrals, refreshTreatmentRecords, refreshPayments 
+    refreshAll
   } = useDataSync({
     setPatients,
     setAppointments,
@@ -177,7 +220,7 @@ export default function App() {
       try {
         setAuthToken(token);
         const userData = JSON.parse(user);
-        setCurrentUser(userData);
+        setCurrentUser({ ...userData, id: String(userData.id) } as AuthUser);
       } catch (error) {
         console.error('Failed to load user session:', error);
         localStorage.removeItem('token');
@@ -192,6 +235,39 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('photos', JSON.stringify(photos));
   }, [photos]);
+
+  // Persist all other data to localStorage
+  useEffect(() => {
+    localStorage.setItem('patients', JSON.stringify(patients));
+  }, [patients]);
+
+  useEffect(() => {
+    localStorage.setItem('appointments', JSON.stringify(appointments));
+  }, [appointments]);
+
+  useEffect(() => {
+    localStorage.setItem('inventory', JSON.stringify(inventory));
+  }, [inventory]);
+
+  useEffect(() => {
+    localStorage.setItem('treatmentRecords', JSON.stringify(treatmentRecords));
+  }, [treatmentRecords]);
+
+  useEffect(() => {
+    localStorage.setItem('referrals', JSON.stringify(referrals));
+  }, [referrals]);
+
+  useEffect(() => {
+    localStorage.setItem('payments', JSON.stringify(payments));
+  }, [payments]);
+
+  useEffect(() => {
+    localStorage.setItem('chatMessages', JSON.stringify(chatMessages));
+  }, [chatMessages]);
+
+  useEffect(() => {
+    localStorage.setItem('announcements', JSON.stringify(announcements));
+  }, [announcements]);
 
   const handleLogout = () => {
     setCurrentUser(null);
@@ -229,13 +305,13 @@ export default function App() {
         
         // Check if first-time login
         if (userData.isFirstLogin) {
-          setCurrentUser(userData);
+          setCurrentUser({ ...userData, id: String(userData.id) } as AuthUser);
           // User will be prompted to change password in AuthPage
           return;
         }
         
         // Set user and let useDataSync handle data loading
-        setCurrentUser(userData);
+        setCurrentUser({ ...userData, id: String(userData.id) } as AuthUser);
         toast.success(`Welcome, ${userData.fullName}`);
       } else {
         toast.error(response.error || 'Login failed');
@@ -264,7 +340,22 @@ export default function App() {
     return (
       <>
         <LandingPage onGetStarted={() => setShowLandingPage(false)} />
-        <Toaster position="top-right" richColors />
+        <Toaster 
+          position="top-center" 
+          richColors
+          toastOptions={{
+            style: {
+              background: '#ffffff',
+              color: '#0f172a',
+              border: '2px solid #14b8a6',
+              borderRadius: '12px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              padding: '16px 24px',
+              fontSize: '14px',
+              fontWeight: '500',
+            },
+          }}
+        />
       </>
     );
   }
@@ -300,9 +391,24 @@ export default function App() {
           photos={photos}
           payments={payments}
           setPayments={setPayments}
-          onDataChanged={refreshAll}
+          onDataChanged={async () => { await refreshAll(); }}
         />
-        <Toaster position="top-right" richColors />
+        <Toaster 
+          position="top-center" 
+          richColors
+          toastOptions={{
+            style: {
+              background: '#ffffff',
+              color: '#0f172a',
+              border: '2px solid #14b8a6',
+              borderRadius: '12px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              padding: '16px 24px',
+              fontSize: '14px',
+              fontWeight: '500',
+            },
+          }}
+        />
       </>
     );
   }
@@ -332,11 +438,24 @@ export default function App() {
           setChatMessages={setChatMessages}
           announcements={announcements}
           setAnnouncements={setAnnouncements}
-          servicePrices={servicePrices}
-          setServicePrices={setServicePrices}
-          onDataChanged={refreshAll}
+          onDataChanged={async () => { await refreshAll(); }}
         />
-        <Toaster position="top-right" richColors />
+        <Toaster 
+          position="top-center" 
+          richColors
+          toastOptions={{
+            style: {
+              background: '#ffffff',
+              color: '#0f172a',
+              border: '2px solid #14b8a6',
+              borderRadius: '12px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              padding: '16px 24px',
+              fontSize: '14px',
+              fontWeight: '500',
+            },
+          }}
+        />
       </>
     );
   }
@@ -399,11 +518,26 @@ export default function App() {
           photos={photos}
           setPhotos={setPhotos}
           announcements={announcements}
-          servicePrices={servicePrices}
           payments={payments}
           currentUserId={currentUser.id}
           onLogout={handleLogout}
-          onDataChanged={refreshAll}
+          onDataChanged={async () => { await refreshAll(); }}
+        />
+        <Toaster 
+          position="top-center" 
+          richColors
+          toastOptions={{
+            style: {
+              background: '#ffffff',
+              color: '#0f172a',
+              border: '2px solid #14b8a6',
+              borderRadius: '12px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              padding: '16px 24px',
+              fontSize: '14px',
+              fontWeight: '500',
+            },
+          }}
         />
       </>
     );

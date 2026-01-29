@@ -33,7 +33,7 @@ const fetchWithAuth = async (url, options = {}) => {
       }
       throw new Error(`API Error: ${response.status}`);
     }
-    return response.json();
+    return await response.json();
   } catch (error) {
     if (error.message?.includes('401')) {
       isUnauthorized = true;

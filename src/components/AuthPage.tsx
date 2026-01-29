@@ -53,9 +53,8 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
   
   // New state for patient record claiming flow
   const [showClaimingFlow, setShowClaimingFlow] = useState(false);
-  // New state for post-signup record choice dialog
-  const [showRecordChoiceDialog, setShowRecordChoiceDialog] = useState(false);
   const [pendingSignupData, setPendingSignupData] = useState<SignupData | null>(null);
+  const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
 
   const [signupData, setSignupData] = useState<SignupData>({
     fullName: '',
@@ -190,9 +189,15 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
       return;
     }
 
-    // Store signup data and show record choice dialog
+    // Check if passwords match
+    if (signupData.password !== signupConfirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    // Store signup data and go directly to claiming flow
     setPendingSignupData(signupData);
-    setShowRecordChoiceDialog(true);
+    setShowClaimingFlow(true);
   };
 
   // Handle completion of claiming flow
@@ -200,52 +205,6 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
     // User is already logged in with their claimed account
     // Redirect will happen from parent
     window.location.reload();
-  };
-
-  // Handle when user says they HAVE an existing record
-  const handleHasExistingRecord = () => {
-    setShowRecordChoiceDialog(false);
-    // Show claiming flow for them to link their record
-    if (pendingSignupData) {
-      setLoggedInUser(pendingSignupData);
-      setShowClaimingFlow(true);
-    }
-  };
-
-  // Handle when user says they DON'T have an existing record
-  const handleNoExistingRecord = async () => {
-    setShowRecordChoiceDialog(false);
-    if (!pendingSignupData) return;
-
-    setIsLoading(true);
-    try {
-      const response = await authAPI.register(pendingSignupData);
-      if (response.message) {
-        toast.success('Account created successfully! Please login with your credentials.');
-        // Switch to login mode after successful signup
-        setIsLoginMode(true);
-        // Clear signup form
-        setSignupData({
-          fullName: '',
-          email: '',
-          phone: '',
-          dateOfBirth: '',
-          address: '',
-          sex: 'Male',
-          username: '',
-          password: '',
-          role: 'patient',
-        });
-        setPendingSignupData(null);
-        setError('');
-      } else {
-        setError(response.error || 'Signup failed');
-      }
-    } catch (err) {
-      setError('Signup failed - Backend error');
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   // Handle canceling claiming flow (user wants new account or has no records)
@@ -262,9 +221,37 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
     }
     
     // If user is from signup claiming flow and wants to cancel
-    if (loggedInUser && pendingSignupData) {
+    if (pendingSignupData) {
       // They came from signup claiming flow, so register without record linking
-      await handleNoExistingRecord();
+      setIsLoading(true);
+      try {
+        const response = await authAPI.register(pendingSignupData);
+        if (response.message) {
+          toast.success('Account created successfully! Please login with your credentials.');
+          // Switch to login mode after successful signup
+          setIsLoginMode(true);
+          // Clear signup form
+          setSignupData({
+            fullName: '',
+            email: '',
+            phone: '',
+            dateOfBirth: '',
+            address: '',
+            sex: 'Male',
+            username: '',
+            password: '',
+            role: 'patient',
+          });
+          setPendingSignupData(null);
+          setError('');
+        } else {
+          setError(response.error || 'Signup failed');
+        }
+      } catch (err) {
+        setError('Signup failed - Backend error');
+      } finally {
+        setIsLoading(false);
+      }
       return;
     }
   };
@@ -272,52 +259,6 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
   const updateSignupField = (field: keyof SignupData, value: string) => {
     setSignupData({ ...signupData, [field]: value });
   };
-
-  // Show record choice dialog after signup
-  if (showRecordChoiceDialog && pendingSignupData) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50 to-cyan-50 flex items-center justify-center p-4 relative overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-teal-200/30 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-cyan-200/30 rounded-full blur-3xl"></div>
-        </div>
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-white/80 backdrop-blur-md rounded-3xl shadow-2xl p-8 max-w-md w-full border border-teal-100/50 relative z-10"
-        >
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl mb-4 shadow-lg">
-              <span className="text-3xl">📋</span>
-            </div>
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">Patient Records</h2>
-            <p className="text-slate-600">Do you have an existing patient record with us?</p>
-          </div>
-
-          <div className="space-y-4">
-            <button
-              onClick={handleHasExistingRecord}
-              disabled={isLoading}
-              className="w-full py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg hover:shadow-xl font-medium"
-            >
-              <span>✓</span>
-              Yes, I have an existing record
-            </button>
-            
-            <button
-              onClick={handleNoExistingRecord}
-              disabled={isLoading}
-              className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl hover:from-amber-600 hover:to-orange-700 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg hover:shadow-xl font-medium"
-            >
-              <span>✕</span>
-              No, create a new record
-            </button>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
 
   // Show claiming flow for patient signup or login
   if (showClaimingFlow && pendingSignupData?.role === 'patient') {
@@ -445,7 +386,7 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-emerald-200/20 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="w-full max-w-6xl flex items-center justify-center gap-12 relative z-10">
+      <div className="w-full max-w-6xl flex items-center justify-center gap-12 relative z-10 max-h-screen overflow-hidden">
         {/* Left side - Branding */}
         <motion.div
           initial={{ opacity: 0, x: -50 }}
@@ -503,9 +444,9 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-white/80 backdrop-blur-md rounded-3xl shadow-2xl p-8 w-full max-w-md border border-teal-100/50"
+          className="bg-white/80 backdrop-blur-md rounded-3xl shadow-2xl p-8 w-full max-w-md border border-teal-100/50 max-h-[90vh] flex flex-col"
         >
-          <div className="text-center mb-8">
+          <div className="text-center mb-8 flex-shrink-0">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -527,12 +468,13 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
           </div>
 
           {/* Toggle between Login and Signup */}
-          <div className="flex mb-6 bg-slate-100 rounded-xl p-1.5">
+          <div className="flex mb-6 bg-slate-100 rounded-xl p-1.5 flex-shrink-0">
             <button
               type="button"
               onClick={() => {
                 setIsLoginMode(true);
                 setError('');
+                setSignupConfirmPassword('');
               }}
               className={`flex-1 py-2.5 rounded-lg transition-all duration-300 font-medium ${
                 isLoginMode
@@ -547,6 +489,7 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
               onClick={() => {
                 setIsLoginMode(false);
                 setError('');
+                setSignupConfirmPassword('');
               }}
               className={`flex-1 py-2.5 rounded-lg transition-all duration-300 font-medium ${
                 !isLoginMode
@@ -560,7 +503,7 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
 
           {isLoginMode ? (
             // Login Form
-            <form onSubmit={handleLogin} className="space-y-5">
+            <form onSubmit={handleLogin} className="space-y-5 flex-shrink-0">
               <div>
                 <label className="block text-sm font-medium mb-2 text-slate-700">Username</label>
                 <div className="relative">
@@ -608,7 +551,7 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
             </form>
           ) : (
             // Signup Form
-            <form onSubmit={handleSignup} className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+            <form onSubmit={handleSignup} className="space-y-4 overflow-y-auto flex-1 pr-2">
               <div>
                 <label className="block text-sm font-medium mb-2 text-slate-700">Full Name *</label>
                 <div className="relative">
@@ -729,17 +672,17 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
                 </div>
 
                 <div className="mt-4">
-                  <label className="block text-sm font-medium mb-2 text-slate-700">Account Type</label>
-                  <select
-                    value={signupData.role}
-                    onChange={(e) => updateSignupField('role', e.target.value as UserRole)}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-                  >
-                    <option value="patient">Patient</option>
-                    <option value="assistant">Assistant</option>
-                    <option value="doctor">Doctor</option>
-                  </select>
+                  <label className="block text-sm font-medium mb-2 text-slate-700">Confirm Password *</label>
+                  <PasswordInput
+                    value={signupConfirmPassword}
+                    onChange={(e) => setSignupConfirmPassword(e.target.value)}
+                    placeholder="Confirm your password"
+                    autoComplete="new-password"
+                    required
+                  />
                 </div>
+
+
               </div>
 
               {error && (

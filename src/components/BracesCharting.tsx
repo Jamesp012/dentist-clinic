@@ -718,8 +718,8 @@ export function BracesCharting({ patients }: BracesChartingProps) {
             </motion.div>
           </motion.div>
 
-          {/* History and Payment Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          {/* History Section */}
+          <div className="grid grid-cols-1 gap-6 mt-6">
             {/* Color Change History */}
             <motion.div
               className="bg-white p-6 rounded-xl shadow-lg border border-purple-100 backdrop-blur-sm bg-opacity-90"
@@ -778,116 +778,6 @@ export function BracesCharting({ patients }: BracesChartingProps) {
                     <p className="text-xs mt-1">Start selecting colors to build your history!</p>
                   </div>
                 )}
-              </div>
-            </motion.div>
-
-            {/* Payment Balance */}
-            <motion.div
-              className="bg-white p-6 rounded-xl shadow-lg border border-purple-100 backdrop-blur-sm bg-opacity-90"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 1.9 }}
-            >
-              <div className="flex items-center gap-2 mb-4">
-                <PesoSign className="w-5 h-5 text-green-600" />
-                <h2 className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                  Payment Summary
-                </h2>
-              </div>
-
-              {/* Balance Summary Card */}
-              <div className="mb-6 p-6 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border-2 border-green-200 shadow-md">
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <p className="text-xs text-gray-600 mb-1">Total Cost</p>
-                    <p className="text-2xl font-bold text-gray-800">
-                      ₱{getPatientBracesData().totalCost.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-600 mb-1">Total Paid</p>
-                    <p className="text-2xl font-bold text-green-600">
-                      ₱{getPatientBracesData().totalPaid.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="pt-4 border-t-2 border-green-300">
-                  <p className="text-xs text-gray-600 mb-2">Remaining Balance</p>
-                  <p className={`text-3xl font-bold ${
-                    (getPatientBracesData().totalCost - getPatientBracesData().totalPaid) > 0 
-                      ? 'text-red-600' 
-                      : 'text-green-600'
-                  }`}>
-                    ₱{(getPatientBracesData().totalCost - getPatientBracesData().totalPaid).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                  </p>
-                  
-                  {(getPatientBracesData().totalCost - getPatientBracesData().totalPaid) === 0 && (
-                    <motion.div
-                      className="mt-3 px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm flex items-center gap-2"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                    >
-                      <CreditCard className="w-4 h-4" />
-                      Fully Paid!
-                    </motion.div>
-                  )}
-                </div>
-              </div>
-
-              {/* Payment History */}
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                  <History className="w-4 h-4" />
-                  Payment History
-                </h3>
-                
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {getPatientBracesData().paymentRecords.length > 0 ? (
-                    getPatientBracesData().paymentRecords.map((record, index) => (
-                      <motion.div
-                        key={record.id}
-                        className={`p-3 rounded-lg border ${
-                          record.type === 'payment' 
-                            ? 'bg-green-50 border-green-200' 
-                            : 'bg-blue-50 border-blue-200'
-                        }`}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 2.1 + index * 0.05 }}
-                      >
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="text-sm font-semibold text-gray-800">{record.description}</p>
-                            <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                              <Calendar className="w-3 h-3" />
-                              {new Date(record.date).toLocaleDateString('en-US', { 
-                                month: 'short', 
-                                day: 'numeric', 
-                                year: 'numeric' 
-                              })}
-                            </p>
-                          </div>
-                          <div className={`text-right`}>
-                            <p className={`font-bold ${
-                              record.type === 'payment' ? 'text-green-600' : 'text-blue-600'
-                            }`}>
-                              {record.type === 'payment' ? '-' : '+'}₱{record.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {record.type === 'payment' ? 'Payment' : 'Charge'}
-                            </p>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8 text-gray-400">
-                      <CreditCard className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No payment records yet</p>
-                    </div>
-                  )}
-                </div>
               </div>
             </motion.div>
           </div>

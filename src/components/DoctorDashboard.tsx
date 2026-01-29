@@ -195,15 +195,16 @@ export function DoctorDashboard({
   };
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, color: 'from-blue-500 to-blue-600' },
-    { id: 'patients', label: 'Patients', icon: Users, color: 'from-purple-500 to-purple-600' },
-      { id: 'employees', label: 'Employees', icon: UserCog, color: 'from-amber-500 to-amber-600' },
-    { id: 'appointments', label: 'Appointments', icon: Calendar, color: 'from-pink-500 to-pink-600' },
-    { id: 'charting', label: 'Dental Charting', icon: ClipboardList, color: 'from-teal-500 to-teal-600' },
-    { id: 'braces', label: 'Braces Charting', icon: Sparkles, color: 'from-indigo-500 to-indigo-600' },
-    { id: 'referrals', label: 'Referrals', icon: FileText, color: 'from-cyan-500 to-cyan-600' },
-    { id: 'services', label: 'Services Forms', icon: Stethoscope, color: 'from-emerald-500 to-emerald-600' },
-    { id: 'financial', label: 'Financial Report', icon: PesoSign, color: 'from-green-500 to-green-600' },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, color: 'from-teal-500 to-cyan-600' },
+    { id: 'patients', label: 'Patients', icon: Users, color: 'from-teal-500 to-teal-600' },
+      { id: 'employees', label: 'Employees', icon: UserCog, color: 'from-cyan-600 to-teal-500' },
+    { id: 'appointments', label: 'Appointments', icon: Calendar, color: 'from-teal-600 to-cyan-600' },
+    { id: 'charting', label: 'Dental Charting', icon: ClipboardList, color: 'from-cyan-500 to-teal-500' },
+    { id: 'braces', label: 'Braces Charting', icon: Sparkles, color: 'from-teal-500 to-emerald-600' },
+    { id: 'referrals', label: 'Referrals', icon: FileText, color: 'from-cyan-500 to-emerald-600' },
+    { id: 'offered', label: 'Services Offered', icon: Users, color: 'from-pink-500 to-rose-600' },
+    { id: 'services', label: 'Services Forms', icon: Stethoscope, color: 'from-teal-600 to-cyan-600' },
+    { id: 'financial', label: 'Financial Report', icon: PesoSign, color: 'from-emerald-500 to-teal-600' },
   ];
 
   return (
@@ -214,7 +215,7 @@ export function DoctorDashboard({
         className={`${sidebarOpen ? 'w-72' : 'w-20'} bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white transition-all duration-300 flex flex-col shadow-2xl relative overflow-hidden`}
       >
         {/* Decorative gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-transparent to-purple-600/10 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-teal-500/10 via-transparent to-cyan-500/10 pointer-events-none"></div>
         
         <div className="p-6 flex items-center justify-between border-b border-slate-700/50 relative z-10">
           {sidebarOpen && (
@@ -224,7 +225,7 @@ export function DoctorDashboard({
               className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => setShowSettings(true)}
             >
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center text-white font-semibold">
                 {currentUser.fullName.charAt(0)}
               </div>
               <div className="min-w-0">

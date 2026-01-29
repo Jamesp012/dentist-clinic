@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Patient, Appointment, TreatmentRecord, PhotoUpload, Announcement, ServicePrice, Payment } from '../App';
+import { Patient, Appointment, TreatmentRecord, PhotoUpload, Announcement, Payment, ServicePrice } from '../App';
 import { Calendar, FileText, User as UserIcon, Clock, Image, X, Upload, Edit, Save, XCircle, Info, CheckCircle, AlertCircle, Camera, Sparkles, Heart, Smile, Shield, Megaphone, Send, Plus, CreditCard, Settings, Check, Eye, EyeOff, Menu, LogOut, History } from 'lucide-react';
-import { PesoSign } from './icons/PesoSign';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import { handlePhoneInput, formatPhoneNumber } from '../utils/phoneValidation';
@@ -17,7 +16,6 @@ type PatientPortalProps = {
   photos: PhotoUpload[];
   setPhotos: (photos: PhotoUpload[]) => void;
   announcements: Announcement[];
-  servicePrices: ServicePrice[];
   payments: Payment[];
   currentUserId: string;
   onLogout?: () => void;
@@ -26,7 +24,7 @@ type PatientPortalProps = {
 
 const API_BASE = 'http://localhost:5000/api';
 
-export function PatientPortal({ patient, appointments, setAppointments, treatmentRecords, onUpdatePatient, billingBalance = 5000, photos, setPhotos, announcements, servicePrices, payments, currentUserId, onLogout, onDataChanged }: PatientPortalProps) {
+export function PatientPortal({ patient, appointments, setAppointments, treatmentRecords, onUpdatePatient, billingBalance = 5000, photos, setPhotos, announcements, payments, currentUserId, onLogout, onDataChanged }: PatientPortalProps) {
   const [activeTab, setActiveTab] = useState<'profile' | 'appointments' | 'records' | 'photos' | 'balance' | 'care-guide' | 'announcements' | 'services'>('profile');
   const [isEditing, setIsEditing] = useState(false);
   const [editedPatient, setEditedPatient] = useState<Patient>(patient);
@@ -178,14 +176,14 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
   const patientPhotos = photos.filter(photo => String(photo.patientId) === String(patient.id));
 
   const menuItems = [
-    { id: 'profile', label: 'My Profile', icon: UserIcon, color: 'from-blue-500 to-blue-600' },
-    { id: 'appointments', label: 'Appointments', icon: Calendar, color: 'from-emerald-500 to-emerald-600' },
-    { id: 'records', label: 'Records', icon: FileText, color: 'from-purple-500 to-purple-600' },
-    { id: 'photos', label: 'Photos', icon: Camera, color: 'from-pink-500 to-pink-600' },
-    { id: 'balance', label: 'Balance', icon: CreditCard, color: 'from-orange-500 to-orange-600' },
-    { id: 'care-guide', label: 'Care Guide', icon: Sparkles, color: 'from-cyan-500 to-cyan-600' },
-    { id: 'announcements', label: 'Announcements', icon: Megaphone, color: 'from-indigo-500 to-indigo-600' },
-    { id: 'services', label: 'Services', icon: PesoSign, color: 'from-teal-500 to-teal-600' },
+    { id: 'profile', label: 'My Profile', icon: UserIcon, color: 'from-teal-500 to-cyan-600' },
+    { id: 'appointments', label: 'Appointments', icon: Calendar, color: 'from-teal-500 to-teal-600' },
+    { id: 'records', label: 'Records', icon: FileText, color: 'from-cyan-500 to-cyan-600' },
+    { id: 'photos', label: 'Photos', icon: Camera, color: 'from-teal-600 to-cyan-500' },
+    { id: 'balance', label: 'Balance', icon: CreditCard, color: 'from-cyan-500 to-emerald-600' },
+    { id: 'care-guide', label: 'Care Guide', icon: Sparkles, color: 'from-teal-500 to-emerald-600' },
+    { id: 'announcements', label: 'Announcements', icon: Megaphone, color: 'from-cyan-600 to-teal-500' },
+    { id: 'services', label: 'Services', icon: Heart, color: 'from-pink-500 to-rose-600' },
   ] as const;
 
   const upcomingAppointments = patientAppointments.filter(
@@ -304,7 +302,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
         animate={{ x: 0, opacity: 1 }}
         className={`${sidebarOpen ? 'w-72' : 'w-20'} bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white transition-all duration-300 flex flex-col shadow-2xl relative overflow-hidden`}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-transparent to-purple-600/10 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-teal-500/10 via-transparent to-cyan-500/10 pointer-events-none"></div>
         
         <div className="p-6 flex items-center justify-between border-b border-slate-700/50 relative z-10">
           {sidebarOpen && (
@@ -314,7 +312,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
               className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => setShowSettings(true)}
             >
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center text-white font-semibold">
                 {patient.name?.charAt(0) || 'P'}
               </div>
               <div className="min-w-0">
@@ -1139,25 +1137,8 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
               </div>
             )}
 
-            {/* Services Tab */}
-            {activeTab === 'services' && (
-              <div className="space-y-6">
-                <h2 className="text-xl mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Services
-                </h2>
+            {/* Services Tab - Removed */}
 
-                {/* Services List */}
-                <div className="space-y-4">
-                  {servicePrices.map(service => (
-                    <div key={service.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                      <h3 className="font-semibold text-lg mb-2">{service.serviceName}</h3>
-                      <p className="text-sm text-gray-600 mb-2">Price: ₱{service.price.toFixed(2)}</p>
-                      <p className="text-sm text-gray-700">{service.description}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </motion.div>
           </AnimatePresence>
         </div>

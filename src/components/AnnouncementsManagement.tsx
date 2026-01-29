@@ -1,53 +1,60 @@
 import { useState } from 'react';
 import { Announcement, ServicePrice } from '../App';
-import { Megaphone, Plus, X, Edit, Trash2, Save } from 'lucide-react';
+import { Plus, X, Trash2, Edit, Save } from 'lucide-react';
+import { PesoSign } from './icons/PesoSign';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
-import { PesoSign } from './icons/PesoSign';
 import { announcementAPI } from '../api';
 
 type AnnouncementsManagementProps = {
   announcements: Announcement[];
   setAnnouncements: (announcements: Announcement[]) => void;
-  servicePrices: ServicePrice[];
-  setServicePrices: (services: ServicePrice[]) => void;
+  servicePrices?: ServicePrice[];
+  setServicePrices?: (servicePrices: ServicePrice[]) => void;
 };
 
-export function AnnouncementsManagement({ announcements, setAnnouncements, servicePrices, setServicePrices }: AnnouncementsManagementProps) {
+export function AnnouncementsManagement({ announcements, setAnnouncements, servicePrices = [], setServicePrices }: AnnouncementsManagementProps) {
   const [activeTab, setActiveTab] = useState<'announcements' | 'services'>('announcements');
   const [showAddAnnouncement, setShowAddAnnouncement] = useState(false);
-  const [showAddService, setShowAddService] = useState(false);
-  const [editingService, setEditingService] = useState<ServicePrice | null>(null);
   const [isPostingAnnouncement, setIsPostingAnnouncement] = useState(false);
   const [deletingAnnouncementId, setDeletingAnnouncementId] = useState<Announcement['id'] | null>(null);
+  const [showAddService, setShowAddService] = useState(false);
+  const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
+  const [isLoadingService, setIsLoadingService] = useState(false);
 
   const handleAddAnnouncement = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const title = (formData.get('title') as string)?.trim();
-    const message = (formData.get('message') as string)?.trim();
-    const type = formData.get('type') as Announcement['type'];
-
-    if (!title || !message) {
-      toast.error('Title and message are required');
-      return;
-    }
-
+    setIsPostingAnnouncement(true);
+    
     try {
-      setIsPostingAnnouncement(true);
+      const formData = new FormData(e.currentTarget);
+      const title = (formData.get('title') as string)?.trim();
+      const message = (formData.get('message') as string)?.trim();
+      const type = formData.get('type') as Announcement['type'];
+
+      if (!title || !message) {
+        toast.error('Title and message are required');
+        setIsPostingAnnouncement(false);
+        return;
+      }
+
       const createdAnnouncement = await announcementAPI.create({
         title,
         message,
         type,
         date: new Date().toISOString().split('T')[0],
       });
-
-      setAnnouncements((prev) => [createdAnnouncement, ...prev]);
-      e.currentTarget.reset();
-      setShowAddAnnouncement(false);
+      
       toast.success('Announcement posted successfully!');
+      
+      if (createdAnnouncement && createdAnnouncement.id) {
+        setAnnouncements([createdAnnouncement, ...announcements]);
+      }
+      
+      setShowAddAnnouncement(false);
+      
     } catch (error) {
-      console.error('Failed to post announcement', error);
+      console.error('Failed to post announcement:', error);
       toast.error('Failed to post announcement. Please try again.');
     } finally {
       setIsPostingAnnouncement(false);
@@ -58,7 +65,7 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
     try {
       setDeletingAnnouncementId(id);
       await announcementAPI.delete(id);
-      setAnnouncements((prev) => prev.filter((a) => a.id !== id));
+      setAnnouncements(announcements.filter((a: Announcement) => a.id !== id));
       toast.success('Announcement deleted');
     } catch (error) {
       console.error('Failed to delete announcement', error);
@@ -66,46 +73,6 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
     } finally {
       setDeletingAnnouncementId(null);
     }
-  };
-
-  const handleAddService = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const newService: ServicePrice = {
-      id: Date.now().toString(),
-      serviceName: formData.get('serviceName') as string,
-      description: formData.get('description') as string,
-      price: parseFloat(formData.get('price') as string),
-      category: formData.get('category') as string,
-      duration: formData.get('duration') as string
-    };
-    setServicePrices([...servicePrices, newService]);
-    setShowAddService(false);
-    toast.success('Service added successfully!');
-  };
-
-  const handleUpdateService = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!editingService) return;
-    
-    const formData = new FormData(e.currentTarget);
-    const updatedService: ServicePrice = {
-      ...editingService,
-      serviceName: formData.get('serviceName') as string,
-      description: formData.get('description') as string,
-      price: parseFloat(formData.get('price') as string),
-      category: formData.get('category') as string,
-      duration: formData.get('duration') as string
-    };
-    
-    setServicePrices(servicePrices.map(s => s.id === updatedService.id ? updatedService : s));
-    setEditingService(null);
-    toast.success('Service updated successfully!');
-  };
-
-  const handleDeleteService = (id: string) => {
-    setServicePrices(servicePrices.filter(s => s.id !== id));
-    toast.success('Service deleted');
   };
 
   const getAnnouncementColor = (type: string) => {
@@ -126,36 +93,83 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
     }
   };
 
+  const handleAddService = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoadingService(true);
+    try {
+      const formData = new FormData(e.currentTarget);
+      const serviceName = (formData.get('serviceName') as string)?.trim();
+      const category = (formData.get('category') as string)?.trim();
+      const duration = (formData.get('duration') as string)?.trim();
+      const price = parseFloat(formData.get('price') as string);
+
+      if (!serviceName || !category || !duration || !price) {
+        toast.error('All fields are required');
+        return;
+      }
+
+      const newService: ServicePrice = {
+        id: editingServiceId || Date.now().toString(),
+        serviceName,
+        category,
+        duration,
+        price,
+      };
+
+      if (editingServiceId) {
+        const updatedServices = servicePrices.map(s => s.id === editingServiceId ? newService : s);
+        setServicePrices?.(updatedServices);
+        toast.success('Service updated successfully');
+        setEditingServiceId(null);
+      } else {
+        setServicePrices?.([...servicePrices, newService]);
+        toast.success('Service added successfully');
+      }
+
+      setShowAddService(false);
+      e.currentTarget.reset();
+    } catch (error) {
+      console.error('Error saving service:', error);
+      toast.error('Failed to save service');
+    } finally {
+      setIsLoadingService(false);
+    }
+  };
+
+  const handleDeleteService = (id: string) => {
+    const updatedServices = servicePrices.filter(s => s.id !== id);
+    setServicePrices?.(updatedServices);
+    toast.success('Service deleted');
+  };
+
   return (
     <div className="p-8">
       <div className="mb-6">
         <h1 className="text-3xl mb-2">Announcements & Services</h1>
-        <p className="text-gray-600">Manage announcements and service price list</p>
+        <p className="text-gray-600">Manage clinic announcements and services</p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 mb-6 bg-white p-2 rounded-lg shadow-sm">
+      {/* Tab Navigation */}
+      <div className="flex gap-4 mb-6 border-b border-gray-200">
         <button
           onClick={() => setActiveTab('announcements')}
-          className={`flex-1 px-4 py-2 rounded-lg transition-colors ${
+          className={`px-6 py-3 font-semibold transition-colors ${
             activeTab === 'announcements'
-              ? 'bg-blue-600 text-white'
-              : 'text-gray-600 hover:bg-gray-100'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-gray-600 hover:text-gray-900'
           }`}
         >
-          <Megaphone className="w-5 h-5 inline-block mr-2" />
           Announcements
         </button>
         <button
           onClick={() => setActiveTab('services')}
-          className={`flex-1 px-4 py-2 rounded-lg transition-colors ${
+          className={`px-6 py-3 font-semibold transition-colors ${
             activeTab === 'services'
-              ? 'bg-blue-600 text-white'
-              : 'text-gray-600 hover:bg-gray-100'
+              ? 'text-pink-600 border-b-2 border-pink-600'
+              : 'text-gray-600 hover:text-gray-900'
           }`}
         >
-          <PesoSign className="w-5 h-5 inline-block mr-2" />
-          Service Price List
+          Services Offered
         </button>
       </div>
 
@@ -174,43 +188,49 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
           </div>
 
           <div className="space-y-4">
-            {announcements.map(announcement => (
-              <motion.div
-                key={announcement.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`p-6 rounded-xl border-2 shadow-lg ${getAnnouncementColor(announcement.type)}`}
-              >
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-3xl">{getAnnouncementIcon(announcement.type)}</span>
-                    <div>
-                      <h3 className="text-lg">{announcement.title}</h3>
-                      <p className="text-sm text-gray-600">
-                        {new Date(announcement.date).toLocaleDateString()} • {announcement.createdBy}
-                      </p>
+            {announcements && announcements.length > 0 ? (
+              announcements.map(announcement => (
+                <motion.div
+                  key={announcement.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`p-6 rounded-xl border-2 shadow-lg ${getAnnouncementColor(announcement.type)}`}
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl">{getAnnouncementIcon(announcement.type)}</span>
+                      <div>
+                        <h3 className="text-lg">{announcement.title}</h3>
+                        <p className="text-sm text-gray-600">
+                          {new Date(announcement.date).toLocaleDateString()} • {announcement.createdBy}
+                        </p>
+                      </div>
                     </div>
+                    <button
+                      onClick={() => handleDeleteAnnouncement(announcement.id)}
+                      disabled={deletingAnnouncementId === announcement.id}
+                      className={`p-2 text-red-600 rounded-lg transition-colors ${
+                        deletingAnnouncementId === announcement.id
+                          ? 'opacity-60 cursor-not-allowed'
+                          : 'hover:bg-red-100'
+                      }`}
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleDeleteAnnouncement(announcement.id)}
-                    disabled={deletingAnnouncementId === announcement.id}
-                    className={`p-2 text-red-600 rounded-lg transition-colors ${
-                      deletingAnnouncementId === announcement.id
-                        ? 'opacity-60 cursor-not-allowed'
-                        : 'hover:bg-red-100'
-                    }`}
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                </div>
-                <p className="text-gray-700">{announcement.message}</p>
-                <div className="mt-3">
-                  <span className="px-3 py-1 bg-white rounded-full text-sm capitalize">
-                    {announcement.type}
-                  </span>
-                </div>
-              </motion.div>
-            ))}
+                  <p className="text-gray-700">{announcement.message}</p>
+                  <div className="mt-3">
+                    <span className="px-3 py-1 bg-white rounded-full text-sm capitalize">
+                      {announcement.type}
+                    </span>
+                  </div>
+                </motion.div>
+              ))
+            ) : (
+              <div className="text-center py-12 text-gray-500">
+                <p>No announcements yet. Click "New Announcement" to create one.</p>
+              </div>
+            )}
           </div>
 
           {/* Add Announcement Modal */}
@@ -288,141 +308,137 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
       {activeTab === 'services' && (
         <div>
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl">Service Price List</h2>
+            <h2 className="text-xl">Services Offered</h2>
             <button
-              onClick={() => setShowAddService(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              onClick={() => {
+                setEditingServiceId(null);
+                setShowAddService(true);
+              }}
+              className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 flex items-center gap-2"
             >
               <Plus className="w-5 h-5" />
               Add Service
             </button>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-3 text-left text-sm text-gray-600">Service Name</th>
-                  <th className="px-6 py-3 text-left text-sm text-gray-600">Category</th>
-                  <th className="px-6 py-3 text-left text-sm text-gray-600">Duration</th>
-                  <th className="px-6 py-3 text-left text-sm text-gray-600">Price</th>
-                  <th className="px-6 py-3 text-left text-sm text-gray-600">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {servicePrices.map(service => (
-                  <tr key={service.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <p className="font-medium">{service.serviceName}</p>
-                      <p className="text-sm text-gray-600">{service.description}</p>
-                    </td>
-                    <td className="px-6 py-4">{service.category}</td>
-                    <td className="px-6 py-4">{service.duration}</td>
-                    <td className="px-6 py-4 text-lg">₱{service.price.toLocaleString()}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex gap-2">
+          {servicePrices && servicePrices.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-300">
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Service Name</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Category</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Duration</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Price</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {servicePrices.map((service) => (
+                    <tr key={service.id} className="border-b border-gray-200 hover:bg-gray-50">
+                      <td className="py-3 px-4 text-gray-800">{service.serviceName}</td>
+                      <td className="py-3 px-4 text-gray-700">{service.category}</td>
+                      <td className="py-3 px-4 text-gray-700">{service.duration}</td>
+                      <td className="py-3 px-4 text-gray-800 font-semibold flex items-center gap-1">
+                        <PesoSign className="w-4 h-4" />
+                        {service.price?.toFixed(2)}
+                      </td>
+                      <td className="py-3 px-4">
                         <button
-                          onClick={() => setEditingService(service)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                          onClick={() => {
+                            setEditingServiceId(service.id);
+                            setShowAddService(true);
+                          }}
+                          className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors mr-2"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteService(service.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                          className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-12 text-gray-500">
+              <p>No services available. Click "Add Service" to create one.</p>
+            </div>
+          )}
 
           {/* Add/Edit Service Modal */}
-          {(showAddService || editingService) && (
+          {showAddService && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-lg p-6 max-w-2xl w-full">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-2xl">{editingService ? 'Edit Service' : 'Add Service'}</h2>
+                  <h2 className="text-2xl">{editingServiceId ? 'Edit Service' : 'Add Service'}</h2>
                   <button
                     onClick={() => {
                       setShowAddService(false);
-                      setEditingService(null);
+                      setEditingServiceId(null);
                     }}
                     className="text-gray-500 hover:text-gray-700"
                   >
                     <X className="w-6 h-6" />
                   </button>
                 </div>
-                <form onSubmit={editingService ? handleUpdateService : handleAddService} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm mb-1">Service Name *</label>
-                      <input
-                        type="text"
-                        name="serviceName"
-                        required
-                        defaultValue={editingService?.serviceName}
-                        placeholder="e.g., Teeth Cleaning"
-                        className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm mb-1">Category *</label>
-                      <input
-                        type="text"
-                        name="category"
-                        required
-                        defaultValue={editingService?.category}
-                        placeholder="e.g., Preventive"
-                        className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
+                <form onSubmit={handleAddService} className="space-y-4">
                   <div>
-                    <label className="block text-sm mb-1">Description *</label>
-                    <textarea
-                      name="description"
+                    <label className="block text-sm mb-1">Service Name *</label>
+                    <input
+                      type="text"
+                      name="serviceName"
                       required
-                      rows={3}
-                      defaultValue={editingService?.description}
-                      placeholder="Brief description of the service..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      defaultValue={editingServiceId ? servicePrices.find(s => s.id === editingServiceId)?.serviceName : ''}
+                      placeholder="e.g., Tooth Extraction"
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-pink-500"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm mb-1">Price (₱) *</label>
-                      <input
-                        type="number"
-                        name="price"
-                        required
-                        step="0.01"
-                        defaultValue={editingService?.price}
-                        placeholder="0.00"
-                        className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm mb-1">Duration</label>
-                      <input
-                        type="text"
-                        name="duration"
-                        defaultValue={editingService?.duration}
-                        placeholder="e.g., 30 minutes"
-                        className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-sm mb-1">Category *</label>
+                    <input
+                      type="text"
+                      name="category"
+                      required
+                      defaultValue={editingServiceId ? servicePrices.find(s => s.id === editingServiceId)?.category : ''}
+                      placeholder="e.g., Extraction"
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-pink-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm mb-1">Duration *</label>
+                    <input
+                      type="text"
+                      name="duration"
+                      required
+                      defaultValue={editingServiceId ? servicePrices.find(s => s.id === editingServiceId)?.duration : ''}
+                      placeholder="e.g., 30 mins"
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-pink-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm mb-1">Price *</label>
+                    <input
+                      type="number"
+                      name="price"
+                      required
+                      step="0.01"
+                      defaultValue={editingServiceId ? servicePrices.find(s => s.id === editingServiceId)?.price : ''}
+                      placeholder="e.g., 500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-pink-500"
+                    />
                   </div>
                   <div className="flex gap-3 justify-end">
                     <button
                       type="button"
                       onClick={() => {
                         setShowAddService(false);
-                        setEditingService(null);
+                        setEditingServiceId(null);
                       }}
                       className="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50"
                     >
@@ -430,10 +446,24 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
                     </button>
                     <button
                       type="submit"
-                      className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2"
+                      disabled={isLoadingService}
+                      className={`px-6 py-2 rounded text-white flex items-center gap-2 ${
+                        isLoadingService
+                          ? 'bg-pink-400 cursor-not-allowed'
+                          : 'bg-pink-600 hover:bg-pink-700'
+                      }`}
                     >
-                      <Save className="w-4 h-4" />
-                      {editingService ? 'Update Service' : 'Add Service'}
+                      {editingServiceId ? (
+                        <>
+                          <Save className="w-4 h-4" />
+                          {isLoadingService ? 'Updating...' : 'Update Service'}
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="w-4 h-4" />
+                          {isLoadingService ? 'Adding...' : 'Add Service'}
+                        </>
+                      )}
                     </button>
                   </div>
                 </form>

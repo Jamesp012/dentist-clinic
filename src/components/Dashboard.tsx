@@ -216,19 +216,34 @@ export function Dashboard({ patients, appointments, inventory, treatmentRecords,
           <div className="space-y-3">
             {appointments
               .filter(apt => apt.status === 'scheduled')
-              .slice(0, 5)
-              .map(apt => (
-                <div key={apt.id} className="flex justify-between items-center p-3 bg-blue-50 rounded border border-blue-200">
-                  <div>
-                    <p>{apt.patientName}</p>
-                    <p className="text-sm text-gray-600">{apt.type}</p>
+              .sort((a, b) => {
+                // Sort by date first, then by time
+                const dateCompare = new Date(`${a.date}T${a.time}`).getTime() - new Date(`${b.date}T${b.time}`).getTime();
+                return dateCompare;
+              })
+              .slice(0, 4)
+              .map(apt => {
+                // Format date as readable format (e.g., "Jan 30, 2026")
+                const appointmentDate = new Date(`${apt.date}T${apt.time}`);
+                const formattedDate = appointmentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                // Format time (e.g., "2:30 PM")
+                const formattedTime = appointmentDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+                
+                return (
+                  <div key={apt.id} className="flex justify-between items-center p-3 bg-blue-50 rounded border border-blue-200">
+                    <div>
+                      <p className="font-medium">{apt.patientName}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-blue-600 font-medium">{formattedDate}</p>
+                      <p className="text-sm text-gray-600">{formattedTime}</p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-blue-600">{apt.date}</p>
-                    <p className="text-xs text-gray-500">{apt.time}</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
+            {appointments.filter(apt => apt.status === 'scheduled').length === 0 && (
+              <p className="text-gray-500 text-center py-4">No upcoming appointments</p>
+            )}
           </div>
         </div>
       </div>

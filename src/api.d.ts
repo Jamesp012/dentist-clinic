@@ -162,3 +162,11 @@ export const patientClaimingAPI: {
   resendOTP: (patientId: string | number) => Promise<any>;
   verifyAndLink: (data: { patientId: string | number; otp: string; userData: any }) => Promise<any>;
 };
+
+export const photoAPI: {
+  getAll: () => Promise<any[]>;
+  getByPatientId: (patientId: string | number) => Promise<any[]>;
+  upload: (data: FormData) => Promise<any>;
+  update: (id: string | number, data: any) => Promise<any>;
+  delete: (id: string | number) => Promise<any>;
+};

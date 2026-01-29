@@ -42,7 +42,6 @@ import type {
   PhotoUpload,
   ChatMessage,
   Announcement,
-  ServicePrice,
   Payment,
 } from "../App";
 
@@ -67,8 +66,6 @@ type AssistantDashboardProps = {
   setChatMessages: (messages: ChatMessage[]) => void;
   announcements: Announcement[];
   setAnnouncements: (announcements: Announcement[]) => void;
-  servicePrices: ServicePrice[];
-  setServicePrices: (prices: ServicePrice[]) => void;
   onDataChanged?: () => Promise<void>;
 };
 
@@ -95,8 +92,6 @@ export function AssistantDashboard({
   setChatMessages,
   announcements,
   setAnnouncements,
-  servicePrices,
-  setServicePrices,
   onDataChanged,
 }: AssistantDashboardProps) {
   const [activeTab, setActiveTab] =
@@ -314,58 +309,64 @@ export function AssistantDashboard({
 
   const menuItems = [
     {
+      id: "dashboard",
+      label: "Dashboard",
+      icon: LayoutDashboard,
+      color: "from-teal-500 to-cyan-600",
+    },
+    {
       id: "patients",
       label: "Patients",
       icon: Users,
-      color: "from-blue-500 to-blue-600",
+      color: "from-teal-500 to-teal-600",
     },
     {
       id: "appointments",
       label: "Appointments",
       icon: Calendar,
-      color: "from-pink-500 to-pink-600",
+      color: "from-cyan-500 to-cyan-600",
     },
     {
       id: "inventory",
       label: "Inventory",
       icon: Package,
-      color: "from-orange-500 to-orange-600",
+      color: "from-teal-600 to-cyan-500",
     },
     {
       id: "braces",
       label: "Braces Charting",
       icon: Sparkles,
-      color: "from-indigo-500 to-indigo-600",
+      color: "from-cyan-500 to-teal-500",
     },
     {
       id: "photos",
       label: "Patient Photos",
       icon: Camera,
-      color: "from-rose-500 to-rose-600",
+      color: "from-teal-500 to-emerald-600",
     },
     {
       id: "referrals",
       label: "Referrals",
       icon: FileText,
-      color: "from-cyan-500 to-cyan-600",
+      color: "from-cyan-500 to-emerald-600",
     },
     {
       id: "services",
       label: "Services Forms",
       icon: Stethoscope,
-      color: "from-blue-500 to-blue-600",
+      color: "from-teal-600 to-cyan-600",
     },
     {
       id: "financial",
       label: "Financial Report",
       icon: PesoSign,
-      color: "from-green-500 to-green-600",
+      color: "from-emerald-500 to-teal-600",
     },
     {
       id: "announcements",
       label: "Announcements",
       icon: Megaphone,
-      color: "from-rose-500 to-rose-600",
+      color: "from-cyan-600 to-teal-500",
     },
   ];
 
@@ -378,7 +379,7 @@ export function AssistantDashboard({
         className={`${sidebarOpen ? "w-72" : "w-20"} bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white transition-all duration-300 flex flex-col shadow-2xl relative overflow-hidden`}
       >
         {/* Decorative gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-transparent to-purple-600/10 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-transparent to-indigo-500/5 pointer-events-none"></div>
 
         <div className="p-6 flex items-center justify-between border-b border-emerald-700/50 relative z-10">
           {sidebarOpen && (
@@ -388,11 +389,11 @@ export function AssistantDashboard({
               className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => setShowSettings(true)}
             >
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center shadow-lg">
                 <span className="text-2xl">🦷</span>
               </div>
               <div className="min-w-0">
-                <h1 className="text-lg font-semibold bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent whitespace-nowrap overflow-hidden text-ellipsis">
+                <h1 className="text-lg font-semibold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent whitespace-nowrap overflow-hidden text-ellipsis">
                   Assistant Portal
                 </h1>
                 <p className="text-xs text-emerald-300 flex items-center gap-1">
@@ -432,7 +433,7 @@ export function AssistantDashboard({
                   activeTab === item.id
                     ? "bg-gradient-to-r " +
                       item.color +
-                      " shadow-lg shadow-emerald-500/20"
+                      " shadow-lg shadow-teal-500/20"
                     : "hover:bg-emerald-700/30 hover:translate-x-1"
                 }`}
               >
@@ -485,7 +486,7 @@ export function AssistantDashboard({
             <div className="bg-emerald-800/50 rounded-xl p-4 backdrop-blur-sm">
               <div className="mb-3">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center text-white font-semibold">
                     {currentUser.fullName.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -686,7 +687,7 @@ export function AssistantDashboard({
                     <button
                       onClick={handlePhotoUpload}
                       disabled={isUploadingPhoto}
-                      className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-400 text-white rounded-lg transition-all duration-200 font-medium flex items-center justify-center gap-2"
+                      className="w-full px-4 py-3 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 disabled:from-gray-400 disabled:to-gray-400 text-white rounded-lg transition-all duration-200 font-medium flex items-center justify-center gap-2"
                     >
                       <Upload className="w-5 h-5" />
                       {isUploadingPhoto ? 'Uploading...' : 'Upload Photo to Patient'}
@@ -749,8 +750,6 @@ export function AssistantDashboard({
                 <AnnouncementsManagement
                   announcements={announcements}
                   setAnnouncements={setAnnouncements}
-                  servicePrices={servicePrices}
-                  setServicePrices={setServicePrices}
                 />
               )}
             </motion.div>
