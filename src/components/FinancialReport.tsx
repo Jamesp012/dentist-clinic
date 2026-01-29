@@ -584,7 +584,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                     <label className="block text-sm font-medium text-gray-700 mb-2">Payment Amount (₱)</label>
                     <input
                       type="number"
-                      step="1"
+                      step="0.01"
                       value={paymentAmount}
                       onChange={(e) => setPaymentAmount(e.target.value)}
                       placeholder="Enter amount"

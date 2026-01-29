@@ -1,9 +1,21 @@
 import { useState } from 'react';
 import { Referral, Patient } from '../App';
-import { FileText, Plus, X, Download, Mail } from 'lucide-react';
+import { 
+  FileText, 
+  Plus, 
+  X, 
+  Download, 
+  Search, 
+  Filter,
+  UserCircle2,
+  Calendar,
+  Eye,
+  AlertCircle
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { PatientSearch } from './PatientSearch';
 import { referralAPI } from '../api';
+import { motion, AnimatePresence } from 'motion/react';
 
 type ReferralGenerationProps = {
   referrals: Referral[];
@@ -11,11 +23,18 @@ type ReferralGenerationProps = {
   patients: Patient[];
 };
 
+interface ReferralWithDetails extends Referral {
+  patientDetails?: Patient;
+}
+
 export function ReferralGeneration({ referrals, setReferrals, patients }: ReferralGenerationProps) {
   const [showAddModal, setShowAddModal] = useState(false);
-  const [viewingReferral, setViewingReferral] = useState<Referral | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedReferral, setSelectedReferral] = useState<ReferralWithDetails | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
 
   const specialties = [
     'Periodontics',
@@ -27,8 +46,25 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
     'Oral Pathology',
     'Oral Radiology',
     'X-Ray Imaging',
-    'General Dentistry (Referral)'
+    'Diagnostic Imaging'
   ];
+
+  const statusConfig = {
+    'routine': { bg: 'bg-blue-100', text: 'text-blue-700', icon: '📋' },
+    'urgent': { bg: 'bg-amber-100', text: 'text-amber-700', icon: '⚠️' },
+    'emergency': { bg: 'bg-red-100', text: 'text-red-700', icon: '🚨' }
+  };
+
+  const filteredReferrals = referrals.filter(ref => {
+    const matchesSearch = 
+      ref.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ref.referredTo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ref.specialty.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = filterStatus === 'all' || ref.urgency === filterStatus;
+    
+    return matchesSearch && matchesStatus;
+  });
 
   const handleCreateReferral = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

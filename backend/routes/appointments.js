@@ -4,30 +4,48 @@ const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
 
-// Helper function to format date as YYYY-MM-DD using local date parts
-const formatDateString = (date) => {
-  if (!date) return date;
-  if (typeof date === 'string') {
-    // If it's a string, just extract the date part
-    return date.split('T')[0];
+// Helper function to parse date and time into DATETIME format
+// Accepts: "2025-02-06" and "10:00" or full "2025-02-06 10:00:00" format
+const parseAppointmentDateTime = (dateStr, timeStr) => {
+  if (!dateStr) return null;
+  
+  // If already contains space (DATETIME format), use as is
+  if (dateStr.includes(' ')) {
+    return dateStr;
   }
-  // For Date objects from MySQL, use local date parts to preserve the stored calendar date
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  
+  // Combine date and time: YYYY-MM-DD + HH:MM -> YYYY-MM-DD HH:MM:00
+  const time = timeStr || '09:00';
+  return `${dateStr} ${time}:00`;
+};
+
+// Helper function to extract date and time from DATETIME
+const extractDateTime = (dateTimeStr) => {
+  if (!dateTimeStr) return { date: null, time: null };
+  
+  const parts = dateTimeStr.split(' ');
+  return {
+    date: parts[0], // YYYY-MM-DD
+    time: parts[1] ? parts[1].substring(0, 5) : '09:00' // HH:MM
+  };
 };
 
 // Get all appointments
 router.get('/', authMiddleware, async (req, res) => {
   try {
-    const [appointments] = await pool.query('SELECT * FROM appointments');
-    // Convert DATE fields to ISO strings to prevent timezone issues
-    const normalizedAppointments = appointments.map(apt => ({
-      ...apt,
-      date: formatDateString(apt.date)
-    }));
-    res.json(normalizedAppointments);
+    const [appointments] = await pool.query(
+      'SELECT * FROM appointments ORDER BY appointmentDateTime ASC'
+    );
+    // Return with both DATETIME and split date/time for compatibility
+    const formattedAppointments = appointments.map(apt => {
+      const { date, time } = extractDateTime(apt.appointmentDateTime);
+      return {
+        ...apt,
+        date,
+        time
+      };
+    });
+    res.json(formattedAppointments);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -36,20 +54,25 @@ router.get('/', authMiddleware, async (req, res) => {
 // Create appointment
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { patientId, patientName, date, time, type, notes } = req.body;
-    // Ensure date is in YYYY-MM-DD format before inserting
-    const normalizedDate = date ? date.split('T')[0] : date;
+    const { patientId, patientName, date, time, type, duration = 60, notes } = req.body;
+    const appointmentDateTime = parseAppointmentDateTime(date, time);
+    
     const [result] = await pool.query(
-      'INSERT INTO appointments (patientId, patientName, date, time, type, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [patientId, patientName, normalizedDate, time, type, 'scheduled', notes]
+      'INSERT INTO appointments (patientId, patientName, appointmentDateTime, type, duration, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [patientId, patientName, appointmentDateTime, type, duration, 'scheduled', notes]
     );
+    
+    const { date: dateOnly, time: timeOnly } = extractDateTime(appointmentDateTime);
+    
     res.status(201).json({ 
       id: result.insertId, 
       patientId, 
       patientName, 
-      date: normalizedDate, 
-      time, 
+      date: dateOnly,
+      time: timeOnly,
+      appointmentDateTime,
       type, 
+      duration,
       notes,
       status: 'scheduled' 
     });
@@ -61,14 +84,28 @@ router.post('/', authMiddleware, async (req, res) => {
 // Update appointment
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
-    const { patientId, patientName, date, time, type, status, notes } = req.body;
-    // Ensure date is in YYYY-MM-DD format before updating
-    const normalizedDate = date ? date.split('T')[0] : date;
+    const { patientId, patientName, date, time, type, duration = 60, status, notes } = req.body;
+    const appointmentDateTime = parseAppointmentDateTime(date, time);
+    
     await pool.query(
-      'UPDATE appointments SET patientId=?, patientName=?, date=?, time=?, type=?, status=?, notes=? WHERE id=?',
-      [patientId, patientName, normalizedDate, time, type, status, notes, req.params.id]
+      'UPDATE appointments SET patientId=?, patientName=?, appointmentDateTime=?, type=?, duration=?, status=?, notes=? WHERE id=?',
+      [patientId, patientName, appointmentDateTime, type, duration, status, notes, req.params.id]
     );
-    res.json({ id: req.params.id, patientId, patientName, date: normalizedDate, time, type, status, notes });
+    
+    const { date: dateOnly, time: timeOnly } = extractDateTime(appointmentDateTime);
+    
+    res.json({ 
+      id: req.params.id, 
+      patientId, 
+      patientName, 
+      date: dateOnly,
+      time: timeOnly,
+      appointmentDateTime,
+      type, 
+      duration, 
+      status, 
+      notes 
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

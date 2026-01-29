@@ -51,7 +51,12 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
     return 'Cleaning';
   });
   const [selectedPatient, setSelectedPatient] = useState<string>(prefilledAppointment?.patientId || '');
-  const [patientSearch, setPatientSearch] = useState<string>('');
+  const [patientSearch, setPatientSearch] = useState<string>(() => {
+    if (prefilledAppointment) {
+      return prefilledAppointment.patientName;
+    }
+    return '';
+  });
   const [prescriptionPatientSearch, setPrescriptionPatientSearch] = useState<string>('');
   const [prescriptionPatientId, setPrescriptionPatientId] = useState<string>('');
   const [showReceiptSuggestions, setShowReceiptSuggestions] = useState<boolean>(false);
@@ -65,6 +70,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
   const [amountPaid, setAmountPaid] = useState<number>(0);
   const [numberOfInstallments, setNumberOfInstallments] = useState<number>(3);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFromAppointment, setIsFromAppointment] = useState<boolean>(!!prefilledAppointment);
 
   const services: ServiceType[] = ['Extraction', 'Pasta', 'Braces', 'Cleaning', 'Pustiso/Dentures'];
 
@@ -129,7 +135,6 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
       }
 
       setLastCreatedService(savedRecord);
-      setActiveForm(null);
       setPaymentType('full');
       setAmountPaid(0);
       setNumberOfInstallments(3);
@@ -143,7 +148,14 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
         await onDataChanged();
       }
       
-      // Show prescription prompt
+      // If opened from appointment, close immediately after save
+      if (isFromAppointment) {
+        setActiveForm(null);
+        setIsFromAppointment(false);
+        return;
+      }
+      
+      // Show prescription prompt for regular service form
       setShowPrescriptionPrompt(true);
       
       // Call callback if provided
@@ -263,17 +275,17 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                     <p className="text-sm text-gray-700 mt-1">{record.treatment} {record.tooth ? `- Tooth ${record.tooth}` : ''}</p>
                     <p className="text-sm text-gray-500 mt-1">{new Date(record.date).toLocaleDateString()} • Dr. {record.dentist}</p>
                     <div className="mt-4 flex gap-4 text-sm">
-                      <span className="font-bold text-lg text-gray-900">₱{record.cost}</span>
+                      <span className="font-bold text-lg text-gray-900">₱{Number(record.cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       {record.paymentType && (
                         <>
                           <span className={`px-3 py-1 rounded-full font-medium ${record.paymentType === 'full' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
                             {record.paymentType === 'full' ? 'Full Payment' : 'Installment'}
                           </span>
                           {record.amountPaid !== undefined && record.amountPaid > 0 && (
-                            <span className="text-gray-700 font-medium">Paid: ₱{record.amountPaid}</span>
+                            <span className="text-gray-700 font-medium">Paid: ₱{Number(record.amountPaid).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           )}
                           {record.remainingBalance !== undefined && record.remainingBalance > 0 && (
-                            <span className="text-orange-600 font-bold">Balance: ₱{record.remainingBalance}</span>
+                            <span className="text-orange-600 font-bold">Balance: ₱{Number(record.remainingBalance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           )}
                         </>
                       )}
@@ -343,9 +355,11 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
           <div className="bg-white rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-200">
               <h2 className="text-3xl font-bold text-gray-900">Record Receipt</h2>
-              <button onClick={() => setActiveForm(null)} className="text-gray-500 hover:text-gray-700">
-                <X className="w-6 h-6" />
-              </button>
+              {!isFromAppointment && (
+                <button onClick={() => setActiveForm(null)} className="text-gray-500 hover:text-gray-700">
+                  <X className="w-6 h-6" />
+                </button>
+              )}
             </div>
             <form onSubmit={handleCreateService} className="space-y-5">
               <div>
@@ -356,14 +370,21 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                     placeholder="Search patient name..."
                     value={patientSearch}
                     onChange={(e) => {
-                      setPatientSearch(e.target.value);
-                      setShowReceiptSuggestions(true);
+                      if (!isFromAppointment) {
+                        setPatientSearch(e.target.value);
+                        setShowReceiptSuggestions(true);
+                      }
                     }}
-                    onFocus={() => setShowReceiptSuggestions(true)}
+                    onFocus={() => {
+                      if (!isFromAppointment) {
+                        setShowReceiptSuggestions(true);
+                      }
+                    }}
                     onBlur={() => setTimeout(() => setShowReceiptSuggestions(false), 200)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    readOnly={isFromAppointment}
+                    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${isFromAppointment ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                   />
-                  {patientSearch && showReceiptSuggestions && (
+                  {patientSearch && showReceiptSuggestions && !isFromAppointment && (
                     <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-64 overflow-y-auto">
                       {patients.filter(p => p.name.toLowerCase().includes(patientSearch.toLowerCase())).map(patient => (
                         <div
@@ -479,12 +500,12 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                 <input
                   type="number"
                   name="amountPaid"
-                  step="1"
+                  step="0.01"
                   placeholder="0"
                   value={amountPaid === 0 ? '' : amountPaid}
                   onChange={(e) => {
                     const value = e.target.value;
-                    const parsed = parseInt(value) || 0;
+                    const parsed = parseFloat(value) || 0;
                     setAmountPaid(parsed);
                   }}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
@@ -550,13 +571,15 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
               )}
 
               <div className="flex gap-3 justify-end pt-6 border-t-2 border-gray-200">
-                <button
-                  type="button"
-                  onClick={() => setActiveForm(null)}
-                  className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors font-semibold text-gray-900"
-                >
-                  Cancel
-                </button>
+                {!isFromAppointment && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveForm(null)}
+                    className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors font-semibold text-gray-900"
+                  >
+                    Cancel
+                  </button>
+                )}
                 <button
                   type="submit"
                   className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all font-semibold"
@@ -872,15 +895,15 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                 <div className="space-y-3 bg-gradient-to-br from-gray-50 to-yellow-50 p-5 rounded-lg border border-yellow-200">
                   <div className="flex justify-between text-gray-900">
                     <span className="font-semibold">Total Billed (Service Fee):</span>
-                    <span className="font-bold">₱{viewingReceipt.cost}</span>
+                    <span className="font-bold">₱{Number(viewingReceipt.cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                   <div className="flex justify-between text-green-700 font-semibold">
                     <span>Total Paid:</span>
-                    <span>₱{viewingReceipt.amountPaid || 0}</span>
+                    <span>₱{Number(viewingReceipt.amountPaid || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                   <div className="flex justify-between border-t-2 border-gray-300 pt-3 font-bold text-lg">
                     <span className="text-gray-900">Current Balance:</span>
-                    <span className={(viewingReceipt.remainingBalance !== undefined ? Number(viewingReceipt.remainingBalance) : Number(viewingReceipt.cost || 0)) > 0 ? 'text-red-600' : 'text-green-600'}>₱{(viewingReceipt.remainingBalance !== undefined ? Number(viewingReceipt.remainingBalance) : Number(viewingReceipt.cost || 0)).toLocaleString()}</span>
+                    <span className={(viewingReceipt.remainingBalance !== undefined ? Number(viewingReceipt.remainingBalance) : Number(viewingReceipt.cost || 0)) > 0 ? 'text-red-600' : 'text-green-600'}>₱{Number(viewingReceipt.remainingBalance !== undefined ? viewingReceipt.remainingBalance : (viewingReceipt.cost || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                 </div>
               </div>

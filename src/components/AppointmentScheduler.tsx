@@ -10,17 +10,11 @@ const getDateString = (date: string | Date): string => {
     // If it's a string, extract just the date part (YYYY-MM-DD)
     return date.includes('T') ? date.split('T')[0] : date;
   }
-  // If it's a Date object, extract the local date components
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  // If it's a Date object, use UTC methods to avoid timezone conversion
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
-};
-
-const getLocalDate = (date: string | Date) => {
-  const normalized = getDateString(date);
-  const [year, month, day] = normalized.split('-').map(Number);
-  return new Date(year, month - 1, day);
 };
 
 type AppointmentSchedulerProps = {
@@ -40,7 +34,14 @@ const getPatientRecordStatus = (patientId: string, treatmentRecords?: TreatmentR
 
 export function AppointmentScheduler({ appointments, setAppointments, patients, treatmentRecords, onOpenServiceForm, onDataChanged }: AppointmentSchedulerProps) {
   const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(getDateString(new Date()));
+  // Use local date to avoid timezone conversion issues
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  });
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [closedSchedules, setClosedSchedules] = useState<Set<string>>(new Set(
@@ -177,9 +178,12 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
       return appointmentDate === targetDate;
     }
     // For week view, show appointments within 7 days from selected date
-    const aptDate = getLocalDate(appointmentDate);
-    const startDate = getLocalDate(targetDate);
-    const endDate = new Date(startDate);
+    // Parse dates as local dates to avoid timezone issues
+    const [apYear, apMonth, apDay] = appointmentDate.split('-').map(Number);
+    const aptDate = new Date(apYear, apMonth - 1, apDay);
+    const [tYear, tMonth, tDay] = targetDate.split('-').map(Number);
+    const startDate = new Date(tYear, tMonth - 1, tDay);
+    const endDate = new Date(tYear, tMonth - 1, tDay);
     endDate.setDate(endDate.getDate() + 6);
     return aptDate >= startDate && aptDate <= endDate;
   });

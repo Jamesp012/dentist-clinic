@@ -58,15 +58,17 @@ CREATE TABLE IF NOT EXISTS patients (
 -- Appointments table
 CREATE TABLE IF NOT EXISTS appointments (
   id INT PRIMARY KEY AUTO_INCREMENT,
-  patientId INT,
+  patientId INT NOT NULL,
   patientName VARCHAR(100) CHARACTER SET utf8mb4,
-  date DATE NOT NULL,
-  time TIME NOT NULL,
+  appointmentDateTime DATETIME NOT NULL,
   type VARCHAR(100) CHARACTER SET utf8mb4,
+  duration INT DEFAULT 60,
   status ENUM('scheduled', 'completed', 'cancelled') DEFAULT 'scheduled',
   notes TEXT CHARACTER SET utf8mb4,
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (patientId) REFERENCES patients(id) ON DELETE SET NULL
+  FOREIGN KEY (patientId) REFERENCES patients(id) ON DELETE SET NULL,
+  INDEX idx_patient_date (patientId, appointmentDateTime),
+  INDEX idx_status (status)
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Treatment records table
@@ -207,9 +209,9 @@ CREATE TABLE IF NOT EXISTS otp_verifications (
 );
 
 -- Insert sample appointments
-INSERT INTO appointments (patientId, patientName, date, time, type, duration, status, notes) VALUES
-(1, 'Krista', '2024-12-06', '10:00:00', 'Braces Adjustment', 45, 'scheduled', 'Monthly braces adjustment'),
-(2, 'Sarah', '2024-12-15', '14:00:00', 'Root Canal', 90, 'scheduled', 'Tooth #14');
+INSERT INTO appointments (patientId, patientName, appointmentDateTime, type, duration, status, notes) VALUES
+(1, 'Krista', '2025-02-06 10:00:00', 'Braces Adjustment', 45, 'scheduled', 'Monthly braces adjustment'),
+(2, 'Sarah', '2025-02-15 14:00:00', 'Root Canal', 90, 'scheduled', 'Tooth #14');
 
 -- Insert sample inventory
 INSERT INTO inventory (name, category, quantity, minQuantity, unit, supplier, cost) VALUES

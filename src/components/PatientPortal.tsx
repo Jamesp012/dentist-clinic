@@ -12,18 +12,11 @@ const getDateString = (date: string | Date): string => {
     // If it's a string, extract just the date part (YYYY-MM-DD)
     return date.includes('T') ? date.split('T')[0] : date;
   }
-  // If it's a Date object, extract local date parts
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  // If it's a Date object, use UTC methods to avoid timezone conversion
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
-};
-
-const getLocalDate = (date: string | Date) => {
-  const normalized = getDateString(date);
-  if (!normalized) return new Date(NaN);
-  const [year, month, day] = normalized.split('-').map(Number);
-  return new Date(year, month - 1, day);
 };
 
 type PatientPortalProps = {
@@ -211,21 +204,34 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
     { id: 'announcements', label: 'Announcements', icon: Megaphone, color: 'from-cyan-600 to-teal-500' },
   ] as const;
 
-  const todayString = getDateString(new Date());
-
   const upcomingAppointments = patientAppointments.filter(apt => {
     if (apt.status !== 'scheduled') return false;
-    return getDateString(apt.date) >= todayString;
+    // Create date as local date (no 'Z') to avoid timezone conversion issues
+    const dateStr = getDateString(apt.date);
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const aptDate = new Date(year, month - 1, day);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return aptDate >= today;
   });
 
   const pastAppointments = patientAppointments.filter(apt => {
     if (apt.status === 'completed') return true;
-    return getDateString(apt.date) < todayString;
+    // Create date as local date (no 'Z') to avoid timezone conversion issues
+    const dateStr = getDateString(apt.date);
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const aptDate = new Date(year, month - 1, day);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return aptDate < today;
   });
 
   const calculateAge = (dob: string) => {
-    const birthDate = getLocalDate(dob);
-    const today = getLocalDate(new Date());
+    // Parse date string as local date to avoid timezone issues
+    const dateStr = dob.includes('T') ? dob.split('T')[0] : dob;
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const birthDate = new Date(year, month - 1, day);
+    const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
@@ -578,7 +584,11 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                   </div>
                   <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
                     <p className="text-sm text-gray-600 mb-1">Date of Birth</p>
-                    <p className="font-medium">{patient.dateOfBirth ? getLocalDate(patient.dateOfBirth).toLocaleDateString() : '—'}</p>
+                    <p className="font-medium">{(() => {
+                      const dateStr = patient.dateOfBirth.includes('T') ? patient.dateOfBirth.split('T')[0] : patient.dateOfBirth;
+                      const [year, month, day] = dateStr.split('-').map(Number);
+                      return new Date(year, month - 1, day).toLocaleDateString();
+                    })()}</p>
                   </div>
                   <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
                     <p className="text-sm text-gray-600 mb-1">Phone</p>
@@ -687,7 +697,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                           setSelectedSchedulePeriod(null);
                         }}
                         className="w-full px-3 py-2 border border-purple-300 rounded-lg"
-                        min={getDateString(new Date())}
+                        min={new Date().toISOString().split('T')[0]}
                       />
                     </div>
 
@@ -796,7 +806,11 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                               <p className="text-lg mb-1">{apt.type}</p>
                               <div className="flex items-center gap-2 text-sm text-gray-600">
                                 <Calendar className="w-4 h-4" />
-                                <span>{getLocalDate(apt.date).toLocaleDateString()}</span>
+                                <span>{(() => {
+                                  const dateStr = getDateString(apt.date);
+                                  const [year, month, day] = dateStr.split('-').map(Number);
+                                  return new Date(year, month - 1, day).toLocaleDateString();
+                                })()}</span>
                                 <Clock className="w-4 h-4 ml-2" />
                                 <span>{apt.time}</span>
                               </div>
@@ -827,7 +841,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                               <p className="text-lg mb-1">{apt.type}</p>
                               <div className="flex items-center gap-2 text-sm text-gray-600">
                                 <Calendar className="w-4 h-4" />
-                                <span>{getLocalDate(apt.date).toLocaleDateString()}</span>
+                                <span>{new Date(getDateString(apt.date) + 'T00:00:00Z').toLocaleDateString()}</span>
                                 <Clock className="w-4 h-4 ml-2" />
                                 <span>{apt.time}</span>
                               </div>
@@ -864,7 +878,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                           </div>
                           <div className="text-right">
                             <p className="text-sm text-gray-600 mb-1">
-                              {record.date ? getLocalDate(record.date).toLocaleDateString() : '—'}
+                              {new Date(record.date).toLocaleDateString()}
                             </p>
                             <p className="text-lg">₱{record.cost.toFixed(2)}</p>
                           </div>
@@ -911,7 +925,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                         <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all rounded-lg flex items-center justify-center">
                           <div className="text-white opacity-0 group-hover:opacity-100 transition-opacity text-center">
                             <p className="font-semibold capitalize">{photo.type}</p>
-                            <p className="text-sm">{photo.date ? getLocalDate(photo.date).toLocaleDateString() : '—'}</p>
+                            <p className="text-sm">{new Date(photo.date).toLocaleDateString()}</p>
                           </div>
                         </div>
                         <div className="absolute top-2 right-2 px-2 py-1 bg-blue-600 text-white text-xs rounded capitalize">
@@ -948,7 +962,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                       <CreditCard className="w-8 h-8 text-red-600" />
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600">As of {getLocalDate(new Date()).toLocaleDateString()}</p>
+                  <p className="text-sm text-gray-600">As of {new Date().toLocaleDateString()}</p>
                   {currentBalance > 0 && (
                     <div className="mt-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg flex items-start gap-2">
                       <AlertCircle className="w-5 h-5 text-yellow-700 flex-shrink-0 mt-0.5" />
@@ -980,11 +994,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                   <div className="space-y-2">
                     {payments
                       .filter(p => String(p.patientId) === String(patient.id))
-                      .sort((a, b) => {
-                        const dateB = b.paymentDate ? getLocalDate(b.paymentDate).getTime() : 0;
-                        const dateA = a.paymentDate ? getLocalDate(a.paymentDate).getTime() : 0;
-                        return dateB - dateA;
-                      })
+                      .sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime())
                       .slice(0, 10)
                       .map(payment => (
                         <div key={payment.id} className="p-4 bg-white rounded-lg border border-gray-100 flex justify-between items-center shadow-sm">
@@ -994,7 +1004,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                             </div>
                             <div>
                               <p className="font-medium text-gray-900">Payment Received</p>
-                              <p className="text-xs text-gray-500">{payment.paymentDate ? getLocalDate(payment.paymentDate).toLocaleDateString() : '—'}</p>
+                              <p className="text-xs text-gray-500">{new Date(payment.paymentDate).toLocaleDateString()}</p>
                               {payment.notes && <p className="text-xs text-gray-400 mt-0.5">{payment.notes}</p>}
                             </div>
                           </div>
@@ -1020,7 +1030,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                       <div key={record.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200 flex justify-between items-center">
                         <div>
                           <p className="font-medium">{record.treatment}</p>
-                          <p className="text-sm text-gray-600">{record.date ? getLocalDate(record.date).toLocaleDateString() : '—'}</p>
+                          <p className="text-sm text-gray-600">{new Date(record.date).toLocaleDateString()}</p>
                         </div>
                         <p className="text-lg">₱{record.cost}</p>
                       </div>
@@ -1287,7 +1297,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                               <div className="flex-1">
                                 <h3 className="text-lg font-bold text-gray-900 mb-1">{ann.title}</h3>
                                 <p className="text-sm text-gray-600">
-                                  {ann.date ? getLocalDate(ann.date).toLocaleDateString() : '—'} • {ann.createdBy}
+                                  {new Date(ann.date).toLocaleDateString()} • {ann.createdBy}
                                 </p>
                               </div>
                               <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold capitalize">
@@ -1405,7 +1415,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
               />
               <div className="p-6 bg-white">
                 <p className="font-semibold text-lg capitalize mb-2">{selectedPhoto.type} Photo</p>
-                <p className="text-sm text-gray-600 mb-2">Date: {selectedPhoto.date ? getLocalDate(selectedPhoto.date).toLocaleDateString() : '—'}</p>
+                <p className="text-sm text-gray-600 mb-2">Date: {new Date(selectedPhoto.date).toLocaleDateString()}</p>
                 {selectedPhoto.notes && (
                   <p className="text-sm text-gray-700">{selectedPhoto.notes}</p>
                 )}

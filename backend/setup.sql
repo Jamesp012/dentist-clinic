@@ -34,13 +34,14 @@ CREATE TABLE appointments (
   id INT PRIMARY KEY AUTO_INCREMENT,
   patientId INT,
   patientName VARCHAR(100),
-  date DATE NOT NULL,
-  time TIME NOT NULL,
+  appointmentDateTime DATETIME NOT NULL,
   type VARCHAR(100),
-  duration INT,
+  duration INT DEFAULT 60,
   status ENUM('scheduled', 'completed', 'cancelled') DEFAULT 'scheduled',
   notes TEXT,
-  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_patient_date (patientId, appointmentDateTime),
+  INDEX idx_status (status)
 );
 
 CREATE TABLE treatmentRecords (
@@ -133,9 +134,9 @@ INSERT INTO patients (name, dateOfBirth, phone, email, address, sex, medicalHist
 ('Sarah', '1992-07-22', '(555) 234-5678', 'sarah@email.com', '456 Oak Ave, City, ST 12345', 'Female', 'None', 'None'),
 ('Susa', '1978-11-30', '(555) 345-6789', 'susa@email.com', '789 Elm St, City, ST 12345', 'Female', 'Hypertension', 'Latex');
 
-INSERT INTO appointments (patientId, patientName, date, time, type, duration, status, notes) VALUES
-(1, 'Krista', '2024-12-06', '10:00:00', 'Braces Adjustment', 45, 'scheduled', 'Monthly braces adjustment'),
-(2, 'Sarah', '2024-12-15', '14:00:00', 'Root Canal', 90, 'scheduled', 'Tooth #14');
+INSERT INTO appointments (patientId, patientName, appointmentDateTime, type, duration, status, notes) VALUES
+(1, 'Krista', '2025-02-06 10:00:00', 'Braces Adjustment', 45, 'scheduled', 'Monthly braces adjustment'),
+(2, 'Sarah', '2025-02-15 14:00:00', 'Root Canal', 90, 'scheduled', 'Tooth #14');
 
 INSERT INTO inventory (name, category, quantity, minQuantity, unit, supplier, cost) VALUES
 ('Nitrile Gloves (Box)', 'PPE', 45, 20, 'box', 'MedSupply Co.', 12.99),

@@ -65,7 +65,7 @@ export const generateReceipt = (
         record.treatment || record.description || 'Dental Service',
         record.tooth || '-',
         record.dentist || '-',
-        `PHP ${Number(record.cost || 0).toLocaleString()}`
+        `PHP ${Number(record.cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
       ]
     ];
 
@@ -92,7 +92,7 @@ export const generateReceipt = (
       .map(p => [
         p.paymentDate ? new Date(p.paymentDate).toLocaleDateString() : 'N/A',
         (p.paymentMethod || 'cash').toUpperCase(),
-        `PHP ${Number(p.amount || 0).toLocaleString()}`
+        `PHP ${Number(p.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
       ]);
 
     if (paymentHistory.length > 0) {
@@ -117,16 +117,16 @@ export const generateReceipt = (
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text('Total Cost:', pageWidth - 60, summaryY);
-    doc.text(`PHP ${Number(record.cost || 0).toLocaleString()}`, pageWidth - 15, summaryY, { align: 'right' });
+    doc.text(`PHP ${Number(record.cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, pageWidth - 15, summaryY, { align: 'right' });
 
     doc.setFont('helvetica', 'bold');
     doc.text('Total Paid:', pageWidth - 60, summaryY + 7);
-    doc.text(`PHP ${Number(record.amountPaid || 0).toLocaleString()}`, pageWidth - 15, summaryY + 7, { align: 'right' });
+    doc.text(`PHP ${Number(record.amountPaid || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, pageWidth - 15, summaryY + 7, { align: 'right' });
 
     const balance = Number(record.remainingBalance || 0);
     doc.setTextColor(balance <= 0 ? [0, 128, 0] : [200, 0, 0]);
     doc.text('Remaining Balance:', pageWidth - 60, summaryY + 14);
-    doc.text(`PHP ${balance.toLocaleString()}`, pageWidth - 15, summaryY + 14, { align: 'right' });
+    doc.text(`PHP ${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, pageWidth - 15, summaryY + 14, { align: 'right' });
 
     // Footer
     doc.setFontSize(10);
@@ -186,9 +186,9 @@ export const generatePatientHistoryPDF = (
       record.treatment || record.description || '-',
       record.tooth || '-',
       record.dentist || '-',
-      `PHP ${Number(record.cost).toLocaleString()}`,
-      `PHP ${Number(record.amountPaid || 0).toLocaleString()}`,
-      `PHP ${Number(record.remainingBalance || 0).toLocaleString()}`
+      `PHP ${Number(record.cost).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      `PHP ${Number(record.amountPaid || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      `PHP ${Number(record.remainingBalance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
     ]);
 
     autoTable(doc, {
@@ -216,15 +216,15 @@ export const generatePatientHistoryPDF = (
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text(`Total Services Billed:`, 15, finalY + 10);
-    doc.text(`PHP ${totalBilled.toLocaleString()}`, pageWidth - 15, finalY + 10, { align: 'right' });
+    doc.text(`PHP ${totalBilled.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, pageWidth - 15, finalY + 10, { align: 'right' });
 
     doc.text(`Total Amount Paid:`, 15, finalY + 17);
-    doc.text(`PHP ${totalPaid.toLocaleString()}`, pageWidth - 15, finalY + 17, { align: 'right' });
+    doc.text(`PHP ${totalPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, pageWidth - 15, finalY + 17, { align: 'right' });
 
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(totalBalance > 0 ? [200, 0, 0] : [0, 128, 0]);
     doc.text(`Overall Remaining Balance:`, 15, finalY + 24);
-    doc.text(`PHP ${totalBalance.toLocaleString()}`, pageWidth - 15, finalY + 24, { align: 'right' });
+    doc.text(`PHP ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, pageWidth - 15, finalY + 24, { align: 'right' });
 
     // Footer
     doc.setFontSize(10);
@@ -490,9 +490,9 @@ export const generateDetailedReceiptPDF = (
     doc.line(15, finalY + 2, 100, finalY + 2);
 
     const summaryData = [
-      ['Total Amount', `PHP ${Number(record.cost).toLocaleString()}`],
-      ['Amount Paid', `PHP ${Number(record.amountPaid || 0).toLocaleString()}`],
-      ['Remaining Balance', `PHP ${Number(record.remainingBalance || 0).toLocaleString()}`]
+      ['Total Amount', `PHP ${Number(record.cost).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
+      ['Amount Paid', `PHP ${Number(record.amountPaid || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
+      ['Remaining Balance', `PHP ${Number(record.remainingBalance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`]
     ];
 
     autoTable(doc, {
