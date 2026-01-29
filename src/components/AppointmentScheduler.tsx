@@ -14,12 +14,49 @@ type AppointmentSchedulerProps = {
   onDataChanged?: () => Promise<void>;
 };
 
-export function AppointmentScheduler({ appointments, setAppointments, patients, onOpenServiceForm, onDataChanged }: AppointmentSchedulerProps) {
+const getPatientRecordStatus = (patientId: string, treatmentRecords?: TreatmentRecord[]): 'has-record' | 'no-record' => {
+  if (!treatmentRecords) return 'has-record';
+  return treatmentRecords.some(record => String(record.patientId) === String(patientId)) ? 'has-record' : 'no-record';
+};
+
+export function AppointmentScheduler({ appointments, setAppointments, patients, treatmentRecords, onOpenServiceForm, onDataChanged }: AppointmentSchedulerProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(false);
+  const [closedSchedules, setClosedSchedules] = useState<Set<string>>(new Set(
+    JSON.parse(localStorage.getItem('closedSchedules') || '[]')
+  ));
+
+  const getScheduleKey = (date: string, period: 'am' | 'pm') => `${date}-${period}`;
+
+  const toggleScheduleClosed = (date: string, period: 'am' | 'pm') => {
+    const key = getScheduleKey(date, period);
+    const newClosed = new Set(closedSchedules);
+    if (newClosed.has(key)) {
+      newClosed.delete(key);
+    } else {
+      newClosed.add(key);
+    }
+    setClosedSchedules(newClosed);
+    localStorage.setItem('closedSchedules', JSON.stringify(Array.from(newClosed)));
+    toast.success(newClosed.has(key) ? 'Schedule closed' : 'Schedule reopened');
+  };
+
+  const isScheduleClosed = (date: string, period: 'am' | 'pm') => {
+    return closedSchedules.has(getScheduleKey(date, period));
+  };
+
+  const getBookingCountForPeriod = (date: string, period: 'am' | 'pm') => {
+    return appointments.filter(apt => {
+      const aptDate = String(apt.date).split('T')[0];
+      if (aptDate !== date || apt.status === 'cancelled') return false;
+      
+      const [hours] = apt.time.split(':').map(Number);
+      return period === 'am' ? hours < 12 : hours >= 12;
+    }).length;
+  };
 
   const handleAddAppointment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -152,9 +189,9 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
   });
 
   const timeSlots = [
-    '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-    '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30',
-    '16:00', '16:30', '17:00'
+    '08:00 AM', '08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
+    '12:00 PM', '12:30 PM', '01:00 PM', '01:30 PM', '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM',
+    '04:00 PM', '04:30 PM', '05:00 PM', '05:30 PM', '06:00 PM', '06:30 PM', '07:00 PM', '07:30 PM', '08:00 PM'
   ];
 
   const getAppointmentForTimeSlot = (time: string) => {
@@ -246,11 +283,11 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
         </div>
       </div>
 
-      {/* Day View - Time Slots */}
+      {/* Day View - Time Slots Grid */}
       {viewMode === 'day' && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="p-4 bg-gray-50 border-b border-gray-200">
-            <h2 className="text-lg">
+        <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+          <div className="p-6 bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200">
+            <h2 className="text-2xl font-bold text-gray-900">
               {(() => {
                 const [year, month, day] = selectedDate.split('-').map(Number);
                 return new Date(year, month - 1, day).toLocaleDateString('en-US', { 
@@ -262,59 +299,73 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
               })()}
             </h2>
           </div>
-          <div className="divide-y divide-gray-200">
-            {timeSlots.map((time) => {
-              const appointment = getAppointmentForTimeSlot(time);
-              return (
-                <div key={time} className="flex">
-                  <div className="w-24 p-4 bg-gray-50 border-r border-gray-200 flex items-center justify-center">
-                    <Clock className="w-4 h-4 mr-2 text-gray-600" />
-                    <span className="text-sm">{time}</span>
-                  </div>
-                  <div className="flex-1 p-4 min-h-[60px]">
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {timeSlots.map((time) => {
+                const appointment = getAppointmentForTimeSlot(time);
+                return (
+                  <div 
+                    key={time} 
+                    className={`rounded-lg border-2 p-4 transition-all ${
+                      appointment
+                        ? `border-blue-300 bg-gradient-to-br ${statusColors[appointment.status].includes('green') ? 'from-green-50 to-green-100 border-green-400' : statusColors[appointment.status].includes('red') ? 'from-red-50 to-red-100 border-red-400' : 'from-blue-50 to-blue-100 border-blue-400'}`
+                        : 'border-gray-300 bg-gray-50 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-200">
+                      <Clock className="w-5 h-5 text-gray-600" />
+                      <span className="font-bold text-lg text-gray-900">{time}</span>
+                    </div>
+                    
                     {appointment ? (
-                      <div className={`p-3 rounded border-l-4 ${statusColors[appointment.status]}`}>
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <p className="font-medium">{appointment.patientName}</p>
-                            <p className="text-sm">{appointment.type}</p>
-                          </div>
-                          <div className="flex gap-2">
-                            {appointment.status === 'scheduled' && (
-                              <>
-                                <button
-                                  onClick={() => handleDoneClick(appointment)}
-                                  className="text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-                                >
-                                  Done
-                                </button>
-                                <button
-                                  onClick={() => updateAppointmentStatus(appointment.id, 'cancelled')}
-                                  className="text-xs px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-                                >
-                                  Cancel
-                                </button>
-                              </>
+                      <div>
+                        <div className="mb-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="font-bold text-gray-900">{appointment.patientName}</p>
+                            {getPatientRecordStatus(String(appointment.patientId), treatmentRecords) === 'no-record' && (
+                              <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs font-semibold">No Record</span>
                             )}
-                            <button
-                              onClick={() => deleteAppointment(appointment.id)}
-                              className="text-xs px-2 py-1 bg-gray-600 text-white rounded hover:bg-gray-700"
-                            >
-                              Delete
-                            </button>
                           </div>
+                          <p className="text-sm text-gray-600 font-medium">{appointment.type}</p>
+                          {appointment.notes && (
+                            <p className="text-xs text-gray-600 mt-2 line-clamp-2">{appointment.notes}</p>
+                          )}
                         </div>
-                        {appointment.notes && (
-                          <p className="text-sm text-gray-600">{appointment.notes}</p>
-                        )}
+                        
+                        <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-200">
+                          {appointment.status === 'scheduled' && (
+                            <>
+                              <button
+                                onClick={() => handleDoneClick(appointment)}
+                                className="text-xs px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-medium"
+                              >
+                                Done
+                              </button>
+                              <button
+                                onClick={() => updateAppointmentStatus(appointment.id, 'cancelled')}
+                                className="text-xs px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors font-medium"
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          )}
+                          <button
+                            onClick={() => deleteAppointment(appointment.id)}
+                            className="text-xs px-3 py-1.5 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors font-medium"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
                     ) : (
-                      <div className="text-gray-400 text-sm">No appointment</div>
+                      <div className="text-center py-8">
+                        <p className="text-gray-400 text-sm font-medium">Available</p>
+                      </div>
                     )}
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
@@ -343,7 +394,14 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                           <p className="text-sm text-gray-600">{String(apt.time).substring(0, 5)}</p>
                         </div>
                       </td>
-                      <td className="px-6 py-4">{apt.patientName}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <span>{apt.patientName}</span>
+                          {getPatientRecordStatus(String(apt.patientId), treatmentRecords) === 'no-record' && (
+                            <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs font-semibold">No Record</span>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-6 py-4">{apt.type}</td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-1 rounded text-xs ${statusColors[apt.status]}`}>
@@ -423,16 +481,15 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                   />
                 </div>
                 <div>
-                  <label className="block text-sm mb-1">Time *</label>
-                  <select
+                  <label className="block text-sm mb-1">Time * <span className="text-xs text-gray-500">(08:00 AM - 08:00 PM)</span></label>
+                  <input
+                    type="time"
                     name="time"
                     required
                     className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {timeSlots.map(time => (
-                      <option key={time} value={time}>{time}</option>
-                    ))}
-                  </select>
+                    min="08:00"
+                    max="20:00"
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">

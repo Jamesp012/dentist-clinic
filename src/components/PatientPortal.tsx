@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Patient, Appointment, TreatmentRecord, PhotoUpload, Announcement, Payment, ServicePrice } from '../App';
+import { Patient, Appointment, TreatmentRecord, PhotoUpload, Announcement, Payment, ServicePrice, Service } from '../App';
 import { Calendar, FileText, User as UserIcon, Clock, Image, X, Upload, Edit, Save, XCircle, Info, CheckCircle, AlertCircle, Camera, Sparkles, Heart, Smile, Shield, Megaphone, Send, Plus, CreditCard, Settings, Check, Eye, EyeOff, Menu, LogOut, History } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
@@ -20,12 +20,14 @@ type PatientPortalProps = {
   currentUserId: string;
   onLogout?: () => void;
   onDataChanged?: () => Promise<void>;
+  services?: Service[];
 };
 
 const API_BASE = 'http://localhost:5000/api';
 
-export function PatientPortal({ patient, appointments, setAppointments, treatmentRecords, onUpdatePatient, billingBalance = 5000, photos, setPhotos, announcements, payments, currentUserId, onLogout, onDataChanged }: PatientPortalProps) {
-  const [activeTab, setActiveTab] = useState<'profile' | 'appointments' | 'records' | 'photos' | 'balance' | 'care-guide' | 'announcements' | 'services'>('profile');
+export function PatientPortal({ patient, appointments, setAppointments, treatmentRecords, onUpdatePatient, billingBalance = 5000, photos, setPhotos, announcements, payments, currentUserId, onLogout, onDataChanged, services = [] }: PatientPortalProps) {
+  const [activeTab, setActiveTab] = useState<'profile' | 'appointments' | 'records' | 'photos' | 'balance' | 'care-guide' | 'announcements'>('profile');
+  const [announcementSubTab, setAnnouncementSubTab] = useState<'announcements' | 'services'>('announcements');
   const [isEditing, setIsEditing] = useState(false);
   const [editedPatient, setEditedPatient] = useState<Patient>(patient);
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoUpload | null>(null);
@@ -183,7 +185,6 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
     { id: 'balance', label: 'Balance', icon: CreditCard, color: 'from-cyan-500 to-emerald-600' },
     { id: 'care-guide', label: 'Care Guide', icon: Sparkles, color: 'from-teal-500 to-emerald-600' },
     { id: 'announcements', label: 'Announcements', icon: Megaphone, color: 'from-cyan-600 to-teal-500' },
-    { id: 'services', label: 'Services', icon: Heart, color: 'from-pink-500 to-rose-600' },
   ] as const;
 
   const upcomingAppointments = patientAppointments.filter(
@@ -204,6 +205,18 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
     }
     return age;
   };
+
+  // Default services
+  const defaultServices = [
+    { id: 'service_1', serviceName: 'ORAL EXAMINATION / CHECK-UP', category: 'Consultation', description: ['Dental consultation', 'Oral examination', 'Diagnosis', 'Treatment planning'], duration: '30 mins', price: 'Price may vary' },
+    { id: 'service_2', serviceName: 'ORAL PROPHYLAXIS', category: 'Cleaning', description: ['Dental cleaning', 'Scaling', 'Polishing', 'Stain removal'], duration: '45 mins', price: 'Price may vary' },
+    { id: 'service_3', serviceName: 'RESTORATION (PERMANENT / TEMPORARY)', category: 'Restorative', description: ['Temporary filling', 'Permanent filling', 'Tooth repair', 'Dental bonding'], duration: '60 mins', price: 'Price may vary' },
+    { id: 'service_4', serviceName: 'TOOTH EXTRACTION', category: 'Extraction', description: ['Simple tooth extraction', 'Surgical extraction', 'Impacted tooth removal'], duration: '45-90 mins', price: 'Price may vary' },
+    { id: 'service_5', serviceName: 'ORTHODONTIC TREATMENT', category: 'Orthodontics', description: ['Braces installation', 'Braces adjustment', 'Retainers', 'Orthodontic consultation'], duration: 'Varies', price: 'Price may vary' },
+    { id: 'service_6', serviceName: 'PROSTHODONTICS', category: 'Prosthetics', description: ['Complete dentures', 'Partial dentures'], duration: 'Multiple sessions', price: 'Price may vary' }
+  ] as Service[];
+
+  const displayServices = services && services.length > 0 ? services : defaultServices;
 
   const totalSpent = patientRecords.reduce((sum, record) => sum + Number(record.cost || 0), 0);
   const totalPaid = patientRecords.reduce((sum, record) => sum + Number(record.amountPaid || 0), 0);
@@ -614,13 +627,19 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                         className="w-full px-3 py-2 border border-purple-300 rounded-lg"
                       >
                         <option value="">Select time...</option>
-                        <option value="09:00 AM">09:00 AM</option>
-                        <option value="10:00 AM">10:00 AM</option>
-                        <option value="11:00 AM">11:00 AM</option>
-                        <option value="01:00 PM">01:00 PM</option>
-                        <option value="02:00 PM">02:00 PM</option>
-                        <option value="03:00 PM">03:00 PM</option>
-                        <option value="04:00 PM">04:00 PM</option>
+                        {['09:00 AM', '10:00 AM', '11:00 AM', '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM'].map(time => {
+                          const isBooked = appointments.some(apt => 
+                            String(apt.date) === String(appointmentDate) && 
+                            apt.time === time && 
+                            String(apt.patientId) !== String(patient.id) &&
+                            apt.status !== 'cancelled'
+                          );
+                          return (
+                            <option key={time} value={time} disabled={isBooked}>
+                              {time} {isBooked ? '(Booked)' : ''}
+                            </option>
+                          );
+                        })}
                       </select>
                     </div>
                     <div>
@@ -1119,25 +1138,133 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
 
             {/* Announcements Tab */}
             {activeTab === 'announcements' && (
-              <div className="p-8 space-y-6">
-                <h2 className="text-xl mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Announcements
-                </h2>
-
-                {/* Announcements List */}
-                <div className="space-y-4">
-                  {announcements.map(ann => (
-                    <div key={ann.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                      <h3 className="font-semibold text-lg mb-2">{ann.title}</h3>
-                      <p className="text-sm text-gray-600 mb-2">{new Date(ann.date).toLocaleDateString()}</p>
-                      <p className="text-sm text-gray-700">{ann.message}</p>
-                    </div>
-                  ))}
+              <div className="p-8 space-y-8">
+                <div>
+                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Clinic Announcements & Services</h2>
+                  <p className="text-gray-600">Stay updated with our latest announcements and explore our professional dental services</p>
                 </div>
+
+                {/* Sub-Tab Navigation */}
+                <div className="flex gap-4 border-b border-gray-200">
+                  <button
+                    onClick={() => setAnnouncementSubTab('announcements')}
+                    className={`px-6 py-3 font-semibold transition-colors ${
+                      announcementSubTab === 'announcements'
+                        ? 'text-blue-600 border-b-2 border-blue-600'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    📢 Announcements
+                  </button>
+                  <button
+                    onClick={() => setAnnouncementSubTab('services')}
+                    className={`px-6 py-3 font-semibold transition-colors ${
+                      announcementSubTab === 'services'
+                        ? 'text-pink-600 border-b-2 border-pink-600'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    🦷 Services Offered
+                  </button>
+                </div>
+
+                {/* Announcements Sub-Section */}
+                {announcementSubTab === 'announcements' && (
+                  <div>
+                    {announcements && announcements.length > 0 ? (
+                      <div className="space-y-4">
+                        {announcements.map(ann => (
+                          <motion.div
+                            key={ann.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="p-6 rounded-xl border-2 border-gray-200 shadow-md hover:shadow-lg transition-shadow bg-white"
+                          >
+                            <div className="flex justify-between items-start mb-3">
+                              <div className="flex-1">
+                                <h3 className="text-lg font-bold text-gray-900 mb-1">{ann.title}</h3>
+                                <p className="text-sm text-gray-600">
+                                  {new Date(ann.date).toLocaleDateString()} • {ann.createdBy}
+                                </p>
+                              </div>
+                              <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold capitalize">
+                                {ann.type}
+                              </span>
+                            </div>
+                            <p className="text-gray-700">{ann.message}</p>
+                          </motion.div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+                        <p className="text-gray-500">No announcements at this time</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Services Sub-Section */}
+                {announcementSubTab === 'services' && (
+                  <div>
+                    <div className="mb-8">
+                      <div>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-2">Professional Services</h2>
+                        <p className="text-gray-600 font-medium">Comprehensive dental care solutions tailored to your needs</p>
+                      </div>
+                    </div>
+
+                    {displayServices && displayServices.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {displayServices.map((service) => (
+                          <div
+                            key={service.id}
+                            className="bg-white rounded-xl border-2 border-gray-200 shadow-md hover:shadow-lg transition-shadow p-6"
+                          >
+                            <div className="flex justify-between items-start mb-4">
+                              <div className="flex-1">
+                                <h3 className="text-lg font-bold text-gray-900 mb-1">{service.serviceName}</h3>
+                                <div className="flex gap-2 mb-4">
+                                  <span className="px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-sm font-semibold">
+                                    {service.category}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {service.description && service.description.length > 0 && (
+                              <div className="mb-4 bg-gray-50 rounded-lg p-4">
+                                <p className="text-xs font-bold text-gray-700 mb-3 uppercase tracking-wide">Service Includes:</p>
+                                <ul className="space-y-2">
+                                  {service.description.map((desc, idx) => (
+                                    <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
+                                      <span className="text-pink-600 font-bold mt-1">•</span>
+                                      <span>{desc}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            <div className="border-t-2 border-gray-200 pt-4">
+                              <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-4 border border-amber-200">
+                                <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-1">Pricing</p>
+                                <p className="text-lg font-bold text-gray-900">{service.price}</p>
+                                <p className="text-xs text-gray-600 mt-2 italic">Pricing varies depending on the complexity of your case</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-16 text-gray-500 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+                        <p className="text-lg font-semibold mb-2">No services available</p>
+                        <p>Check back soon for our professional dental services.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
-
-            {/* Services Tab - Removed */}
 
           </motion.div>
           </AnimatePresence>

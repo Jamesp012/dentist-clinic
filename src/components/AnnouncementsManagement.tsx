@@ -1,19 +1,27 @@
 import { useState } from 'react';
-import { Announcement, ServicePrice } from '../App';
-import { Plus, X, Trash2, Edit, Save } from 'lucide-react';
-import { PesoSign } from './icons/PesoSign';
+import { Announcement } from '../App';
+import { Plus, X, Trash2, Edit, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import { announcementAPI } from '../api';
 
+type Service = {
+  id: string;
+  serviceName: string;
+  category: string;
+  description: string[];
+  duration: string;
+  price?: string;
+};
+
 type AnnouncementsManagementProps = {
   announcements: Announcement[];
   setAnnouncements: (announcements: Announcement[]) => void;
-  servicePrices?: ServicePrice[];
-  setServicePrices?: (servicePrices: ServicePrice[]) => void;
+  services?: Service[];
+  setServices?: (services: Service[]) => void;
 };
 
-export function AnnouncementsManagement({ announcements, setAnnouncements, servicePrices = [], setServicePrices }: AnnouncementsManagementProps) {
+export function AnnouncementsManagement({ announcements, setAnnouncements, services = [], setServices }: AnnouncementsManagementProps) {
   const [activeTab, setActiveTab] = useState<'announcements' | 'services'>('announcements');
   const [showAddAnnouncement, setShowAddAnnouncement] = useState(false);
   const [isPostingAnnouncement, setIsPostingAnnouncement] = useState(false);
@@ -21,6 +29,60 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
   const [showAddService, setShowAddService] = useState(false);
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
   const [isLoadingService, setIsLoadingService] = useState(false);
+
+  const defaultServices: Service[] = [
+    {
+      id: 'service_1',
+      serviceName: 'ORAL EXAMINATION / CHECK-UP',
+      category: 'Consultation',
+      description: ['Dental consultation', 'Oral examination', 'Diagnosis', 'Treatment planning'],
+      duration: '30 mins',
+      price: 'Price may vary'
+    },
+    {
+      id: 'service_2',
+      serviceName: 'ORAL PROPHYLAXIS',
+      category: 'Cleaning',
+      description: ['Dental cleaning', 'Scaling', 'Polishing', 'Stain removal'],
+      duration: '45 mins',
+      price: 'Price may vary'
+    },
+    {
+      id: 'service_3',
+      serviceName: 'RESTORATION (PERMANENT / TEMPORARY)',
+      category: 'Restorative',
+      description: ['Temporary filling', 'Permanent filling', 'Tooth repair', 'Dental bonding'],
+      duration: '60 mins',
+      price: 'Price may vary'
+    },
+    {
+      id: 'service_4',
+      serviceName: 'TOOTH EXTRACTION',
+      category: 'Extraction',
+      description: ['Simple tooth extraction', 'Surgical extraction', 'Impacted tooth removal'],
+      duration: '45-90 mins',
+      price: 'Price may vary'
+    },
+    {
+      id: 'service_5',
+      serviceName: 'ORTHODONTIC TREATMENT',
+      category: 'Orthodontics',
+      description: ['Braces installation', 'Braces adjustment', 'Retainers', 'Orthodontic consultation'],
+      duration: 'Varies',
+      price: 'Price may vary'
+    },
+    {
+      id: 'service_6',
+      serviceName: 'PROSTHODONTICS',
+      category: 'Prosthetics',
+      description: ['Complete dentures', 'Partial dentures'],
+      duration: 'Multiple sessions',
+      price: 'Price may vary'
+    }
+  ];
+
+  // Initialize with default services if empty
+  const displayServices = services && services.length > 0 ? services : defaultServices;
 
   const handleAddAnnouncement = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -101,28 +163,38 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
       const serviceName = (formData.get('serviceName') as string)?.trim();
       const category = (formData.get('category') as string)?.trim();
       const duration = (formData.get('duration') as string)?.trim();
-      const price = parseFloat(formData.get('price') as string);
+      const price = (formData.get('price') as string)?.trim();
+      
+      // Get descriptions from multiple inputs
+      const descriptions: string[] = [];
+      let descIndex = 0;
+      while (formData.get(`description_${descIndex}`)) {
+        const desc = (formData.get(`description_${descIndex}`) as string)?.trim();
+        if (desc) descriptions.push(desc);
+        descIndex++;
+      }
 
-      if (!serviceName || !category || !duration || !price) {
-        toast.error('All fields are required');
+      if (!serviceName || !category || !duration) {
+        toast.error('Service name, category, and duration are required');
         return;
       }
 
-      const newService: ServicePrice = {
+      const newService: Service = {
         id: editingServiceId || Date.now().toString(),
         serviceName,
         category,
+        description: descriptions.length > 0 ? descriptions : [],
         duration,
-        price,
+        price: price || 'Price may vary',
       };
 
       if (editingServiceId) {
-        const updatedServices = servicePrices.map(s => s.id === editingServiceId ? newService : s);
-        setServicePrices?.(updatedServices);
+        const updatedServices = services.map(s => s.id === editingServiceId ? newService : s);
+        setServices?.(updatedServices);
         toast.success('Service updated successfully');
         setEditingServiceId(null);
       } else {
-        setServicePrices?.([...servicePrices, newService]);
+        setServices?.([...services, newService]);
         toast.success('Service added successfully');
       }
 
@@ -137,8 +209,8 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
   };
 
   const handleDeleteService = (id: string) => {
-    const updatedServices = servicePrices.filter(s => s.id !== id);
-    setServicePrices?.(updatedServices);
+    const updatedServices = services.filter(s => s.id !== id);
+    setServices?.(updatedServices);
     toast.success('Service deleted');
   };
 
@@ -307,76 +379,96 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
       {/* Services Tab */}
       {activeTab === 'services' && (
         <div>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl">Services Offered</h2>
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Professional Services</h2>
+              <p className="text-gray-600 font-medium">Comprehensive dental care solutions tailored to your needs</p>
+            </div>
             <button
               onClick={() => {
                 setEditingServiceId(null);
                 setShowAddService(true);
               }}
-              className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 flex items-center gap-2"
+              className="px-6 py-3 bg-gradient-to-r from-pink-600 to-pink-700 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-2 font-semibold"
             >
               <Plus className="w-5 h-5" />
               Add Service
             </button>
           </div>
 
-          {servicePrices && servicePrices.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-300">
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Service Name</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Category</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Duration</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Price</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {servicePrices.map((service) => (
-                    <tr key={service.id} className="border-b border-gray-200 hover:bg-gray-50">
-                      <td className="py-3 px-4 text-gray-800">{service.serviceName}</td>
-                      <td className="py-3 px-4 text-gray-700">{service.category}</td>
-                      <td className="py-3 px-4 text-gray-700">{service.duration}</td>
-                      <td className="py-3 px-4 text-gray-800 font-semibold flex items-center gap-1">
-                        <PesoSign className="w-4 h-4" />
-                        {service.price?.toFixed(2)}
-                      </td>
-                      <td className="py-3 px-4">
-                        <button
-                          onClick={() => {
-                            setEditingServiceId(service.id);
-                            setShowAddService(true);
-                          }}
-                          className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors mr-2"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteService(service.id)}
-                          className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {displayServices && displayServices.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {displayServices.map((service) => (
+                <div
+                  key={service.id}
+                  className="bg-white rounded-xl border-2 border-gray-200 shadow-md hover:shadow-lg transition-shadow p-6"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-gray-900 mb-1">{service.serviceName}</h3>
+                      <div className="flex gap-2 mb-4">
+                        <span className="px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-sm font-semibold">
+                          {service.category}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {service.description && service.description.length > 0 && (
+                    <div className="mb-4 bg-gray-50 rounded-lg p-4">
+                      <p className="text-xs font-bold text-gray-700 mb-3 uppercase tracking-wide">Service Includes:</p>
+                      <ul className="space-y-2">
+                        {service.description.map((desc, idx) => (
+                          <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
+                            <span className="text-pink-600 font-bold mt-1">•</span>
+                            <span>{desc}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <div className="border-t-2 border-gray-200 pt-4 mb-4">
+                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-4 border border-amber-200">
+                      <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-1">Pricing</p>
+                      <p className="text-lg font-bold text-gray-900">{service.price}</p>
+                      <p className="text-xs text-gray-600 mt-2 italic">Pricing varies depending on the complexity of your case</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 justify-end">
+                    <button
+                      onClick={() => {
+                        setEditingServiceId(service.id);
+                        setShowAddService(true);
+                      }}
+                      className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors font-semibold"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteService(service.id)}
+                      className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors font-semibold"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
-            <div className="text-center py-12 text-gray-500">
-              <p>No services available. Click "Add Service" to create one.</p>
+            <div className="text-center py-16 text-gray-500 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+              <p className="text-lg font-semibold mb-2">No services available</p>
+              <p>Click "Add Service" to create one or initialize with default services.</p>
             </div>
           )}
 
           {/* Add/Edit Service Modal */}
           {showAddService && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-lg p-6 max-w-2xl w-full">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-2xl">{editingServiceId ? 'Edit Service' : 'Add Service'}</h2>
+              <div className="bg-white rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+                <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-200">
+                  <h2 className="text-3xl font-bold text-gray-900">{editingServiceId ? 'Edit Service' : 'Add Service'}</h2>
                   <button
                     onClick={() => {
                       setShowAddService(false);
@@ -387,75 +479,117 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
                     <X className="w-6 h-6" />
                   </button>
                 </div>
-                <form onSubmit={handleAddService} className="space-y-4">
+                <form onSubmit={handleAddService} className="space-y-5">
                   <div>
-                    <label className="block text-sm mb-1">Service Name *</label>
+                    <label className="block text-sm font-semibold mb-2 text-gray-900">Service Name *</label>
                     <input
                       type="text"
                       name="serviceName"
                       required
-                      defaultValue={editingServiceId ? servicePrices.find(s => s.id === editingServiceId)?.serviceName : ''}
-                      placeholder="e.g., Tooth Extraction"
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-pink-500"
+                      defaultValue={editingServiceId ? displayServices.find(s => s.id === editingServiceId)?.serviceName : ''}
+                      placeholder="e.g., ORAL EXAMINATION / CHECK-UP"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
                     />
                   </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold mb-2 text-gray-900">Category *</label>
+                      <input
+                        type="text"
+                        name="category"
+                        required
+                        defaultValue={editingServiceId ? displayServices.find(s => s.id === editingServiceId)?.category : ''}
+                        placeholder="e.g., Consultation"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold mb-2 text-gray-900">Duration *</label>
+                      <input
+                        type="text"
+                        name="duration"
+                        required
+                        defaultValue={editingServiceId ? displayServices.find(s => s.id === editingServiceId)?.duration : ''}
+                        placeholder="e.g., 30 mins"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+                      />
+                    </div>
+                  </div>
                   <div>
-                    <label className="block text-sm mb-1">Category *</label>
+                    <label className="block text-sm font-semibold mb-2 text-gray-900">Price</label>
                     <input
                       type="text"
-                      name="category"
-                      required
-                      defaultValue={editingServiceId ? servicePrices.find(s => s.id === editingServiceId)?.category : ''}
-                      placeholder="e.g., Extraction"
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-pink-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm mb-1">Duration *</label>
-                    <input
-                      type="text"
-                      name="duration"
-                      required
-                      defaultValue={editingServiceId ? servicePrices.find(s => s.id === editingServiceId)?.duration : ''}
-                      placeholder="e.g., 30 mins"
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-pink-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm mb-1">Price *</label>
-                    <input
-                      type="number"
                       name="price"
-                      required
-                      step="0.01"
-                      defaultValue={editingServiceId ? servicePrices.find(s => s.id === editingServiceId)?.price : ''}
-                      placeholder="e.g., 500"
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-pink-500"
+                      defaultValue={editingServiceId ? displayServices.find(s => s.id === editingServiceId)?.price : 'Price may vary'}
+                      placeholder="e.g., Price may vary"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
                     />
                   </div>
-                  <div className="flex gap-3 justify-end">
+
+                  <div className="border-t-2 border-gray-200 pt-5">
+                    <div className="flex justify-between items-center mb-4">
+                      <label className="block text-sm font-bold text-gray-900 uppercase tracking-wide">Service Descriptions</label>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const count = (e.currentTarget.parentElement?.parentElement?.querySelectorAll('input[name^="description_"]').length || 0) + 1;
+                          const newInput = document.createElement('input');
+                          newInput.setAttribute('type', 'text');
+                          newInput.setAttribute('name', `description_${count}`);
+                          newInput.className = 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all';
+                          newInput.placeholder = 'e.g., Dental consultation';
+                          e.currentTarget.parentElement?.parentElement?.appendChild(newInput);
+                        }}
+                        className="px-3 py-1 bg-pink-100 text-pink-700 rounded-lg hover:bg-pink-200 transition-colors text-sm font-semibold"
+                      >
+                        + Add Item
+                      </button>
+                    </div>
+                    {editingServiceId && displayServices.find(s => s.id === editingServiceId)?.description ? (
+                      displayServices.find(s => s.id === editingServiceId)?.description.map((desc, idx) => (
+                        <input
+                          key={idx}
+                          type="text"
+                          name={`description_${idx}`}
+                          defaultValue={desc}
+                          placeholder={`Service item ${idx + 1}`}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all mb-3"
+                        />
+                      ))
+                    ) : (
+                      <input
+                        type="text"
+                        name="description_0"
+                        placeholder="e.g., Dental consultation"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all mb-3"
+                      />
+                    )}
+                  </div>
+
+                  <div className="flex gap-3 justify-end pt-6 border-t-2 border-gray-200">
                     <button
                       type="button"
                       onClick={() => {
                         setShowAddService(false);
                         setEditingServiceId(null);
                       }}
-                      className="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50"
+                      className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors font-semibold text-gray-900"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={isLoadingService}
-                      className={`px-6 py-2 rounded text-white flex items-center gap-2 ${
+                      className={`px-6 py-3 rounded-lg text-white flex items-center gap-2 font-semibold transition-all ${
                         isLoadingService
                           ? 'bg-pink-400 cursor-not-allowed'
-                          : 'bg-pink-600 hover:bg-pink-700'
+                          : 'bg-gradient-to-r from-pink-600 to-pink-700 hover:shadow-lg transform hover:scale-105'
                       }`}
                     >
                       {editingServiceId ? (
                         <>
-                          <Save className="w-4 h-4" />
+                          <Check className="w-4 h-4" />
                           {isLoadingService ? 'Updating...' : 'Update Service'}
                         </>
                       ) : (

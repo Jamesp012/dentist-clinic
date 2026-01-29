@@ -122,6 +122,15 @@ export type Announcement = {
   createdBy: string;
 };
 
+export type Service = {
+  id: string;
+  serviceName: string;
+  category: string;
+  description: string[];
+  duration: string;
+  price?: string;
+};
+
 export default function App() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [showLandingPage, setShowLandingPage] = useState(true);
@@ -192,6 +201,14 @@ export default function App() {
   const [announcements, setAnnouncements] = useState<Announcement[]>(() => {
     try {
       const saved = localStorage.getItem('announcements');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [services, setServices] = useState<Service[]>(() => {
+    try {
+      const saved = localStorage.getItem('services');
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -268,6 +285,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('announcements', JSON.stringify(announcements));
   }, [announcements]);
+
+  useEffect(() => {
+    localStorage.setItem('services', JSON.stringify(services));
+  }, [services]);
 
   const handleLogout = () => {
     setCurrentUser(null);
@@ -391,6 +412,10 @@ export default function App() {
           photos={photos}
           payments={payments}
           setPayments={setPayments}
+          announcements={announcements}
+          setAnnouncements={setAnnouncements}
+          services={services}
+          setServices={setServices}
           onDataChanged={async () => { await refreshAll(); }}
         />
         <Toaster 
@@ -438,6 +463,8 @@ export default function App() {
           setChatMessages={setChatMessages}
           announcements={announcements}
           setAnnouncements={setAnnouncements}
+          services={services}
+          setServices={setServices}
           onDataChanged={async () => { await refreshAll(); }}
         />
         <Toaster 
@@ -522,6 +549,7 @@ export default function App() {
           currentUserId={currentUser.id}
           onLogout={handleLogout}
           onDataChanged={async () => { await refreshAll(); }}
+          services={services}
         />
         <Toaster 
           position="top-center" 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Menu, Users, Calendar, ClipboardList, FileText, LayoutDashboard, Stethoscope, LogOut, Sparkles, UserCog, Settings, X, Check, Eye, EyeOff } from 'lucide-react';
+import { Menu, Users, Calendar, ClipboardList, FileText, LayoutDashboard, Stethoscope, LogOut, Sparkles, UserCog, Settings, X, Check, Eye, EyeOff, Megaphone } from 'lucide-react';
 import { PesoSign } from './icons/PesoSign';
 import { Dashboard } from './Dashboard';
 import { PatientManagement } from './PatientManagement';
@@ -10,11 +10,12 @@ import { BracesCharting } from './BracesCharting';
 import { ReferralGeneration } from './ReferralGeneration';
 import { ServicesForms } from './ServicesForms';
 import { FinancialReport } from './FinancialReport';
+import { AnnouncementsManagement } from './AnnouncementsManagement';
 import { Notifications } from './Notifications';
 import { EmployeeManagement } from './EmployeeManagement';
 import { motion, AnimatePresence } from 'motion/react';
 import type { User } from './AuthPage';
-import type { Patient, Appointment, InventoryItem, TreatmentRecord, Referral, PhotoUpload, Payment } from '../App';
+import type { Patient, Appointment, InventoryItem, TreatmentRecord, Referral, PhotoUpload, Payment, Announcement, Service } from '../App';
 
 type DoctorDashboardProps = {
   currentUser: User;
@@ -32,6 +33,10 @@ type DoctorDashboardProps = {
   photos: PhotoUpload[];
   payments: Payment[];
   setPayments: (payments: Payment[]) => void;
+  announcements: Announcement[];
+  setAnnouncements: (announcements: Announcement[]) => void;
+  services: Service[];
+  setServices: (services: Service[]) => void;
   onDataChanged?: () => Promise<void>;
 };
 
@@ -53,6 +58,10 @@ export function DoctorDashboard({
   photos,
   payments,
   setPayments,
+  announcements,
+  setAnnouncements,
+  services,
+  setServices,
   onDataChanged
 }: DoctorDashboardProps) {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
@@ -202,9 +211,9 @@ export function DoctorDashboard({
     { id: 'charting', label: 'Dental Charting', icon: ClipboardList, color: 'from-cyan-500 to-teal-500' },
     { id: 'braces', label: 'Braces Charting', icon: Sparkles, color: 'from-teal-500 to-emerald-600' },
     { id: 'referrals', label: 'Referrals', icon: FileText, color: 'from-cyan-500 to-emerald-600' },
-    { id: 'offered', label: 'Services Offered', icon: Users, color: 'from-pink-500 to-rose-600' },
     { id: 'services', label: 'Services Forms', icon: Stethoscope, color: 'from-teal-600 to-cyan-600' },
     { id: 'financial', label: 'Financial Report', icon: PesoSign, color: 'from-emerald-500 to-teal-600' },
+    { id: 'announcements', label: 'Announcements', icon: Megaphone, color: 'from-cyan-600 to-teal-500' },
   ];
 
   return (
@@ -440,6 +449,14 @@ export function DoctorDashboard({
                   setTreatmentRecords={setTreatmentRecords}
                   payments={payments}
                   setPayments={setPayments}
+                />
+              )}
+              {activeTab === 'announcements' && (
+                <AnnouncementsManagement
+                  announcements={announcements}
+                  setAnnouncements={setAnnouncements}
+                  services={services}
+                  setServices={setServices}
                 />
               )}
             </motion.div>

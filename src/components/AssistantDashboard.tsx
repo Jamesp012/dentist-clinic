@@ -43,6 +43,7 @@ import type {
   ChatMessage,
   Announcement,
   Payment,
+  Service,
 } from "../App";
 
 type AssistantDashboardProps = {
@@ -66,6 +67,8 @@ type AssistantDashboardProps = {
   setChatMessages: (messages: ChatMessage[]) => void;
   announcements: Announcement[];
   setAnnouncements: (announcements: Announcement[]) => void;
+  services: Service[];
+  setServices: (services: Service[]) => void;
   onDataChanged?: () => Promise<void>;
 };
 
@@ -92,6 +95,8 @@ export function AssistantDashboard({
   setChatMessages,
   announcements,
   setAnnouncements,
+  services,
+  setServices,
   onDataChanged,
 }: AssistantDashboardProps) {
   const [activeTab, setActiveTab] =
@@ -750,6 +755,8 @@ export function AssistantDashboard({
                 <AnnouncementsManagement
                   announcements={announcements}
                   setAnnouncements={setAnnouncements}
+                  services={services}
+                  setServices={setServices}
                 />
               )}
             </motion.div>

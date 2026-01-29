@@ -51,6 +51,11 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
     return 'Cleaning';
   });
   const [selectedPatient, setSelectedPatient] = useState<string>(prefilledAppointment?.patientId || '');
+  const [patientSearch, setPatientSearch] = useState<string>('');
+  const [prescriptionPatientSearch, setPrescriptionPatientSearch] = useState<string>('');
+  const [prescriptionPatientId, setPrescriptionPatientId] = useState<string>('');
+  const [showReceiptSuggestions, setShowReceiptSuggestions] = useState<boolean>(false);
+  const [showPrescriptionSuggestions, setShowPrescriptionSuggestions] = useState<boolean>(false);
   const [viewingPrescription, setViewingPrescription] = useState<Prescription | null>(null);
   const [viewingReceipt, setViewingReceipt] = useState<TreatmentRecord | null>(null);
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
@@ -129,6 +134,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
       setAmountPaid(0);
       setNumberOfInstallments(3);
       setSelectedPatient('');
+      setPatientSearch('');
       
       toast.success('Service record saved successfully');
       
@@ -155,7 +161,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
   const handleCreatePrescription = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const patientId = formData.get('patientId') as string;
+    const patientId = prescriptionPatientId || selectedPatient;
     const patient = patients.find(p => String(p.id) === String(patientId));
 
     const medications = [];
@@ -183,6 +189,8 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
     setPrescriptions([...prescriptions, newPrescription]);
     setViewingPrescription(newPrescription);
     setActiveForm(null);
+    setPrescriptionPatientSearch('');
+    setPrescriptionPatientId('');
   };
 
   const printPrescription = (prescription: Prescription) => {
@@ -218,54 +226,54 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
 
   return (
     <div className="p-8">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-8 pb-6 border-b-2 border-gray-200">
         <div>
-          <h1 className="text-3xl mb-2">Services & Forms</h1>
-          <p className="text-gray-600">Manage dental services, prescriptions, and receipts</p>
+          <h1 className="text-4xl font-bold mb-2 text-gray-900">Receipts & Forms</h1>
+          <p className="text-gray-600 text-lg">Manage dental receipts and prescriptions</p>
         </div>
         <div className="flex gap-3">
           <button
             onClick={() => setActiveForm('service')}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2"
+            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-2 font-semibold"
           >
             <Plus className="w-5 h-5" />
-            New Service
+            New Receipt
           </button>
           <button
             onClick={() => setActiveForm('prescription')}
-            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-2"
+            className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-2 font-semibold"
           >
             <FileText className="w-5 h-5" />
-            Create Reseta
+            Create Prescription
           </button>
         </div>
       </div>
 
-      {/* Recent Services */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-        <h2 className="mb-4">Recent Services</h2>
+      {/* Recent Receipts */}
+      <div className="bg-white p-8 rounded-xl shadow-md border border-gray-200 mb-8">
+        <h2 className="text-2xl font-bold mb-6 text-gray-900">Recent Receipts</h2>
         <div className="space-y-3">
           {treatmentRecords.slice(-5).reverse().map((record) => {
             const patient = patients.find(p => String(p.id) === String(record.patientId));
             return (
-              <div key={record.id} className="p-4 border border-gray-200 rounded hover:bg-gray-50">
+              <div key={record.id} className="p-6 border border-gray-200 rounded-lg hover:shadow-md transition-shadow bg-gradient-to-br from-white to-gray-50">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <p className="text-lg">{patient?.name}</p>
-                    <p className="text-sm text-gray-600">{record.treatment} {record.tooth ? `- Tooth ${record.tooth}` : ''}</p>
-                    <p className="text-sm text-gray-500">{new Date(record.date).toLocaleDateString()} • Dr. {record.dentist}</p>
-                    <div className="mt-2 flex gap-4 text-sm">
-                      <span className="font-semibold">₱{record.cost}</span>
+                    <p className="text-lg font-semibold text-gray-900">{patient?.name}</p>
+                    <p className="text-sm text-gray-700 mt-1">{record.treatment} {record.tooth ? `- Tooth ${record.tooth}` : ''}</p>
+                    <p className="text-sm text-gray-500 mt-1">{new Date(record.date).toLocaleDateString()} • Dr. {record.dentist}</p>
+                    <div className="mt-4 flex gap-4 text-sm">
+                      <span className="font-bold text-lg text-gray-900">₱{record.cost}</span>
                       {record.paymentType && (
                         <>
-                          <span className={`px-2 py-1 rounded ${record.paymentType === 'full' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
+                          <span className={`px-3 py-1 rounded-full font-medium ${record.paymentType === 'full' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
                             {record.paymentType === 'full' ? 'Full Payment' : 'Installment'}
                           </span>
                           {record.amountPaid !== undefined && record.amountPaid > 0 && (
-                            <span className="text-gray-600">Paid: ₱{record.amountPaid}</span>
+                            <span className="text-gray-700 font-medium">Paid: ₱{record.amountPaid}</span>
                           )}
                           {record.remainingBalance !== undefined && record.remainingBalance > 0 && (
-                            <span className="text-orange-600 font-semibold">Balance: ₱{record.remainingBalance}</span>
+                            <span className="text-orange-600 font-bold">Balance: ₱{record.remainingBalance}</span>
                           )}
                         </>
                       )}
@@ -274,24 +282,12 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                   <div className="flex gap-2">
                     <button
                       onClick={() => {
-                        const p = patients.find(pat => String(pat.id) === String(record.patientId));
-                        const recs = treatmentRecords.filter(r => String(r.patientId) === String(record.patientId));
-                        if (p) generatePatientHistoryPDF(p, recs);
-                      }}
-                      className="px-3 py-1 bg-teal-600 text-white rounded hover:bg-teal-700 flex items-center gap-2 text-sm"
-                      title="Print All Services"
-                    >
-                      <Printer className="w-4 h-4" />
-                      History
-                    </button>
-                    <button
-                      onClick={() => {
                         setViewingReceipt(record);
                       }}
-                      className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2 text-sm"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 hover:shadow-md transition-all flex items-center gap-2 text-sm font-semibold"
                     >
                       <CreditCard className="w-4 h-4" />
-                      Print Resibo
+                      View Receipt
                     </button>
                   </div>
                 </div>
@@ -299,34 +295,35 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
             );
           })}
           {treatmentRecords.length === 0 && (
-            <p className="text-gray-500 text-center py-8">No services recorded yet</p>
+            <p className="text-gray-500 text-center py-8">No receipts recorded yet</p>
           )}
         </div>
       </div>
 
       {/* Recent Prescriptions */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h2 className="mb-4">Recent Prescriptions (Reseta)</h2>
+      <div className="bg-white p-8 rounded-xl shadow-md border border-gray-200">
+        <h2 className="text-2xl font-bold mb-6 text-gray-900">Recent Prescriptions</h2>
         <div className="space-y-3">
           {prescriptions.slice(-5).reverse().map((prescription) => (
-            <div key={prescription.id} className="p-4 border border-gray-200 rounded hover:bg-gray-50">
+            <div key={prescription.id} className="p-6 border border-gray-200 rounded-lg hover:shadow-md transition-shadow bg-gradient-to-br from-white to-green-50">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-lg">{prescription.patientName}</p>
-                  <p className="text-sm text-gray-600">{prescription.medications.length} medication(s) prescribed</p>
-                  <p className="text-sm text-gray-500">{new Date(prescription.date).toLocaleDateString()} • Dr. {prescription.dentist}</p>
+                  <p className="text-lg font-semibold text-gray-900">{prescription.patientName}</p>
+                  <p className="text-sm text-gray-700 mt-1">{prescription.medications.length} medication(s) prescribed</p>
+                  <p className="text-sm text-gray-500 mt-1">{new Date(prescription.date).toLocaleDateString()} • Dr. {prescription.dentist}</p>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setViewingPrescription(prescription)}
-                    className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-2 text-sm"
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 hover:shadow-md transition-all flex items-center gap-2 text-sm font-semibold"
                   >
                     <FileText className="w-4 h-4" />
                     View
                   </button>
                   <button
                     onClick={() => printPrescription(prescription)}
-                    className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 flex items-center gap-2 text-sm"
+                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 hover:shadow-md transition-all flex items-center gap-2 text-sm font-semibold"
+                    title="Print Prescription"
                   >
                     <Download className="w-4 h-4" />
                   </button>
@@ -340,54 +337,81 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
         </div>
       </div>
 
-      {/* Add Service Modal */}
+      {/* Add Receipt Modal */}
       {activeForm === 'service' && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl">Record Service</h2>
+          <div className="bg-white rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-200">
+              <h2 className="text-3xl font-bold text-gray-900">Record Receipt</h2>
               <button onClick={() => setActiveForm(null)} className="text-gray-500 hover:text-gray-700">
                 <X className="w-6 h-6" />
               </button>
             </div>
-            <form onSubmit={handleCreateService} className="space-y-4">
+            <form onSubmit={handleCreateService} className="space-y-5">
               <div>
-                <label className="block text-sm mb-1">Patient *</label>
-                <select
+                <label className="block text-sm font-semibold mb-2 text-gray-900">Patient *</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search patient name..."
+                    value={patientSearch}
+                    onChange={(e) => {
+                      setPatientSearch(e.target.value);
+                      setShowReceiptSuggestions(true);
+                    }}
+                    onFocus={() => setShowReceiptSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowReceiptSuggestions(false), 200)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  />
+                  {patientSearch && showReceiptSuggestions && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-64 overflow-y-auto">
+                      {patients.filter(p => p.name.toLowerCase().includes(patientSearch.toLowerCase())).map(patient => (
+                        <div
+                          key={patient.id}
+                          onMouseDown={() => {
+                            setSelectedPatient(patient.id);
+                            setPatientSearch(patient.name);
+                            setShowReceiptSuggestions(false);
+                          }}
+                          className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-200 last:border-b-0"
+                        >
+                          <p className="font-semibold text-gray-900">{patient.name}</p>
+                          <p className="text-sm text-gray-500">{patient.phone}</p>
+                        </div>
+                      ))}
+                      {patients.filter(p => p.name.toLowerCase().includes(patientSearch.toLowerCase())).length === 0 && (
+                        <div className="px-4 py-3 text-gray-500 text-center">No patients found</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <input
+                  type="hidden"
                   name="patientId"
-                  required
                   value={selectedPatient}
-                  onChange={(e) => setSelectedPatient(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select a patient</option>
-                  {patients.map(patient => (
-                    <option key={patient.id} value={patient.id}>
-                      {patient.name}
-                    </option>
-                  ))}
-                </select>
+                  required
+                />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-sm mb-1">Date *</label>
+                  <label className="block text-sm font-semibold mb-2 text-gray-900">Date *</label>
                   <input
                     type="date"
                     name="date"
                     required
                     defaultValue={new Date().toISOString().split('T')[0]}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm mb-1">Service Type *</label>
+                  <label className="block text-sm font-semibold mb-2 text-gray-900">Service Type *</label>
                   <select
                     name="service"
                     required
                     value={selectedService}
                     onChange={(e) => setSelectedService(e.target.value as ServiceType)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   >
                     {services.map(service => (
                       <option key={service} value={service}>
@@ -399,59 +423,59 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
               </div>
 
               <div>
-                <label className="block text-sm mb-1">Tooth (Optional)</label>
+                <label className="block text-sm font-semibold mb-2 text-gray-900">Tooth (Optional)</label>
                 <input
                   type="text"
                   name="tooth"
                   placeholder="e.g., #14, Upper Right"
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-sm mb-1">Cost (₱) *</label>
+                <label className="block text-sm font-semibold mb-2 text-gray-900">Cost (₱) *</label>
                 <input
                   type="number"
                   name="cost"
                   required
                   step="1"
                   placeholder="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 />
               </div>
 
               {/* Payment Type Selection */}
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded">
-                <label className="block text-sm font-medium mb-3">Payment Method *</label>
-                <div className="space-y-2">
-                  <label className="flex items-center">
+              <div className="p-5 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-300 rounded-lg">
+                <label className="block text-sm font-bold mb-4 text-gray-900">Payment Method *</label>
+                <div className="space-y-3">
+                  <label className="flex items-center cursor-pointer">
                     <input
                       type="radio"
                       name="paymentType"
                       value="full"
                       checked={paymentType === 'full'}
                       onChange={(e) => setPaymentType(e.target.value as 'full' | 'installment')}
-                      className="mr-2"
+                      className="mr-3 w-5 h-5 cursor-pointer"
                     />
-                    <span className="text-sm">Full Payment</span>
+                    <span className="text-sm font-medium text-gray-900">Full Payment</span>
                   </label>
-                  <label className="flex items-center">
+                  <label className="flex items-center cursor-pointer">
                     <input
                       type="radio"
                       name="paymentType"
                       value="installment"
                       checked={paymentType === 'installment'}
                       onChange={(e) => setPaymentType(e.target.value as 'full' | 'installment')}
-                      className="mr-2"
+                      className="mr-3 w-5 h-5 cursor-pointer"
                     />
-                    <span className="text-sm">Installment Plan</span>
+                    <span className="text-sm font-medium text-gray-900">Installment Plan</span>
                   </label>
                 </div>
               </div>
 
               {/* Payment Amount */}
               <div>
-                <label className="block text-sm mb-1">Amount Paid (₱)</label>
+                <label className="block text-sm font-semibold mb-2 text-gray-900">Amount Paid (₱)</label>
                 <input
                   type="number"
                   name="amountPaid"
@@ -463,20 +487,20 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                     const parsed = parseInt(value) || 0;
                     setAmountPaid(parsed);
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 />
-                <p className="text-xs text-gray-500 mt-1">Leave empty or 0 if no payment yet</p>
+                <p className="text-xs text-gray-500 mt-2 font-medium">Leave empty or 0 if no payment yet</p>
               </div>
 
               {/* Number of Installments */}
               {paymentType === 'installment' && (
                 <div>
-                  <label className="block text-sm mb-1">Number of Installments</label>
+                  <label className="block text-sm font-semibold mb-2 text-gray-900">Number of Installments</label>
                   <select
                     name="numberOfInstallments"
                     value={numberOfInstallments}
                     onChange={(e) => setNumberOfInstallments(parseInt(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   >
                     <option value="2">2 months</option>
                     <option value="3">3 months</option>
@@ -489,55 +513,55 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
               )}
 
               <div>
-                <label className="block text-sm mb-1">Dentist *</label>
+                <label className="block text-sm font-semibold mb-2 text-gray-900">Dentist *</label>
                 <input
                   type="text"
                   name="dentist"
                   required
                   placeholder="Dr. Name"
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-sm mb-1">Notes</label>
+                <label className="block text-sm font-semibold mb-2 text-gray-900">Notes</label>
                 <textarea
                   name="notes"
                   rows={3}
-                  placeholder="Service details and observations"
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Receipt details and observations"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
                 />
               </div>
 
               {selectedService === 'Extraction' && (
-                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
-                  <p className="text-sm text-yellow-800">
-                    Note: After recording this extraction, you will be prompted to create a prescription (reseta) for the patient.
+                <div className="p-4 bg-gradient-to-r from-yellow-50 to-yellow-100 border border-yellow-300 rounded-lg">
+                  <p className="text-sm text-yellow-900 font-medium">
+                    💊 After recording this extraction, you will be prompted to create a prescription for the patient.
                   </p>
                 </div>
               )}
 
               {selectedService === 'Braces' && (
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded">
-                  <p className="text-sm text-blue-800">
-                    Note: For braces, you may need to create a referral form for x-ray or if referring to another dentist.
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-300 rounded-lg">
+                  <p className="text-sm text-blue-900 font-medium">
+                    📋 For braces, you may need to create a referral form for x-ray or if referring to another dentist.
                   </p>
                 </div>
               )}
 
-              <div className="flex gap-3 justify-end">
+              <div className="flex gap-3 justify-end pt-6 border-t-2 border-gray-200">
                 <button
                   type="button"
                   onClick={() => setActiveForm(null)}
-                  className="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50"
+                  className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors font-semibold text-gray-900"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all font-semibold"
                 >
-                  Record Service
+                  Record Receipt
                 </button>
               </div>
             </form>
@@ -548,96 +572,119 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
       {/* Create Prescription Modal */}
       {activeForm === 'prescription' && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl">Create Prescription (Reseta)</h2>
+          <div className="bg-white rounded-xl p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-200">
+              <h2 className="text-3xl font-bold text-gray-900">Create Prescription</h2>
               <button onClick={() => setActiveForm(null)} className="text-gray-500 hover:text-gray-700">
                 <X className="w-6 h-6" />
               </button>
             </div>
-            <form onSubmit={handleCreatePrescription} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleCreatePrescription} className="space-y-5">
+              <div className="grid grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-sm mb-1">Patient *</label>
-                  <select
-                    name="patientId"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                  >
-                    <option value="">Select a patient</option>
-                    {patients.map(patient => (
-                      <option key={patient.id} value={patient.id}>
-                        {patient.name}
-                      </option>
-                    ))}
-                  </select>
+                  <label className="block text-sm font-semibold mb-2 text-gray-900">Patient *</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search patient name..."
+                      value={prescriptionPatientSearch}
+                      onChange={(e) => {
+                        setPrescriptionPatientSearch(e.target.value);
+                        setShowPrescriptionSuggestions(true);
+                      }}
+                      onFocus={() => setShowPrescriptionSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowPrescriptionSuggestions(false), 200)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                    />
+                    {prescriptionPatientSearch && showPrescriptionSuggestions && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-20 max-h-64 overflow-y-auto">
+                        {patients.filter(p => p.name.toLowerCase().includes(prescriptionPatientSearch.toLowerCase())).map(patient => (
+                          <div
+                            key={patient.id}
+                            onMouseDown={() => {
+                              setPrescriptionPatientId(patient.id);
+                              setPrescriptionPatientSearch(patient.name);
+                              setShowPrescriptionSuggestions(false);
+                            }}
+                            className="px-4 py-3 hover:bg-green-50 cursor-pointer border-b border-gray-200 last:border-b-0"
+                          >
+                            <p className="font-semibold text-gray-900">{patient.name}</p>
+                            <p className="text-sm text-gray-500">{patient.phone}</p>
+                          </div>
+                        ))}
+                        {patients.filter(p => p.name.toLowerCase().includes(prescriptionPatientSearch.toLowerCase())).length === 0 && (
+                          <div className="px-4 py-3 text-gray-500 text-center">No patients found</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-sm mb-1">Date *</label>
+                  <label className="block text-sm font-semibold mb-2 text-gray-900">Date *</label>
                   <input
                     type="date"
                     name="date"
                     required
                     defaultValue={new Date().toISOString().split('T')[0]}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                   />
                 </div>
               </div>
 
-              <div className="border-t border-gray-200 pt-4">
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="text-lg">Medications</h3>
+              <div className="border-t-2 border-gray-200 pt-6">
+                <div className="flex justify-between items-center mb-5">
+                  <h3 className="text-lg font-bold text-gray-900">Medications</h3>
                   <button
                     type="button"
                     onClick={() => setMedicationCount(medicationCount + 1)}
-                    className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 text-sm"
+                    className="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm font-semibold"
                   >
                     + Add Medication
                   </button>
                 </div>
 
                 {Array.from({ length: medicationCount }).map((_, index) => (
-                  <div key={index} className="mb-4 p-4 bg-gray-50 rounded border border-gray-200">
-                    <p className="text-sm mb-2">Medication #{index + 1}</p>
-                    <div className="grid grid-cols-2 gap-3">
+                  <div key={index} className="mb-5 p-5 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                    <p className="text-sm font-bold mb-4 text-gray-900">Medication #{index + 1}</p>
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="col-span-2">
-                        <label className="block text-sm mb-1">Medicine Name *</label>
+                        <label className="block text-sm font-semibold mb-2 text-gray-900">Medicine Name *</label>
                         <input
                           type="text"
                           name={`medication_${index}`}
                           required
                           placeholder="e.g., Amoxicillin"
-                          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm mb-1">Dosage *</label>
+                        <label className="block text-sm font-semibold mb-2 text-gray-900">Dosage *</label>
                         <input
                           type="text"
                           name={`dosage_${index}`}
                           required
                           placeholder="e.g., 500mg"
-                          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm mb-1">Frequency *</label>
+                        <label className="block text-sm font-semibold mb-2 text-gray-900">Frequency *</label>
                         <input
                           type="text"
                           name={`frequency_${index}`}
                           required
                           placeholder="e.g., 3 times a day"
-                          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                         />
                       </div>
                       <div className="col-span-2">
-                        <label className="block text-sm mb-1">Duration *</label>
+                        <label className="block text-sm font-semibold mb-2 text-gray-900">Duration *</label>
                         <input
                           type="text"
                           name={`duration_${index}`}
                           required
                           placeholder="e.g., 7 days"
-                          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                         />
                       </div>
                     </div>
@@ -646,37 +693,37 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
               </div>
 
               <div>
-                <label className="block text-sm mb-1">Dentist *</label>
+                <label className="block text-sm font-semibold mb-2 text-gray-900">Dentist *</label>
                 <input
                   type="text"
                   name="dentist"
                   required
                   placeholder="Dr. Name"
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-sm mb-1">Additional Instructions</label>
+                <label className="block text-sm font-semibold mb-2 text-gray-900">Additional Instructions</label>
                 <textarea
                   name="notes"
                   rows={3}
                   placeholder="Special instructions for patient..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none"
                 />
               </div>
 
-              <div className="flex gap-3 justify-end">
+              <div className="flex gap-3 justify-end pt-6 border-t-2 border-gray-200">
                 <button
                   type="button"
                   onClick={() => setActiveForm(null)}
-                  className="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50"
+                  className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors font-semibold text-gray-900"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all font-semibold"
                 >
                   Create Prescription
                 </button>
@@ -689,49 +736,49 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
       {/* View Prescription Modal */}
       {viewingPrescription && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-300">
-              <h2 className="text-2xl">Prescription / Reseta</h2>
+              <h2 className="text-3xl font-bold text-gray-900">Prescription</h2>
               <button onClick={() => setViewingPrescription(null)} className="text-gray-500 hover:text-gray-700">
                 <X className="w-6 h-6" />
               </button>
             </div>
 
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Date</p>
-                  <p>{new Date(viewingPrescription.date).toLocaleDateString()}</p>
+                  <p className="text-sm text-gray-700 font-semibold mb-2">Date</p>
+                  <p className="text-gray-900 font-medium">{new Date(viewingPrescription.date).toLocaleDateString()}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Prescription ID</p>
-                  <p>{viewingPrescription.id}</p>
+                  <p className="text-sm text-gray-700 font-semibold mb-2">Prescription ID</p>
+                  <p className="text-gray-900 font-medium">{viewingPrescription.id}</p>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="mb-3">Patient Information</h3>
-                <p className="text-lg">{viewingPrescription.patientName}</p>
+              <div className="pt-4 border-t-2 border-gray-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-3">Patient Information</h3>
+                <p className="text-lg font-semibold text-gray-900">{viewingPrescription.patientName}</p>
               </div>
 
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="mb-3">Medications</h3>
+              <div className="pt-4 border-t-2 border-gray-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Medications</h3>
                 <div className="space-y-4">
                   {viewingPrescription.medications.map((med, index) => (
-                    <div key={index} className="p-4 bg-green-50 border border-green-200 rounded">
-                      <p className="mb-2">{index + 1}. {med.name}</p>
-                      <div className="grid grid-cols-3 gap-2 text-sm text-gray-600">
+                    <div key={index} className="p-5 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-300 rounded-lg">
+                      <p className="mb-4 font-bold text-gray-900">{index + 1}. {med.name}</p>
+                      <div className="grid grid-cols-3 gap-4 text-sm">
                         <div>
-                          <p className="text-xs">Dosage</p>
-                          <p>{med.dosage}</p>
+                          <p className="text-xs font-semibold text-gray-700 mb-1">Dosage</p>
+                          <p className="text-gray-900 font-medium">{med.dosage}</p>
                         </div>
                         <div>
-                          <p className="text-xs">Frequency</p>
-                          <p>{med.frequency}</p>
+                          <p className="text-xs font-semibold text-gray-700 mb-1">Frequency</p>
+                          <p className="text-gray-900 font-medium">{med.frequency}</p>
                         </div>
                         <div>
-                          <p className="text-xs">Duration</p>
-                          <p>{med.duration}</p>
+                          <p className="text-xs font-semibold text-gray-700 mb-1">Duration</p>
+                          <p className="text-gray-900 font-medium">{med.duration}</p>
                         </div>
                       </div>
                     </div>
@@ -740,28 +787,28 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
               </div>
 
               {viewingPrescription.notes && (
-                <div className="pt-4 border-t border-gray-200">
-                  <h3 className="mb-3">Instructions</h3>
-                  <p className="text-gray-700">{viewingPrescription.notes}</p>
+                <div className="pt-4 border-t-2 border-gray-200">
+                  <h3 className="text-lg font-bold text-gray-900 mb-3">Instructions</h3>
+                  <p className="text-gray-800 leading-relaxed">{viewingPrescription.notes}</p>
                 </div>
               )}
 
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="mb-3">Prescribing Dentist</h3>
-                <p>Dr. {viewingPrescription.dentist}</p>
+              <div className="pt-4 border-t-2 border-gray-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-3">Prescribing Dentist</h3>
+                <p className="text-gray-900 font-semibold">Dr. {viewingPrescription.dentist}</p>
               </div>
 
-              <div className="flex gap-3 justify-end pt-6 border-t border-gray-200">
+              <div className="flex gap-3 justify-end pt-6 border-t-2 border-gray-200">
                 <button
                   onClick={() => printPrescription(viewingPrescription)}
-                  className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-2"
+                  className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-2 font-semibold"
                 >
                   <Printer className="w-5 h-5" />
-                  Print Reseta
+                  Print Prescription
                 </button>
                 <button
                   onClick={() => setViewingPrescription(null)}
-                  className="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50"
+                  className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors font-semibold text-gray-900"
                 >
                   Close
                 </button>
@@ -774,79 +821,79 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
       {/* View Receipt Modal */}
       {viewingReceipt && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-300">
-              <h2 className="text-2xl">Official Receipt / Resibo</h2>
+              <h2 className="text-3xl font-bold text-gray-900">Official Receipt</h2>
               <button onClick={() => setViewingReceipt(null)} className="text-gray-500 hover:text-gray-700">
                 <X className="w-6 h-6" />
               </button>
             </div>
 
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Receipt No.</p>
-                  <p>{viewingReceipt.id}</p>
+                  <p className="text-sm text-gray-700 font-semibold mb-2">Receipt No.</p>
+                  <p className="text-gray-900 font-medium">{viewingReceipt.id}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Date</p>
-                  <p>{new Date(viewingReceipt.date).toLocaleDateString()}</p>
+                  <p className="text-sm text-gray-700 font-semibold mb-2">Date</p>
+                  <p className="text-gray-900 font-medium">{new Date(viewingReceipt.date).toLocaleDateString()}</p>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="mb-3">Patient Information</h3>
+              <div className="pt-4 border-t-2 border-gray-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-3">Patient Information</h3>
                 {(() => {
                   const patient = patients.find(p => String(p.id) === String(viewingReceipt.patientId));
                   return patient ? (
-                    <div className="space-y-2">
-                      <p><strong>Name:</strong> {patient.name}</p>
-                      <p><strong>Age:</strong> {calculateAge(patient.dateOfBirth)}</p>
-                      <p><strong>Sex:</strong> {patient.sex}</p>
-                      <p><strong>Address:</strong> {patient.address}</p>
-                      <p><strong>Phone:</strong> {patient.phone}</p>
-                      <p><strong>Email:</strong> {patient.email}</p>
+                    <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
+                      <p className="text-gray-900"><strong className="text-gray-700">Name:</strong> {patient.name}</p>
+                      <p className="text-gray-900"><strong className="text-gray-700">Age:</strong> {calculateAge(patient.dateOfBirth)}</p>
+                      <p className="text-gray-900"><strong className="text-gray-700">Sex:</strong> {patient.sex}</p>
+                      <p className="text-gray-900"><strong className="text-gray-700">Address:</strong> {patient.address}</p>
+                      <p className="text-gray-900"><strong className="text-gray-700">Phone:</strong> {patient.phone}</p>
+                      <p className="text-gray-900"><strong className="text-gray-700">Email:</strong> {patient.email}</p>
                     </div>
                   ) : null;
                 })()}
               </div>
 
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="mb-3">Service Details</h3>
-                <div className="space-y-2">
-                  <p>Service: {viewingReceipt.treatment}</p>
-                  {viewingReceipt.tooth && <p>Tooth Number: {viewingReceipt.tooth}</p>}
-                  <p>Performed by: Dr. {viewingReceipt.dentist}</p>
+              <div className="pt-4 border-t-2 border-gray-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-3">Service Details</h3>
+                <div className="space-y-3 bg-blue-50 p-4 rounded-lg">
+                  <p className="text-gray-900"><strong className="text-gray-700">Service:</strong> {viewingReceipt.treatment}</p>
+                  {viewingReceipt.tooth && <p className="text-gray-900"><strong className="text-gray-700">Tooth Number:</strong> {viewingReceipt.tooth}</p>}
+                  <p className="text-gray-900"><strong className="text-gray-700">Performed by:</strong> Dr. {viewingReceipt.dentist}</p>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="mb-3">Amount</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>Total Billed (Service Fee):</span>
-                    <span>₱{viewingReceipt.cost}</span>
+              <div className="pt-4 border-t-2 border-gray-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Amount</h3>
+                <div className="space-y-3 bg-gradient-to-br from-gray-50 to-yellow-50 p-5 rounded-lg border border-yellow-200">
+                  <div className="flex justify-between text-gray-900">
+                    <span className="font-semibold">Total Billed (Service Fee):</span>
+                    <span className="font-bold">₱{viewingReceipt.cost}</span>
                   </div>
-                  <div className="flex justify-between text-green-600">
+                  <div className="flex justify-between text-green-700 font-semibold">
                     <span>Total Paid:</span>
                     <span>₱{viewingReceipt.amountPaid || 0}</span>
                   </div>
-                  <div className="flex justify-between border-t-2 border-gray-300 pt-2 font-semibold">
-                    <span>Current Balance:</span>
+                  <div className="flex justify-between border-t-2 border-gray-300 pt-3 font-bold text-lg">
+                    <span className="text-gray-900">Current Balance:</span>
                     <span className={(viewingReceipt.remainingBalance !== undefined ? Number(viewingReceipt.remainingBalance) : Number(viewingReceipt.cost || 0)) > 0 ? 'text-red-600' : 'text-green-600'}>₱{(viewingReceipt.remainingBalance !== undefined ? Number(viewingReceipt.remainingBalance) : Number(viewingReceipt.cost || 0)).toLocaleString()}</span>
                   </div>
                 </div>
               </div>
 
               {viewingReceipt.paymentType && (
-                <div className="pt-4 border-t border-gray-200">
-                  <h3 className="mb-3">Payment Information</h3>
-                  <div className="space-y-2">
-                    <p><strong>Payment Type:</strong> {viewingReceipt.paymentType === 'full' ? 'Full Payment' : 'Installment Plan'}</p>
+                <div className="pt-4 border-t-2 border-gray-200">
+                  <h3 className="text-lg font-bold text-gray-900 mb-3">Payment Information</h3>
+                  <div className="space-y-2 bg-purple-50 p-4 rounded-lg">
+                    <p className="text-gray-900"><strong className="text-gray-700">Payment Type:</strong> {viewingReceipt.paymentType === 'full' ? 'Full Payment' : 'Installment Plan'}</p>
                     {viewingReceipt.paymentType === 'installment' && viewingReceipt.installmentPlan && (
                       <>
-                        <p><strong>Number of Installments:</strong> {viewingReceipt.installmentPlan.installments}</p>
-                        <p><strong>Per Installment:</strong> ₱{Math.round(viewingReceipt.installmentPlan.amountPerInstallment)}</p>
+                        <p className="text-gray-900"><strong className="text-gray-700">Number of Installments:</strong> {viewingReceipt.installmentPlan.installments}</p>
+                        <p className="text-gray-900"><strong className="text-gray-700">Per Installment:</strong> ₱{Math.round(viewingReceipt.installmentPlan.amountPerInstallment)}</p>
                       </>
                     )}
                   </div>
@@ -854,23 +901,23 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
               )}
 
               {viewingReceipt.notes && (
-                <div className="pt-4 border-t border-gray-200">
-                  <h3 className="mb-3">Notes</h3>
-                  <p className="text-gray-700">{viewingReceipt.notes}</p>
+                <div className="pt-4 border-t-2 border-gray-200">
+                  <h3 className="text-lg font-bold text-gray-900 mb-3">Notes</h3>
+                  <p className="text-gray-800 leading-relaxed">{viewingReceipt.notes}</p>
                 </div>
               )}
 
-              <div className="flex gap-3 justify-end pt-6 border-t border-gray-200">
+              <div className="flex gap-3 justify-end pt-6 border-t-2 border-gray-200">
                 <button
                   onClick={() => printReceipt(viewingReceipt)}
-                  className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2"
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-2 font-semibold"
                 >
                   <Printer className="w-5 h-5" />
-                  Print Resibo
+                  Print Receipt
                 </button>
                 <button
                   onClick={() => setViewingReceipt(null)}
-                  className="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50"
+                  className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors font-semibold text-gray-900"
                 >
                   Close
                 </button>
@@ -883,10 +930,10 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
       {/* Prescription Prompt Modal */}
       {showPrescriptionPrompt && lastCreatedService && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full shadow-2xl">
-            <h2 className="text-2xl font-bold mb-4">Prescription Required?</h2>
-            <p className="text-gray-700 mb-6">
-              Do you need to make a prescription for {patients.find(p => String(p.id) === String(lastCreatedService.patientId))?.name || 'this patient'}?
+          <div className="bg-white rounded-xl p-8 max-w-md w-full shadow-2xl border border-gray-200">
+            <h2 className="text-2xl font-bold mb-4 text-gray-900">Create Prescription?</h2>
+            <p className="text-gray-700 mb-8 leading-relaxed">
+              Would you like to create a prescription for <strong>{patients.find(p => String(p.id) === String(lastCreatedService.patientId))?.name || 'this patient'}</strong>?
             </p>
             <div className="flex gap-4 justify-end">
               <button
@@ -894,7 +941,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                   setShowPrescriptionPrompt(false);
                   setLastCreatedService(null);
                 }}
-                className="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50 font-semibold"
+                className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors font-semibold text-gray-900"
               >
                 No
               </button>
@@ -904,7 +951,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                   setSelectedPatient(lastCreatedService.patientId);
                   setActiveForm('prescription');
                 }}
-                className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold"
+                className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all font-semibold"
               >
                 Yes
               </button>
