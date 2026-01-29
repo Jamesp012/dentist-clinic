@@ -1,5 +1,7 @@
 -- Create database
-CREATE DATABASE IF NOT EXISTS dental_clinic;
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
+CREATE DATABASE IF NOT EXISTS dental_clinic CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE dental_clinic;
 
 -- Users table
@@ -7,7 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
   id INT PRIMARY KEY AUTO_INCREMENT,
   username VARCHAR(50) UNIQUE NOT NULL,
   password VARCHAR(255) NOT NULL,
-  fullName VARCHAR(100),
+  fullName VARCHAR(100) CHARACTER SET utf8mb4,
   email VARCHAR(100),
   phone VARCHAR(20),
   role ENUM('doctor', 'assistant', 'patient') NOT NULL,
@@ -15,100 +17,104 @@ CREATE TABLE IF NOT EXISTS users (
   isFirstLogin BOOLEAN DEFAULT TRUE,
   accountStatus ENUM('pending', 'active', 'inactive') DEFAULT 'active',
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Employees table
 CREATE TABLE IF NOT EXISTS employees (
   id INT PRIMARY KEY AUTO_INCREMENT,
   user_id INT UNIQUE,
-  name VARCHAR(100) NOT NULL,
+  name VARCHAR(100) NOT NULL CHARACTER SET utf8mb4,
   position ENUM('dentist', 'assistant_dentist', 'assistant') NOT NULL,
   phone VARCHAR(20),
   email VARCHAR(100),
-  address TEXT,
+  address TEXT CHARACTER SET utf8mb4,
   dateHired DATE,
   generatedCode VARCHAR(100) UNIQUE,
   isCodeUsed BOOLEAN DEFAULT FALSE,
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Patients table
 CREATE TABLE IF NOT EXISTS patients (
   id INT PRIMARY KEY AUTO_INCREMENT,
   user_id INT,
-  name VARCHAR(100) NOT NULL,
+  name VARCHAR(100) NOT NULL CHARACTER SET utf8mb4,
   dateOfBirth DATE,
   phone VARCHAR(20),
   email VARCHAR(100),
-  address TEXT,
+  address TEXT CHARACTER SET utf8mb4,
   sex ENUM('Male', 'Female'),
-  medicalHistory TEXT,
-  allergies TEXT,
+  medicalHistory TEXT CHARACTER SET utf8mb4,
+  allergies TEXT CHARACTER SET utf8mb4,
   lastVisit DATE,
   nextAppointment DATE,
+  totalBalance DECIMAL(10, 2) DEFAULT 0,
   has_account BOOLEAN DEFAULT FALSE,
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
-);
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Appointments table
 CREATE TABLE IF NOT EXISTS appointments (
   id INT PRIMARY KEY AUTO_INCREMENT,
   patientId INT,
-  patientName VARCHAR(100),
+  patientName VARCHAR(100) CHARACTER SET utf8mb4,
   date DATE NOT NULL,
   time TIME NOT NULL,
-  type VARCHAR(100),
-  duration INT,
+  type VARCHAR(100) CHARACTER SET utf8mb4,
   status ENUM('scheduled', 'completed', 'cancelled') DEFAULT 'scheduled',
-  notes TEXT,
+  notes TEXT CHARACTER SET utf8mb4,
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (patientId) REFERENCES patients(id) ON DELETE SET NULL
-);
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Treatment records table
 CREATE TABLE IF NOT EXISTS treatmentRecords (
   id INT PRIMARY KEY AUTO_INCREMENT,
   patientId INT,
   date DATE,
-  treatment VARCHAR(100),
+  treatment VARCHAR(100) CHARACTER SET utf8mb4,
   tooth VARCHAR(10),
-  notes TEXT,
+  notes TEXT CHARACTER SET utf8mb4,
   cost DECIMAL(10, 2),
-  dentist VARCHAR(100),
+  dentist VARCHAR(100) CHARACTER SET utf8mb4,
+  paymentType ENUM('full', 'installment') DEFAULT 'full',
+  amountPaid DECIMAL(10, 2) DEFAULT 0,
+  remainingBalance DECIMAL(10, 2) DEFAULT 0,
+  installmentPlan JSON,
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (patientId) REFERENCES patients(id) ON DELETE SET NULL
-);
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Inventory table
 CREATE TABLE IF NOT EXISTS inventory (
   id INT PRIMARY KEY AUTO_INCREMENT,
-  name VARCHAR(150) NOT NULL,
-  category VARCHAR(50),
+  name VARCHAR(150) NOT NULL CHARACTER SET utf8mb4,
+  category VARCHAR(50) CHARACTER SET utf8mb4,
   quantity INT,
   minQuantity INT,
   unit VARCHAR(20),
-  supplier VARCHAR(100),
+  supplier VARCHAR(100) CHARACTER SET utf8mb4,
   lastOrdered DATE,
   cost DECIMAL(10, 2),
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Referrals table
 CREATE TABLE IF NOT EXISTS referrals (
   id INT PRIMARY KEY AUTO_INCREMENT,
   patientId INT,
-  patientName VARCHAR(100),
-  referringDentist VARCHAR(100),
-  referredTo VARCHAR(100),
-  specialty VARCHAR(100),
-  reason TEXT,
+  patientName VARCHAR(100) CHARACTER SET utf8mb4,
+  referringDentist VARCHAR(100) CHARACTER SET utf8mb4,
+  referredTo VARCHAR(100) CHARACTER SET utf8mb4,
+  specialty VARCHAR(100) CHARACTER SET utf8mb4,
+  reason TEXT CHARACTER SET utf8mb4,
   date DATE,
   urgency ENUM('routine', 'urgent', 'emergency'),
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (patientId) REFERENCES patients(id) ON DELETE SET NULL
-);
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Photos table
 CREATE TABLE IF NOT EXISTS photos (
@@ -117,47 +123,63 @@ CREATE TABLE IF NOT EXISTS photos (
   type ENUM('before', 'after', 'xray'),
   url TEXT,
   date DATE,
-  notes TEXT,
+  notes TEXT CHARACTER SET utf8mb4,
   treatmentId INT,
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (patientId) REFERENCES patients(id) ON DELETE SET NULL
-);
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Chat messages table
 CREATE TABLE IF NOT EXISTS chatMessages (
   id INT PRIMARY KEY AUTO_INCREMENT,
   patientId INT,
   senderId INT,
-  senderName VARCHAR(100),
+  senderName VARCHAR(100) CHARACTER SET utf8mb4,
   senderRole ENUM('patient', 'assistant'),
-  message TEXT,
+  message TEXT CHARACTER SET utf8mb4,
   timestamp DATETIME,
   read BOOLEAN DEFAULT FALSE,
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (patientId) REFERENCES patients(id) ON DELETE SET NULL
-);
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Payments table
+CREATE TABLE IF NOT EXISTS payments (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  patientId INT NOT NULL,
+  treatmentRecordId INT,
+  amount DECIMAL(10, 2) NOT NULL,
+  paymentDate DATE NOT NULL,
+  paymentMethod ENUM('cash', 'card', 'check', 'bank_transfer') NOT NULL,
+  status ENUM('paid', 'pending', 'overdue') DEFAULT 'pending',
+  notes TEXT CHARACTER SET utf8mb4,
+  recordedBy VARCHAR(100) CHARACTER SET utf8mb4,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (patientId) REFERENCES patients(id) ON DELETE CASCADE,
+  FOREIGN KEY (treatmentRecordId) REFERENCES treatmentRecords(id) ON DELETE SET NULL
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Announcements table
 CREATE TABLE IF NOT EXISTS announcements (
   id INT PRIMARY KEY AUTO_INCREMENT,
-  title VARCHAR(200),
-  message TEXT,
+  title VARCHAR(200) CHARACTER SET utf8mb4,
+  message TEXT CHARACTER SET utf8mb4,
   type ENUM('promo', 'closure', 'general', 'important'),
   date DATE,
-  createdBy VARCHAR(100),
+  createdBy VARCHAR(100) CHARACTER SET utf8mb4,
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Service prices table
 CREATE TABLE IF NOT EXISTS servicePrices (
   id INT PRIMARY KEY AUTO_INCREMENT,
-  serviceName VARCHAR(150),
-  description TEXT,
+  serviceName VARCHAR(150) CHARACTER SET utf8mb4,
+  description TEXT CHARACTER SET utf8mb4,
   price DECIMAL(10, 2),
-  category VARCHAR(50),
-  duration VARCHAR(50),
+  category VARCHAR(50) CHARACTER SET utf8mb4,
+  duration VARCHAR(50) CHARACTER SET utf8mb4,
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Insert sample users
 INSERT INTO users (username, password, fullName, email, phone, role) VALUES

@@ -33,7 +33,6 @@ export type Appointment = {
   date: string;
   time: string;
   type: string;
-  duration: number;
   status: 'scheduled' | 'completed' | 'cancelled';
   notes: string;
 };

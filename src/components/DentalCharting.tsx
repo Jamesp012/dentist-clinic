@@ -721,55 +721,156 @@ export function DentalCharting({ patients, treatmentRecords, setTreatmentRecords
                 Comprehensive Condition Legend (Click any tooth to cycle through these conditions)
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                {Object.entries(toothConditionColors).map(([condition, colorClass], index) => (
-                  <motion.div
-                    key={condition}
-                    className="flex flex-col items-center gap-1 p-2 rounded-lg bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-transparent hover:border-purple-200 transition-all"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 2.2 + index * 0.03 }}
-                    whileHover={{ scale: 1.05 }}
-                  >
-                    <svg width="25" height="32" viewBox="0 0 50 70">
-                      {/* Crown */}
-                      <path
-                        d="M25 10
-                           C 18 10, 14 12, 12 16
-                           C 10 19, 9 22, 9 26
-                           C 9 28, 10 30, 12 31
-                           L 38 31
-                           C 40 30, 41 28, 41 26
-                           C 41 22, 40 19, 38 16
-                           C 36 12, 32 10, 25 10 Z"
-                        className={colorClass}
-                        strokeWidth="2"
-                        strokeLinejoin="round"
-                        strokeLinecap="round"
-                      />
-                      {/* Left root */}
-                      <path
-                        d="M18 31 L 18 34 Q 18 38, 16 43 Q 15 48, 15 53 Q 15 57, 17 60 Q 18 62, 20 63 Q 22 62, 23 60 Q 25 57, 25 53 Q 25 48, 24 43 Q 23 38, 23 34 L 23 31 Z"
-                        className={colorClass}
-                        strokeWidth="1.5"
-                        strokeLinejoin="round"
-                        strokeLinecap="round"
-                        opacity="0.9"
-                      />
-                      {/* Right root */}
-                      <path
-                        d="M32 31 L 32 34 Q 32 38, 34 43 Q 35 48, 35 53 Q 35 57, 33 60 Q 32 62, 30 63 Q 28 62, 27 60 Q 25 57, 25 53 Q 25 48, 26 43 Q 27 38, 27 34 L 27 31 Z"
-                        className={colorClass}
-                        strokeWidth="1.5"
-                        strokeLinejoin="round"
-                        strokeLinecap="round"
-                        opacity="0.9"
-                      />
-                    </svg>
-                    <span className="text-xs font-semibold text-gray-700 text-center leading-tight">
-                      {condition}
-                    </span>
-                  </motion.div>
-                ))}
+                {Object.entries(toothConditionColors).map(([condition, colorClass], index) => {
+                  // Get the color for this condition
+                  const getColorFromClass = (cls: string): string => {
+                    const colorMap: { [key: string]: string } = {
+                      'fill-white': '#ffffff',
+                      'fill-red-200': '#fecaca',
+                      'fill-blue-200': '#bfdbfe',
+                      'fill-yellow-200': '#fef08a',
+                      'fill-purple-200': '#e9d5ff',
+                      'fill-gray-300': '#d1d5db',
+                      'fill-green-200': '#dcfce7',
+                      'fill-orange-200': '#fed7aa',
+                    };
+                    const matches = cls.match(/fill-\w+-\d+/);
+                    return matches ? colorMap[matches[0]] || '#ffffff' : '#ffffff';
+                  };
+
+                  const toothColor = getColorFromClass(colorClass);
+                  const strokeColor = colorClass.includes('white') ? '#9ca3af' : 
+                                     colorClass.includes('red') ? '#ef4444' :
+                                     colorClass.includes('blue') ? '#3b82f6' :
+                                     colorClass.includes('yellow') ? '#eab308' :
+                                     colorClass.includes('purple') ? '#a855f7' :
+                                     colorClass.includes('gray') ? '#6b7280' :
+                                     colorClass.includes('green') ? '#22c55e' :
+                                     colorClass.includes('orange') ? '#f97316' : '#9ca3af';
+
+                  return (
+                    <motion.div
+                      key={condition}
+                      className="flex flex-col items-center gap-1 p-2 rounded-lg bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-transparent hover:border-purple-200 transition-all"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 2.2 + index * 0.03 }}
+                      whileHover={{ scale: 1.05 }}
+                    >
+                      <motion.svg 
+                        width="50" 
+                        height="70" 
+                        viewBox="0 0 50 80"
+                        className="drop-shadow-md"
+                      >
+                        <defs>
+                          <linearGradient id={`legendCrownGradient-${condition}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stopColor={toothColor} stopOpacity="1" />
+                            <stop offset="100%" stopColor={toothColor} stopOpacity="0.9" />
+                          </linearGradient>
+                          <linearGradient id={`legendRootGradient-${condition}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stopColor={toothColor} stopOpacity="0.95" />
+                            <stop offset="100%" stopColor={toothColor} stopOpacity="0.7" />
+                          </linearGradient>
+                          <linearGradient id={`legendToothShine-${condition}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="white" stopOpacity="0.7" />
+                            <stop offset="50%" stopColor="white" stopOpacity="0.3" />
+                            <stop offset="100%" stopColor="white" stopOpacity="0" />
+                          </linearGradient>
+                          <radialGradient id={`legendToothHighlight-${condition}`}>
+                            <stop offset="0%" stopColor="white" stopOpacity="0.9" />
+                            <stop offset="100%" stopColor="white" stopOpacity="0" />
+                          </radialGradient>
+                          <filter id={`legendShadow-${condition}`}>
+                            <feDropShadow dx="0" dy="3" stdDeviation="2.5" floodOpacity="0.4"/>
+                          </filter>
+                        </defs>
+                        
+                        {/* REALISTIC TOOTH - Exact reference image shape */}
+                        <path
+                          d="M 16 12
+                             C 14 12, 12 14, 12 16
+                             L 12 26
+                             C 12 28, 13 30, 14 31
+                             L 14 38
+                             C 14 40, 16 42, 18 42
+                             C 19 40, 20 38, 20 35
+                             C 20 38, 21 40, 22 42
+                             C 24 42, 26 40, 26 38
+                             L 26 31
+                             C 27 30, 28 28, 28 26
+                             L 28 16
+                             C 28 14, 26 12, 24 12
+                             C 22 12, 21 14, 20 16
+                             C 20 14, 19 12, 18 12
+                             C 17 12, 16 12, 16 12
+                             Z"
+                          fill={`url(#legendCrownGradient-${condition})`}
+                          stroke={strokeColor}
+                          strokeWidth="2.2"
+                          strokeLinejoin="round"
+                          strokeLinecap="round"
+                          filter={`url(#legendShadow-${condition})`}
+                        />
+                        
+                        {/* Top chewing surface line */}
+                        <path
+                          d="M 14 16 Q 20 14, 26 16"
+                          stroke={strokeColor}
+                          strokeWidth="1.2"
+                          opacity="0.4"
+                          fill="none"
+                        />
+                        
+                        {/* Tooth surface highlight */}
+                        <ellipse
+                          cx="18"
+                          cy="22"
+                          rx="3"
+                          ry="5"
+                          fill="white"
+                          opacity="0.35"
+                        />
+                        
+                        {/* Gum line */}
+                        <ellipse
+                          cx="25"
+                          cy="43"
+                          rx="16"
+                          ry="3"
+                          fill="none"
+                          stroke="#d1d5db"
+                          strokeWidth="1.5"
+                          opacity="0.6"
+                        />
+                        
+                        {/* Shine/highlight on crown for healthy teeth */}
+                        {condition === 'Healthy' && (
+                          <>
+                            <ellipse
+                              cx="18"
+                              cy="22"
+                              rx="5"
+                              ry="7"
+                              fill={`url(#legendToothShine-${condition})`}
+                              opacity="0.7"
+                            />
+                            <circle
+                              cx="16"
+                              cy="19"
+                              r="2.5"
+                              fill={`url(#legendToothHighlight-${condition})`}
+                              opacity="0.9"
+                            />
+                          </>
+                        )}
+                      </motion.svg>
+                      <span className="text-xs font-semibold text-gray-700 text-center leading-tight">
+                        {condition}
+                      </span>
+                    </motion.div>
+                  );
+                })}
               </div>
             </motion.div>
           </motion.div>

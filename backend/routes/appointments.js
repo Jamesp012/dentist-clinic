@@ -17,10 +17,10 @@ router.get('/', authMiddleware, async (req, res) => {
 // Create appointment
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { patientId, patientName, date, time, type, duration, notes } = req.body;
+    const { patientId, patientName, date, time, type, notes } = req.body;
     const [result] = await pool.query(
-      'INSERT INTO appointments (patientId, patientName, date, time, type, duration, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [patientId, patientName, date, time, type, duration, 'scheduled', notes]
+      'INSERT INTO appointments (patientId, patientName, date, time, type, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [patientId, patientName, date, time, type, 'scheduled', notes]
     );
     res.status(201).json({ 
       id: result.insertId, 
@@ -29,7 +29,6 @@ router.post('/', authMiddleware, async (req, res) => {
       date, 
       time, 
       type, 
-      duration, 
       notes,
       status: 'scheduled' 
     });
@@ -41,10 +40,10 @@ router.post('/', authMiddleware, async (req, res) => {
 // Update appointment
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
-    const { patientId, patientName, date, time, type, duration, status, notes } = req.body;
+    const { patientId, patientName, date, time, type, status, notes } = req.body;
     await pool.query(
-      'UPDATE appointments SET patientId=?, patientName=?, date=?, time=?, type=?, duration=?, status=?, notes=? WHERE id=?',
-      [patientId, patientName, date, time, type, duration, status, notes, req.params.id]
+      'UPDATE appointments SET patientId=?, patientName=?, date=?, time=?, type=?, status=?, notes=? WHERE id=?',
+      [patientId, patientName, date, time, type, status, notes, req.params.id]
     );
     res.json({ id: req.params.id, ...req.body });
   } catch (error) {

@@ -35,7 +35,6 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
         date: formData.get('date') as string,
         time: formData.get('time') as string,
         type: formData.get('type') as string,
-        duration: parseInt(formData.get('duration') as string),
         notes: formData.get('notes') as string,
       };
 
@@ -278,7 +277,7 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                         <div className="flex justify-between items-start mb-2">
                           <div>
                             <p className="font-medium">{appointment.patientName}</p>
-                            <p className="text-sm">{appointment.type} ({appointment.duration} min)</p>
+                            <p className="text-sm">{appointment.type}</p>
                           </div>
                           <div className="flex gap-2">
                             {appointment.status === 'scheduled' && (
@@ -330,7 +329,6 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                   <th className="px-6 py-3 text-left text-sm text-gray-600">Date & Time</th>
                   <th className="px-6 py-3 text-left text-sm text-gray-600">Patient</th>
                   <th className="px-6 py-3 text-left text-sm text-gray-600">Type</th>
-                  <th className="px-6 py-3 text-left text-sm text-gray-600">Duration</th>
                   <th className="px-6 py-3 text-left text-sm text-gray-600">Status</th>
                   <th className="px-6 py-3 text-left text-sm text-gray-600">Actions</th>
                 </tr>
@@ -347,7 +345,6 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                       </td>
                       <td className="px-6 py-4">{apt.patientName}</td>
                       <td className="px-6 py-4">{apt.type}</td>
-                      <td className="px-6 py-4">{apt.duration} min</td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-1 rounded text-xs ${statusColors[apt.status]}`}>
                           {apt.status}
@@ -377,7 +374,7 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
                       No appointments found for this period
                     </td>
                   </tr>
@@ -457,21 +454,7 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm mb-1">Duration (minutes) *</label>
-                  <select
-                    name="duration"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="30">30 minutes</option>
-                    <option value="60">60 minutes</option>
-                    <option value="90">90 minutes</option>
-                    <option value="120">120 minutes</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm mb-1">Notes</label>
+                  <label className="block text-sm mb-1">Notes</label>
                 <textarea
                   name="notes"
                   rows={3}
