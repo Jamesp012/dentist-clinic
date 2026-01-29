@@ -131,6 +131,20 @@ export type Service = {
   price?: string;
 };
 
+/**
+ * Helper function to normalize appointment dates to YYYY-MM-DD format
+ * This prevents timezone issues when displaying appointments
+ */
+const getDateString = (date: string | Date): string => {
+  if (typeof date === 'string') {
+    return date.includes('T') ? date.split('T')[0] : date;
+  }
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function App() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [showLandingPage, setShowLandingPage] = useState(true);
@@ -145,7 +159,13 @@ export default function App() {
   const [appointments, setAppointments] = useState<Appointment[]>(() => {
     try {
       const saved = localStorage.getItem('appointments');
-      return saved ? JSON.parse(saved) : [];
+      if (!saved) return [];
+      const parsed = JSON.parse(saved);
+      // Normalize all appointment dates to YYYY-MM-DD format to prevent timezone issues
+      return parsed.map((apt: any) => ({
+        ...apt,
+        date: getDateString(apt.date)
+      }));
     } catch {
       return [];
     }
@@ -215,12 +235,27 @@ export default function App() {
     }
   });
 
+  // Create a wrapper for setAppointments that normalizes dates
+  const setAppointmentsWithNormalization = (appointmentsOrUpdater: Appointment[] | ((prev: Appointment[]) => Appointment[])) => {
+    setAppointments(prev => {
+      const newAppointments = typeof appointmentsOrUpdater === 'function' 
+        ? appointmentsOrUpdater(prev) 
+        : appointmentsOrUpdater;
+      
+      // Normalize all appointment dates
+      return newAppointments.map(apt => ({
+        ...apt,
+        date: getDateString(apt.date)
+      }));
+    });
+  };
+
   // Initialize data sync hook for real-time synchronization
   const { 
     refreshAll
   } = useDataSync({
     setPatients,
-    setAppointments,
+    setAppointments: setAppointmentsWithNormalization,
     setTreatmentRecords,
     setInventory,
     setReferrals,
@@ -402,7 +437,7 @@ export default function App() {
           patients={patients}
           setPatients={setPatients}
           appointments={appointments}
-          setAppointments={setAppointments}
+          setAppointments={setAppointmentsWithNormalization}
           inventory={inventory}
           setInventory={setInventory}
           treatmentRecords={treatmentRecords}
@@ -448,7 +483,7 @@ export default function App() {
           patients={patients}
           setPatients={setPatients}
           appointments={appointments}
-          setAppointments={setAppointments}
+          setAppointments={setAppointmentsWithNormalization}
           inventory={inventory}
           setInventory={setInventory}
           treatmentRecords={treatmentRecords}
@@ -536,7 +571,7 @@ export default function App() {
         <PatientPortal
           patient={patient}
           appointments={appointments}
-          setAppointments={setAppointments}
+          setAppointments={setAppointmentsWithNormalization}
           treatmentRecords={patientTreatments}
           onUpdatePatient={(updatedPatient) => {
             setPatients(patients.map(p => String(p.id) === String(updatedPatient.id) ? updatedPatient : p));

@@ -1,8 +1,27 @@
 import { useState } from 'react';
 import { Appointment, Patient, TreatmentRecord } from '../App';
-import { Calendar, Clock, Plus, X, Filter } from 'lucide-react';
+import { Calendar, Plus, X, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 import { appointmentAPI } from '../api';
+
+// Helper function to extract date string without timezone conversion
+const getDateString = (date: string | Date): string => {
+  if (typeof date === 'string') {
+    // If it's a string, extract just the date part (YYYY-MM-DD)
+    return date.includes('T') ? date.split('T')[0] : date;
+  }
+  // If it's a Date object, extract the local date components
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getLocalDate = (date: string | Date) => {
+  const normalized = getDateString(date);
+  const [year, month, day] = normalized.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
 
 type AppointmentSchedulerProps = {
   appointments: Appointment[];
@@ -21,10 +40,9 @@ const getPatientRecordStatus = (patientId: string, treatmentRecords?: TreatmentR
 
 export function AppointmentScheduler({ appointments, setAppointments, patients, treatmentRecords, onOpenServiceForm, onDataChanged }: AppointmentSchedulerProps) {
   const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(getDateString(new Date()));
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [isLoading, setIsLoading] = useState(false);
   const [closedSchedules, setClosedSchedules] = useState<Set<string>>(new Set(
     JSON.parse(localStorage.getItem('closedSchedules') || '[]')
   ));
@@ -50,7 +68,7 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
 
   const getBookingCountForPeriod = (date: string, period: 'am' | 'pm') => {
     return appointments.filter(apt => {
-      const aptDate = String(apt.date).split('T')[0];
+      const aptDate = getDateString(apt.date);
       if (aptDate !== date || apt.status === 'cancelled') return false;
       
       const [hours] = apt.time.split(':').map(Number);
@@ -60,7 +78,6 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
 
   const handleAddAppointment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true);
     try {
       const formData = new FormData(e.currentTarget);
       const patientId = formData.get('patientId') as string;
@@ -83,7 +100,7 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
         status: (createdAppointment as any).status || 'scheduled'
       };
 
-      setAppointments(prev => [...prev, appointmentWithStatus as Appointment]);
+      setAppointments([...appointments, appointmentWithStatus as Appointment]);
       setSelectedDate(newAppointment.date);
       setShowAddModal(false);
       toast.success('Appointment scheduled successfully!');
@@ -94,8 +111,6 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
     } catch (error) {
       console.error('Failed to add appointment:', error);
       toast.error('Failed to schedule appointment');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -155,55 +170,27 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
       return true;
     }
 
-    // Normalize dates for comparison (YYYY-MM-DD)
-    const normalizeDate = (dateVal: any) => {
-      if (!dateVal) return '';
-      const d = new Date(dateVal);
-      if (isNaN(d.getTime())) return String(dateVal).split('T')[0];
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
-
-    const appointmentDate = normalizeDate(apt.date);
-    const targetDate = normalizeDate(selectedDate);
+    const appointmentDate = getDateString(apt.date);
+    const targetDate = selectedDate; // selectedDate is already in YYYY-MM-DD format
 
     if (viewMode === 'day') {
       return appointmentDate === targetDate;
     }
     // For week view, show appointments within 7 days from selected date
-    const aptDate = new Date(appointmentDate);
-    const startDate = new Date(targetDate);
-    const endDate = new Date(targetDate);
+    const aptDate = getLocalDate(appointmentDate);
+    const startDate = getLocalDate(targetDate);
+    const endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + 6);
     return aptDate >= startDate && aptDate <= endDate;
   });
 
   const sortedAppointments = filteredAppointments.sort((a, b) => {
-    const dateA = String(a.date).split('T')[0];
-    const dateB = String(b.date).split('T')[0];
+    const dateA = getDateString(a.date);
+    const dateB = getDateString(b.date);
     const dateCompare = dateA.localeCompare(dateB);
     if (dateCompare !== 0) return dateCompare;
     return a.time.localeCompare(b.time);
   });
-
-  const timeSlots = [
-    '08:00 AM', '08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
-    '12:00 PM', '12:30 PM', '01:00 PM', '01:30 PM', '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM',
-    '04:00 PM', '04:30 PM', '05:00 PM', '05:30 PM', '06:00 PM', '06:30 PM', '07:00 PM', '07:30 PM', '08:00 PM'
-  ];
-
-  const getAppointmentForTimeSlot = (time: string) => {
-    return filteredAppointments.find(apt => {
-      if (!apt.time) return false;
-      // Compare HH:mm parts only. Supports both "08:00" and "08:00:00"
-      const aptTimeParts = String(apt.time).split(':');
-      if (aptTimeParts.length < 2) return false;
-      const aptTimeShort = `${aptTimeParts[0].padStart(2, '0')}:${aptTimeParts[1].padStart(2, '0')}`;
-      return aptTimeShort === time;
-    });
-  };
 
   const statusColors = {
     scheduled: 'bg-blue-100 border-blue-500 text-blue-700',
@@ -283,7 +270,7 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
         </div>
       </div>
 
-      {/* Day View - Time Slots Grid */}
+      {/* Day View - Queue System */}
       {viewMode === 'day' && (
         <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
           <div className="p-6 bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200">
@@ -299,72 +286,179 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
               })()}
             </h2>
           </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {timeSlots.map((time) => {
-                const appointment = getAppointmentForTimeSlot(time);
-                return (
-                  <div 
-                    key={time} 
-                    className={`rounded-lg border-2 p-4 transition-all ${
-                      appointment
-                        ? `border-blue-300 bg-gradient-to-br ${statusColors[appointment.status].includes('green') ? 'from-green-50 to-green-100 border-green-400' : statusColors[appointment.status].includes('red') ? 'from-red-50 to-red-100 border-red-400' : 'from-blue-50 to-blue-100 border-blue-400'}`
-                        : 'border-gray-300 bg-gray-50 hover:bg-gray-100'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-200">
-                      <Clock className="w-5 h-5 text-gray-600" />
-                      <span className="font-bold text-lg text-gray-900">{time}</span>
-                    </div>
-                    
-                    {appointment ? (
-                      <div>
-                        <div className="mb-3">
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className="font-bold text-gray-900">{appointment.patientName}</p>
-                            {getPatientRecordStatus(String(appointment.patientId), treatmentRecords) === 'no-record' && (
-                              <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs font-semibold">No Record</span>
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-600 font-medium">{appointment.type}</p>
-                          {appointment.notes && (
-                            <p className="text-xs text-gray-600 mt-2 line-clamp-2">{appointment.notes}</p>
-                          )}
-                        </div>
-                        
-                        <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-200">
-                          {appointment.status === 'scheduled' && (
-                            <>
-                              <button
-                                onClick={() => handleDoneClick(appointment)}
-                                className="text-xs px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-medium"
-                              >
-                                Done
-                              </button>
-                              <button
-                                onClick={() => updateAppointmentStatus(appointment.id, 'cancelled')}
-                                className="text-xs px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors font-medium"
-                              >
-                                Cancel
-                              </button>
-                            </>
-                          )}
-                          <button
-                            onClick={() => deleteAppointment(appointment.id)}
-                            className="text-xs px-3 py-1.5 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors font-medium"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center py-8">
-                        <p className="text-gray-400 text-sm font-medium">Available</p>
-                      </div>
-                    )}
+          <div className="p-6 space-y-8">
+            {/* MORNING QUEUE */}
+            <div className={`rounded-lg border-2 transition-all ${isScheduleClosed(selectedDate, 'am') ? 'border-red-300 bg-red-50' : 'border-emerald-300 bg-emerald-50'}`}>
+              <div className="p-4 bg-gradient-to-r from-emerald-100 to-teal-100 border-b-2 border-emerald-300 flex items-center justify-between rounded-t">
+                <div>
+                  <h3 className="text-lg font-bold text-emerald-900">Morning Queue</h3>
+                  <p className="text-sm text-emerald-700">8:00 AM - 12:00 PM</p>
+                </div>
+                <div className="text-right">
+                  <div className="text-4xl font-bold text-emerald-900">{getBookingCountForPeriod(selectedDate, 'am')}</div>
+                  <p className="text-xs text-emerald-700">in queue</p>
+                </div>
+              </div>
+              <div className="p-4">
+                {isScheduleClosed(selectedDate, 'am') && (
+                  <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-2 rounded mb-4 text-sm font-semibold">
+                    ⛔ Schedule Closed
                   </div>
-                );
-              })}
+                )}
+                
+                {/* Queue List */}
+                <div className="space-y-2 mb-4 max-h-96 overflow-y-auto">
+                  {appointments.filter(apt => {
+                    const aptDate = getDateString(apt.date);
+                    if (aptDate !== selectedDate || apt.status === 'cancelled') return false;
+                    const [hours] = (apt.time || '09:00').split(':').map(Number);
+                    return hours < 12;
+                  }).map((apt, index) => (
+                    <div key={apt.id} className="flex items-start gap-3 p-3 bg-white rounded-lg border border-emerald-200">
+                      <div className="flex-shrink-0 w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                        {index + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-gray-900">{apt.patientName}</p>
+                          {getPatientRecordStatus(String(apt.patientId), treatmentRecords) === 'no-record' && (
+                            <span className="px-1.5 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs font-semibold">No Record</span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600">{apt.type}</p>
+                        {apt.notes && <p className="text-xs text-gray-500 mt-1">{apt.notes}</p>}
+                      </div>
+                      <div className="flex-shrink-0 flex gap-1">
+                        {apt.status === 'scheduled' && (
+                          <>
+                            <button
+                              onClick={() => handleDoneClick(apt)}
+                              className="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors font-medium"
+                            >
+                              Done
+                            </button>
+                            <button
+                              onClick={() => updateAppointmentStatus(apt.id, 'cancelled')}
+                              className="px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors font-medium"
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        )}
+                        <button
+                          onClick={() => deleteAppointment(apt.id)}
+                          className="px-2 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-700 transition-colors font-medium"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {getBookingCountForPeriod(selectedDate, 'am') === 0 && (
+                    <div className="text-center py-8 text-gray-400">
+                      <p className="text-sm">No appointments in queue</p>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => toggleScheduleClosed(selectedDate, 'am')}
+                  className={`w-full py-2 rounded font-semibold transition-colors ${
+                    isScheduleClosed(selectedDate, 'am')
+                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                      : 'bg-red-600 hover:bg-red-700 text-white'
+                  }`}
+                >
+                  {isScheduleClosed(selectedDate, 'am') ? '✓ Reopen Morning Schedule' : '✕ Close Morning Schedule'}
+                </button>
+              </div>
+            </div>
+
+            {/* AFTERNOON QUEUE */}
+            <div className={`rounded-lg border-2 transition-all ${isScheduleClosed(selectedDate, 'pm') ? 'border-red-300 bg-red-50' : 'border-orange-300 bg-orange-50'}`}>
+              <div className="p-4 bg-gradient-to-r from-orange-100 to-amber-100 border-b-2 border-orange-300 flex items-center justify-between rounded-t">
+                <div>
+                  <h3 className="text-lg font-bold text-orange-900">Afternoon Queue</h3>
+                  <p className="text-sm text-orange-700">12:30 PM - 8:00 PM</p>
+                </div>
+                <div className="text-right">
+                  <div className="text-4xl font-bold text-orange-900">{getBookingCountForPeriod(selectedDate, 'pm')}</div>
+                  <p className="text-xs text-orange-700">in queue</p>
+                </div>
+              </div>
+              <div className="p-4">
+                {isScheduleClosed(selectedDate, 'pm') && (
+                  <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-2 rounded mb-4 text-sm font-semibold">
+                    ⛔ Schedule Closed
+                  </div>
+                )}
+                
+                {/* Queue List */}
+                <div className="space-y-2 mb-4 max-h-96 overflow-y-auto">
+                  {appointments.filter(apt => {
+                    const aptDate = getDateString(apt.date);
+                    if (aptDate !== selectedDate || apt.status === 'cancelled') return false;
+                    const [hours] = (apt.time || '09:00').split(':').map(Number);
+                    return hours >= 12;
+                  }).map((apt, index) => (
+                    <div key={apt.id} className="flex items-start gap-3 p-3 bg-white rounded-lg border border-orange-200">
+                      <div className="flex-shrink-0 w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                        {index + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-gray-900">{apt.patientName}</p>
+                          {getPatientRecordStatus(String(apt.patientId), treatmentRecords) === 'no-record' && (
+                            <span className="px-1.5 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs font-semibold">No Record</span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600">{apt.type}</p>
+                        {apt.notes && <p className="text-xs text-gray-500 mt-1">{apt.notes}</p>}
+                      </div>
+                      <div className="flex-shrink-0 flex gap-1">
+                        {apt.status === 'scheduled' && (
+                          <>
+                            <button
+                              onClick={() => handleDoneClick(apt)}
+                              className="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors font-medium"
+                            >
+                              Done
+                            </button>
+                            <button
+                              onClick={() => updateAppointmentStatus(apt.id, 'cancelled')}
+                              className="px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors font-medium"
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        )}
+                        <button
+                          onClick={() => deleteAppointment(apt.id)}
+                          className="px-2 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-700 transition-colors font-medium"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {getBookingCountForPeriod(selectedDate, 'pm') === 0 && (
+                    <div className="text-center py-8 text-gray-400">
+                      <p className="text-sm">No appointments in queue</p>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => toggleScheduleClosed(selectedDate, 'pm')}
+                  className={`w-full py-2 rounded font-semibold transition-colors ${
+                    isScheduleClosed(selectedDate, 'pm')
+                      ? 'bg-orange-600 hover:bg-orange-700 text-white'
+                      : 'bg-red-600 hover:bg-red-700 text-white'
+                  }`}
+                >
+                  {isScheduleClosed(selectedDate, 'pm') ? '✓ Reopen Afternoon Schedule' : '✕ Close Afternoon Schedule'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -390,7 +484,7 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                     <tr key={apt.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
                         <div>
-                          <p>{String(apt.date).split('T')[0]}</p>
+                          <p>{getDateString(apt.date)}</p>
                           <p className="text-sm text-gray-600">{String(apt.time).substring(0, 5)}</p>
                         </div>
                       </td>

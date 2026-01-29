@@ -3,6 +3,23 @@ import { Patient, Appointment, Referral } from '../App';
 import { Bell, X, AlertCircle, Calendar, FileText, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
+const getDateString = (date: string | Date): string => {
+  if (typeof date === 'string') {
+    return date.includes('T') ? date.split('T')[0] : date;
+  }
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getLocalDate = (date: string | Date) => {
+  const normalized = getDateString(date);
+  if (!normalized) return new Date(NaN);
+  const [year, month, day] = normalized.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
 export type Notification = {
   id: string;
   type: 'appointment' | 'referral';
@@ -29,16 +46,14 @@ export function Notifications({ patients, appointments, referrals, currentPatien
   // Generate notifications based on appointments and referrals
   useEffect(() => {
     const generatedNotifications: Notification[] = [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = getLocalDate(new Date());
 
     // Appointment reminders (2 days before)
     appointments.forEach(appointment => {
       // Only show for current patient in patient portal, or all in staff view
       if (currentPatientId && appointment.patientId !== currentPatientId) return;
 
-      const appointmentDate = new Date(appointment.date);
-      appointmentDate.setHours(0, 0, 0, 0);
+      const appointmentDate = getLocalDate(appointment.date);
       
       const twoDaysBefore = new Date(appointmentDate);
       twoDaysBefore.setDate(twoDaysBefore.getDate() - 2);
@@ -53,7 +68,7 @@ export function Notifications({ patients, appointments, referrals, currentPatien
         } else if (daysUntil === 1) {
           message = `Your ${appointment.type} appointment is tomorrow at ${appointment.time}`;
         } else {
-          message = `Your ${appointment.type} appointment is in ${daysUntil} days on ${new Date(appointment.date).toLocaleDateString()} at ${appointment.time}`;
+          message = `Your ${appointment.type} appointment is in ${daysUntil} days on ${appointmentDate.toLocaleDateString()} at ${appointment.time}`;
         }
 
         generatedNotifications.push({

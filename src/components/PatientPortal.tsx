@@ -6,6 +6,26 @@ import { motion, AnimatePresence } from 'motion/react';
 import { handlePhoneInput, formatPhoneNumber } from '../utils/phoneValidation';
 import { appointmentAPI } from '../api';
 
+// Helper function to extract date string without timezone conversion
+const getDateString = (date: string | Date): string => {
+  if (typeof date === 'string') {
+    // If it's a string, extract just the date part (YYYY-MM-DD)
+    return date.includes('T') ? date.split('T')[0] : date;
+  }
+  // If it's a Date object, extract local date parts
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getLocalDate = (date: string | Date) => {
+  const normalized = getDateString(date);
+  if (!normalized) return new Date(NaN);
+  const [year, month, day] = normalized.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
 type PatientPortalProps = {
   patient: Patient;
   appointments: Appointment[];
@@ -53,6 +73,10 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
   const [appointmentType, setAppointmentType] = useState('');
   const [appointmentNotes, setAppointmentNotes] = useState('');
   const [isBookingAppointment, setIsBookingAppointment] = useState(false);
+  const [selectedSchedulePeriod, setSelectedSchedulePeriod] = useState<'am' | 'pm' | null>(null);
+  const [closedSchedules, setClosedSchedules] = useState<Set<string>>(new Set(
+    JSON.parse(localStorage.getItem('closedSchedules') || '[]')
+  ));
 
   const checkUsernameAvailability = async (username: string) => {
     if (username === (patient.username || '')) {
@@ -187,17 +211,21 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
     { id: 'announcements', label: 'Announcements', icon: Megaphone, color: 'from-cyan-600 to-teal-500' },
   ] as const;
 
-  const upcomingAppointments = patientAppointments.filter(
-    apt => apt.status === 'scheduled' && new Date(apt.date) >= new Date()
-  );
+  const todayString = getDateString(new Date());
 
-  const pastAppointments = patientAppointments.filter(
-    apt => apt.status === 'completed' || new Date(apt.date) < new Date()
-  );
+  const upcomingAppointments = patientAppointments.filter(apt => {
+    if (apt.status !== 'scheduled') return false;
+    return getDateString(apt.date) >= todayString;
+  });
+
+  const pastAppointments = patientAppointments.filter(apt => {
+    if (apt.status === 'completed') return true;
+    return getDateString(apt.date) < todayString;
+  });
 
   const calculateAge = (dob: string) => {
-    const birthDate = new Date(dob);
-    const today = new Date();
+    const birthDate = getLocalDate(dob);
+    const today = getLocalDate(new Date());
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
@@ -247,6 +275,22 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
     }
   };
 
+  const getScheduleKey = (date: string, period: 'am' | 'pm') => `${date}-${period}`;
+
+  const isScheduleClosed = (date: string, period: 'am' | 'pm') => {
+    return closedSchedules.has(getScheduleKey(date, period));
+  };
+
+  const getBookingCountForPeriod = (date: string, period: 'am' | 'pm') => {
+    return appointments.filter(apt => {
+      const aptDate = getDateString(apt.date);
+      if (aptDate !== date || apt.status === 'cancelled') return false;
+      
+      const [hours] = (apt.time || '09:00').split(':').map(Number);
+      return period === 'am' ? hours < 12 : hours >= 12;
+    }).length;
+  };
+
   const handlePhotoUpload = () => {
     // Simulate photo upload
     const newPhoto: PhotoUpload = {
@@ -263,19 +307,36 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
   };
 
   const handleBookAppointment = async () => {
-    if (!appointmentDate || !appointmentTime || !appointmentType) {
+    if (!appointmentDate || !appointmentType) {
       toast.error('Please fill in all appointment details');
+      return;
+    }
+
+    if (!selectedSchedulePeriod) {
+      toast.error('Please select a queue period (AM or PM)');
+      return;
+    }
+
+    // Check if schedule is closed
+    if (isScheduleClosed(appointmentDate, selectedSchedulePeriod)) {
+      toast.error(`The ${selectedSchedulePeriod.toUpperCase()} schedule is closed for this date`);
       return;
     }
 
     setIsBookingAppointment(true);
     
+    // Normalize the appointment date to ensure consistent YYYY-MM-DD format
+    const normalizedDate = getDateString(appointmentDate);
+    
+    // For queue system, use a default time based on the period (24-hour format)
+    const defaultTime = selectedSchedulePeriod === 'am' ? '09:00' : '14:00';
+    
     const newAppointment: Appointment = {
       id: Date.now().toString(),
       patientId: patient.id,
       patientName: patient.name,
-      date: appointmentDate,
-      time: appointmentTime,
+      date: normalizedDate,
+      time: defaultTime,
       type: appointmentType,
       duration: 60,
       status: 'scheduled',
@@ -286,14 +347,20 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
       // Save appointment to API
       const createdAppointment = await appointmentAPI.create(newAppointment);
       
-      // Update local state with the created appointment (or use the one we created if API just returns success)
-      setAppointments([...appointments, createdAppointment as Appointment || newAppointment]);
+      // Ensure the appointment date is normalized before adding to state
+      const appointmentToAdd = createdAppointment as Appointment || newAppointment;
+      if (appointmentToAdd.date) {
+        appointmentToAdd.date = getDateString(appointmentToAdd.date);
+      }
+      
+      // Update local state with the created appointment
+      setAppointments([...appointments, appointmentToAdd]);
       
       setAppointmentDate('');
-      setAppointmentTime('');
       setAppointmentType('');
       setAppointmentNotes('');
-      toast.success('Appointment request submitted! The clinic will confirm your appointment soon.');
+      setSelectedSchedulePeriod(null);
+      toast.success('Successfully joined the queue! Please arrive at your selected time.');
       
       // Sync data across all users
       if (onDataChanged) {
@@ -301,7 +368,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
       }
     } catch (error) {
       console.error('Failed to book appointment:', error);
-      toast.error('Failed to book appointment. Please try again.');
+      toast.error('Failed to join queue. Please try again.');
     } finally {
       setIsBookingAppointment(false);
     }
@@ -511,7 +578,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                   </div>
                   <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
                     <p className="text-sm text-gray-600 mb-1">Date of Birth</p>
-                    <p className="font-medium">{new Date(patient.dateOfBirth).toLocaleDateString()}</p>
+                    <p className="font-medium">{patient.dateOfBirth ? getLocalDate(patient.dateOfBirth).toLocaleDateString() : '—'}</p>
                   </div>
                   <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
                     <p className="text-sm text-gray-600 mb-1">Phone</p>
@@ -608,42 +675,71 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                     <Plus className="w-6 h-6 text-blue-600" />
                     Book New Appointment
                   </h2>
-                  <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="space-y-4">
+                    {/* Date Selection */}
                     <div>
-                      <label className="text-sm text-gray-600 mb-1 block">Appointment Date</label>
+                      <label className="text-sm text-gray-600 mb-1 block font-semibold">Appointment Date</label>
                       <input
                         type="date"
                         value={appointmentDate}
-                        onChange={(e) => setAppointmentDate(e.target.value)}
+                        onChange={(e) => {
+                          setAppointmentDate(e.target.value);
+                          setSelectedSchedulePeriod(null);
+                        }}
                         className="w-full px-3 py-2 border border-purple-300 rounded-lg"
-                        min={new Date().toISOString().split('T')[0]}
+                        min={getDateString(new Date())}
                       />
                     </div>
+
+                    {/* Schedule Period Selection (AM/PM Queue) */}
+                    {appointmentDate && (
+                      <div>
+                        <label className="text-sm text-gray-600 mb-2 block font-semibold">Select Queue</label>
+                        <div className="grid grid-cols-2 gap-3">
+                          {/* AM Schedule */}
+                          <button
+                            onClick={() => setSelectedSchedulePeriod('am')}
+                            disabled={isScheduleClosed(appointmentDate, 'am')}
+                            className={`p-4 rounded-lg border-2 transition-all text-left ${
+                              selectedSchedulePeriod === 'am'
+                                ? 'border-emerald-500 bg-emerald-50'
+                                : 'border-gray-300 bg-gray-50 hover:border-emerald-400'
+                            } ${isScheduleClosed(appointmentDate, 'am') ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          >
+                            <p className="font-semibold text-gray-900">Morning</p>
+                            <p className="text-xs text-gray-600 mb-2">8:00 AM - 12:00 PM</p>
+                            <p className="text-lg font-bold text-emerald-600">{getBookingCountForPeriod(appointmentDate, 'am')}</p>
+                            <p className="text-xs text-gray-600">in queue</p>
+                            {isScheduleClosed(appointmentDate, 'am') && (
+                              <p className="text-xs text-red-600 font-semibold mt-2">⛔ Closed</p>
+                            )}
+                          </button>
+
+                          {/* PM Schedule */}
+                          <button
+                            onClick={() => setSelectedSchedulePeriod('pm')}
+                            disabled={isScheduleClosed(appointmentDate, 'pm')}
+                            className={`p-4 rounded-lg border-2 transition-all text-left ${
+                              selectedSchedulePeriod === 'pm'
+                                ? 'border-orange-500 bg-orange-50'
+                                : 'border-gray-300 bg-gray-50 hover:border-orange-400'
+                            } ${isScheduleClosed(appointmentDate, 'pm') ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          >
+                            <p className="font-semibold text-gray-900">Afternoon</p>
+                            <p className="text-xs text-gray-600 mb-2">12:30 PM - 8:00 PM</p>
+                            <p className="text-lg font-bold text-orange-600">{getBookingCountForPeriod(appointmentDate, 'pm')}</p>
+                            <p className="text-xs text-gray-600">in queue</p>
+                            {isScheduleClosed(appointmentDate, 'pm') && (
+                              <p className="text-xs text-red-600 font-semibold mt-2">⛔ Closed</p>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Service Type */}
                     <div>
-                      <label className="text-sm text-gray-600 mb-1 block">Preferred Time</label>
-                      <select
-                        value={appointmentTime}
-                        onChange={(e) => setAppointmentTime(e.target.value)}
-                        className="w-full px-3 py-2 border border-purple-300 rounded-lg"
-                      >
-                        <option value="">Select time...</option>
-                        {['09:00 AM', '10:00 AM', '11:00 AM', '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM'].map(time => {
-                          const isBooked = appointments.some(apt => 
-                            String(apt.date) === String(appointmentDate) && 
-                            apt.time === time && 
-                            String(apt.patientId) !== String(patient.id) &&
-                            apt.status !== 'cancelled'
-                          );
-                          return (
-                            <option key={time} value={time} disabled={isBooked}>
-                              {time} {isBooked ? '(Booked)' : ''}
-                            </option>
-                          );
-                        })}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-sm text-gray-600 mb-1 block">Service Type</label>
+                      <label className="text-sm text-gray-600 mb-1 block font-semibold">Service Type</label>
                       <select
                         value={appointmentType}
                         onChange={(e) => setAppointmentType(e.target.value)}
@@ -659,28 +755,31 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                         <option value="Consultation">Consultation</option>
                       </select>
                     </div>
+
+                    {/* Notes */}
                     <div>
-                      <label className="text-sm text-gray-600 mb-1 block">Notes (Optional)</label>
-                      <input
-                        type="text"
+                      <label className="text-sm text-gray-600 mb-1 block font-semibold">Notes (Optional)</label>
+                      <textarea
                         value={appointmentNotes}
                         onChange={(e) => setAppointmentNotes(e.target.value)}
                         placeholder="Any special requests..."
                         className="w-full px-3 py-2 border border-purple-300 rounded-lg"
+                        rows={3}
                       />
                     </div>
                   </div>
+
                   <button
                     onClick={handleBookAppointment}
-                    disabled={isBookingAppointment}
-                    className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 font-medium"
+                    disabled={isBookingAppointment || !selectedSchedulePeriod}
+                    className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 font-medium mt-4"
                   >
                     <Calendar className="w-5 h-5" />
-                    {isBookingAppointment ? 'Booking...' : 'Request Appointment'}
+                    {isBookingAppointment ? 'Booking...' : 'Join Queue'}
                   </button>
                   <p className="text-sm text-gray-600 mt-3 text-center">
                     <Info className="w-4 h-4 inline-block mr-1" />
-                    Your appointment request will be reviewed by our staff and you'll receive a confirmation.
+                    Join the queue for your preferred time period. The clinic will serve you on a first-come, first-served basis.
                   </p>
                 </div>
 
@@ -697,7 +796,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                               <p className="text-lg mb-1">{apt.type}</p>
                               <div className="flex items-center gap-2 text-sm text-gray-600">
                                 <Calendar className="w-4 h-4" />
-                                <span>{new Date(apt.date).toLocaleDateString()}</span>
+                                <span>{getLocalDate(apt.date).toLocaleDateString()}</span>
                                 <Clock className="w-4 h-4 ml-2" />
                                 <span>{apt.time}</span>
                               </div>
@@ -728,7 +827,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                               <p className="text-lg mb-1">{apt.type}</p>
                               <div className="flex items-center gap-2 text-sm text-gray-600">
                                 <Calendar className="w-4 h-4" />
-                                <span>{new Date(apt.date).toLocaleDateString()}</span>
+                                <span>{getLocalDate(apt.date).toLocaleDateString()}</span>
                                 <Clock className="w-4 h-4 ml-2" />
                                 <span>{apt.time}</span>
                               </div>
@@ -765,7 +864,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                           </div>
                           <div className="text-right">
                             <p className="text-sm text-gray-600 mb-1">
-                              {new Date(record.date).toLocaleDateString()}
+                              {record.date ? getLocalDate(record.date).toLocaleDateString() : '—'}
                             </p>
                             <p className="text-lg">₱{record.cost.toFixed(2)}</p>
                           </div>
@@ -812,7 +911,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                         <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all rounded-lg flex items-center justify-center">
                           <div className="text-white opacity-0 group-hover:opacity-100 transition-opacity text-center">
                             <p className="font-semibold capitalize">{photo.type}</p>
-                            <p className="text-sm">{new Date(photo.date).toLocaleDateString()}</p>
+                            <p className="text-sm">{photo.date ? getLocalDate(photo.date).toLocaleDateString() : '—'}</p>
                           </div>
                         </div>
                         <div className="absolute top-2 right-2 px-2 py-1 bg-blue-600 text-white text-xs rounded capitalize">
@@ -849,7 +948,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                       <CreditCard className="w-8 h-8 text-red-600" />
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600">As of {new Date().toLocaleDateString()}</p>
+                  <p className="text-sm text-gray-600">As of {getLocalDate(new Date()).toLocaleDateString()}</p>
                   {currentBalance > 0 && (
                     <div className="mt-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg flex items-start gap-2">
                       <AlertCircle className="w-5 h-5 text-yellow-700 flex-shrink-0 mt-0.5" />
@@ -881,7 +980,11 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                   <div className="space-y-2">
                     {payments
                       .filter(p => String(p.patientId) === String(patient.id))
-                      .sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime())
+                      .sort((a, b) => {
+                        const dateB = b.paymentDate ? getLocalDate(b.paymentDate).getTime() : 0;
+                        const dateA = a.paymentDate ? getLocalDate(a.paymentDate).getTime() : 0;
+                        return dateB - dateA;
+                      })
                       .slice(0, 10)
                       .map(payment => (
                         <div key={payment.id} className="p-4 bg-white rounded-lg border border-gray-100 flex justify-between items-center shadow-sm">
@@ -891,7 +994,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                             </div>
                             <div>
                               <p className="font-medium text-gray-900">Payment Received</p>
-                              <p className="text-xs text-gray-500">{new Date(payment.paymentDate).toLocaleDateString()}</p>
+                              <p className="text-xs text-gray-500">{payment.paymentDate ? getLocalDate(payment.paymentDate).toLocaleDateString() : '—'}</p>
                               {payment.notes && <p className="text-xs text-gray-400 mt-0.5">{payment.notes}</p>}
                             </div>
                           </div>
@@ -917,7 +1020,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                       <div key={record.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200 flex justify-between items-center">
                         <div>
                           <p className="font-medium">{record.treatment}</p>
-                          <p className="text-sm text-gray-600">{new Date(record.date).toLocaleDateString()}</p>
+                          <p className="text-sm text-gray-600">{record.date ? getLocalDate(record.date).toLocaleDateString() : '—'}</p>
                         </div>
                         <p className="text-lg">₱{record.cost}</p>
                       </div>
@@ -1184,7 +1287,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                               <div className="flex-1">
                                 <h3 className="text-lg font-bold text-gray-900 mb-1">{ann.title}</h3>
                                 <p className="text-sm text-gray-600">
-                                  {new Date(ann.date).toLocaleDateString()} • {ann.createdBy}
+                                  {ann.date ? getLocalDate(ann.date).toLocaleDateString() : '—'} • {ann.createdBy}
                                 </p>
                               </div>
                               <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold capitalize">
@@ -1302,7 +1405,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
               />
               <div className="p-6 bg-white">
                 <p className="font-semibold text-lg capitalize mb-2">{selectedPhoto.type} Photo</p>
-                <p className="text-sm text-gray-600 mb-2">Date: {new Date(selectedPhoto.date).toLocaleDateString()}</p>
+                <p className="text-sm text-gray-600 mb-2">Date: {selectedPhoto.date ? getLocalDate(selectedPhoto.date).toLocaleDateString() : '—'}</p>
                 {selectedPhoto.notes && (
                   <p className="text-sm text-gray-700">{selectedPhoto.notes}</p>
                 )}

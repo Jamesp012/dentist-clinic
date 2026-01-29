@@ -4,6 +4,23 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { motion } from 'motion/react';
 import { PesoSign } from './icons/PesoSign';
 
+const getDateString = (date: string | Date): string => {
+  if (typeof date === 'string') {
+    return date.includes('T') ? date.split('T')[0] : date;
+  }
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getLocalDateTime = (date: string | Date, time = '00:00') => {
+  const normalizedDate = getDateString(date);
+  const [year, month, day] = normalizedDate.split('-').map(Number);
+  const [hours, minutes] = (time || '00:00').split(':').map(part => parseInt(part, 10) || 0);
+  return new Date(year, month - 1, day, hours, minutes);
+};
+
 type DashboardProps = {
   patients: Patient[];
   appointments: Appointment[];
@@ -13,7 +30,8 @@ type DashboardProps = {
 };
 
 export function Dashboard({ patients, appointments, inventory, treatmentRecords, onNavigate }: DashboardProps) {
-  const todayAppointments = appointments.filter(apt => apt.date === new Date().toISOString().split('T')[0]);
+  const todayString = getDateString(new Date());
+  const todayAppointments = appointments.filter(apt => getDateString(apt.date) === todayString);
   const lowStockItems = inventory.filter(item => item.quantity <= item.minQuantity);
   
   const totalRevenue = treatmentRecords.reduce((sum, record) => sum + Number(record.amountPaid || 0), 0);
@@ -218,13 +236,13 @@ export function Dashboard({ patients, appointments, inventory, treatmentRecords,
               .filter(apt => apt.status === 'scheduled')
               .sort((a, b) => {
                 // Sort by date first, then by time
-                const dateCompare = new Date(`${a.date}T${a.time}`).getTime() - new Date(`${b.date}T${b.time}`).getTime();
+                const dateCompare = getLocalDateTime(a.date, a.time).getTime() - getLocalDateTime(b.date, b.time).getTime();
                 return dateCompare;
               })
               .slice(0, 4)
               .map(apt => {
                 // Format date as readable format (e.g., "Jan 30, 2026")
-                const appointmentDate = new Date(`${apt.date}T${apt.time}`);
+                const appointmentDate = getLocalDateTime(apt.date, apt.time);
                 const formattedDate = appointmentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                 // Format time (e.g., "2:30 PM")
                 const formattedTime = appointmentDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Announcement } from '../App';
-import { Plus, X, Trash2, Edit, Check } from 'lucide-react';
+import { Plus, X, Trash2, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import { announcementAPI } from '../api';

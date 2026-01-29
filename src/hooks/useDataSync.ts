@@ -2,6 +2,20 @@ import { useEffect, useCallback, useRef } from 'react';
 import { patientAPI, appointmentAPI, inventoryAPI, referralAPI, treatmentRecordAPI, paymentAPI, announcementAPI } from '../api';
 
 /**
+ * Helper function to normalize appointment dates to YYYY-MM-DD format
+ * This prevents timezone issues when displaying appointments
+ */
+const getDateString = (date: string | Date): string => {
+  if (typeof date === 'string') {
+    return date.includes('T') ? date.split('T')[0] : date;
+  }
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+/**
  * Custom hook for real-time data synchronization across the application
  * Automatically refreshes data from the server at intervals and when triggered
  */
@@ -121,7 +135,12 @@ export function useDataSync({
     if (!isAuthenticated || hasEncountered401.current) return false;
     try {
       const appointmentsData = await appointmentAPI.getAll();
-      setAppointments(appointmentsData || []);
+      // Normalize all appointment dates to YYYY-MM-DD format to prevent timezone issues
+      const normalizedAppointments = (appointmentsData || []).map(apt => ({
+        ...apt,
+        date: getDateString(apt.date)
+      }));
+      setAppointments(normalizedAppointments);
       return true;
     } catch (error: any) {
       if (error.message?.includes('401')) {
