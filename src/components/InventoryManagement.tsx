@@ -17,13 +17,11 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [showLowStockOnly, setShowLowStockOnly] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   const categories = ['PPE', 'Medications', 'Restorative', 'Instruments', 'Equipment', 'Office Supplies'];
 
   const handleAddItem = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true);
     try {
       const formData = new FormData(e.currentTarget);
       const newItem = {
@@ -46,8 +44,6 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
     } catch (error) {
       console.error('Failed to add item:', error);
       toast.error('Failed to add item');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -55,7 +51,6 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
     e.preventDefault();
     if (!editingItem) return;
 
-    setIsLoading(true);
     try {
       const formData = new FormData(e.currentTarget);
       const updatedItem = {
@@ -80,8 +75,6 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
     } catch (error) {
       console.error('Failed to update item:', error);
       toast.error('Failed to update item');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -121,27 +114,6 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
     }
   };
 
-  const reorderItem = async (id: string | number) => {
-    try {
-      const item = inventory.find(i => i.id === id);
-      if (!item) return;
-      
-      const orderQuantity = item.minQuantity * 2;
-      const updatedItem = { 
-        ...item, 
-        quantity: item.quantity + orderQuantity, 
-        lastOrdered: new Date().toISOString().split('T')[0] 
-      };
-      
-      await inventoryAPI.update(id, updatedItem);
-      setInventory(inventory.map(i => i.id === id ? updatedItem : i));
-      alert(`Order placed: ${orderQuantity} ${item.unit} of ${item.name} from ${item.supplier}`);
-      toast.success('Reorder completed!');
-    } catch (error) {
-      console.error('Failed to reorder:', error);
-      toast.error('Failed to place order');
-    }
-  };
 
   const filteredInventory = inventory.filter(item => {
     if (searchTerm && !item.name.toLowerCase().includes(searchTerm.toLowerCase())) {
@@ -161,11 +133,7 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
 
   return (
     <div className="p-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl mb-2">Inventory Management</h1>
-          <p className="text-gray-600">Track and manage dental supplies</p>
-        </div>
+      <div className="flex justify-end items-center mb-6">
         <button
           onClick={() => setShowAddModal(true)}
           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2"

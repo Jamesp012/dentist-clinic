@@ -55,7 +55,7 @@ export function DoctorDashboard({
   setTreatmentRecords,
   referrals,
   setReferrals,
-  photos,
+
   payments,
   setPayments,
   announcements,
@@ -227,6 +227,12 @@ export function DoctorDashboard({
         <div className="absolute inset-0 bg-gradient-to-br from-teal-500/10 via-transparent to-cyan-500/10 pointer-events-none"></div>
         
         <div className="p-6 flex items-center justify-between border-b border-slate-700/50 relative z-10">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2.5 hover:bg-slate-700/50 rounded-xl transition-all duration-200 backdrop-blur-sm"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
           {sidebarOpen && (
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -234,11 +240,11 @@ export function DoctorDashboard({
               className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => setShowSettings(true)}
             >
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center text-white font-semibold">
-                {currentUser.fullName.charAt(0)}
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                <span className="text-2xl">🦷</span>
               </div>
               <div className="min-w-0">
-                <h1 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent whitespace-nowrap overflow-hidden text-ellipsis">{currentUser.fullName}</h1>
+                <h1 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent whitespace-nowrap overflow-hidden text-ellipsis">Doctor Portal</h1>
                 <p className="text-xs text-slate-400 flex items-center gap-1">
                   Doctor
                   <Settings className="w-3 h-3" />
@@ -246,12 +252,6 @@ export function DoctorDashboard({
               </div>
             </motion.div>
           )}
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2.5 hover:bg-slate-700/50 rounded-xl transition-all duration-200 backdrop-blur-sm"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
         </div>
 
         <nav className="flex-1 p-3 overflow-y-auto relative z-10">
@@ -341,15 +341,6 @@ export function DoctorDashboard({
         >
           <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-transparent to-indigo-500/5 pointer-events-none"></div>
           <div className="relative z-10">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-              Welcome back, {currentUser.fullName}
-            </h2>
-            <p className="text-sm text-blue-600 font-medium flex items-center gap-2 mt-1">
-              <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-              Doctor - Full System Access
-            </p>
-          </div>
-          <div className="relative z-10">
             <Notifications
               patients={patients}
               appointments={appointments}
@@ -387,10 +378,6 @@ export function DoctorDashboard({
                 <PatientManagement
                   patients={patients}
                   setPatients={setPatients}
-                  treatmentRecords={treatmentRecords}
-                  setTreatmentRecords={setTreatmentRecords}
-                  photos={photos}
-                  payments={payments}
                   onDataChanged={onDataChanged}
                 />
               )}

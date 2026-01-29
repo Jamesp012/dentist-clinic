@@ -2,27 +2,15 @@ import React, { useState } from 'react';
 import { Patient, Referral, Payment, TreatmentRecord } from '../App';
 import {
   FileText,
-  Plus,
   X,
   Download,
   Search,
-  Filter,
   Eye,
-  Printer,
   ClipboardList,
-  ExternalLink,
   Building2,
   UserCircle2,
   Calendar,
-  MoreHorizontal,
   ArrowUpRight,
-  MapPin,
-  Phone,
-  MoreVertical,
-  ChevronRight,
-  CheckCircle2,
-  Clock,
-  AlertCircle,
   DollarSign
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -44,10 +32,8 @@ type MergedFormsComponentProps = {
 
 export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
   referrals,
-  setReferrals,
   patients,
   treatmentRecords,
-  payments = []
 }) => {
   const [state, setState] = useState<MergedFormState>({
     selectedTab: 'referrals',
@@ -308,7 +294,9 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
                         <td className="px-6 py-4">
                           <span className="font-medium text-slate-900">{receipt.patientName}</span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-slate-600">{receipt.service}</td>
+                        <td className="px-6 py-4 text-sm text-slate-600">
+                          {receipt.treatment || receipt.type || receipt.description || 'Service'}
+                        </td>
                         <td className="px-6 py-4 text-sm text-slate-600">
                           {new Date(receipt.date).toLocaleDateString()}
                         </td>
@@ -492,7 +480,7 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-slate-500">Service</p>
-                      <p className="font-medium">{selectedReceipt.service}</p>
+                      <p className="font-medium">{selectedReceipt.treatment || selectedReceipt.type || selectedReceipt.description}</p>
                     </div>
                   </div>
                 </div>
@@ -507,7 +495,7 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
                 </button>
                 <button
                   onClick={() => {
-                    const content = `Receipt: ${selectedReceipt.id}\nPatient: ${patients.find(p => String(p.id) === String(selectedReceipt.patientId))?.name}\nService: ${selectedReceipt.service}\nAmount: ₱${(selectedReceipt.cost || 0).toFixed(2)}`;
+                    const content = `Receipt: ${selectedReceipt.id}\nPatient: ${patients.find(p => String(p.id) === String(selectedReceipt.patientId))?.name}\nService: ${selectedReceipt.treatment || selectedReceipt.type || selectedReceipt.description}\nAmount: ₱${(selectedReceipt.cost || 0).toFixed(2)}`;
                     const blob = new Blob([content], { type: 'text/plain' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Patient, Appointment, TreatmentRecord, PhotoUpload, Announcement, Payment, ServicePrice, Service } from '../App';
-import { Calendar, FileText, User as UserIcon, Clock, Image, X, Upload, Edit, Save, XCircle, Info, CheckCircle, AlertCircle, Camera, Sparkles, Heart, Smile, Shield, Megaphone, Send, Plus, CreditCard, Settings, Check, Eye, EyeOff, Menu, LogOut, History } from 'lucide-react';
+import { Patient, Appointment, TreatmentRecord, PhotoUpload, Announcement, Payment, Service } from '../App';
+import { Calendar, FileText, User as UserIcon, Clock, X, Edit, Save, XCircle, Info, CheckCircle, AlertCircle, Camera, Sparkles, Heart, Smile, Shield, Megaphone, Plus, CreditCard, Settings, Check, Eye, EyeOff, Menu, LogOut, History } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import { handlePhoneInput, formatPhoneNumber } from '../utils/phoneValidation';
@@ -25,12 +25,10 @@ type PatientPortalProps = {
   setAppointments: (appointments: Appointment[]) => void;
   treatmentRecords: TreatmentRecord[];
   onUpdatePatient?: (updatedPatient: Patient) => void;
-  billingBalance?: number;
   photos: PhotoUpload[];
   setPhotos: (photos: PhotoUpload[]) => void;
   announcements: Announcement[];
   payments: Payment[];
-  currentUserId: string;
   onLogout?: () => void;
   onDataChanged?: () => Promise<void>;
   services?: Service[];
@@ -38,18 +36,16 @@ type PatientPortalProps = {
 
 const API_BASE = 'http://localhost:5000/api';
 
-export function PatientPortal({ patient, appointments, setAppointments, treatmentRecords, onUpdatePatient, billingBalance = 5000, photos, setPhotos, announcements, payments, currentUserId, onLogout, onDataChanged, services = [] }: PatientPortalProps) {
+export function PatientPortal({ patient, appointments, setAppointments, treatmentRecords, onUpdatePatient, photos, setPhotos: _, announcements, payments, onLogout, onDataChanged, services = [] }: PatientPortalProps) {
   const [activeTab, setActiveTab] = useState<'profile' | 'appointments' | 'records' | 'photos' | 'balance' | 'care-guide' | 'announcements'>('profile');
   const [announcementSubTab, setAnnouncementSubTab] = useState<'announcements' | 'services'>('announcements');
   const [isEditing, setIsEditing] = useState(false);
   const [editedPatient, setEditedPatient] = useState<Patient>(patient);
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoUpload | null>(null);
-  const [uploadNotes, setUploadNotes] = useState('');
-  const [uploadType, setUploadType] = useState<'before' | 'after' | 'xray'>('before');
   const [showSettings, setShowSettings] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [newFullName, setNewFullName] = useState(patient.name);
-  const [newUsername, setNewUsername] = useState(patient.username || '');
+  const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
@@ -62,22 +58,13 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
   
   // Appointment booking state
   const [appointmentDate, setAppointmentDate] = useState('');
-  const [appointmentTime, setAppointmentTime] = useState('');
+
   const [appointmentType, setAppointmentType] = useState('');
   const [appointmentNotes, setAppointmentNotes] = useState('');
   const [isBookingAppointment, setIsBookingAppointment] = useState(false);
   const [selectedSchedulePeriod, setSelectedSchedulePeriod] = useState<'am' | 'pm' | null>(null);
-  const [closedSchedules, setClosedSchedules] = useState<Set<string>>(new Set(
-    JSON.parse(localStorage.getItem('closedSchedules') || '[]')
-  ));
 
   const checkUsernameAvailability = async (username: string) => {
-    if (username === (patient.username || '')) {
-      setUsernameAvailable(true);
-      setCheckingUsername(false);
-      return;
-    }
-    
     if (username.trim().length < 3) {
       setUsernameAvailable(null);
       setCheckingUsername(false);
@@ -115,13 +102,13 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
     }
 
     // Check if username was changed and is unavailable (only false means unavailable, null means still checking)
-    if (newUsername !== currentUser.username && usernameAvailable === false) {
+    if (newUsername.length > 0 && usernameAvailable === false) {
       toast.error('Username is not available');
       return;
     }
 
     // Check if username was changed and availability check is still in progress
-    if (newUsername !== currentUser.username && checkingUsername) {
+    if (newUsername.length > 0 && checkingUsername) {
       toast.error('Please wait for username availability check to complete');
       return;
     }
@@ -134,7 +121,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
-          userId: currentUser.id,
+          userId: patient.id,
           fullName: newFullName,
           username: newUsername,
           currentPassword: currentPassword || undefined,
@@ -156,10 +143,6 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
       }
 
       toast.success('Settings updated successfully!');
-      
-      // Update currentUser object
-      currentUser.fullName = data.user.fullName;
-      currentUser.username = data.user.username;
       
       // Reset password fields
       setCurrentPassword('');
@@ -281,10 +264,10 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
     }
   };
 
-  const getScheduleKey = (date: string, period: 'am' | 'pm') => `${date}-${period}`;
 
-  const isScheduleClosed = (date: string, period: 'am' | 'pm') => {
-    return closedSchedules.has(getScheduleKey(date, period));
+  const isScheduleClosed = (_: string, __: 'am' | 'pm') => {
+    // For now, no schedules are closed - this can be expanded later
+    return false;
   };
 
   const getBookingCountForPeriod = (date: string, period: 'am' | 'pm') => {
@@ -295,21 +278,6 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
       const [hours] = (apt.time || '09:00').split(':').map(Number);
       return period === 'am' ? hours < 12 : hours >= 12;
     }).length;
-  };
-
-  const handlePhotoUpload = () => {
-    // Simulate photo upload
-    const newPhoto: PhotoUpload = {
-      id: Date.now().toString(),
-      patientId: patient.id,
-      type: uploadType,
-      url: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=400',
-      date: new Date().toISOString(),
-      notes: uploadNotes
-    };
-    setPhotos([...photos, newPhoto]);
-    setUploadNotes('');
-    toast.success('Photo uploaded successfully!');
   };
 
   const handleBookAppointment = async () => {
@@ -391,6 +359,12 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
         <div className="absolute inset-0 bg-gradient-to-br from-teal-500/10 via-transparent to-cyan-500/10 pointer-events-none"></div>
         
         <div className="p-6 flex items-center justify-between border-b border-slate-700/50 relative z-10">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2.5 hover:bg-slate-700/50 rounded-xl transition-all duration-200 backdrop-blur-sm"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
           {sidebarOpen && (
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -398,11 +372,11 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
               className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => setShowSettings(true)}
             >
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center text-white font-semibold">
-                {patient.name?.charAt(0) || 'P'}
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                <span className="text-2xl">🦷</span>
               </div>
               <div className="min-w-0">
-                <h1 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent whitespace-nowrap overflow-hidden text-ellipsis">{patient.name}</h1>
+                <h1 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent whitespace-nowrap overflow-hidden text-ellipsis">Patient Portal</h1>
                 <p className="text-xs text-slate-400 flex items-center gap-1">
                   Patient
                   <Settings className="w-3 h-3" />
@@ -410,12 +384,6 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
               </div>
             </motion.div>
           )}
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2.5 hover:bg-slate-700/50 rounded-xl transition-all duration-200 backdrop-blur-sm"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
         </div>
 
         <nav className="flex-1 p-3 overflow-y-auto relative z-10">
@@ -504,15 +472,6 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
           className="bg-white/80 backdrop-blur-xl border-b border-slate-200/50 px-8 py-5 flex justify-between items-center shadow-sm relative"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-transparent to-indigo-500/5 pointer-events-none"></div>
-          <div className="relative z-10">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-              Welcome back, {patient.name}
-            </h2>
-            <p className="text-sm text-blue-600 font-medium flex items-center gap-2 mt-1">
-              <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-              Patient - Your Health Dashboard
-            </p>
-          </div>
         </motion.div>
         
         {/* Main Content Area with Animation */}
@@ -1499,7 +1458,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                         <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                       </div>
                     )}
-                    {!checkingUsername && usernameAvailable === true && newUsername !== (patient.username || '') && (
+                    {!checkingUsername && usernameAvailable === true && newUsername.length > 0 && (
                       <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500">
                         <Check className="w-5 h-5" />
                       </div>
@@ -1513,7 +1472,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                   {usernameAvailable === false && (
                     <p className="text-sm text-red-600 mt-1">Username is already taken</p>
                   )}
-                  {usernameAvailable === true && newUsername !== (patient.username || '') && (
+                  {usernameAvailable === true && newUsername.length > 0 && (
                     <p className="text-sm text-green-600 mt-1">Username is available</p>
                   )}
                   {newUsername.trim().length > 0 && newUsername.trim().length < 3 && (
@@ -1602,7 +1561,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                   onClick={() => {
                     setShowSettings(false);
                     setNewFullName(patient.name);
-                    setNewUsername(patient.username || '');
+                    setNewUsername('');
                     setNewPassword('');
                     setConfirmPassword('');
                     setCurrentPassword('');
@@ -1630,7 +1589,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                     }
                     handleSaveSettings();
                   }}
-                  disabled={checkingUsername || (newUsername !== currentUser.username && usernameAvailable === false)}
+                  disabled={checkingUsername || (newUsername.length > 0 && usernameAvailable === false)}
                   className="flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Check className="w-4 h-4" />

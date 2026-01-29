@@ -213,7 +213,7 @@ export default function App() {
       return [];
     }
   });
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => {
+  const [chatMessages] = useState<ChatMessage[]>(() => {
     try {
       const saved = localStorage.getItem('chatMessages');
       return saved ? JSON.parse(saved) : [];
@@ -497,8 +497,6 @@ export default function App() {
           setPhotos={setPhotos}
           payments={payments}
           setPayments={setPayments}
-          chatMessages={chatMessages}
-          setChatMessages={setChatMessages}
           announcements={announcements}
           setAnnouncements={setAnnouncements}
           services={services}
@@ -567,7 +565,7 @@ export default function App() {
     console.log('App.tsx - Current User PatientId:', currentUser.patientId);
     console.log('App.tsx - All Treatment Records:', treatmentRecords);
     console.log('App.tsx - Filtered Patient Treatments:', patientTreatments);
-    const billingBalance = patientTreatments.reduce((sum, treatment) => sum + (treatment.remainingBalance !== undefined ? Number(treatment.remainingBalance) : Number(treatment.cost || 0)), 0);
+    void patientTreatments.reduce((sum, treatment) => sum + (treatment.remainingBalance !== undefined ? Number(treatment.remainingBalance) : Number(treatment.cost || 0)), 0);
 
     return (
       <>
@@ -579,12 +577,10 @@ export default function App() {
           onUpdatePatient={(updatedPatient) => {
             setPatients(patients.map(p => String(p.id) === String(updatedPatient.id) ? updatedPatient : p));
           }}
-          billingBalance={billingBalance}
           photos={photos}
           setPhotos={setPhotos}
           announcements={announcements}
           payments={payments}
-          currentUserId={currentUser.id}
           onLogout={handleLogout}
           onDataChanged={async () => { await refreshAll(); }}
           services={services}

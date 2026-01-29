@@ -1,190 +1,475 @@
 import { useState } from 'react';
+import { Plus, X, Check } from 'lucide-react';
 import { Referral, Patient } from '../App';
-import { 
-  FileText, 
-  Plus, 
-  X, 
-  Download, 
-  Search, 
-  Filter,
-  UserCircle2,
-  Calendar,
-  Eye,
-  AlertCircle
-} from 'lucide-react';
 import { toast } from 'sonner';
-import { PatientSearch } from './PatientSearch';
 import { referralAPI } from '../api';
-import { motion, AnimatePresence } from 'motion/react';
 
-type ReferralGenerationProps = {
+
+type ReferralType = 'doctor' | 'xray' | null;
+
+interface ReferralGenerationProps {
   referrals: Referral[];
   setReferrals: (referrals: Referral[]) => void;
   patients: Patient[];
-};
-
-interface ReferralWithDetails extends Referral {
-  patientDetails?: Patient;
 }
 
 export function ReferralGeneration({ referrals, setReferrals, patients }: ReferralGenerationProps) {
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedReferral, setSelectedReferral] = useState<ReferralWithDetails | null>(null);
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-
-  const specialties = [
-    'Periodontics',
-    'Endodontics',
-    'Orthodontics',
-    'Oral Surgery',
-    'Prosthodontics',
-    'Pediatric Dentistry',
-    'Oral Pathology',
-    'Oral Radiology',
-    'X-Ray Imaging',
-    'Diagnostic Imaging'
-  ];
-
-  const statusConfig = {
-    'routine': { bg: 'bg-blue-100', text: 'text-blue-700', icon: '📋' },
-    'urgent': { bg: 'bg-amber-100', text: 'text-amber-700', icon: '⚠️' },
-    'emergency': { bg: 'bg-red-100', text: 'text-red-700', icon: '🚨' }
-  };
-
-  const filteredReferrals = referrals.filter(ref => {
-    const matchesSearch = 
-      ref.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ref.referredTo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ref.specialty.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = filterStatus === 'all' || ref.urgency === filterStatus;
-    
-    return matchesSearch && matchesStatus;
+  const [referralType, setReferralType] = useState<ReferralType>(null);
+  const [showTypeSelection, setShowTypeSelection] = useState(false);
+  const [selectedServices, setSelectedServices] = useState<Record<string, boolean>>({});
+  const [selectedXrayItems, setSelectedXrayItems] = useState<Record<string, boolean>>({});
+  const [formData, setFormData] = useState({
+    patientName: '',
+    patientId: '',
+    contactNo: '',
+    age: '',
+    dateOfBirth: '',
+    sex: '',
+    referredBy: '',
+    referredByContact: '',
+    referredByEmail: '',
+    specialty: '',
+    reason: '',
+    date: new Date().toISOString().split('T')[0],
+    urgency: 'routine' as 'routine' | 'urgent' | 'emergency'
   });
 
-  const handleCreateReferral = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsLoading(true);
-    try {
-      const formData = new FormData(e.currentTarget);
-      
-      if (!selectedPatient) {
-        toast.error('Please select a patient');
-        setIsLoading(false);
-        return;
-      }
+  const toggleService = (id: string) => {
+    setSelectedServices(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
-      const newReferral = {
-        patientId: selectedPatient.id,
-        patientName: selectedPatient.name,
-        referringDentist: formData.get('referringDentist') as string,
-        referredTo: formData.get('referredTo') as string,
-        specialty: formData.get('specialty') as string,
-        reason: formData.get('reason') as string,
-        date: formData.get('date') as string,
-        urgency: formData.get('urgency') as 'routine' | 'urgent' | 'emergency',
+  const toggleXrayItem = (id: string) => {
+    setSelectedXrayItems(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handlePatientSelect = (patientId: string) => {
+    const patient = patients.find(p => String(p.id) === patientId);
+    if (patient) {
+      const age = new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear();
+      setFormData(prev => ({
+        ...prev,
+        patientId,
+        patientName: patient.name,
+        contactNo: patient.phone,
+        dateOfBirth: patient.dateOfBirth,
+        age: String(age),
+        sex: patient.sex
+      }));
+    }
+  };
+
+  const handleCreateReferral = async () => {
+    if (!formData.patientName) {
+      toast.error('Please select a patient');
+      return;
+    }
+
+    try {
+      const newReferral: Referral = {
+        id: `REF-${Date.now()}`,
+        patientId: formData.patientId,
+        patientName: formData.patientName,
+        referringDentist: formData.referredBy,
+        referredTo: formData.specialty,
+        specialty: referralType === 'xray' ? 'X-Ray Imaging' : formData.specialty,
+        reason: formData.reason,
+        date: formData.date,
+        urgency: formData.urgency
       };
 
-      const createdReferral = await referralAPI.create(newReferral);
-      setReferrals([...referrals, createdReferral as Referral]);
-      setShowAddModal(false);
-      setSelectedPatient(null);
+      const response = await referralAPI.create(newReferral);
+      setReferrals([...referrals, response]);
       
-      // Show success notification
-      toast.success(`Referral created for ${selectedPatient.name}`, {
-        description: `Patient has been referred to ${newReferral.referredTo} for ${newReferral.specialty}. A notification has been sent to the patient.`,
-        duration: 5000,
-      });
+      resetForm();
+      setReferralType(null);
+      setShowTypeSelection(false);
+      toast.success('Referral created successfully');
     } catch (error) {
       console.error('Failed to create referral:', error);
       toast.error('Failed to create referral');
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const deleteReferral = async (id: string | number) => {
-    if (confirm('Are you sure you want to delete this referral?')) {
-      try {
-        await referralAPI.delete(id);
-        setReferrals(referrals.filter(r => String(r.id) !== String(id)));
-        toast.success('Referral deleted successfully');
-      } catch (error) {
-        console.error('Failed to delete referral:', error);
-        toast.error('Failed to delete referral');
-      }
-    }
+  const resetForm = () => {
+    setFormData({
+      patientName: '',
+      patientId: '',
+      contactNo: '',
+      age: '',
+      dateOfBirth: '',
+      sex: '',
+      referredBy: '',
+      referredByContact: '',
+      referredByEmail: '',
+      specialty: '',
+      reason: '',
+      date: new Date().toISOString().split('T')[0],
+      urgency: 'routine'
+    });
+    setSelectedServices({});
+    setSelectedXrayItems({});
   };
 
-  const downloadReferral = (referral: Referral) => {
-    const patient = patients.find(p => String(p.id) === String(referral.patientId));
-    
-    const content = `
-DENTAL REFERRAL
+  const ServiceItem = ({ label, id, showInput }: { label: string; id: string; showInput?: boolean }) => (
+    <div className="flex items-center gap-3 cursor-pointer group" onClick={() => toggleService(id)}>
+      <div className={`w-5 h-5 rounded-full border-2 border-yellow-400 flex items-center justify-center transition-colors ${selectedServices[id] ? "bg-yellow-400" : "bg-white"}`}>
+        {selectedServices[id] && <Check className="text-white w-3.5 h-3.5 stroke-[4]" />}
+      </div>
+      <span className="text-sm font-bold tracking-tight">{label}</span>
+      {showInput && (
+        <input 
+          type="text" 
+          onClick={(e) => e.stopPropagation()}
+          className="w-16 border-b border-slate-400 focus:outline-none focus:border-yellow-500 bg-transparent text-sm px-1 font-normal" 
+        />
+      )}
+    </div>
+  );
 
-Date: ${new Date(referral.date).toLocaleDateString()}
-Referral ID: ${referral.id}
-
-PATIENT INFORMATION
-Name: ${referral.patientName}
-Date of Birth: ${patient?.dateOfBirth || 'N/A'}
-Phone: ${patient?.phone || 'N/A'}
-Email: ${patient?.email || 'N/A'}
-
-REFERRING DENTIST
-Dr. ${referral.referringDentist}
-
-REFERRED TO
-${referral.referredTo}
-Specialty: ${referral.specialty}
-
-URGENCY: ${referral.urgency.toUpperCase()}
-
-REASON FOR REFERRAL
-${referral.reason}
-
-PATIENT MEDICAL HISTORY
-${patient?.medicalHistory || 'None reported'}
-
-ALLERGIES
-${patient?.allergies || 'None reported'}
-
----
-This referral was generated by the Dental Clinic Management System
-Generated on: ${new Date().toLocaleString()}
-    `;
-
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Referral_${referral.patientName.replace(/\s/g, '_')}_${referral.id}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  const urgencyColors = {
-    routine: 'bg-blue-100 text-blue-700 border-blue-500',
-    urgent: 'bg-orange-100 text-orange-700 border-orange-500',
-    emergency: 'bg-red-100 text-red-700 border-red-500',
-  };
+  const UnderlineInput = ({ label, value, onChange, className = '' }: { label: string; value: string; onChange: (v: string) => void; className?: string }) => (
+    <div className={`flex items-end ${className}`}>
+      <span className="text-sm whitespace-nowrap mr-2">{label}</span>
+      <input 
+        type="text" 
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="flex-1 border-b border-slate-400 focus:outline-none focus:border-yellow-500 bg-transparent px-1 h-[20px] mb-[-1px]" 
+      />
+    </div>
+  );
 
   return (
     <div className="p-8">
+      {/* Type Selection Modal */}
+      {showTypeSelection && referralType === null && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-8 max-w-2xl w-full">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Select Referral Type</h2>
+              <button onClick={() => setShowTypeSelection(false)} className="text-gray-500 hover:text-gray-700">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                onClick={() => setReferralType('doctor')}
+                className="p-6 border-2 border-yellow-400 rounded-lg hover:bg-yellow-50 transition-colors text-center"
+              >
+                <div className="text-3xl mb-2">👨‍⚕️</div>
+                <h3 className="font-bold text-lg mb-2">Doctor Referral</h3>
+                <p className="text-sm text-gray-600">Refer patient to a specialist dentist</p>
+              </button>
+
+              <button
+                onClick={() => setReferralType('xray')}
+                className="p-6 border-2 border-blue-600 rounded-lg hover:bg-blue-50 transition-colors text-center"
+              >
+                <div className="text-3xl mb-2">🖼️</div>
+                <h3 className="font-bold text-lg mb-2">X-Ray Referral</h3>
+                <p className="text-sm text-gray-600">Request X-ray imaging services</p>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Doctor Referral Form */}
+      {referralType === 'doctor' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white w-full max-w-4xl rounded-lg shadow-2xl my-8">
+            <div className="flex justify-between items-center p-6 border-b">
+              <h1 className="text-2xl font-bold">Doctor Referral Form</h1>
+              <button onClick={() => { setReferralType(null); setShowTypeSelection(false); }} className="text-gray-500 hover:text-gray-700">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto">
+              {/* Patient Selection */}
+              <div className="mb-6">
+                <label className="block text-sm font-bold mb-2">Select Patient</label>
+                <select
+                  value={formData.patientId}
+                  onChange={(e) => handlePatientSelect(e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                >
+                  <option value="">-- Select a Patient --</option>
+                  {patients.map(patient => (
+                    <option key={patient.id} value={String(patient.id)}>
+                      {patient.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Header Form Fields */}
+              <div className="space-y-3 mb-6">
+                <div className="flex gap-4">
+                  <UnderlineInput label="Patient's Name:" value={formData.patientName} onChange={(v) => handleInputChange('patientName', v)} className="flex-1" />
+                  <UnderlineInput label="Date:" value={formData.date} onChange={(v) => handleInputChange('date', v)} className="w-48" />
+                </div>
+                <div className="flex gap-4">
+                  <UnderlineInput label="Contact No.:" value={formData.contactNo} onChange={(v) => handleInputChange('contactNo', v)} className="flex-1" />
+                  <UnderlineInput label="Age:" value={formData.age} onChange={(v) => handleInputChange('age', v)} className="w-16" />
+                  <UnderlineInput label="Date Of Birth:" value={formData.dateOfBirth} onChange={(v) => handleInputChange('dateOfBirth', v)} className="w-40" />
+                  <UnderlineInput label="Sex:" value={formData.sex} onChange={(v) => handleInputChange('sex', v)} className="w-16" />
+                </div>
+                <UnderlineInput label="Referred by:" value={formData.referredBy} onChange={(v) => handleInputChange('referredBy', v)} />
+                <div className="flex gap-4">
+                  <UnderlineInput label="Contact No.:" value={formData.referredByContact} onChange={(v) => handleInputChange('referredByContact', v)} className="flex-1" />
+                  <UnderlineInput label="Clinic Email Address:" value={formData.referredByEmail} onChange={(v) => handleInputChange('referredByEmail', v)} className="flex-1" />
+                </div>
+              </div>
+
+              {/* Services Section */}
+              <div className="grid grid-cols-2 gap-8 mb-8 pb-8 border-b-4 border-yellow-400">
+                <div className="space-y-3">
+                  <h2 className="font-black text-lg uppercase mb-4">Diagnostic Services:</h2>
+                  <ServiceItem label="STANDARD PANORAMIC" id="pano" />
+                  <ServiceItem label="TMJ (OPEN & CLOSE)" id="tmj" />
+                  <ServiceItem label="SINUS PA" id="sinus" />
+                  <ServiceItem label="BITEWING LEFT SIDE" id="bite-l" />
+                  <ServiceItem label="BITEWING RIGHT SIDE" id="bite-r" />
+                  <ServiceItem label="PERIAPICAL XRAY TOOTH#" id="peri" showInput />
+                </div>
+
+                <div className="space-y-3 pt-6">
+                  <h2 className="font-black text-lg uppercase mb-4">OTHER SERVICES</h2>
+                  <ServiceItem label="DIAGNOSTIC MODEL CAST" id="model" />
+                  <ServiceItem label="INTRAORAL PHOTOGRAPH" id="intra" />
+                  <ServiceItem label="EXTRAORAL PHOTOGRAPH" id="extra" />
+                </div>
+              </div>
+
+              {/* Specialty & Urgency */}
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-sm font-bold mb-2">Specialty</label>
+                  <input
+                    type="text"
+                    value={formData.specialty}
+                    onChange={(e) => handleInputChange('specialty', e.target.value)}
+                    placeholder="e.g., Orthodontics, Endodontics"
+                    className="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold mb-2">Urgency Level</label>
+                  <select
+                    value={formData.urgency}
+                    onChange={(e) => handleInputChange('urgency', e.target.value)}
+                    className="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  >
+                    <option value="routine">Routine</option>
+                    <option value="urgent">Urgent</option>
+                    <option value="emergency">Emergency</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold mb-2">Reason for Referral</label>
+                  <textarea
+                    value={formData.reason}
+                    onChange={(e) => handleInputChange('reason', e.target.value)}
+                    rows={4}
+                    className="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 p-6 border-t justify-end">
+              <button
+                onClick={() => { setReferralType(null); setShowTypeSelection(false); resetForm(); }}
+                className="px-6 py-2 border border-slate-300 rounded hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateReferral}
+                className="px-6 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+              >
+                Create Referral
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* X-Ray Referral Form */}
+      {referralType === 'xray' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white w-full max-w-5xl rounded-lg shadow-2xl my-8">
+            <div className="flex justify-between items-center p-6 border-b">
+              <h1 className="text-2xl font-bold">X-Ray Referral Form</h1>
+              <button onClick={() => { setReferralType(null); setShowTypeSelection(false); }} className="text-gray-500 hover:text-gray-700">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto space-y-6">
+              {/* Patient Selection */}
+              <div>
+                <label className="block text-sm font-bold mb-2">Select Patient</label>
+                <select
+                  value={formData.patientId}
+                  onChange={(e) => handlePatientSelect(e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">-- Select a Patient --</option>
+                  {patients.map(patient => (
+                    <option key={patient.id} value={String(patient.id)}>
+                      {patient.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Patient Fields */}
+              <div className="space-y-3 border-b pb-6">
+                <UnderlineInput label="Date" value={formData.date} onChange={(v) => handleInputChange('date', v)} className="w-48" />
+                <UnderlineInput label="Patient's Name" value={formData.patientName} onChange={(v) => handleInputChange('patientName', v)} />
+                <div className="flex gap-12">
+                  <UnderlineInput label="Birthday" value={formData.dateOfBirth} onChange={(v) => handleInputChange('dateOfBirth', v)} />
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="sex"
+                        value="Male"
+                        checked={formData.sex === 'Male'}
+                        onChange={(e) => handleInputChange('sex', e.target.value)}
+                        className="w-4 h-4"
+                      />
+                      <span className="font-bold">Male</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="sex"
+                        value="Female"
+                        checked={formData.sex === 'Female'}
+                        onChange={(e) => handleInputChange('sex', e.target.value)}
+                        className="w-4 h-4"
+                      />
+                      <span className="font-bold">Female</span>
+                    </label>
+                  </div>
+                </div>
+                <div className="flex gap-8">
+                  <UnderlineInput label="Referred by Dr." value={formData.referredBy} onChange={(v) => handleInputChange('referredBy', v)} />
+                  <UnderlineInput label="Dentist's Contact #" value={formData.referredByContact} onChange={(v) => handleInputChange('referredByContact', v)} />
+                </div>
+              </div>
+
+              {/* X-Ray Services */}
+              <div className="space-y-4">
+                <h3 className="font-black text-center uppercase mb-4">X-RAY IMAGING SERVICES</h3>
+                
+                <div className="grid grid-cols-2 gap-6">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedXrayItems['panoramic'] || false}
+                      onChange={() => toggleXrayItem('panoramic')}
+                      className="w-4 h-4"
+                    />
+                    <span className="font-bold">Panoramic X-Ray</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedXrayItems['periapical'] || false}
+                      onChange={() => toggleXrayItem('periapical')}
+                      className="w-4 h-4"
+                    />
+                    <span className="font-bold">Periapical X-Ray</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedXrayItems['bitewing'] || false}
+                      onChange={() => toggleXrayItem('bitewing')}
+                      className="w-4 h-4"
+                    />
+                    <span className="font-bold">Bitewing X-Ray</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedXrayItems['occlusal'] || false}
+                      onChange={() => toggleXrayItem('occlusal')}
+                      className="w-4 h-4"
+                    />
+                    <span className="font-bold">Occlusal X-Ray</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedXrayItems['tmj'] || false}
+                      onChange={() => toggleXrayItem('tmj')}
+                      className="w-4 h-4"
+                    />
+                    <span className="font-bold">TMJ X-Ray</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedXrayItems['cbct'] || false}
+                      onChange={() => toggleXrayItem('cbct')}
+                      className="w-4 h-4"
+                    />
+                    <span className="font-bold">CBCT (3D Imaging)</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Reason */}
+              <div>
+                <label className="block text-sm font-bold mb-2">Reason for X-Ray Imaging</label>
+                <textarea
+                  value={formData.reason}
+                  onChange={(e) => handleInputChange('reason', e.target.value)}
+                  rows={3}
+                  className="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Describe the clinical indication for x-ray imaging..."
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 p-6 border-t justify-end">
+              <button
+                onClick={() => { setReferralType(null); setShowTypeSelection(false); resetForm(); }}
+                className="px-6 py-2 border border-slate-300 rounded hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateReferral}
+                className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Create X-Ray Referral
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content - List and Create Button */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl mb-2">Referral Generation</h1>
+          <h1 className="text-3xl mb-2 font-bold">Referral Management</h1>
           <p className="text-gray-600">Create and manage patient referrals</p>
         </div>
         <button
-          onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2"
+          onClick={() => { setShowTypeSelection(true); setReferralType(null); }}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2 font-bold"
         >
           <Plus className="w-5 h-5" />
           New Referral
@@ -197,309 +482,47 @@ Generated on: ${new Date().toLocaleString()}
           <div key={referral.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h3 className="text-lg mb-1">{referral.patientName}</h3>
-                <p className="text-sm text-gray-600">
-                  {new Date(referral.date).toLocaleDateString()}
-                </p>
+                <h3 className="text-lg font-bold mb-1">{referral.patientName}</h3>
+                <p className="text-sm text-gray-600">{new Date(referral.date).toLocaleDateString()}</p>
               </div>
-              <span className={`px-3 py-1 rounded text-xs border ${urgencyColors[referral.urgency]}`}>
-                {referral.urgency}
+              <span className={`px-3 py-1 rounded text-xs border font-bold ${
+                referral.urgency === 'emergency' ? 'bg-red-100 text-red-700 border-red-500' :
+                referral.urgency === 'urgent' ? 'bg-orange-100 text-orange-700 border-orange-500' :
+                'bg-blue-100 text-blue-700 border-blue-500'
+              }`}>
+                {referral.urgency.toUpperCase()}
               </span>
             </div>
 
             <div className="space-y-2 mb-4">
               <div>
                 <p className="text-sm text-gray-600">Specialty</p>
-                <p>{referral.specialty}</p>
+                <p className="font-semibold">{referral.specialty}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Referred To</p>
-                <p>{referral.referredTo}</p>
+                <p className="font-semibold">{referral.referredTo}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Reason</p>
-                <p className="text-sm">{referral.reason}</p>
+                <p className="text-sm">{referral.reason.substring(0, 60)}...</p>
               </div>
-            </div>
-
-            <div className="flex gap-2 pt-4 border-t border-gray-200">
-              <button
-                onClick={() => setViewingReferral(referral)}
-                className="flex-1 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center justify-center gap-2 text-sm"
-              >
-                <FileText className="w-4 h-4" />
-                View Full
-              </button>
-              <button
-                onClick={() => downloadReferral(referral)}
-                className="flex-1 px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center justify-center gap-2 text-sm"
-              >
-                <Download className="w-4 h-4" />
-                Download
-              </button>
-              <button
-                onClick={() => deleteReferral(referral.id)}
-                className="px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-              >
-                <X className="w-4 h-4" />
-              </button>
             </div>
           </div>
         ))}
 
         {referrals.length === 0 && (
           <div className="col-span-2 bg-white p-12 rounded-lg shadow-sm border border-gray-200 text-center">
-            <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No referrals created yet</p>
+            <p className="text-gray-600 mb-4">No referrals created yet</p>
             <button
-              onClick={() => setShowAddModal(true)}
-              className="mt-4 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              onClick={() => { setShowTypeSelection(true); setReferralType(null); }}
+              className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
               Create Your First Referral
             </button>
           </div>
         )}
       </div>
-
-      {/* Add Referral Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl">Create New Referral</h2>
-              <button onClick={() => setShowAddModal(false)} className="text-gray-500 hover:text-gray-700">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <form onSubmit={handleCreateReferral} className="space-y-4">
-              <div>
-                <label className="block text-sm mb-1">Patient *</label>
-                <PatientSearch
-                  patients={patients}
-                  selectedPatient={selectedPatient}
-                  onSelectPatient={setSelectedPatient}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm mb-1">Date *</label>
-                  <input
-                    type="date"
-                    name="date"
-                    required
-                    defaultValue={new Date().toISOString().split('T')[0]}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm mb-1">Urgency *</label>
-                  <select
-                    name="urgency"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="routine">Routine</option>
-                    <option value="urgent">Urgent</option>
-                    <option value="emergency">Emergency</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm mb-1">Referring Dentist *</label>
-                <input
-                  type="text"
-                  name="referringDentist"
-                  required
-                  placeholder="Dr. Name"
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm mb-1">Specialty *</label>
-                <select
-                  name="specialty"
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {specialties.map(specialty => (
-                    <option key={specialty} value={specialty}>
-                      {specialty}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded">
-                <p className="text-sm mb-2">
-                  <strong>Common referral scenarios:</strong>
-                </p>
-                <ul className="text-sm text-blue-800 list-disc list-inside space-y-1">
-                  <li>Select "X-Ray Imaging" when patient needs dental x-ray imaging</li>
-                  <li>Select "General Dentistry (Referral)" when referring to another dentist (e.g., when unavailable)</li>
-                  <li>Select "Orthodontics" for braces-related specialist referrals</li>
-                </ul>
-              </div>
-
-              <div>
-                <label className="block text-sm mb-1">Referred To (Specialist) *</label>
-                <input
-                  type="text"
-                  name="referredTo"
-                  required
-                  placeholder="Dr. Name, Practice Name"
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm mb-1">Reason for Referral *</label>
-                <textarea
-                  name="reason"
-                  required
-                  rows={4}
-                  placeholder="Detailed reason for referral, including relevant findings and recommended treatment..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div className="flex gap-3 justify-end">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  Create Referral
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* View Referral Modal */}
-      {viewingReferral && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-300">
-              <h2 className="text-2xl">Dental Referral</h2>
-              <button onClick={() => setViewingReferral(null)} className="text-gray-500 hover:text-gray-700">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Date</p>
-                  <p>{new Date(viewingReferral.date).toLocaleDateString()}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Referral ID</p>
-                  <p>{viewingReferral.id}</p>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="mb-3">Patient Information</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Name</p>
-                    <p>{viewingReferral.patientName}</p>
-                  </div>
-                  {patients.find(p => String(p.id) === String(viewingReferral.patientId)) && (
-                    <>
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">Date of Birth</p>
-                        <p>{new Date(patients.find(p => String(p.id) === String(viewingReferral.patientId))!.dateOfBirth).toLocaleDateString()}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">Phone</p>
-                        <p>{patients.find(p => String(p.id) === String(viewingReferral.patientId))!.phone}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">Email</p>
-                        <p>{patients.find(p => String(p.id) === String(viewingReferral.patientId))!.email}</p>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="mb-3">Referral Details</h3>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Referring Dentist</p>
-                    <p>Dr. {viewingReferral.referringDentist}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Referred To</p>
-                    <p>{viewingReferral.referredTo}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Specialty</p>
-                    <p>{viewingReferral.specialty}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Urgency</p>
-                    <span className={`inline-block px-3 py-1 rounded text-sm border ${urgencyColors[viewingReferral.urgency]}`}>
-                      {viewingReferral.urgency.toUpperCase()}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="mb-3">Reason for Referral</h3>
-                <p className="text-gray-700 whitespace-pre-wrap">{viewingReferral.reason}</p>
-              </div>
-
-              {patients.find(p => String(p.id) === String(viewingReferral.patientId)) && (
-                <div className="pt-4 border-t border-gray-200">
-                  <h3 className="mb-3">Patient Medical Information</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Medical History</p>
-                      <p>{patients.find(p => String(p.id) === String(viewingReferral.patientId))!.medicalHistory || 'None reported'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Allergies</p>
-                      <p className={patients.find(p => String(p.id) === String(viewingReferral.patientId))!.allergies !== 'None' ? 'text-red-600' : ''}>
-                        {patients.find(p => String(p.id) === String(viewingReferral.patientId))!.allergies || 'None reported'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex gap-3 justify-end pt-6 border-t border-gray-200">
-                <button
-                  onClick={() => downloadReferral(viewingReferral)}
-                  className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-2"
-                >
-                  <Download className="w-5 h-5" />
-                  Download Referral
-                </button>
-                <button
-                  onClick={() => setViewingReferral(null)}
-                  className="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

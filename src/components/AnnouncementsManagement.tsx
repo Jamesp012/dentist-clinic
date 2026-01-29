@@ -308,30 +308,31 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
           {/* Add Announcement Modal */}
           {showAddAnnouncement && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-lg p-6 max-w-2xl w-full">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-2xl">New Announcement</h2>
-                  <button onClick={() => setShowAddAnnouncement(false)} className="text-gray-500 hover:text-gray-700">
+              <div className="bg-white rounded-2xl p-8 max-w-2xl w-full shadow-2xl border border-gray-200">
+                <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
+                  <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">New Announcement</h2>
+                  <button onClick={() => setShowAddAnnouncement(false)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-700">
                     <X className="w-6 h-6" />
                   </button>
                 </div>
-                <form onSubmit={handleAddAnnouncement} className="space-y-4">
+                <form onSubmit={handleAddAnnouncement} className="space-y-6">
                   <div>
-                    <label className="block text-sm mb-1">Title *</label>
+                    <label className="block text-sm font-semibold mb-2.5 text-gray-800">Title <span className="text-red-500">*</span></label>
                     <input
                       type="text"
                       name="title"
                       required
                       placeholder="e.g., Holiday Promo"
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white focus:border-blue-500 transition-all hover:border-gray-400"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm mb-1">Type *</label>
+                    <label className="block text-sm font-semibold mb-2.5 text-gray-800">Type <span className="text-red-500">*</span></label>
                     <select
                       name="type"
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white focus:border-blue-500 transition-all hover:border-gray-400 appearance-none cursor-pointer"
+                      style={{backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%233B82F6' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', paddingRight: '2.5rem'}}
                     >
                       <option value="general">General</option>
                       <option value="promo">Promo</option>
@@ -340,30 +341,30 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm mb-1">Message *</label>
+                    <label className="block text-sm font-semibold mb-2.5 text-gray-800">Message <span className="text-red-500">*</span></label>
                     <textarea
                       name="message"
                       required
                       rows={4}
                       placeholder="Enter announcement details..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white focus:border-blue-500 transition-all hover:border-gray-400 resize-none"
                     />
                   </div>
-                  <div className="flex gap-3 justify-end">
+                  <div className="flex gap-3 justify-end pt-4 border-t border-gray-200">
                     <button
                       type="button"
                       onClick={() => setShowAddAnnouncement(false)}
-                      className="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50"
+                      className="px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-medium transition-all duration-200 hover:border-gray-400"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={isPostingAnnouncement}
-                      className={`px-6 py-2 rounded text-white ${
+                      className={`px-8 py-2.5 rounded-lg text-white font-medium transition-all duration-200 shadow-lg hover:shadow-xl ${
                         isPostingAnnouncement
                           ? 'bg-blue-400 cursor-not-allowed'
-                          : 'bg-blue-600 hover:bg-blue-700'
+                          : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
                       }`}
                     >
                       {isPostingAnnouncement ? 'Posting...' : 'Post Announcement'}

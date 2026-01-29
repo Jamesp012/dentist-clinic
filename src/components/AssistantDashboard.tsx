@@ -4,14 +4,12 @@ import {
   Users,
   Calendar,
   Package,
-  ClipboardList,
   FileText,
   LayoutDashboard,
   Stethoscope,
   LogOut,
   Sparkles,
   Megaphone,
-  MessageCircle,
   Settings,
   X,
   Check,
@@ -40,7 +38,6 @@ import type {
   TreatmentRecord,
   Referral,
   PhotoUpload,
-  ChatMessage,
   Announcement,
   Payment,
   Service,
@@ -63,8 +60,6 @@ type AssistantDashboardProps = {
   setPhotos: (photos: PhotoUpload[]) => void;
   payments: Payment[];
   setPayments: (payments: Payment[]) => void;
-  chatMessages: ChatMessage[];
-  setChatMessages: (messages: ChatMessage[]) => void;
   announcements: Announcement[];
   setAnnouncements: (announcements: Announcement[]) => void;
   services: Service[];
@@ -91,8 +86,6 @@ export function AssistantDashboard({
   setPhotos,
   payments,
   setPayments,
-  chatMessages,
-  setChatMessages,
   announcements,
   setAnnouncements,
   services,
@@ -387,6 +380,12 @@ export function AssistantDashboard({
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-transparent to-indigo-500/5 pointer-events-none"></div>
 
         <div className="p-6 flex items-center justify-between border-b border-emerald-700/50 relative z-10">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2.5 hover:bg-emerald-700/50 rounded-xl transition-all duration-200 backdrop-blur-sm"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
           {sidebarOpen && (
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -408,24 +407,12 @@ export function AssistantDashboard({
               </div>
             </motion.div>
           )}
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2.5 hover:bg-emerald-700/50 rounded-xl transition-all duration-200 backdrop-blur-sm"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
         </div>
 
         <nav className="flex-1 p-3 overflow-y-auto relative z-10">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
-            const unreadMessages =
-              item.id === "chat"
-                ? chatMessages.filter(
-                    (m) =>
-                      !m.read && m.senderRole === "patient",
-                  ).length
-                : 0;
+            const unreadMessages = 0;
 
             return (
               <motion.button
@@ -535,15 +522,6 @@ export function AssistantDashboard({
         >
           <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-transparent to-indigo-500/5 pointer-events-none"></div>
           <div className="relative z-10">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-              Welcome back, {currentUser.fullName}
-            </h2>
-            <p className="text-sm text-emerald-600 font-medium flex items-center gap-2 mt-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              Assistant - Staff Access
-            </p>
-          </div>
-          <div className="relative z-10">
             <Notifications
               patients={patients}
               appointments={appointments}
@@ -576,10 +554,7 @@ export function AssistantDashboard({
                 <PatientManagement
                   patients={patients}
                   setPatients={setPatients}
-                  treatmentRecords={treatmentRecords}
-                  setTreatmentRecords={setTreatmentRecords}
-                  photos={photos}
-                  payments={payments}
+
                   onDataChanged={onDataChanged}
                 />
               )}
@@ -604,8 +579,7 @@ export function AssistantDashboard({
               {activeTab === "braces" && (
                 <BracesCharting
                   patients={patients}
-                  treatmentRecords={treatmentRecords}
-                  setTreatmentRecords={setTreatmentRecords}
+
                 />
               )}
               {activeTab === "photos" && (
