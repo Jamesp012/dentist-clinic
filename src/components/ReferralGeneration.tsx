@@ -462,11 +462,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
       )}
 
       {/* Main Content - List and Create Button */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl mb-2 font-bold">Referral Management</h1>
-          <p className="text-gray-600">Create and manage patient referrals</p>
-        </div>
+      <div className="flex justify-end mb-6">
         <button
           onClick={() => { setShowTypeSelection(true); setReferralType(null); }}
           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2 font-bold"

@@ -164,13 +164,14 @@ Generated on: ${new Date().toLocaleString()}
   );
 
   const UnderlineInput = ({ label, value, onChange, className = '' }: { label: string; value: string; onChange: (v: string) => void; className?: string }) => (
-    <div className={`flex items-end ${className}`}>
-      <span className="text-sm whitespace-nowrap mr-2 font-semibold">{label}</span>
+    <div className={`flex items-center gap-2 ${className}`}>
+      <span className="text-sm whitespace-nowrap font-semibold">{label}</span>
       <input 
         type="text" 
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="flex-1 border-b border-slate-400 focus:outline-none focus:border-yellow-500 bg-transparent px-1 h-[20px] mb-[-1px]" 
+        className="flex-1 border-b-2 border-slate-400 focus:outline-none focus:border-yellow-500 focus:bg-yellow-50 bg-white px-2 py-1 text-sm transition-colors" 
+        style={{ minHeight: '32px' }}
       />
     </div>
   );

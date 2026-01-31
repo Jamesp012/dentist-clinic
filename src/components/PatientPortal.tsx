@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import { handlePhoneInput, formatPhoneNumber } from '../utils/phoneValidation';
 import { appointmentAPI } from '../api';
+import { Notifications } from './Notifications';
 
 // Helper function to extract date string without timezone conversion
 const getDateString = (date: string | Date): string => {
@@ -183,8 +184,8 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
     { id: 'records', label: 'Records', icon: FileText, color: 'from-cyan-500 to-cyan-600' },
     { id: 'photos', label: 'Photos', icon: Camera, color: 'from-teal-600 to-cyan-500' },
     { id: 'balance', label: 'Balance', icon: CreditCard, color: 'from-cyan-500 to-emerald-600' },
-    { id: 'care-guide', label: 'Care Guide', icon: Sparkles, color: 'from-teal-500 to-emerald-600' },
     { id: 'announcements', label: 'Announcements', icon: Megaphone, color: 'from-cyan-600 to-teal-500' },
+    { id: 'care-guide', label: 'Care Guide', icon: Sparkles, color: 'from-teal-500 to-emerald-600' },
   ] as const;
 
   const upcomingAppointments = patientAppointments.filter(apt => {
@@ -469,9 +470,60 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
         <motion.div 
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="bg-white/80 backdrop-blur-xl border-b border-slate-200/50 px-8 py-5 flex justify-between items-center shadow-sm relative"
+          className="bg-white/80 backdrop-blur-xl border-b border-slate-200/50 px-8 py-5 flex justify-between items-start shadow-sm relative"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-transparent to-indigo-500/5 pointer-events-none"></div>
+          <div className="relative z-10 flex-1">
+            {activeTab === 'profile' && (
+              <div>
+                <h2 className="text-3xl font-bold text-teal-900">My Profile</h2>
+                <p className="text-gray-600 mt-1">View and manage your personal information</p>
+              </div>
+            )}
+            {activeTab === 'appointments' && (
+              <div>
+                <h2 className="text-3xl font-bold text-teal-900">Appointments</h2>
+                <p className="text-gray-600 mt-1">View your appointment schedule</p>
+              </div>
+            )}
+            {activeTab === 'records' && (
+              <div>
+                <h2 className="text-3xl font-bold text-cyan-900">Records</h2>
+                <p className="text-gray-600 mt-1">View your dental treatment records</p>
+              </div>
+            )}
+            {activeTab === 'photos' && (
+              <div>
+                <h2 className="text-3xl font-bold text-indigo-900">Photos</h2>
+                <p className="text-gray-600 mt-1">View your treatment photos</p>
+              </div>
+            )}
+            {activeTab === 'balance' && (
+              <div>
+                <h2 className="text-3xl font-bold text-green-900">Balance</h2>
+                <p className="text-gray-600 mt-1">View your account balance and payments</p>
+              </div>
+            )}
+            {activeTab === 'care-guide' && (
+              <div>
+                <h2 className="text-3xl font-bold text-purple-900">Care Guide</h2>
+                <p className="text-gray-600 mt-1">Dental care tips and guidance</p>
+              </div>
+            )}
+            {activeTab === 'announcements' && (
+              <div>
+                <h2 className="text-3xl font-bold text-indigo-900">Announcements</h2>
+                <p className="text-gray-600 mt-1">Latest clinic announcements and updates</p>
+              </div>
+            )}
+          </div>
+          <div className="relative z-10 ml-auto">
+            <Notifications
+              patients={[patient]}
+              appointments={patientAppointments}
+              referrals={[]}
+            />
+          </div>
         </motion.div>
         
         {/* Main Content Area with Animation */}

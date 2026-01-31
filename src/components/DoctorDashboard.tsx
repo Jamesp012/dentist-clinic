@@ -337,10 +337,72 @@ export function DoctorDashboard({
         <motion.div 
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="bg-white/80 backdrop-blur-xl border-b border-slate-200/50 px-8 py-5 flex justify-between items-center shadow-sm relative"
+          className="bg-white/80 backdrop-blur-xl border-b border-slate-200/50 px-8 py-5 flex justify-between items-start shadow-sm relative"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-transparent to-indigo-500/5 pointer-events-none"></div>
-          <div className="relative z-10">
+          <div className="relative z-10 flex-1">
+            {activeTab === 'dashboard' && (
+              <div>
+                <h2 className="text-3xl font-bold text-cyan-900">Dashboard</h2>
+                <p className="text-gray-600 mt-1">Overview of clinic operations</p>
+              </div>
+            )}
+            {activeTab === 'patients' && (
+              <div>
+                <h2 className="text-3xl font-bold text-blue-900">Patient Management</h2>
+                <p className="text-gray-600 mt-1">Manage patient records and medical information</p>
+              </div>
+            )}
+            {activeTab === 'employees' && (
+              <div>
+                <h2 className="text-3xl font-bold text-purple-900">Employee Management</h2>
+                <p className="text-gray-600 mt-1">Manage clinic staff and their access credentials</p>
+              </div>
+            )}
+            {activeTab === 'appointments' && (
+              <div>
+                <h2 className="text-3xl font-bold text-purple-900">Appointments</h2>
+                <p className="text-gray-600 mt-1">Schedule and manage patient appointments</p>
+              </div>
+            )}
+            {activeTab === 'charting' && (
+              <div>
+                <h2 className="text-3xl font-bold text-pink-900">Dental Charting</h2>
+                <p className="text-gray-600 mt-1">Track dental conditions and treatments</p>
+              </div>
+            )}
+            {activeTab === 'braces' && (
+              <div>
+                <h2 className="text-3xl font-bold text-cyan-900">Braces Charting</h2>
+                <p className="text-gray-600 mt-1">Track and manage patient braces records</p>
+              </div>
+            )}
+            {activeTab === 'referrals' && (
+              <div>
+                <h2 className="text-3xl font-bold text-orange-900">Referrals</h2>
+                <p className="text-gray-600 mt-1">Generate and manage patient referrals</p>
+              </div>
+            )}
+            {activeTab === 'services' && (
+              <div>
+                <h2 className="text-3xl font-bold text-teal-900">Services Forms</h2>
+                <p className="text-gray-600 mt-1">Manage clinic services and treatments</p>
+              </div>
+            )}
+            {activeTab === 'financial' && (
+              <div>
+                <h2 className="text-3xl font-bold text-green-900">Financial Report</h2>
+                <p className="text-gray-600 mt-1">View financial data and reports</p>
+              </div>
+            )}
+            {activeTab === 'announcements' && (
+              <div>
+                <h2 className="text-3xl font-bold text-indigo-900">Announcements</h2>
+                <p className="text-gray-600 mt-1">Manage clinic announcements and updates</p>
+              </div>
+            )}
+          </div>
+          <div className="relative z-10 ml-auto">
             <Notifications
               patients={patients}
               appointments={appointments}

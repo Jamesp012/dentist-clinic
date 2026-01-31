@@ -238,27 +238,21 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
 
   return (
     <div className="p-8">
-      <div className="flex justify-between items-center mb-8 pb-6 border-b-2 border-gray-200">
-        <div>
-          <h1 className="text-4xl font-bold mb-2 text-gray-900">Receipts & Forms</h1>
-          <p className="text-gray-600 text-lg">Manage dental receipts and prescriptions</p>
-        </div>
-        <div className="flex gap-3">
-          <button
-            onClick={() => setActiveForm('service')}
-            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-2 font-semibold"
-          >
-            <Plus className="w-5 h-5" />
-            New Receipt
-          </button>
-          <button
-            onClick={() => setActiveForm('prescription')}
-            className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-2 font-semibold"
-          >
-            <FileText className="w-5 h-5" />
-            Create Prescription
-          </button>
-        </div>
+      <div className="flex justify-end gap-3 mb-8">
+        <button
+          onClick={() => setActiveForm('service')}
+          className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-2 font-semibold"
+        >
+          <Plus className="w-5 h-5" />
+          New Receipt
+        </button>
+        <button
+          onClick={() => setActiveForm('prescription')}
+          className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-2 font-semibold"
+        >
+          <FileText className="w-5 h-5" />
+          Create Prescription
+        </button>
       </div>
 
       {/* Recent Receipts */}

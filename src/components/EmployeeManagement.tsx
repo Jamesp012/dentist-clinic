@@ -200,12 +200,18 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold text-purple-900">Employee Management</h2>
-          <p className="text-gray-600 mt-1">Manage clinic staff and their access credentials</p>
+    <div className="px-6 space-y-6">
+      {/* Search */}
+      <div className="relative flex items-center justify-between gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input
+            type="text"
+            placeholder="Search employees by name, position, or email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          />
         </div>
         <button
           onClick={() => setShowAddModal(true)}
@@ -214,18 +220,6 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
           <Plus className="w-5 h-5" />
           Add Employee
         </button>
-      </div>
-
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-        <input
-          type="text"
-          placeholder="Search employees by name, position, or email..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-        />
       </div>
 
       {/* Employees Table */}
