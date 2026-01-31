@@ -37,12 +37,9 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
     const patientRecords = treatmentRecords.filter(r => String(r.patientId) === String(patient.id));
     const totalBilled = patientRecords.reduce((sum, r) => sum + Number(r.cost || 0), 0);
     
-    // Use actual payment data from treatment records
+    // Use actual amountPaid from treatment records (matches Dashboard)
     const totalPaid = patientRecords.reduce((sum, r) => {
-      if (r.amountPaid !== undefined) {
-        return sum + Number(r.amountPaid || 0);
-      }
-      return sum;
+      return sum + Number(r.amountPaid || 0);
     }, 0);
     
     const balance = totalBilled - totalPaid;
@@ -56,21 +53,21 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
     };
   });
 
-  // Calculate monthly revenue
+  // Calculate monthly revenue using amountPaid (matches Dashboard)
   const monthlyRecords = treatmentRecords.filter(record => {
     const recordMonth = record.date.slice(0, 7);
     return recordMonth === selectedMonth;
   });
 
-  const monthlyRevenue = monthlyRecords.reduce((sum, record) => sum + Number(record.cost || 0), 0);
+  const monthlyRevenue = monthlyRecords.reduce((sum, record) => sum + Number(record.amountPaid || 0), 0);
   const monthlyTransactions = monthlyRecords.length;
 
   // Calculate total outstanding balance
-  const totalOutstanding = patientBalances.reduce((sum, pb) => sum + Number(pb.balance || 0), 0);
+  const totalOutstanding = patientBalances.reduce((sum, pb) => sum + Math.max(0, Number(pb.balance || 0)), 0);
 
-  // Calculate totals
+  // Calculate totals (match Dashboard calculation)
   const totalBilled = treatmentRecords.reduce((sum, record) => sum + Number(record.cost || 0), 0);
-  const totalRevenue = patientBalances.reduce((sum, pb) => sum + Number(pb.totalPaid || 0), 0);
+  const totalRevenue = treatmentRecords.reduce((sum, record) => sum + Number(record.amountPaid || 0), 0);
 
   // Treatment type breakdown
   const treatmentBreakdown = treatmentRecords.reduce((acc, record) => {
