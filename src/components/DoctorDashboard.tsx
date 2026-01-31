@@ -298,25 +298,13 @@ export function DoctorDashboard({
           {sidebarOpen ? (
             <div className="bg-slate-800/50 rounded-xl p-4 backdrop-blur-sm">
               <div className="mb-3">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
-                    <span className="text-2xl">🦷</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-white truncate">Doctor Portal</p>
-                    <p className="text-xs text-blue-400 flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                      Full System Access
-                    </p>
-                  </div>
-                </div>
               </div>
               <button
                 onClick={onLogout}
-                className="w-full px-4 py-2.5 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
+                className="w-full px-4 py-2.5 bg-gradient-to-r from-slate-600 to-slate-700 hover:from-red-500 hover:to-red-600 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-lg hover:shadow-xl font-medium text-white"
               >
                 <LogOut className="w-4 h-4" />
-                Logout
+                Sign Out
               </button>
             </div>
           ) : (
