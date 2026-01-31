@@ -29,21 +29,6 @@ export function Dashboard({ patients, appointments, inventory, treatmentRecords,
 
   return (
     <div className="p-8 space-y-8">
-      {/* Header Section */}
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative"
-      >
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5 rounded-2xl -z-10"></div>
-        <div className="p-6">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent mb-2">
-            Dashboard Overview
-          </h1>
-          <p className="text-slate-600">Monitor your dental clinic performance at a glance</p>
-        </div>
-      </motion.div>
-
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <motion.button

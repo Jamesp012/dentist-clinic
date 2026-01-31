@@ -216,10 +216,6 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
 
   return (
     <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-3xl mb-2">Announcements & Services</h1>
-        <p className="text-gray-600">Manage clinic announcements and services</p>
-      </div>
 
       {/* Tab Navigation */}
       <div className="flex gap-4 mb-6 border-b border-gray-200">

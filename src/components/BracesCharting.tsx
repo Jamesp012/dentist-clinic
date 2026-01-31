@@ -475,16 +475,6 @@ export function BracesCharting({ patients }: BracesChartingProps) {
 
   return (
     <div className="p-8 bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 min-h-screen">
-      <motion.div 
-        className="mb-6"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <h1 className="text-3xl mb-2 bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-          Braces Color Customization
-        </h1>
-        <p className="text-gray-600">Design your perfect braces look with custom rubber band colors</p>
-      </motion.div>
 
       {/* Patient Selection */}
       <motion.div 
@@ -511,12 +501,6 @@ export function BracesCharting({ patients }: BracesChartingProps) {
             transition={{ delay: 0.2 }}
           >
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Palette className="w-5 h-5 text-purple-600" />
-                <h2 className="bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-                  Rubber Band Color Palette
-                </h2>
-              </div>
               <motion.button
                 onClick={resetAllColors}
                 className="px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all duration-300 shadow-md hover:shadow-lg flex items-center gap-2"

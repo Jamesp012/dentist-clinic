@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import { handlePhoneInput, formatPhoneNumber } from '../utils/phoneValidation';
 import { appointmentAPI } from '../api';
+import { Notifications } from './Notifications';
 
 // Helper function to extract date string without timezone conversion
 const getDateString = (date: string | Date): string => {
@@ -183,8 +184,8 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
     { id: 'records', label: 'Records', icon: FileText, color: 'from-cyan-500 to-cyan-600' },
     { id: 'photos', label: 'Photos', icon: Camera, color: 'from-teal-600 to-cyan-500' },
     { id: 'balance', label: 'Balance', icon: CreditCard, color: 'from-cyan-500 to-emerald-600' },
-    { id: 'care-guide', label: 'Care Guide', icon: Sparkles, color: 'from-teal-500 to-emerald-600' },
     { id: 'announcements', label: 'Announcements', icon: Megaphone, color: 'from-cyan-600 to-teal-500' },
+    { id: 'care-guide', label: 'Care Guide', icon: Sparkles, color: 'from-teal-500 to-emerald-600' },
   ] as const;
 
   const upcomingAppointments = patientAppointments.filter(apt => {
@@ -430,25 +431,13 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
           {sidebarOpen ? (
             <div className="bg-slate-800/50 rounded-xl p-4 backdrop-blur-sm">
               <div className="mb-3">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
-                    <span className="text-2xl">🦷</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-white truncate">Patient Portal</p>
-                    <p className="text-xs text-blue-400 flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                      Health Dashboard
-                    </p>
-                  </div>
-                </div>
               </div>
               <button
                 onClick={handleLogout}
-                className="w-full px-4 py-2.5 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
+                className="w-full px-4 py-2.5 bg-gradient-to-r from-slate-600 to-slate-700 hover:from-red-500 hover:to-red-600 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-lg hover:shadow-xl font-medium text-white"
               >
                 <LogOut className="w-4 h-4" />
-                Logout
+                Sign Out
               </button>
             </div>
           ) : (
@@ -469,9 +458,60 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
         <motion.div 
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="bg-white/80 backdrop-blur-xl border-b border-slate-200/50 px-8 py-5 flex justify-between items-center shadow-sm relative"
+          className="bg-white/80 backdrop-blur-xl border-b border-slate-200/50 px-8 py-5 flex justify-between items-start shadow-sm relative"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-transparent to-indigo-500/5 pointer-events-none"></div>
+          <div className="relative z-10 flex-1">
+            {activeTab === 'profile' && (
+              <div>
+                <h2 className="text-3xl font-bold text-teal-900">My Profile</h2>
+                <p className="text-gray-600 mt-1">View and manage your personal information</p>
+              </div>
+            )}
+            {activeTab === 'appointments' && (
+              <div>
+                <h2 className="text-3xl font-bold text-teal-900">Appointments</h2>
+                <p className="text-gray-600 mt-1">View your appointment schedule</p>
+              </div>
+            )}
+            {activeTab === 'records' && (
+              <div>
+                <h2 className="text-3xl font-bold text-cyan-900">Records</h2>
+                <p className="text-gray-600 mt-1">View your dental treatment records</p>
+              </div>
+            )}
+            {activeTab === 'photos' && (
+              <div>
+                <h2 className="text-3xl font-bold text-indigo-900">Photos</h2>
+                <p className="text-gray-600 mt-1">View your treatment photos</p>
+              </div>
+            )}
+            {activeTab === 'balance' && (
+              <div>
+                <h2 className="text-3xl font-bold text-green-900">Balance</h2>
+                <p className="text-gray-600 mt-1">View your account balance and payments</p>
+              </div>
+            )}
+            {activeTab === 'care-guide' && (
+              <div>
+                <h2 className="text-3xl font-bold text-purple-900">Care Guide</h2>
+                <p className="text-gray-600 mt-1">Dental care tips and guidance</p>
+              </div>
+            )}
+            {activeTab === 'announcements' && (
+              <div>
+                <h2 className="text-3xl font-bold text-indigo-900">Announcements</h2>
+                <p className="text-gray-600 mt-1">Latest clinic announcements and updates</p>
+              </div>
+            )}
+          </div>
+          <div className="relative z-10 ml-auto">
+            <Notifications
+              patients={[patient]}
+              appointments={patientAppointments}
+              referrals={[]}
+            />
+          </div>
         </motion.div>
         
         {/* Main Content Area with Animation */}
@@ -487,6 +527,19 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
             >
               {activeTab === 'profile' && (
                 <div className="p-8 space-y-6">
+                  {/* Profile Picture Section */}
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg border-4 border-white">
+                      <span className="text-6xl">👤</span>
+                    </div>
+                    <button
+                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                    >
+                      <Camera className="w-4 h-4" />
+                      Upload Photo
+                    </button>
+                  </div>
+
                   <div className="flex justify-between items-center">
                     <h2 className="text-xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                       Personal Information
@@ -1002,10 +1055,6 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
             {/* Care Guide Tab */}
             {activeTab === 'care-guide' && (
               <div className="p-8 space-y-6">
-                <h2 className="text-xl mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Dental Care Guide
-                </h2>
-
                 {/* Before Treatment */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -1211,11 +1260,6 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
             {/* Announcements Tab */}
             {activeTab === 'announcements' && (
               <div className="p-8 space-y-8">
-                <div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Clinic Announcements & Services</h2>
-                  <p className="text-gray-600">Stay updated with our latest announcements and explore our professional dental services</p>
-                </div>
-
                 {/* Sub-Tab Navigation */}
                 <div className="flex gap-4 border-b border-gray-200">
                   <button
