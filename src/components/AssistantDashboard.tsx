@@ -409,7 +409,7 @@ export function AssistantDashboard({
           )}
         </div>
 
-        <nav className="flex-1 p-3 overflow-y-auto relative z-10">
+        <nav className="flex-1 p-3 overflow-y-auto relative z-10 sidebar-scroll">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
             const unreadMessages = 0;

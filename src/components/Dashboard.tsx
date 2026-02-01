@@ -18,14 +18,41 @@ export function Dashboard({ patients, appointments, inventory, treatmentRecords,
   
   const totalRevenue = treatmentRecords.reduce((sum, record) => sum + Number(record.amountPaid || 0), 0);
 
-  // Generate appointment data from real appointments
-  const appointmentData = appointments.length > 0 ? [
-    { month: 'Current', appointments: appointments.length }
-  ] : [{ month: 'No Data', appointments: 0 }];
+  // Generate appointment data with 5-day view based on actual appointments
+  const getAppointmentsForDate = (daysOffset: number) => {
+    const date = new Date();
+    date.setDate(date.getDate() + daysOffset);
+    const dateStr = date.toISOString().split('T')[0];
+    return appointments.filter(apt => apt.date === dateStr).length;
+  };
 
-  const revenueData = treatmentRecords.length > 0 ? [
+  const appointmentData = [
+    { day: 'Two Days Ago', appointments: getAppointmentsForDate(-2) },
+    { day: 'Yesterday', appointments: getAppointmentsForDate(-1) },
+    { day: 'Today', appointments: getAppointmentsForDate(0) },
+    { day: 'Tomorrow', appointments: getAppointmentsForDate(1) },
+    { day: 'Day After', appointments: getAppointmentsForDate(2) }
+  ];
+
+  // Calculate revenue for last month and this month
+  const getRevenueForMonth = (monthOffset: number) => {
+    const now = new Date();
+    const targetMonth = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + monthOffset + 1, 1);
+    return treatmentRecords.filter(record => {
+      const recordDate = new Date(record.createdAt || new Date());
+      return recordDate >= targetMonth && recordDate < nextMonth;
+    }).reduce((sum, record) => sum + Number(record.amountPaid || 0), 0);
+  };
+
+  const lastMonthRevenue = getRevenueForMonth(-1);
+  const thisMonthRevenue = getRevenueForMonth(0);
+
+  const revenueData = [
+    { month: 'Last Month', revenue: lastMonthRevenue },
+    { month: 'This Month', revenue: thisMonthRevenue },
     { month: 'Total', revenue: totalRevenue }
-  ] : [{ month: 'No Data', revenue: 0 }];
+  ];
 
   return (
     <div className="p-8 space-y-8">
@@ -140,11 +167,11 @@ export function Dashboard({ patients, appointments, inventory, treatmentRecords,
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={appointmentData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
+              <XAxis dataKey="day" />
+              <YAxis domain={[0, 15]} ticks={[3, 6, 9, 12, 15]} />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey="appointments" stroke="#3b82f6" strokeWidth={2} />
+              <Line type="monotone" dataKey="appointments" stroke="#3b82f6" strokeWidth={2} dot={{ fill: '#3b82f6', r: 5 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -155,7 +182,7 @@ export function Dashboard({ patients, appointments, inventory, treatmentRecords,
             <BarChart data={revenueData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
-              <YAxis />
+              <YAxis domain={[0, 50000]} ticks={[10000, 20000, 30000, 40000, 50000]} />
               <Tooltip />
               <Legend />
               <Bar dataKey="revenue" fill="#10b981" />

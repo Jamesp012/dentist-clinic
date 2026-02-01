@@ -134,6 +134,9 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
         });
       }
 
+      // Update local state immediately to show the receipt
+      setTreatmentRecords([...treatmentRecords, savedRecord]);
+      
       setLastCreatedService(savedRecord);
       setPaymentType('full');
       setAmountPaid(0);

@@ -131,13 +131,20 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
   );
 
   const UnderlineInput = ({ label, value, onChange, className = '' }: { label: string; value: string; onChange: (v: string) => void; className?: string }) => (
-    <div className={`flex items-end ${className}`}>
-      <span className="text-sm whitespace-nowrap mr-2">{label}</span>
+    <div className={`flex items-center gap-2 ${className}`}>
+      <span className="text-sm whitespace-nowrap font-semibold">{label}</span>
       <input 
         type="text" 
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="flex-1 border-b border-slate-400 focus:outline-none focus:border-yellow-500 bg-transparent px-1 h-[20px] mb-[-1px]" 
+        onChange={(e) => {
+          e.stopPropagation();
+          onChange(e.target.value);
+        }}
+        onClick={(e) => e.stopPropagation()}
+        onFocus={(e) => e.stopPropagation()}
+        autoComplete="off"
+        className="flex-1 border-b-2 border-slate-400 focus:outline-none focus:border-yellow-500 focus:bg-yellow-50 bg-white px-2 py-2 text-sm transition-colors font-medium" 
+        style={{ pointerEvents: 'auto' }}
       />
     </div>
   );
@@ -180,8 +187,13 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
 
       {/* Doctor Referral Form */}
       {referralType === 'doctor' && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-white w-full max-w-4xl rounded-lg shadow-2xl my-8">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto" onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            setReferralType(null);
+            setShowTypeSelection(false);
+          }
+        }}>
+          <div className="bg-white w-full max-w-4xl rounded-lg shadow-2xl my-8" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center p-6 border-b">
               <h1 className="text-2xl font-bold">Doctor Referral Form</h1>
               <button onClick={() => { setReferralType(null); setShowTypeSelection(false); }} className="text-gray-500 hover:text-gray-700">
@@ -208,21 +220,21 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
               </div>
 
               {/* Header Form Fields */}
-              <div className="space-y-3 mb-6">
-                <div className="flex gap-4">
-                  <UnderlineInput label="Patient's Name:" value={formData.patientName} onChange={(v) => handleInputChange('patientName', v)} className="flex-1" />
-                  <UnderlineInput label="Date:" value={formData.date} onChange={(v) => handleInputChange('date', v)} className="w-48" />
+              <div className="space-y-4 mb-6">
+                <UnderlineInput label="Patient's Name:" value={formData.patientName} onChange={(v) => handleInputChange('patientName', v)} />
+                <div className="grid grid-cols-3 gap-4">
+                  <UnderlineInput label="Date:" value={formData.date} onChange={(v) => handleInputChange('date', v)} />
+                  <UnderlineInput label="Contact No.:" value={formData.contactNo} onChange={(v) => handleInputChange('contactNo', v)} />
+                  <UnderlineInput label="Age:" value={formData.age} onChange={(v) => handleInputChange('age', v)} />
                 </div>
-                <div className="flex gap-4">
-                  <UnderlineInput label="Contact No.:" value={formData.contactNo} onChange={(v) => handleInputChange('contactNo', v)} className="flex-1" />
-                  <UnderlineInput label="Age:" value={formData.age} onChange={(v) => handleInputChange('age', v)} className="w-16" />
-                  <UnderlineInput label="Date Of Birth:" value={formData.dateOfBirth} onChange={(v) => handleInputChange('dateOfBirth', v)} className="w-40" />
-                  <UnderlineInput label="Sex:" value={formData.sex} onChange={(v) => handleInputChange('sex', v)} className="w-16" />
+                <div className="grid grid-cols-2 gap-4">
+                  <UnderlineInput label="Sex:" value={formData.sex} onChange={(v) => handleInputChange('sex', v)} />
+                  <UnderlineInput label="Date Of Birth:" value={formData.dateOfBirth} onChange={(v) => handleInputChange('dateOfBirth', v)} />
                 </div>
                 <UnderlineInput label="Referred by:" value={formData.referredBy} onChange={(v) => handleInputChange('referredBy', v)} />
-                <div className="flex gap-4">
-                  <UnderlineInput label="Contact No.:" value={formData.referredByContact} onChange={(v) => handleInputChange('referredByContact', v)} className="flex-1" />
-                  <UnderlineInput label="Clinic Email Address:" value={formData.referredByEmail} onChange={(v) => handleInputChange('referredByEmail', v)} className="flex-1" />
+                <div className="grid grid-cols-2 gap-4">
+                  <UnderlineInput label="Contact No.:" value={formData.referredByContact} onChange={(v) => handleInputChange('referredByContact', v)} />
+                  <UnderlineInput label="Clinic Email Address:" value={formData.referredByEmail} onChange={(v) => handleInputChange('referredByEmail', v)} />
                 </div>
               </div>
 
@@ -248,37 +260,31 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
 
               {/* Specialty & Urgency */}
               <div className="space-y-4 mb-6">
-                <div>
-                  <label className="block text-sm font-bold mb-2">Specialty</label>
-                  <input
-                    type="text"
-                    value={formData.specialty}
-                    onChange={(e) => handleInputChange('specialty', e.target.value)}
-                    placeholder="e.g., Orthodontics, Endodontics"
-                    className="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                  />
-                </div>
+                <UnderlineInput 
+                  label="Specialty:" 
+                  value={formData.specialty} 
+                  onChange={(v) => handleInputChange('specialty', v)} 
+                />
 
-                <div>
-                  <label className="block text-sm font-bold mb-2">Urgency Level</label>
-                  <select
-                    value={formData.urgency}
-                    onChange={(e) => handleInputChange('urgency', e.target.value)}
-                    className="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                  >
-                    <option value="routine">Routine</option>
-                    <option value="urgent">Urgent</option>
-                    <option value="emergency">Emergency</option>
-                  </select>
-                </div>
+                <UnderlineInput 
+                  label="Urgency Level:" 
+                  value={formData.urgency} 
+                  onChange={(v) => handleInputChange('urgency', v)} 
+                />
 
-                <div>
-                  <label className="block text-sm font-bold mb-2">Reason for Referral</label>
+                <div className="flex items-start gap-2">
+                  <span className="text-sm whitespace-nowrap font-semibold pt-1">Reason for Referral:</span>
                   <textarea
                     value={formData.reason}
-                    onChange={(e) => handleInputChange('reason', e.target.value)}
-                    rows={4}
-                    className="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      handleInputChange('reason', e.target.value);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    onFocus={(e) => e.stopPropagation()}
+                    rows={3}
+                    className="flex-1 border-b-2 border-slate-400 focus:outline-none focus:border-yellow-500 focus:bg-yellow-50 bg-white px-2 py-1 text-sm transition-colors resize-none"
+                    style={{ pointerEvents: 'auto' }}
                   />
                 </div>
               </div>
@@ -304,8 +310,8 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
 
       {/* X-Ray Referral Form */}
       {referralType === 'xray' && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-white w-full max-w-5xl rounded-lg shadow-2xl my-8">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white w-full max-w-5xl rounded-lg shadow-2xl my-8 pointer-events-auto">
             <div className="flex justify-between items-center p-6 border-b">
               <h1 className="text-2xl font-bold">X-Ray Referral Form</h1>
               <button onClick={() => { setReferralType(null); setShowTypeSelection(false); }} className="text-gray-500 hover:text-gray-700">
@@ -313,7 +319,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
               </button>
             </div>
 
-            <div className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto space-y-6">
+            <div className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto space-y-6 pointer-events-auto">
               {/* Patient Selection */}
               <div>
                 <label className="block text-sm font-bold mb-2">Select Patient</label>
@@ -332,12 +338,12 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
               </div>
 
               {/* Patient Fields */}
-              <div className="space-y-3 border-b pb-6">
-                <UnderlineInput label="Date" value={formData.date} onChange={(v) => handleInputChange('date', v)} className="w-48" />
-                <UnderlineInput label="Patient's Name" value={formData.patientName} onChange={(v) => handleInputChange('patientName', v)} />
-                <div className="flex gap-12">
-                  <UnderlineInput label="Birthday" value={formData.dateOfBirth} onChange={(v) => handleInputChange('dateOfBirth', v)} />
-                  <div className="flex items-center gap-4">
+              <div className="space-y-4 border-b pb-6">
+                <UnderlineInput label="Date:" value={formData.date} onChange={(v) => handleInputChange('date', v)} />
+                <UnderlineInput label="Patient's Name:" value={formData.patientName} onChange={(v) => handleInputChange('patientName', v)} />
+                <div className="grid grid-cols-2 gap-4">
+                  <UnderlineInput label="Birthday:" value={formData.dateOfBirth} onChange={(v) => handleInputChange('dateOfBirth', v)} />
+                  <div className="flex items-center gap-8">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="radio"
@@ -362,9 +368,9 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                     </label>
                   </div>
                 </div>
-                <div className="flex gap-8">
-                  <UnderlineInput label="Referred by Dr." value={formData.referredBy} onChange={(v) => handleInputChange('referredBy', v)} />
-                  <UnderlineInput label="Dentist's Contact #" value={formData.referredByContact} onChange={(v) => handleInputChange('referredByContact', v)} />
+                <div className="grid grid-cols-2 gap-4">
+                  <UnderlineInput label="Referred by Dr.:" value={formData.referredBy} onChange={(v) => handleInputChange('referredBy', v)} />
+                  <UnderlineInput label="Dentist's Contact #:" value={formData.referredByContact} onChange={(v) => handleInputChange('referredByContact', v)} />
                 </div>
               </div>
 

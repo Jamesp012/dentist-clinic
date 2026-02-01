@@ -30,12 +30,12 @@ export function RealisticTooth({
   const getTransform = () => {
     if (view === 'buccal') {
       // Upper Buccal (Row 1): Roots UP. SVG is drawn Roots UP. No rotation.
-      // Lower Buccal (Row 4): Roots DOWN. SVG is drawn Roots UP. Rotate 180.
-      return isUpper ? '' : 'rotate(180)';
+      // Lower Buccal (Row 4): Roots DOWN. SVG is drawn Roots UP. Flip vertically.
+      return isUpper ? '' : 'scaleY(-1)';
     } else {
       // Occlusal views
-      // Usually mirrored. Let's just rotate 180 for lower to match orientation
-      return isUpper ? '' : 'rotate(180)';
+      // Flip vertically for lower teeth
+      return isUpper ? '' : 'scaleY(-1)';
     }
   };
 
@@ -78,7 +78,8 @@ export function RealisticTooth({
         "group relative cursor-pointer transition-transform duration-200 select-none",
         isSelected && "z-10",
         view === 'buccal' ? "h-24 w-10" : "h-14 w-10", // Taller for roots
-        "flex items-center justify-center"
+        "flex items-center justify-center",
+        !isUpper && "scale-y-[-1]"
       )}
       onClick={() => onToothClick(id)}
     >
@@ -105,7 +106,6 @@ export function RealisticTooth({
           "w-full h-full transition-all", 
           !isMissing && "drop-shadow-sm hover:drop-shadow-md"
         )}
-        style={{ transform: getTransform() }}
       >
         <defs>
           <radialGradient id={`toothGradient-${id}`} cx="50%" cy="50%" r="50%" fx="50%" fy="50%">

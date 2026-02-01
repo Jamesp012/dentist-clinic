@@ -234,7 +234,7 @@ export function DentalChart() {
             </div>
 
             {/* Lower Arch Roots (Buccal) */}
-            <div className="relative flex justify-center gap-1 mt-[-10px] z-0">
+            <div className="relative flex justify-center gap-1 mt-[-10px] z-0" style={{ transform: 'scaleY(-1)' }}>
                {Array.from({ length: 16 }, (_, i) => 32 - i).map(id => (
                  <div key={id} className={id === 25 ? "mr-4" : ""}>
                     <RealisticTooth 
