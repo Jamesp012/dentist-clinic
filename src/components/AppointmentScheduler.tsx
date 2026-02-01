@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Appointment, Patient, TreatmentRecord } from '../App';
-import { Calendar, Plus, X, Filter } from 'lucide-react';
+import { Calendar, Plus, X, Filter, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { appointmentAPI } from '../api';
+import { PatientSearchInput } from './PatientSearchInput';
+import { convertToDBDate, convertToDisplayDate, formatDateInput, isValidDateFormat } from '../utils/dateHelpers';
 
 // Helper function to extract date string without timezone conversion
 const getDateString = (date: string | Date): string => {
@@ -32,8 +34,17 @@ const getPatientRecordStatus = (patientId: string, treatmentRecords?: TreatmentR
   return treatmentRecords.some(record => String(record.patientId) === String(patientId)) ? 'has-record' : 'no-record';
 };
 
+// Helper function to convert 24-hour time to 12-hour format with AM/PM
+const formatTime = (time: string) => {
+  const [hours, minutes] = time.split(':').map(Number);
+  const period = hours >= 12 ? 'PM' : 'AM';
+  const displayHours = hours % 12 || 12;
+  return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+};
+
 export function AppointmentScheduler({ appointments, setAppointments, patients, treatmentRecords, onOpenServiceForm, onDataChanged }: AppointmentSchedulerProps) {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedPatientId, setSelectedPatientId] = useState('');
   // Use local date to avoid timezone conversion issues
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date();
@@ -42,6 +53,7 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
     const day = String(today.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   });
+  const [selectedDateInput, setSelectedDateInput] = useState(() => convertToDisplayDate(selectedDate));
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [closedSchedules, setClosedSchedules] = useState<Set<string>>(new Set(
@@ -77,20 +89,41 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
     }).length;
   };
 
+  useEffect(() => {
+    setSelectedDateInput(convertToDisplayDate(selectedDate));
+  }, [selectedDate]);
+
   const handleAddAppointment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       const formData = new FormData(e.currentTarget);
       const patientId = formData.get('patientId') as string;
       const patient = patients.find(p => String(p.id) === patientId);
+      const schedulePeriod = formData.get('schedulePeriod') as string;
+      const rawDate = String(formData.get('date') || '').trim();
+      const normalizedDate = convertToDBDate(rawDate);
+      const isDbDateValid = /^\d{4}-\d{2}-\d{2}$/.test(normalizedDate);
+
+      if (!rawDate || (!isValidDateFormat(rawDate) && !isDbDateValid)) {
+        toast.error('Please enter a valid date (MM/DD/YYYY)');
+        return;
+      }
+      if (!isDbDateValid) {
+        toast.error('Please enter a valid date (MM/DD/YYYY)');
+        return;
+      }
+      
+      // For queue system, use a default time based on the period (24-hour format)
+      const defaultTime = schedulePeriod === 'am' ? '09:00' : '14:00';
 
       const newAppointment = {
         patientId,
         patientName: patient?.name || '',
-        date: formData.get('date') as string,
-        time: formData.get('time') as string,
+        date: normalizedDate,
+        time: defaultTime,
         type: formData.get('type') as string,
         notes: formData.get('notes') as string,
+        createdByRole: 'staff',
       };
 
       const createdAppointment = await appointmentAPI.create(newAppointment);
@@ -102,16 +135,16 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
       };
 
       setAppointments([...appointments, appointmentWithStatus as Appointment]);
-      setSelectedDate(newAppointment.date);
+      setSelectedDate(normalizedDate);
       setShowAddModal(false);
-      toast.success('Appointment scheduled successfully!');
+      toast.success('Successfully joined the queue!');
       // Sync data across all users
       if (onDataChanged) {
         await onDataChanged();
       }
     } catch (error) {
       console.error('Failed to add appointment:', error);
-      toast.error('Failed to schedule appointment');
+      toast.error('Failed to join queue');
     }
   };
 
@@ -220,9 +253,16 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
           <div className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-gray-600" />
             <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
+              type="text"
+              value={selectedDateInput}
+              onChange={(e) => {
+                const formatted = formatDateInput(e.target.value);
+                setSelectedDateInput(formatted);
+                if (isValidDateFormat(formatted)) {
+                  setSelectedDate(convertToDBDate(formatted));
+                }
+              }}
+              placeholder="MM/DD/YYYY"
               className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -328,7 +368,7 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                         <p className="text-sm text-gray-600">{apt.type}</p>
                         {apt.notes && <p className="text-xs text-gray-500 mt-1">{apt.notes}</p>}
                       </div>
-                      <div className="flex-shrink-0 flex gap-1">
+                      <div className="flex-shrink-0 flex gap-1 items-center">
                         {apt.status === 'scheduled' && (
                           <>
                             <button
@@ -344,6 +384,9 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                               Cancel
                             </button>
                           </>
+                        )}
+                        {apt.status === 'completed' && (
+                          <span className="px-2 py-1 bg-emerald-100 text-emerald-700 text-xs rounded font-semibold">✓ Completed</span>
                         )}
                         <button
                           onClick={() => deleteAppointment(apt.id)}
@@ -415,7 +458,7 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                         <p className="text-sm text-gray-600">{apt.type}</p>
                         {apt.notes && <p className="text-xs text-gray-500 mt-1">{apt.notes}</p>}
                       </div>
-                      <div className="flex-shrink-0 flex gap-1">
+                      <div className="flex-shrink-0 flex gap-1 items-center">
                         {apt.status === 'scheduled' && (
                           <>
                             <button
@@ -431,6 +474,9 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                               Cancel
                             </button>
                           </>
+                        )}
+                        {apt.status === 'completed' && (
+                          <span className="px-2 py-1 bg-emerald-100 text-emerald-700 text-xs rounded font-semibold">✓ Completed</span>
                         )}
                         <button
                           onClick={() => deleteAppointment(apt.id)}
@@ -485,7 +531,7 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                       <td className="px-6 py-4">
                         <div>
                           <p>{getDateString(apt.date)}</p>
-                          <p className="text-sm text-gray-600">{String(apt.time).substring(0, 5)}</p>
+                          <p className="text-sm text-gray-600">{formatTime(String(apt.time).substring(0, 5))}</p>
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -540,96 +586,134 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
       {/* Add Appointment Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-lg w-full">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl">New Appointment</h2>
+          <div className="bg-white rounded-lg p-5 max-w-lg w-full">
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-xl font-semibold">New Appointment</h2>
               <button onClick={() => setShowAddModal(false)} className="text-gray-500 hover:text-gray-700">
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5" />
               </button>
             </div>
-            <form onSubmit={handleAddAppointment} className="space-y-4">
+            <form onSubmit={handleAddAppointment} className="space-y-3">
               <div>
-                <label className="block text-sm mb-1">Patient *</label>
-                <select
-                  name="patientId"
+                <label className="block text-sm mb-1 font-semibold">Patient *</label>
+                <input type="hidden" name="patientId" value={selectedPatientId} required />
+                <PatientSearchInput
+                  patients={patients}
+                  selectedPatientId={selectedPatientId}
+                  onSelectPatient={setSelectedPatientId}
+                  placeholder="Search patient..."
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm mb-1 font-semibold">Appointment Date *</label>
+                <input
+                  type="text"
+                  name="date"
+                  required
+                  defaultValue={convertToDisplayDate(selectedDate)}
+                  onChange={(e) => {
+                    e.currentTarget.value = formatDateInput(e.currentTarget.value);
+                  }}
+                  placeholder="MM/DD/YYYY"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Schedule Period Selection (AM/PM Queue) */}
+              <div>
+                <label className="block text-sm mb-1.5 font-semibold">Select Queue *</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {/* AM Schedule */}
+                  <label className="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="schedulePeriod"
+                      value="am"
+                      required
+                      className="peer sr-only"
+                    />
+                    <div className="p-3 rounded-lg border-2 transition-all text-left border-gray-300 bg-gray-50 hover:border-emerald-400 peer-checked:border-emerald-500 peer-checked:bg-emerald-50">
+                      <p className="font-semibold text-gray-900 text-sm">Morning</p>
+                      <p className="text-xs text-gray-600 mb-1">8:00 AM - 12:00 PM</p>
+                      <p className="text-base font-bold text-emerald-600">{(() => {
+                        const rawDate = (document.querySelector('input[name="date"]') as HTMLInputElement)?.value || convertToDisplayDate(selectedDate);
+                        const date = convertToDBDate(rawDate);
+                        return getBookingCountForPeriod(date, 'am');
+                      })()}</p>
+                      <p className="text-xs text-gray-600">in queue</p>
+                    </div>
+                  </label>
+
+                  {/* PM Schedule */}
+                  <label className="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="schedulePeriod"
+                      value="pm"
+                      required
+                      className="peer sr-only"
+                    />
+                    <div className="p-3 rounded-lg border-2 transition-all text-left border-gray-300 bg-gray-50 hover:border-orange-400 peer-checked:border-orange-500 peer-checked:bg-orange-50">
+                      <p className="font-semibold text-gray-900 text-sm">Afternoon</p>
+                      <p className="text-xs text-gray-600 mb-1">12:30 PM - 8:00 PM</p>
+                      <p className="text-base font-bold text-orange-600">{(() => {
+                        const rawDate = (document.querySelector('input[name="date"]') as HTMLInputElement)?.value || convertToDisplayDate(selectedDate);
+                        const date = convertToDBDate(rawDate);
+                        return getBookingCountForPeriod(date, 'pm');
+                      })()}</p>
+                      <p className="text-xs text-gray-600">in queue</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm mb-1 font-semibold">Service Type *</label>
+                <select
+                  name="type"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="">Select a patient</option>
-                  {patients.map(patient => (
-                    <option key={patient.id} value={patient.id}>
-                      {patient.name}
-                    </option>
-                  ))}
+                  <option value="">Select service...</option>
+                  <option value="Cleaning">Cleaning</option>
+                  <option value="Extraction">Extraction</option>
+                  <option value="Pasta">Pasta</option>
+                  <option value="Braces">Braces</option>
+                  <option value="Pustiso/Dentures">Pustiso/Dentures</option>
+                  <option value="Check-up">Check-up</option>
+                  <option value="Consultation">Consultation</option>
                 </select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm mb-1">Date *</label>
-                  <input
-                    type="date"
-                    name="date"
-                    required
-                    defaultValue={selectedDate}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm mb-1">Time * <span className="text-xs text-gray-500">(08:00 AM - 08:00 PM)</span></label>
-                  <input
-                    type="time"
-                    name="time"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    min="08:00"
-                    max="20:00"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm mb-1 font-semibold">Notes (Optional)</label>
+                <textarea
+                  name="notes"
+                  rows={2}
+                  placeholder="Any special requests..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm mb-1">Appointment Type *</label>
-                  <select
-                    name="type"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="Check-up">Check-up</option>
-                    <option value="Cleaning">Cleaning</option>
-                    <option value="Filling">Filling</option>
-                    <option value="Root Canal">Root Canal</option>
-                    <option value="Extraction">Extraction</option>
-                    <option value="Crown">Crown</option>
-                    <option value="Emergency">Emergency</option>
-                    <option value="Consultation">Consultation</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm mb-1">Notes</label>
-                  <textarea
-                    name="notes"
-                    rows={3}
-                    placeholder="Additional notes or special instructions..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-              <div className="flex gap-3 justify-end">
+              <div className="flex gap-2 justify-end pt-2">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50"
+                  className="px-5 py-2 border border-gray-300 rounded hover:bg-gray-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  className="px-5 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                 >
-                  Schedule Appointment
+                  Join Queue
                 </button>
               </div>
             </form>
+            <p className="text-xs text-gray-600 mt-2 text-center">
+              <Info className="w-3.5 h-3.5 inline-block mr-1" />
+              Join the queue for your preferred time period. The clinic will serve patients on a first-come, first-served basis.
+            </p>
           </div>
         </div>
       )}

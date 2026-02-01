@@ -56,6 +56,34 @@ async function migrateDatabase() {
       );
     }
 
+    // Check if appointments table has createdByRole column
+    const [appointmentColumns] = await connection.query(
+      "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'appointments' AND TABLE_SCHEMA = 'dental_clinic'"
+    );
+
+    const appointmentColumnNames = appointmentColumns.map(col => col.COLUMN_NAME);
+
+    if (!appointmentColumnNames.includes('createdByRole')) {
+      console.log('Adding createdByRole column to appointments...');
+      await connection.execute(
+        "ALTER TABLE appointments ADD COLUMN createdByRole ENUM('patient', 'staff') DEFAULT 'staff'"
+      );
+    }
+
+    // Check if referrals table has createdByRole column
+    const [referralColumns] = await connection.query(
+      "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'referrals' AND TABLE_SCHEMA = 'dental_clinic'"
+    );
+
+    const referralColumnNames = referralColumns.map(col => col.COLUMN_NAME);
+
+    if (!referralColumnNames.includes('createdByRole')) {
+      console.log('Adding createdByRole column to referrals...');
+      await connection.execute(
+        "ALTER TABLE referrals ADD COLUMN createdByRole ENUM('patient', 'staff') DEFAULT 'staff'"
+      );
+    }
+
     // Check if payments table exists
     const [tables] = await connection.query(
       "SHOW TABLES WHERE `Tables_in_dental_clinic` = 'payments'"

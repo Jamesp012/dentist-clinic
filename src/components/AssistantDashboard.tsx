@@ -379,7 +379,7 @@ export function AssistantDashboard({
         {/* Decorative gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-transparent to-indigo-500/5 pointer-events-none"></div>
 
-        <div className="p-6 flex items-center justify-between border-b border-emerald-700/50 relative z-10">
+        <div className="p-6 flex items-center gap-3 border-b border-emerald-700/50 relative z-10">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="p-2.5 hover:bg-emerald-700/50 rounded-xl transition-all duration-200 backdrop-blur-sm"
@@ -393,12 +393,9 @@ export function AssistantDashboard({
               className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => setShowSettings(true)}
             >
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center shadow-lg">
-                <span className="text-2xl">🦷</span>
-              </div>
               <div className="min-w-0">
                 <h1 className="text-lg font-semibold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent whitespace-nowrap overflow-hidden text-ellipsis">
-                  Assistant Portal
+                  {currentUser.fullName || currentUser.username || 'Assistant'}
                 </h1>
                 <p className="text-xs text-emerald-300 flex items-center gap-1">
                   Staff Access
@@ -504,7 +501,7 @@ export function AssistantDashboard({
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="bg-white/80 backdrop-blur-xl border-b border-slate-200/50 px-8 py-5 flex justify-between items-start shadow-sm relative"
+          className={`bg-white/80 backdrop-blur-xl border-b border-slate-200/50 px-6 py-0 ${sidebarOpen ? 'min-h-[92px]' : 'min-h-[88px]'} flex justify-between items-center shadow-sm relative`}
         >
           <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-transparent to-indigo-500/5 pointer-events-none"></div>
           <div className="relative z-10 flex-1">
@@ -592,6 +589,7 @@ export function AssistantDashboard({
               patients={patients}
               appointments={appointments}
               referrals={referrals}
+              onNavigate={setActiveTab}
             />
           </div>
         </motion.div>

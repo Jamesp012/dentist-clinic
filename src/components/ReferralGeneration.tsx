@@ -3,6 +3,7 @@ import { Plus, X, Check } from 'lucide-react';
 import { Referral, Patient } from '../App';
 import { toast } from 'sonner';
 import { referralAPI } from '../api';
+import { PatientSearchInput } from './PatientSearchInput';
 
 
 type ReferralType = 'doctor' | 'xray' | null;
@@ -78,7 +79,8 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
         specialty: referralType === 'xray' ? 'X-Ray Imaging' : formData.specialty,
         reason: formData.reason,
         date: formData.date,
-        urgency: formData.urgency
+        urgency: formData.urgency,
+        createdByRole: 'staff'
       };
 
       const response = await referralAPI.create(newReferral);
@@ -204,19 +206,14 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
             <div className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto">
               {/* Patient Selection */}
               <div className="mb-6">
-                <label className="block text-sm font-bold mb-2">Select Patient</label>
-                <select
-                  value={formData.patientId}
-                  onChange={(e) => handlePatientSelect(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                >
-                  <option value="">-- Select a Patient --</option>
-                  {patients.map(patient => (
-                    <option key={patient.id} value={String(patient.id)}>
-                      {patient.name}
-                    </option>
-                  ))}
-                </select>
+                <label className="block text-sm font-bold mb-2">Search Patient</label>
+                <PatientSearchInput
+                  patients={patients}
+                  selectedPatientId={formData.patientId}
+                  onSelectPatient={(id) => handlePatientSelect(id)}
+                  placeholder="Search patient..."
+                  required
+                />
               </div>
 
               {/* Header Form Fields */}
@@ -322,19 +319,14 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
             <div className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto space-y-6 pointer-events-auto">
               {/* Patient Selection */}
               <div>
-                <label className="block text-sm font-bold mb-2">Select Patient</label>
-                <select
-                  value={formData.patientId}
-                  onChange={(e) => handlePatientSelect(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">-- Select a Patient --</option>
-                  {patients.map(patient => (
-                    <option key={patient.id} value={String(patient.id)}>
-                      {patient.name}
-                    </option>
-                  ))}
-                </select>
+                <label className="block text-sm font-bold mb-2">Search Patient</label>
+                <PatientSearchInput
+                  patients={patients}
+                  selectedPatientId={formData.patientId}
+                  onSelectPatient={(id) => handlePatientSelect(id)}
+                  placeholder="Search patient..."
+                  required
+                />
               </div>
 
               {/* Patient Fields */}

@@ -226,7 +226,7 @@ export function DoctorDashboard({
         {/* Decorative gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-teal-500/10 via-transparent to-cyan-500/10 pointer-events-none"></div>
         
-        <div className="p-6 flex items-center justify-between border-b border-slate-700/50 relative z-10">
+        <div className="p-6 flex items-center gap-3 border-b border-slate-700/50 relative z-10">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="p-2.5 hover:bg-slate-700/50 rounded-xl transition-all duration-200 backdrop-blur-sm"
@@ -240,11 +240,10 @@ export function DoctorDashboard({
               className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => setShowSettings(true)}
             >
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
-                <span className="text-2xl">🦷</span>
-              </div>
               <div className="min-w-0">
-                <h1 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent whitespace-nowrap overflow-hidden text-ellipsis">Doctor Portal</h1>
+                <h1 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent whitespace-nowrap overflow-hidden text-ellipsis">
+                  {currentUser.fullName || currentUser.username || 'Doctor'}
+                </h1>
                 <p className="text-xs text-slate-400 flex items-center gap-1">
                   Doctor
                   <Settings className="w-3 h-3" />
@@ -325,7 +324,7 @@ export function DoctorDashboard({
         <motion.div 
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="bg-white/80 backdrop-blur-xl border-b border-slate-200/50 px-8 py-5 flex justify-between items-start shadow-sm relative"
+          className={`bg-white/80 backdrop-blur-xl border-b border-slate-200/50 px-6 py-0 ${sidebarOpen ? 'min-h-[92px]' : 'min-h-[88px]'} flex justify-between items-center shadow-sm relative`}
         >
           <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-transparent to-indigo-500/5 pointer-events-none"></div>
           <div className="relative z-10 flex-1">
@@ -395,6 +394,7 @@ export function DoctorDashboard({
               patients={patients}
               appointments={appointments}
               referrals={referrals}
+              onNavigate={setActiveTab}
             />
           </div>
         </motion.div>

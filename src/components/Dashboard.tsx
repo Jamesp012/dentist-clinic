@@ -13,6 +13,14 @@ type DashboardProps = {
 };
 
 export function Dashboard({ patients, appointments, inventory, treatmentRecords, onNavigate }: DashboardProps) {
+  const isValidDbDate = (dateStr: string) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
+    const [year, month, day] = dateStr.split('-').map(Number);
+    if (!year || month < 1 || month > 12 || day < 1 || day > 31) return false;
+    const testDate = new Date(year, month - 1, day);
+    return testDate.getFullYear() === year && testDate.getMonth() === month - 1 && testDate.getDate() === day;
+  };
+
   const todayAppointments = appointments.filter(apt => apt.date === new Date().toISOString().split('T')[0]);
   const lowStockItems = inventory.filter(item => item.quantity <= item.minQuantity);
   
@@ -228,14 +236,22 @@ export function Dashboard({ patients, appointments, inventory, treatmentRecords,
           <div className="space-y-3">
             {appointments
               .filter(apt => apt.status === 'scheduled')
+              .filter(apt => isValidDbDate(apt.date))
+              .filter(apt => {
+                const [year, month, day] = apt.date.split('-').map(Number);
+                const aptDate = new Date(year, month - 1, day);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                return aptDate >= today;
+              })
               .sort((a, b) => {
                 // Sort by date first, then by time (parse as local dates)
                 const [aYear, aMonth, aDay] = a.date.split('-').map(Number);
-                const [aHour, aMin] = a.time.split(':').map(Number);
+                const [aHour, aMin] = (a.time || '00:00').split(':').map(Number);
                 const aDateTime = new Date(aYear, aMonth - 1, aDay, aHour, aMin);
                 
                 const [bYear, bMonth, bDay] = b.date.split('-').map(Number);
-                const [bHour, bMin] = b.time.split(':').map(Number);
+                const [bHour, bMin] = (b.time || '00:00').split(':').map(Number);
                 const bDateTime = new Date(bYear, bMonth - 1, bDay, bHour, bMin);
                 
                 return aDateTime.getTime() - bDateTime.getTime();
@@ -244,11 +260,10 @@ export function Dashboard({ patients, appointments, inventory, treatmentRecords,
               .map(apt => {
                 // Format date as readable format (e.g., "Jan 30, 2026")
                 const [year, month, day] = apt.date.split('-').map(Number);
-                const [hour, min] = apt.time.split(':').map(Number);
+                const [hour, min] = (apt.time || '00:00').split(':').map(Number);
                 const appointmentDate = new Date(year, month - 1, day, hour, min);
                 const formattedDate = appointmentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                // Format time (e.g., "2:30 PM")
-                const formattedTime = appointmentDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+                const periodLabel = appointmentDate.getHours() < 12 ? 'Morning' : 'Afternoon';
                 
                 return (
                   <div key={apt.id} className="flex justify-between items-center p-3 bg-blue-50 rounded border border-blue-200">
@@ -257,12 +272,21 @@ export function Dashboard({ patients, appointments, inventory, treatmentRecords,
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-blue-600 font-medium">{formattedDate}</p>
-                      <p className="text-sm text-gray-600">{formattedTime}</p>
+                      <p className="text-sm text-gray-600">{periodLabel}</p>
                     </div>
                   </div>
                 );
               })}
-            {appointments.filter(apt => apt.status === 'scheduled').length === 0 && (
+            {appointments
+              .filter(apt => apt.status === 'scheduled')
+              .filter(apt => isValidDbDate(apt.date))
+              .filter(apt => {
+                const [year, month, day] = apt.date.split('-').map(Number);
+                const aptDate = new Date(year, month - 1, day);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                return aptDate >= today;
+              }).length === 0 && (
               <p className="text-gray-500 text-center py-4">No upcoming appointments</p>
             )}
           </div>

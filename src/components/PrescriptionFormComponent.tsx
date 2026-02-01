@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Download, X, Plus, Trash2 } from 'lucide-react';
 import { Patient } from '../App';
 import { toast } from 'sonner';
+import { PatientSearchInput } from './PatientSearchInput';
 
 interface MedicationItem {
   id: string;
@@ -241,19 +242,14 @@ Generated on: ${new Date().toLocaleString()}
           {/* Patient Info Fields */}
           <div className="space-y-4 mb-8 bg-white p-6 rounded-lg border border-slate-200">
             <div>
-              <label className="block text-sm font-bold mb-2">Select Patient</label>
-              <select
-                value={formData.patientId}
-                onChange={(e) => handlePatientSelect(e.target.value)}
-                className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-600"
-              >
-                <option value="">-- Select a Patient --</option>
-                {patients.map(patient => (
-                  <option key={patient.id} value={String(patient.id)}>
-                    {patient.name}
-                  </option>
-                ))}
-              </select>
+              <label className="block text-sm font-bold mb-2">Search Patient</label>
+              <PatientSearchInput
+                patients={patients}
+                selectedPatientId={formData.patientId}
+                onSelectPatient={(id) => handlePatientSelect(id)}
+                placeholder="Search patient..."
+                required
+              />
             </div>
 
             <div className="grid grid-cols-12 gap-4">

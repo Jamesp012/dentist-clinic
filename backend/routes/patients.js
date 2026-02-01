@@ -8,8 +8,13 @@ const router = express.Router();
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const [patients] = await pool.query('SELECT * FROM patients');
+    console.log('Fetching all patients - Count:', patients.length);
+    if (patients.length > 0) {
+      console.log('First patient has profilePhoto:', !!patients[0].profilePhoto);
+    }
     res.json(patients);
   } catch (error) {
+    console.error('Error fetching patients:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -30,10 +35,10 @@ router.get('/:id', authMiddleware, async (req, res) => {
 // Create patient
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { name, dateOfBirth, phone, email, address, sex, medicalHistory, allergies } = req.body;
+    const { name, dateOfBirth, phone, email, address, sex, medicalHistory, allergies, profilePhoto } = req.body;
     const [result] = await pool.query(
-      'INSERT INTO patients (name, dateOfBirth, phone, email, address, sex, medicalHistory, allergies) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [name, dateOfBirth, phone, email, address, sex, medicalHistory || '', allergies || '']
+      'INSERT INTO patients (name, dateOfBirth, phone, email, address, sex, medicalHistory, allergies, profilePhoto) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [name, dateOfBirth, phone, email, address, sex, medicalHistory || '', allergies || '', profilePhoto || null]
     );
     res.status(201).json({ id: result.insertId, ...req.body });
   } catch (error) {
@@ -44,13 +49,30 @@ router.post('/', authMiddleware, async (req, res) => {
 // Update patient
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
-    const { name, dateOfBirth, phone, email, address, sex, medicalHistory, allergies } = req.body;
-    await pool.query(
-      'UPDATE patients SET name=?, dateOfBirth=?, phone=?, email=?, address=?, sex=?, medicalHistory=?, allergies=? WHERE id=?',
-      [name, dateOfBirth, phone, email, address, sex, medicalHistory, allergies, req.params.id]
+    const { name, dateOfBirth, phone, email, address, sex, medicalHistory, allergies, profilePhoto } = req.body;
+    
+    console.log('=== UPDATE PATIENT ===');
+    console.log('Patient ID:', req.params.id);
+    console.log('Request Body Keys:', Object.keys(req.body));
+    console.log('ProfilePhoto received:', !!profilePhoto);
+    console.log('ProfilePhoto length:', profilePhoto ? profilePhoto.length : 0);
+    console.log('ProfilePhoto starts with:', profilePhoto ? profilePhoto.substring(0, 50) : 'N/A');
+    
+    const result = await pool.query(
+      'UPDATE patients SET name=?, dateOfBirth=?, phone=?, email=?, address=?, sex=?, medicalHistory=?, allergies=?, profilePhoto=? WHERE id=?',
+      [name, dateOfBirth, phone, email, address, sex, medicalHistory, allergies, profilePhoto || null, req.params.id]
     );
+    
+    console.log('Update result - Rows affected:', result[0].affectedRows);
+    
+    // Verify the update
+    const [updated] = await pool.query('SELECT id, name, profilePhoto FROM patients WHERE id = ?', [req.params.id]);
+    console.log('Verification - Patient now has photo:', !!updated[0]?.profilePhoto);
+    console.log('=== END UPDATE ===\n');
+    
     res.json({ id: req.params.id, ...req.body });
   } catch (error) {
+    console.error('❌ Error updating patient:', error);
     res.status(500).json({ error: error.message });
   }
 });

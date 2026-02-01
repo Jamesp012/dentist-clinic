@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Patient, Appointment, TreatmentRecord, PhotoUpload, Announcement, Payment, Service } from '../App';
 import { Calendar, FileText, User as UserIcon, Clock, X, Edit, Save, XCircle, Info, CheckCircle, AlertCircle, Camera, Sparkles, Heart, Smile, Shield, Megaphone, Plus, CreditCard, Settings, Check, Eye, EyeOff, Menu, LogOut, History } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import { handlePhoneInput, formatPhoneNumber } from '../utils/phoneValidation';
+import { convertToDBDate, convertToDisplayDate, formatDateInput } from '../utils/dateHelpers';
 import { appointmentAPI } from '../api';
 import { Notifications } from './Notifications';
 
@@ -38,6 +39,7 @@ type PatientPortalProps = {
 const API_BASE = 'http://localhost:5000/api';
 
 export function PatientPortal({ patient, appointments, setAppointments, treatmentRecords, onUpdatePatient, photos, setPhotos: _, announcements, payments, onLogout, onDataChanged, services = [] }: PatientPortalProps) {
+  const birthdatePickerRef = useRef<HTMLInputElement | null>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'appointments' | 'records' | 'photos' | 'balance' | 'care-guide' | 'announcements'>('profile');
   const [announcementSubTab, setAnnouncementSubTab] = useState<'announcements' | 'services'>('announcements');
   const [isEditing, setIsEditing] = useState(false);
@@ -53,6 +55,14 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Helper function to convert 24-hour time to 12-hour format with AM/PM
+  const formatTime = (time: string) => {
+    const [hours, minutes] = time.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+  };
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [usernameCheckTimeout, setUsernameCheckTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -173,6 +183,30 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
     setUsernameCheckTimeout(timeout);
   };
 
+  // Helper function to get queue number and list
+  const getQueueInfo = (appointment: Appointment) => {
+    const appointmentHour = parseInt(appointment.time.split(':')[0]);
+    const period = appointmentHour < 12 ? 'AM' : 'PM';
+    
+    // Get ALL appointments for the same date and period across ALL patients
+    const sameQueueAppointments = appointments
+      .filter(apt => {
+        const aptHour = parseInt(apt.time.split(':')[0]);
+        const aptPeriod = aptHour < 12 ? 'AM' : 'PM';
+        const dateStr = getDateString(apt.date);
+        const apptDateStr = getDateString(appointment.date);
+        return dateStr === apptDateStr && aptPeriod === period && (apt.status === 'scheduled' || apt.status === 'completed');
+      })
+      .sort((a, b) => {
+        const timeA = parseInt(a.time.split(':')[0]);
+        const timeB = parseInt(b.time.split(':')[0]);
+        return timeA - timeB;
+      });
+    
+    const queueNumber = sameQueueAppointments.findIndex(apt => apt.id === appointment.id) + 1;
+    return { queueNumber, period, queueList: sameQueueAppointments };
+  };
+
   const patientAppointments = appointments.filter(apt => String(apt.patientId) === String(patient.id));
   // treatmentRecords are already filtered in App.tsx for this patient, so use directly
   const patientRecords = treatmentRecords;
@@ -248,7 +282,11 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
 
   const handleSaveProfile = () => {
     if (onUpdatePatient) {
-      onUpdatePatient(editedPatient);
+      const updatedPatient = {
+        ...editedPatient,
+        dateOfBirth: convertToDBDate(editedPatient.dateOfBirth)
+      };
+      onUpdatePatient(updatedPatient);
       toast.success('Profile updated successfully!');
       setIsEditing(false);
     }
@@ -266,9 +304,40 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
   };
 
 
-  const isScheduleClosed = (_: string, __: 'am' | 'pm') => {
-    // For now, no schedules are closed - this can be expanded later
-    return false;
+  const [closedSchedules, setClosedSchedules] = useState<Set<string>>(() => {
+    if (typeof window === 'undefined') return new Set();
+    try {
+      return new Set(JSON.parse(localStorage.getItem('closedSchedules') || '[]'));
+    } catch {
+      return new Set();
+    }
+  });
+
+  const getScheduleKey = (date: string, period: 'am' | 'pm') => `${getDateString(date)}-${period}`;
+
+  const refreshClosedSchedules = () => {
+    if (typeof window === 'undefined') return;
+    try {
+      const stored = JSON.parse(localStorage.getItem('closedSchedules') || '[]');
+      setClosedSchedules(new Set(stored));
+    } catch {
+      setClosedSchedules(new Set());
+    }
+  };
+
+  useEffect(() => {
+    refreshClosedSchedules();
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === 'closedSchedules') {
+        refreshClosedSchedules();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  const isScheduleClosed = (date: string, period: 'am' | 'pm') => {
+    return closedSchedules.has(getScheduleKey(date, period));
   };
 
   const getBookingCountForPeriod = (date: string, period: 'am' | 'pm') => {
@@ -315,7 +384,8 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
       type: appointmentType,
       duration: 60,
       status: 'scheduled',
-      notes: appointmentNotes
+      notes: appointmentNotes,
+      createdByRole: 'patient'
     };
 
     try {
@@ -359,7 +429,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
       >
         <div className="absolute inset-0 bg-gradient-to-br from-teal-500/10 via-transparent to-cyan-500/10 pointer-events-none"></div>
         
-        <div className="p-6 flex items-center justify-between border-b border-slate-700/50 relative z-10">
+        <div className="p-6 flex items-center gap-3 border-b border-slate-700/50 relative z-10">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="p-2.5 hover:bg-slate-700/50 rounded-xl transition-all duration-200 backdrop-blur-sm"
@@ -373,11 +443,8 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
               className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => setShowSettings(true)}
             >
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
-                <span className="text-2xl">🦷</span>
-              </div>
               <div className="min-w-0">
-                <h1 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent whitespace-nowrap overflow-hidden text-ellipsis">Patient Portal</h1>
+                <h1 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent whitespace-nowrap overflow-hidden text-ellipsis">{patient.name}</h1>
                 <p className="text-xs text-slate-400 flex items-center gap-1">
                   Patient
                   <Settings className="w-3 h-3" />
@@ -458,7 +525,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
         <motion.div 
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="bg-white/80 backdrop-blur-xl border-b border-slate-200/50 px-8 py-5 flex justify-between items-start shadow-sm relative"
+          className={`bg-white/80 backdrop-blur-xl border-b border-slate-200/50 px-6 py-0 ${sidebarOpen ? 'min-h-[92px]' : 'min-h-[88px]'} flex justify-between items-center shadow-sm relative`}
         >
           <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-transparent to-indigo-500/5 pointer-events-none"></div>
           <div className="relative z-10 flex-1">
@@ -510,6 +577,8 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
               patients={[patient]}
               appointments={patientAppointments}
               referrals={[]}
+              currentPatientId={patient.id}
+              onNavigate={setActiveTab}
             />
           </div>
         </motion.div>
@@ -527,19 +596,6 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
             >
               {activeTab === 'profile' && (
                 <div className="p-8 space-y-6">
-                  {/* Profile Picture Section */}
-                  <div className="flex flex-col items-center space-y-4">
-                    <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg border-4 border-white">
-                      <span className="text-6xl">👤</span>
-                    </div>
-                    <button
-                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-                    >
-                      <Camera className="w-4 h-4" />
-                      Upload Photo
-                    </button>
-                  </div>
-
                   <div className="flex justify-between items-center">
                     <h2 className="text-xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                       Personal Information
@@ -588,19 +644,63 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                   </div>
                   <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
                     <p className="text-sm text-gray-600 mb-1">Age</p>
-                    <p className="font-medium">{calculateAge(patient.dateOfBirth)} years old</p>
+                    <p className="font-medium">{isEditing ? calculateAge(editedPatient.dateOfBirth) : calculateAge(patient.dateOfBirth)} years old</p>
                   </div>
                   <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
                     <p className="text-sm text-gray-600 mb-1">Sex</p>
-                    <p className="font-medium">{patient.sex}</p>
+                    {isEditing ? (
+                      <select
+                        value={editedPatient.sex}
+                        onChange={(e) => setEditedPatient({ ...editedPatient, sex: e.target.value as 'Male' | 'Female' })}
+                        className="w-full px-3 py-2 border border-purple-300 rounded-lg bg-white"
+                      >
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                      </select>
+                    ) : (
+                      <p className="font-medium">{patient.sex}</p>
+                    )}
                   </div>
                   <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
                     <p className="text-sm text-gray-600 mb-1">Date of Birth</p>
-                    <p className="font-medium">{(() => {
-                      const dateStr = patient.dateOfBirth.includes('T') ? patient.dateOfBirth.split('T')[0] : patient.dateOfBirth;
-                      const [year, month, day] = dateStr.split('-').map(Number);
-                      return new Date(year, month - 1, day).toLocaleDateString();
-                    })()}</p>
+                    {isEditing ? (
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={convertToDisplayDate(editedPatient.dateOfBirth)}
+                          onChange={(e) => setEditedPatient({ ...editedPatient, dateOfBirth: formatDateInput(e.target.value) })}
+                          placeholder="MM/DD/YYYY"
+                          className="w-full px-3 pr-10 py-2 border border-purple-300 rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            birthdatePickerRef.current?.focus();
+                            if (birthdatePickerRef.current?.showPicker) {
+                              birthdatePickerRef.current.showPicker();
+                            } else {
+                              birthdatePickerRef.current?.click();
+                            }
+                          }}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                          aria-label="Open calendar"
+                        >
+                          <Calendar className="w-4 h-4" />
+                        </button>
+                        <input
+                          ref={birthdatePickerRef}
+                          type="date"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 opacity-0 cursor-pointer"
+                          onChange={(e) => setEditedPatient({ ...editedPatient, dateOfBirth: convertToDisplayDate(e.target.value) })}
+                        />
+                      </div>
+                    ) : (
+                      <p className="font-medium">{(() => {
+                        const dateStr = patient.dateOfBirth.includes('T') ? patient.dateOfBirth.split('T')[0] : patient.dateOfBirth;
+                        const [year, month, day] = dateStr.split('-');
+                        return `${month}/${day}/${year}`;
+                      })()}</p>
+                    )}
                   </div>
                   <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
                     <p className="text-sm text-gray-600 mb-1">Phone</p>
@@ -811,31 +911,82 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                       Upcoming Appointments
                     </h2>
                     <div className="space-y-3">
-                      {upcomingAppointments.map(apt => (
-                        <div key={apt.id} className="p-4 border-2 border-blue-200 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50">
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <p className="text-lg mb-1">{apt.type}</p>
-                              <div className="flex items-center gap-2 text-sm text-gray-600">
-                                <Calendar className="w-4 h-4" />
-                                <span>{(() => {
-                                  const dateStr = getDateString(apt.date);
-                                  const [year, month, day] = dateStr.split('-').map(Number);
-                                  return new Date(year, month - 1, day).toLocaleDateString();
-                                })()}</span>
-                                <Clock className="w-4 h-4 ml-2" />
-                                <span>{apt.time}</span>
+                      {upcomingAppointments.map(apt => {
+                        const { queueNumber, period, queueList } = getQueueInfo(apt);
+                        const isCompleted = apt.status === 'completed';
+                        return (
+                          <motion.div 
+                            key={apt.id} 
+                            className={`p-4 border-2 border-blue-200 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 transition-opacity ${isCompleted ? 'opacity-30' : ''}`}
+                            initial={{ opacity: 1 }}
+                            animate={{ opacity: isCompleted ? 0.3 : 1 }}
+                            transition={{ duration: 0.5 }}
+                          >
+                            <div className="flex justify-between items-start mb-3">
+                              <div>
+                                <p className="text-lg mb-1 font-semibold">{apt.type}</p>
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                  <Calendar className="w-4 h-4" />
+                                  <span>{(() => {
+                                    const dateStr = getDateString(apt.date);
+                                    const [year, month, day] = dateStr.split('-').map(Number);
+                                    return new Date(year, month - 1, day).toLocaleDateString();
+                                  })()}</span>
+                                  <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded font-semibold text-xs">
+                                    Queue #{queueNumber} ({period})
+                                  </span>
+                                </div>
                               </div>
+                              <motion.span 
+                                className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                                  isCompleted 
+                                    ? 'bg-gray-200 text-gray-600' 
+                                    : 'bg-green-100 text-green-700'
+                                }`}
+                                animate={{ scale: isCompleted ? 0.95 : 1 }}
+                              >
+                                {apt.status}
+                              </motion.span>
                             </div>
-                            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
-                              {apt.status}
-                            </span>
-                          </div>
-                          {apt.notes && (
-                            <p className="text-sm text-gray-600 mt-2">{apt.notes}</p>
-                          )}
-                        </div>
-                      ))}
+
+                            {/* Queue List */}
+                            {queueList.length > 0 && (
+                              <div className="mt-3 p-3 bg-white bg-opacity-50 rounded border border-blue-100">
+                                <p className="text-xs font-semibold text-gray-600 mb-2">Queue Order ({period}):</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {queueList.map((queueApt, idx) => (
+                                    <div
+                                      key={queueApt.id}
+                                      className={`group relative px-3 py-1 rounded text-sm font-semibold transition-all ${
+                                        queueApt.id === apt.id
+                                          ? 'bg-blue-500 text-white'
+                                          : queueApt.status === 'completed'
+                                          ? 'bg-gray-200 text-gray-500 line-through opacity-40'
+                                          : 'bg-gray-100 text-gray-700'
+                                      }`}
+                                    >
+                                      {queueApt.id === apt.id ? (
+                                        <span>{idx + 1} - {patient.name}</span>
+                                      ) : (
+                                        <span>#{idx + 1}</span>
+                                      )}
+                                      {queueApt.status === 'completed' && (
+                                        <span className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                                          Done
+                                        </span>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {apt.notes && (
+                              <p className="text-sm text-gray-600 mt-2">Notes: {apt.notes}</p>
+                            )}
+                          </motion.div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -855,7 +1006,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                                 <Calendar className="w-4 h-4" />
                                 <span>{new Date(getDateString(apt.date) + 'T00:00:00Z').toLocaleDateString()}</span>
                                 <Clock className="w-4 h-4 ml-2" />
-                                <span>{apt.time}</span>
+                                <span>{formatTime(apt.time)}</span>
                               </div>
                             </div>
                             <span className="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm">

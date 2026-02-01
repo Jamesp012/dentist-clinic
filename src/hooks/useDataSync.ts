@@ -52,6 +52,15 @@ export function useDataSync({
     if (!isAuthenticated || hasEncountered401.current) return false;
     try {
       const patientsData = await patientAPI.getAll();
+      console.log('Fetched patients from API:', {
+        count: patientsData?.length,
+        firstPatient: patientsData?.[0] ? {
+          id: patientsData[0].id,
+          name: patientsData[0].name,
+          hasProfilePhoto: !!patientsData[0].profilePhoto,
+          photoLength: patientsData[0].profilePhoto?.length
+        } : null
+      });
       setPatients(patientsData || []);
       return true;
     } catch (error: any) {

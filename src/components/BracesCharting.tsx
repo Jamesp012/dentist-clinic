@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { Patient } from '../App';
-import { Sparkles, Star, Palette, RotateCcw, History, Calendar, CreditCard } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { Sparkles, Star, RotateCcw, History, Calendar } from 'lucide-react';
+import { motion } from 'motion/react';
 import { PatientSearch } from './PatientSearch';
-import { PesoSign } from './icons/PesoSign';
 
 type BracesChartingProps = {
   patients: Patient[];
@@ -72,11 +71,11 @@ export function BracesCharting({ patients }: BracesChartingProps) {
       // Initialize with default clear rubber bands for all teeth
       const defaultColors: { [toothNumber: number]: string } = {};
       [...upperTeeth, ...lowerTeeth].forEach(tooth => {
-        defaultColors[tooth] = rubberBandColorOptions[0].value;
+        defaultColors[tooth as number] = rubberBandColorOptions[0].value;
       });
       
       return {
-        patientId: selectedPatient.id,
+        patientId: String(selectedPatient.id),
         rubberBandColors: defaultColors,
         bracketType: 'metal',
         colorHistory: [],
@@ -181,297 +180,7 @@ export function BracesCharting({ patients }: BracesChartingProps) {
     });
   };
 
-  const ToothWithBraces = ({ number, onClick }: { number: number; onClick: () => void }) => {
-    const currentData = getPatientBracesData();
-    const rubberBandColor = currentData.rubberBandColors[number] || rubberBandColorOptions[0].value;
-    const colorOption = rubberBandColorOptions.find(c => c.value === rubberBandColor) || rubberBandColorOptions[0];
-    const isHovered = hoveredTooth === number;
-    const isSelected = selectedTooth === number;
 
-    return (
-      <div className="relative flex flex-col items-center">
-        <motion.div
-          className="flex flex-col items-center cursor-pointer select-none"
-          onClick={onClick}
-          onMouseEnter={() => setHoveredTooth(number)}
-          onMouseLeave={() => setHoveredTooth(null)}
-          whileHover={{ scale: 1.15, y: -5 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 400, damping: 17 }}
-        >
-          <motion.span 
-            className="text-xs mb-1 text-gray-700 font-semibold"
-            animate={isHovered ? { scale: 1.2, color: '#3b82f6' } : {}}
-          >
-            {number}
-          </motion.span>
-          
-          <div className="relative">
-            <motion.svg 
-              width="40" 
-              height="50" 
-              viewBox="0 0 60 80"
-              className="drop-shadow-lg"
-              animate={isSelected ? { 
-                rotate: [0, -5, 5, -5, 5, 0],
-                scale: [1, 1.05, 1]
-              } : {}}
-              transition={{ duration: 0.4 }}
-            >
-              <defs>
-                {/* Enamel shine gradient */}
-                <linearGradient id={`enamelShine-${number}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#ffffff" stopOpacity="0.4" />
-                  <stop offset="50%" stopColor="#f8f9fa" stopOpacity="0.2" />
-                  <stop offset="100%" stopColor="#e9ecef" stopOpacity="0.1" />
-                </linearGradient>
-                
-                {/* Metal bracket gradient */}
-                <linearGradient id={`metalGradient-${number}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#D3D3D3" />
-                  <stop offset="50%" stopColor="#A9A9A9" />
-                  <stop offset="100%" stopColor="#808080" />
-                </linearGradient>
-                
-                {/* Wire gradient */}
-                <linearGradient id={`wireGradient-${number}`} x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#C0C0C0" />
-                  <stop offset="50%" stopColor="#A0A0A0" />
-                  <stop offset="100%" stopColor="#909090" />
-                </linearGradient>
-                
-                {/* Tooth shadow */}
-                <filter id={`toothShadow-${number}`}>
-                  <feDropShadow dx="0" dy="2" stdDeviation="2" floodOpacity="0.25"/>
-                </filter>
-                
-                {/* Glow effect for hover */}
-                <filter id={`glow-${number}`}>
-                  <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                  <feMerge>
-                    <feMergeNode in="coloredBlur"/>
-                    <feMergeNode in="SourceGraphic"/>
-                  </feMerge>
-                </filter>
-              </defs>
-              
-              {/* Hover glow effect */}
-              {isHovered && (
-                <motion.rect
-                  x="10" y="5" width="40" height="60"
-                  rx="8"
-                  fill="none"
-                  stroke="#60A5FA"
-                  strokeWidth="2"
-                  opacity="0.4"
-                  className="blur-md"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 0.6 }}
-                />
-              )}
-              
-              {/* REALISTIC TOOTH SHAPE - Matches DentalCharting */}
-              <motion.path
-                d="M 16 12
-                   C 14 12, 12 14, 12 16
-                   L 12 26
-                   C 12 28, 13 30, 14 31
-                   L 14 38
-                   C 14 40, 16 42, 18 42
-                   C 19 40, 20 38, 20 35
-                   C 20 38, 21 40, 22 42
-                   C 24 42, 26 40, 26 38
-                   L 26 31
-                   C 27 30, 28 28, 28 26
-                   L 28 16
-                   C 28 14, 26 12, 24 12
-                   C 22 12, 21 14, 20 16
-                   C 20 14, 19 12, 18 12
-                   C 17 12, 16 12, 16 12
-                   Z"
-                fill="white"
-                stroke="#d4d4d4"
-                strokeWidth="1.5"
-                strokeLinejoin="round"
-                filter={`url(#toothShadow-${number})`}
-                animate={isHovered ? { 
-                  filter: `url(#glow-${number})`,
-                  strokeWidth: 2
-                } : {}}
-              />
-              
-              {/* Top chewing surface line */}
-              <motion.path
-                d="M 14 16 Q 20 14, 26 16"
-                stroke="#d4d4d4"
-                strokeWidth="1"
-                opacity="0.4"
-                fill="none"
-              />
-              
-              {/* Enamel shine on crown */}
-              <ellipse
-                cx="18"
-                cy="22"
-                rx="3"
-                ry="5"
-                fill="white"
-                opacity="0.35"
-              />
-              
-              {/* METAL BRACKET - centered on tooth */}
-              <motion.rect
-                x="17"
-                y="21"
-                width="10"
-                height="10"
-                rx="2"
-                fill={`url(#metalGradient-${number})`}
-                stroke="#696969"
-                strokeWidth="0.8"
-                animate={isHovered ? { scale: 1.1 } : { scale: 1 }}
-                style={{ transformOrigin: "22px 26px" }}
-              />
-              
-              {/* Bracket details (slots) */}
-              <rect
-                x="18"
-                y="24"
-                width="8"
-                height="1.5"
-                rx="0.5"
-                fill="#505050"
-                opacity="0.6"
-              />
-              <rect
-                x="18"
-                y="27"
-                width="8"
-                height="1.5"
-                rx="0.5"
-                fill="#505050"
-                opacity="0.6"
-              />
-              
-              {/* Bracket shine */}
-              <rect
-                x="18"
-                y="22"
-                width="2"
-                height="3"
-                fill="white"
-                opacity="0.4"
-              />
-              
-              {/* ARCHWIRE - horizontal wire through bracket */}
-              <line
-                x1="0"
-                y1="26"
-                x2="60"
-                y2="26"
-                stroke={`url(#wireGradient-${number})`}
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-              
-              {/* Wire shine */}
-              <line
-                x1="0"
-                y1="25.5"
-                x2="60"
-                y2="23.5"
-                stroke="white"
-                strokeWidth="0.5"
-                opacity="0.5"
-                strokeLinecap="round"
-              />
-              
-              {/* RUBBER BAND (O-Ring) - colorful elastic around bracket */}
-              <motion.circle
-                cx="30"
-                cy="24"
-                r="6.5"
-                fill={rubberBandColor}
-                stroke={colorOption.stroke}
-                strokeWidth="1.2"
-                opacity="0.85"
-                animate={isSelected ? { 
-                  scale: [1, 1.15, 1],
-                  opacity: [0.85, 1, 0.85]
-                } : {}}
-                style={{ transformOrigin: "30px 24px" }}
-                transition={{ duration: 0.5 }}
-              />
-              
-              {/* Rubber band shine effect */}
-              <motion.ellipse
-                cx="28"
-                cy="22"
-                rx="2.5"
-                ry="3"
-                fill="white"
-                opacity="0.3"
-                animate={isHovered ? { opacity: 0.5 } : { opacity: 0.3 }}
-              />
-              
-              {/* Inner circle detail on rubber band */}
-              <circle
-                cx="30"
-                cy="24"
-                r="4"
-                fill="none"
-                stroke={colorOption.stroke}
-                strokeWidth="0.5"
-                opacity="0.3"
-              />
-            </motion.svg>
-
-            {/* Color indicator badge */}
-            <AnimatePresence>
-              {isHovered && (
-                <motion.div
-                  className="absolute -top-1 -right-1"
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  exit={{ scale: 0, rotate: 180 }}
-                  transition={{ type: "spring", stiffness: 260, damping: 20 }}
-                >
-                  <div 
-                    className="w-5 h-5 rounded-full border-2 border-white shadow-lg"
-                    style={{ backgroundColor: rubberBandColor }}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </motion.div>
-
-        {/* Tooltip */}
-        <AnimatePresence>
-          {isHovered && (
-            <motion.div
-              className="absolute z-50 pointer-events-none"
-              style={{ top: '100%', marginTop: '8px' }}
-              initial={{ opacity: 0, y: -10, scale: 0.8 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.8 }}
-              transition={{ duration: 0.2 }}
-            >
-              <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs px-3 py-2 rounded-lg whitespace-nowrap shadow-xl">
-                <div className="flex items-center gap-1">
-                  <Palette className="w-3 h-3" />
-                  <span className="font-medium">
-                    Tooth #{number} - {colorOption.name}
-                  </span>
-                </div>
-                <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gradient-to-br from-purple-600 to-pink-600 rotate-45" />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    );
-  };
 
   return (
     <div className="p-8 bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 min-h-screen">
@@ -591,90 +300,359 @@ export function BracesCharting({ patients }: BracesChartingProps) {
               </p>
             </div>
 
-            {/* Upper Teeth */}
-            <div className="mb-16">
-              <motion.div 
-                className="text-center text-sm font-medium text-purple-600 mb-4"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-              >
-                Upper Teeth
-              </motion.div>
-              <div className="flex justify-center gap-2 mb-6">
-                <div className="flex gap-2">
-                  {upperTeeth.slice(0, 8).map((tooth, index) => (
-                    <motion.div
-                      key={tooth}
-                      initial={{ opacity: 0, y: -20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.5 + index * 0.04 }}
-                    >
-                      <ToothWithBraces number={tooth} onClick={() => handleToothClick(tooth)} />
-                    </motion.div>
-                  ))}
-                </div>
-                <div className="w-8" />
-                <div className="flex gap-2">
-                  {upperTeeth.slice(8, 16).map((tooth, index) => (
-                    <motion.div
-                      key={tooth}
-                      initial={{ opacity: 0, y: -20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.8 + index * 0.04 }}
-                    >
-                      <ToothWithBraces number={tooth} onClick={() => handleToothClick(tooth)} />
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-              <div className="border-b-4 border-gradient-to-r from-purple-300 via-pink-300 to-purple-300" style={{ 
-                background: 'linear-gradient(90deg, #d8b4fe 0%, #fbcfe8 50%, #d8b4fe 100%)',
-                height: '3px'
-              }} />
-            </div>
+            {/* Professional Braces Chart - Like Reference Image */}
+            <div className="space-y-6">
+              {/* UPPER TEETH ARCH */}
+              <div className="relative mx-auto" style={{ width: '800px', height: '280px' }}>
+                <svg width="800" height="280" viewBox="0 0 800 280" className="w-full">
+                  <defs>
+                    <linearGradient id="upperGumGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" style={{ stopColor: '#ff9eb5' }} />
+                      <stop offset="100%" style={{ stopColor: '#ff6a8f' }} />
+                    </linearGradient>
+                    <linearGradient id="upperToothGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" style={{ stopColor: '#fffdf7' }} />
+                      <stop offset="100%" style={{ stopColor: '#e8e8e8' }} />
+                    </linearGradient>
+                    <linearGradient id="bracketGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" style={{ stopColor: '#e0e0e0' }} />
+                      <stop offset="50%" style={{ stopColor: '#a0a0a0' }} />
+                      <stop offset="100%" style={{ stopColor: '#707070' }} />
+                    </linearGradient>
+                    <linearGradient id="wireGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" style={{ stopColor: '#e0e0e0' }} />
+                      <stop offset="50%" style={{ stopColor: '#b0b0b0' }} />
+                      <stop offset="100%" style={{ stopColor: '#909090' }} />
+                    </linearGradient>
+                  </defs>
 
-            {/* Lower Teeth */}
-            <div>
-              <div className="border-b-4 border-gradient-to-r from-purple-300 via-pink-300 to-purple-300 mb-6" style={{ 
-                background: 'linear-gradient(90deg, #d8b4fe 0%, #fbcfe8 50%, #d8b4fe 100%)',
-                height: '3px'
-              }} />
-              <div className="flex justify-center gap-2 mb-4">
-                <div className="flex gap-2">
-                  {lowerTeeth.slice(0, 8).reverse().map((tooth, index) => (
-                    <motion.div
-                      key={tooth}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 1.1 + index * 0.04 }}
-                    >
-                      <ToothWithBraces number={tooth} onClick={() => handleToothClick(tooth)} />
-                    </motion.div>
-                  ))}
-                </div>
-                <div className="w-8" />
-                <div className="flex gap-2">
-                  {lowerTeeth.slice(8, 16).reverse().map((tooth, index) => (
-                    <motion.div
-                      key={tooth}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 1.4 + index * 0.04 }}
-                    >
-                      <ToothWithBraces number={tooth} onClick={() => handleToothClick(tooth)} />
-                    </motion.div>
-                  ))}
-                </div>
+                  {/* Upper Gum - Major curved shape */}
+                  <path
+                    d="M 40,50
+                       C 40,20 120,5 400,5
+                       C 680,5 760,20 760,50
+                       C 760,80 720,110 620,128
+                       C 520,142 420,148 400,148
+                       C 380,148 280,142 180,128
+                       C 80,110 40,80 40,50
+                       Z"
+                    fill="url(#upperGumGradient)"
+                    filter="url(#gumShadow)"
+                  />
+
+                  {/* Gum shine/highlight */}
+                  <ellipse cx="400" cy="28" rx="300" ry="16" fill="white" opacity="0.25" />
+
+                  {/* Individual Teeth - 16 teeth across */}
+                  {upperTeeth.map((tooth, index) => {
+                    const teethSpacing = 44;
+                    const centerIndex = 7.5;
+                    const offset = index - centerIndex;
+                    
+                    // Teeth positioned on gum curve - aligned with gum edge
+                    const startX = 40 + index * teethSpacing;
+                    const gumCurve = Math.pow(Math.abs(offset) * 0.15, 1.6) * 24;
+                    const toothY = 145 - gumCurve; // Teeth start where gum ends
+                    const toothWidth = 40;
+                    const toothHeight = 52;
+                    
+                    // Rotation to follow arch
+                    const rotation = offset * 3;
+                    
+                    const currentData = getPatientBracesData();
+                    const rubberBandColor = currentData.rubberBandColors[tooth] || rubberBandColorOptions[0].value;
+                    const colorOption = rubberBandColorOptions.find(c => c.value === rubberBandColor) || rubberBandColorOptions[0];
+                    const isHovered = hoveredTooth === tooth;
+                    const isSelected = selectedTooth === tooth;
+
+                    return (
+                      <g 
+                        key={tooth} 
+                        onClick={() => handleToothClick(tooth)} 
+                        onMouseEnter={() => setHoveredTooth(tooth)} 
+                        onMouseLeave={() => setHoveredTooth(null)} 
+                        style={{ cursor: 'pointer' }}
+                        transform={`translate(${startX + toothWidth/2},${toothY + toothHeight/2}) rotate(${rotation}) translate(${-(startX + toothWidth/2)},${-(toothY + toothHeight/2)})`}
+                      >
+                        {/* Tooth - smooth rounded shape, sitting on gum */}
+                        <ellipse
+                          cx={startX + toothWidth/2}
+                          cy={toothY + toothHeight/2}
+                          rx="22"
+                          ry="28"
+                          fill="url(#upperToothGradient)"
+                          stroke={isHovered ? '#4b90ff' : '#c0c0c0'}
+                          strokeWidth={isHovered ? '2' : '1'}
+                        />
+                        
+                        {/* Tooth shine */}
+                        <ellipse
+                          cx={startX + toothWidth/2 - 8}
+                          cy={toothY + 15}
+                          rx="4"
+                          ry="8"
+                          fill="white"
+                          opacity="0.5"
+                        />
+                        
+                        {/* Left bracket */}
+                        <rect
+                          x={startX + 8}
+                          y={toothY + 28}
+                          width="11"
+                          height="11"
+                          rx="1"
+                          fill="url(#bracketGradient)"
+                          stroke="#555555"
+                          strokeWidth="0.6"
+                        />
+                        
+                        {/* Right bracket */}
+                        <rect
+                          x={startX + 26}
+                          y={toothY + 28}
+                          width="11"
+                          height="11"
+                          rx="1"
+                          fill="url(#bracketGradient)"
+                          stroke="#555555"
+                          strokeWidth="0.6"
+                        />
+                        
+                        {/* Bracket slot details */}
+                        <line x1={startX + 9} y1={toothY + 31.5} x2={startX + 18} y2={toothY + 31.5} stroke="#444444" strokeWidth="0.8" opacity="0.9" />
+                        <line x1={startX + 9} y1={toothY + 35} x2={startX + 18} y2={toothY + 35} stroke="#444444" strokeWidth="0.8" opacity="0.9" />
+                        <line x1={startX + 27} y1={toothY + 31.5} x2={startX + 36} y2={toothY + 31.5} stroke="#444444" strokeWidth="0.8" opacity="0.9" />
+                        <line x1={startX + 27} y1={toothY + 35} x2={startX + 36} y2={toothY + 35} stroke="#444444" strokeWidth="0.8" opacity="0.9" />
+                        
+                        {/* Bracket shine */}
+                        <rect x={startX + 9} y={toothY + 28.5} width="1.5" height="2" fill="white" opacity="0.6" />
+                        <rect x={startX + 27} y={toothY + 28.5} width="1.5" height="2" fill="white" opacity="0.6" />
+                        
+                        {/* Left rubber band */}
+                        <circle
+                          cx={startX + 13.5}
+                          cy={toothY + 33.5}
+                          r="6.5"
+                          fill={rubberBandColor}
+                          stroke={colorOption.stroke}
+                          strokeWidth="1"
+                          opacity={isSelected ? 1 : 0.9}
+                          filter="url(#gumShadow)"
+                        />
+                        
+                        {/* Right rubber band */}
+                        <circle
+                          cx={startX + 31.5}
+                          cy={toothY + 33.5}
+                          r="6.5"
+                          fill={rubberBandColor}
+                          stroke={colorOption.stroke}
+                          strokeWidth="1"
+                          opacity={isSelected ? 1 : 0.9}
+                          filter="url(#gumShadow)"
+                        />
+                        
+                        {/* Rubber band shine */}
+                        <ellipse cx={startX + 12} cy={toothY + 31.5} rx="2" ry="2.5" fill="white" opacity="0.4" />
+                        <ellipse cx={startX + 30} cy={toothY + 31.5} rx="2" ry="2.5" fill="white" opacity="0.4" />
+                      </g>
+                    );
+                  })}
+
+                  {/* Upper Archwire */}
+                  <path
+                    d="M 25,128
+                       Q 400,110 775,128"
+                    stroke="url(#wireGradient)"
+                    strokeWidth="3"
+                    fill="none"
+                    strokeLinecap="round"
+                  />
+                  
+                  {/* Wire shine */}
+                  <path
+                    d="M 25,126.5
+                       Q 400,108.5 775,126.5"
+                    stroke="white"
+                    strokeWidth="1"
+                    fill="none"
+                    opacity="0.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
               </div>
-              <motion.div 
-                className="text-center text-sm font-medium text-purple-600"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.7 }}
-              >
-                Lower Teeth
-              </motion.div>
+
+              {/* LOWER TEETH ARCH */}
+              <div className="relative mx-auto" style={{ width: '800px', height: '280px' }}>
+                <svg width="800" height="280" viewBox="0 0 800 280" className="w-full">
+                  <defs>
+                    <linearGradient id="lowerGumGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" style={{ stopColor: '#ff6a8f' }} />
+                      <stop offset="100%" style={{ stopColor: '#ff3366' }} />
+                    </linearGradient>
+                    <linearGradient id="lowerToothGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" style={{ stopColor: '#fffdf7' }} />
+                      <stop offset="100%" style={{ stopColor: '#e8e8e8' }} />
+                    </linearGradient>
+                  </defs>
+
+                  {/* Lower Gum - Major curved shape */}
+                  <path
+                    d="M 40,230
+                       C 40,260 120,275 400,275
+                       C 680,275 760,260 760,230
+                       C 760,200 720,170 620,152
+                       C 520,138 420,132 400,132
+                       C 380,132 280,138 180,152
+                       C 80,170 40,200 40,230
+                       Z"
+                    fill="url(#lowerGumGradient)"
+                    filter="url(#gumShadow)"
+                  />
+
+                  {/* Gum shine/highlight */}
+                  <ellipse cx="400" cy="252" rx="300" ry="16" fill="white" opacity="0.2" />
+
+                  {/* Individual Teeth - 16 teeth across */}
+                  {lowerTeeth.map((tooth, index) => {
+                    const teethSpacing = 44;
+                    const centerIndex = 7.5;
+                    const offset = index - centerIndex;
+                    
+                    // Teeth positioned on gum curve (opposite of upper)
+                    const startX = 40 + index * teethSpacing;
+                    const gumCurve = Math.pow(Math.abs(offset) * 0.15, 1.6) * 24;
+                    const toothY = 135 + gumCurve; // Lower teeth start where gum begins
+                    const toothWidth = 40;
+                    const toothHeight = 52;
+                    
+                    // Rotation to follow arch
+                    const rotation = -offset * 3;
+                    
+                    const currentData = getPatientBracesData();
+                    const rubberBandColor = currentData.rubberBandColors[tooth] || rubberBandColorOptions[0].value;
+                    const colorOption = rubberBandColorOptions.find(c => c.value === rubberBandColor) || rubberBandColorOptions[0];
+                    const isHovered = hoveredTooth === tooth;
+                    const isSelected = selectedTooth === tooth;
+
+                    return (
+                      <g 
+                        key={tooth} 
+                        onClick={() => handleToothClick(tooth)} 
+                        onMouseEnter={() => setHoveredTooth(tooth)} 
+                        onMouseLeave={() => setHoveredTooth(null)} 
+                        style={{ cursor: 'pointer' }}
+                        transform={`translate(${startX + toothWidth/2},${toothY + toothHeight/2}) rotate(${rotation}) translate(${-(startX + toothWidth/2)},${-(toothY + toothHeight/2)})`}
+                      >
+                        {/* Tooth - smooth rounded shape */}
+                        <ellipse
+                          cx={startX + toothWidth/2}
+                          cy={toothY + toothHeight/2 + 5}
+                          rx="22"
+                          ry="28"
+                          fill="url(#lowerToothGradient)"
+                          stroke={isHovered ? '#4b90ff' : '#c0c0c0'}
+                          strokeWidth={isHovered ? '2' : '1'}
+                        />
+                        
+                        {/* Tooth shine */}
+                        <ellipse
+                          cx={startX + toothWidth/2 - 8}
+                          cy={toothY + 25}
+                          rx="4"
+                          ry="8"
+                          fill="white"
+                          opacity="0.5"
+                        />
+                        
+                        {/* Left bracket */}
+                        <rect
+                          x={startX + 8}
+                          y={toothY + 28}
+                          width="11"
+                          height="11"
+                          rx="1"
+                          fill="url(#bracketGradient)"
+                          stroke="#555555"
+                          strokeWidth="0.6"
+                        />
+                        
+                        {/* Right bracket */}
+                        <rect
+                          x={startX + 26}
+                          y={toothY + 28}
+                          width="11"
+                          height="11"
+                          rx="1"
+                          fill="url(#bracketGradient)"
+                          stroke="#555555"
+                          strokeWidth="0.6"
+                        />
+                        
+                        {/* Bracket slot details */}
+                        <line x1={startX + 9} y1={toothY + 31.5} x2={startX + 18} y2={toothY + 31.5} stroke="#444444" strokeWidth="0.8" opacity="0.9" />
+                        <line x1={startX + 9} y1={toothY + 35} x2={startX + 18} y2={toothY + 35} stroke="#444444" strokeWidth="0.8" opacity="0.9" />
+                        <line x1={startX + 27} y1={toothY + 31.5} x2={startX + 36} y2={toothY + 31.5} stroke="#444444" strokeWidth="0.8" opacity="0.9" />
+                        <line x1={startX + 27} y1={toothY + 35} x2={startX + 36} y2={toothY + 35} stroke="#444444" strokeWidth="0.8" opacity="0.9" />
+                        
+                        {/* Bracket shine */}
+                        <rect x={startX + 9} y={toothY + 28.5} width="1.5" height="2" fill="white" opacity="0.6" />
+                        <rect x={startX + 27} y={toothY + 28.5} width="1.5" height="2" fill="white" opacity="0.6" />
+                        
+                        {/* Left rubber band */}
+                        <circle
+                          cx={startX + 13.5}
+                          cy={toothY + 33.5}
+                          r="6.5"
+                          fill={rubberBandColor}
+                          stroke={colorOption.stroke}
+                          strokeWidth="1"
+                          opacity={isSelected ? 1 : 0.9}
+                          filter="url(#gumShadow)"
+                        />
+                        
+                        {/* Right rubber band */}
+                        <circle
+                          cx={startX + 31.5}
+                          cy={toothY + 33.5}
+                          r="6.5"
+                          fill={rubberBandColor}
+                          stroke={colorOption.stroke}
+                          strokeWidth="1"
+                          opacity={isSelected ? 1 : 0.9}
+                          filter="url(#gumShadow)"
+                        />
+                        
+                        {/* Rubber band shine */}
+                        <ellipse cx={startX + 12} cy={toothY + 31.5} rx="2" ry="2.5" fill="white" opacity="0.4" />
+                        <ellipse cx={startX + 30} cy={toothY + 31.5} rx="2" ry="2.5" fill="white" opacity="0.4" />
+                      </g>
+                    );
+                  })}
+
+                  {/* Lower Archwire */}
+                  <path
+                    d="M 25,152
+                       Q 400,170 775,152"
+                    stroke="url(#wireGradient)"
+                    strokeWidth="3"
+                    fill="none"
+                    strokeLinecap="round"
+                  />
+                  
+                  {/* Wire shine */}
+                  <path
+                    d="M 25,153.5
+                       Q 400,171.5 775,153.5"
+                    stroke="white"
+                    strokeWidth="1"
+                    fill="none"
+                    opacity="0.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
             </div>
 
             {/* Tips Section */}
@@ -720,10 +698,8 @@ export function BracesCharting({ patients }: BracesChartingProps) {
 
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {getPatientBracesData().colorHistory.length > 0 ? (
-                  getPatientBracesData().colorHistory.map((entry, index) => {
-                    const colorInfo = rubberBandColorOptions.find(c => c.value === entry.colorValue);
-                    return (
-                      <motion.div
+                  getPatientBracesData().colorHistory.map((entry: { colorValue: string; colorName: string; date: string; notes?: string }, index: number) => (
+                    <motion.div
                         key={index}
                         className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200 hover:shadow-md transition-shadow"
                         initial={{ opacity: 0, y: 20 }}
@@ -752,9 +728,8 @@ export function BracesCharting({ patients }: BracesChartingProps) {
                             </div>
                           </div>
                         </div>
-                      </motion.div>
-                    );
-                  })
+                    </motion.div>
+                  ))
                 ) : (
                   <div className="text-center py-12 text-gray-400">
                     <History className="w-12 h-12 mx-auto mb-3 opacity-50" />

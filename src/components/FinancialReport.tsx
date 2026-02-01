@@ -4,6 +4,7 @@ import { TrendingUp, TrendingDown, Calendar, FileText, Download, PieChart, BarCh
 import { motion, AnimatePresence } from 'motion/react';
 import { PesoSign } from './icons/PesoSign';
 import { generateReceipt, generatePatientHistoryPDF, generateFinancialPDF } from '../utils/pdfGenerator';
+import { PatientSearchInput } from './PatientSearchInput';
 
 type FinancialReportProps = {
   patients: Patient[];
@@ -522,22 +523,17 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Patient Selection */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Patient</label>
-                    <select
-                      value={selectedPatientId}
-                      onChange={(e) => {
-                        setSelectedPatientId(e.target.value);
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Search Patient</label>
+                    <PatientSearchInput
+                      patients={patients}
+                      selectedPatientId={selectedPatientId}
+                      onSelectPatient={(id) => {
+                        setSelectedPatientId(id);
                         setSelectedTreatmentId('');  // Reset procedure selection when patient changes
                       }}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:outline-none transition-colors"
-                    >
-                      <option value="">-- Select a patient --</option>
-                      {patients.map(patient => (
-                        <option key={patient.id} value={patient.id.toString()}>
-                          {patient.name}
-                        </option>
-                      ))}
-                    </select>
+                      placeholder="Search patient..."
+                      required
+                    />
                   </div>
 
                   {/* Procedure Selection - Show procedures with remaining balance */}

@@ -80,6 +80,7 @@ async function initializeDatabase() {
         duration INT DEFAULT 60,
         status ENUM('scheduled', 'completed', 'cancelled') DEFAULT 'scheduled',
         notes TEXT,
+        createdByRole ENUM('patient', 'staff') DEFAULT 'staff',
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         INDEX idx_patient_date (patientId, appointmentDateTime),
         INDEX idx_status (status)
@@ -126,6 +127,7 @@ async function initializeDatabase() {
         reason TEXT,
         date DATE,
         urgency ENUM('routine', 'urgent', 'emergency'),
+        createdByRole ENUM('patient', 'staff') DEFAULT 'staff',
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);

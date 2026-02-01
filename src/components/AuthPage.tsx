@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { User, Lock, LogIn, UserPlus, Mail, Phone, Calendar, MapPin, Shield, Stethoscope } from 'lucide-react';
 import { motion } from 'motion/react';
 import { toast } from 'sonner';
@@ -6,6 +6,7 @@ import { authAPI, setAuthToken } from '../api';
 import { PasswordInput } from './PasswordInput';
 import { handlePhoneInput, formatPhoneNumber } from '../utils/phoneValidation';
 import { PatientRecordClaiming } from './PatientRecordClaiming';
+import { convertToDBDate, convertToDisplayDate, formatDateInput } from '../utils/dateHelpers';
 
 export type UserRole = 'doctor' | 'assistant' | 'patient';
 
@@ -41,6 +42,7 @@ export type SignupData = {
 };
 
 export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
+  const birthdatePickerRef = useRef<HTMLInputElement | null>(null);
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -482,7 +484,7 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
                   : 'text-slate-600 hover:text-slate-800'
               }`}
             >
-              Login
+              Sign in
             </button>
             <button
               type="button"
@@ -608,10 +610,32 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
                   <div className="relative">
                     <Calendar className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
                     <input
-                      type="date"
+                      type="text"
                       value={signupData.dateOfBirth}
-                      onChange={(e) => updateSignupField('dateOfBirth', e.target.value)}
-                      className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                      onChange={(e) => updateSignupField('dateOfBirth', formatDateInput(e.target.value))}
+                      placeholder="MM/DD/YYYY"
+                      className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        birthdatePickerRef.current?.focus();
+                        if (birthdatePickerRef.current?.showPicker) {
+                          birthdatePickerRef.current.showPicker();
+                        } else {
+                          birthdatePickerRef.current?.click();
+                        }
+                      }}
+                      className="absolute right-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                      aria-label="Open calendar"
+                    >
+                      <Calendar className="w-5 h-5" />
+                    </button>
+                    <input
+                      ref={birthdatePickerRef}
+                      type="date"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 opacity-0 cursor-pointer"
+                      onChange={(e) => updateSignupField('dateOfBirth', convertToDisplayDate(e.target.value))}
                     />
                   </div>
                 </div>

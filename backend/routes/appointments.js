@@ -54,12 +54,13 @@ router.get('/', authMiddleware, async (req, res) => {
 // Create appointment
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { patientId, patientName, date, time, type, duration = 60, notes } = req.body;
+    const { patientId, patientName, date, time, type, duration = 60, notes, createdByRole } = req.body;
     const appointmentDateTime = parseAppointmentDateTime(date, time);
+    const roleValue = createdByRole === 'patient' ? 'patient' : 'staff';
     
     const [result] = await pool.query(
-      'INSERT INTO appointments (patientId, patientName, appointmentDateTime, type, duration, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [patientId, patientName, appointmentDateTime, type, duration, 'scheduled', notes]
+      'INSERT INTO appointments (patientId, patientName, appointmentDateTime, type, duration, status, notes, createdByRole) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [patientId, patientName, appointmentDateTime, type, duration, 'scheduled', notes, roleValue]
     );
     
     const { date: dateOnly, time: timeOnly } = extractDateTime(appointmentDateTime);
@@ -74,7 +75,8 @@ router.post('/', authMiddleware, async (req, res) => {
       type, 
       duration,
       notes,
-      status: 'scheduled' 
+      status: 'scheduled',
+      createdByRole: roleValue
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -84,12 +86,13 @@ router.post('/', authMiddleware, async (req, res) => {
 // Update appointment
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
-    const { patientId, patientName, date, time, type, duration = 60, status, notes } = req.body;
+    const { patientId, patientName, date, time, type, duration = 60, status, notes, createdByRole } = req.body;
     const appointmentDateTime = parseAppointmentDateTime(date, time);
+    const roleValue = createdByRole === 'patient' ? 'patient' : 'staff';
     
     await pool.query(
-      'UPDATE appointments SET patientId=?, patientName=?, appointmentDateTime=?, type=?, duration=?, status=?, notes=? WHERE id=?',
-      [patientId, patientName, appointmentDateTime, type, duration, status, notes, req.params.id]
+      'UPDATE appointments SET patientId=?, patientName=?, appointmentDateTime=?, type=?, duration=?, status=?, notes=?, createdByRole=? WHERE id=?',
+      [patientId, patientName, appointmentDateTime, type, duration, status, notes, roleValue, req.params.id]
     );
     
     const { date: dateOnly, time: timeOnly } = extractDateTime(appointmentDateTime);
@@ -104,7 +107,8 @@ router.put('/:id', authMiddleware, async (req, res) => {
       type, 
       duration, 
       status, 
-      notes 
+      notes,
+      createdByRole: roleValue
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

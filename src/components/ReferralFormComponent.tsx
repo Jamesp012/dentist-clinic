@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Check, Download, X } from 'lucide-react';
 import { Patient, Referral } from '../App';
 import { toast } from 'sonner';
+import { PatientSearchInput } from './PatientSearchInput';
 
 interface ReferralFormComponentProps {
   patients: Patient[];
@@ -164,23 +165,21 @@ Generated on: ${new Date().toLocaleString()}
   );
 
   const UnderlineInput = ({ label, value, onChange, className = '' }: { label: string; value: string; onChange: (v: string) => void; className?: string }) => (
-    <div className={`${className} pointer-events-auto`}>
-      <label className="block text-sm font-semibold text-gray-700 mb-1">{label}</label>
+    <div className={`flex items-center gap-2 ${className}`}>
+      <span className="text-sm whitespace-nowrap font-semibold">{label}</span>
       <input 
         type="text" 
-        placeholder={label}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        onInput={(e) => onChange((e.target as HTMLInputElement).value)}
-        className="w-full p-2 border-2 border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 text-sm bg-white cursor-text"
-        style={{ pointerEvents: 'auto' }}
+        className="flex-1 border-b-2 border-slate-400 focus:outline-none focus:border-yellow-500 focus:bg-yellow-50 bg-white px-2 py-1 text-sm transition-colors" 
+        style={{ minHeight: '32px' }}
       />
     </div>
   );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto pointer-events-auto">
-      <div className="bg-white w-full max-w-4xl rounded-lg shadow-2xl my-8 pointer-events-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className="bg-white w-full max-w-4xl rounded-lg shadow-2xl my-8">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-gradient-to-r from-yellow-50 to-slate-50">
           <h1 className="text-2xl font-bold text-slate-900">Dental Referral Form</h1>
@@ -193,27 +192,22 @@ Generated on: ${new Date().toLocaleString()}
         </div>
 
         {/* Form Content */}
-        <div className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto pointer-events-auto">
-          <div className="space-y-6 pointer-events-auto">
+        <div className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto">
+          <div className="space-y-6">
             {/* Patient Information */}
             <div className="space-y-4 pb-6 border-b border-slate-200">
               <h2 className="text-lg font-bold text-slate-900 uppercase">Patient Information</h2>
               
               <div className="space-y-3">
                 <div>
-                  <label className="block text-sm font-bold mb-2">Select Patient</label>
-                  <select
-                    value={formData.patientId}
-                    onChange={(e) => handlePatientSelect(e.target.value)}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                  >
-                    <option value="">-- Select a Patient --</option>
-                    {patients.map(patient => (
-                      <option key={patient.id} value={String(patient.id)}>
-                        {patient.name}
-                      </option>
-                    ))}
-                  </select>
+                  <label className="block text-sm font-bold mb-2">Search Patient</label>
+                  <PatientSearchInput
+                    patients={patients}
+                    selectedPatientId={formData.patientId}
+                    onSelectPatient={(id) => handlePatientSelect(id)}
+                    placeholder="Search patient..."
+                    required
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

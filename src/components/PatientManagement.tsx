@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Patient } from '../App';
-import { Search, Plus, X, Edit, Trash2 } from 'lucide-react';
+import { Search, Plus, X, Edit, Trash2, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { patientAPI } from '../api';
 import { handlePhoneInput, formatPhoneNumber } from '../utils/phoneValidation';
@@ -16,6 +16,7 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [deletingPatient, setDeletingPatient] = useState<Patient | null>(null);
+  const [viewingPatient, setViewingPatient] = useState<Patient | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const filteredPatients = patients.filter(patient =>
@@ -43,7 +44,7 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
       const formData = new FormData(form);
       const newPatient = {
         name: formData.get('name') as string,
-        dateOfBirth: formData.get('dateOfBirth') as string,
+        dateOfBirth: convertToDBDate(formData.get('dateOfBirth') as string),
         sex: formData.get('sex') as 'Male' | 'Female',
         phone: formData.get('phone') as string,
         email: formData.get('email') as string,
@@ -78,7 +79,7 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
       const updatedPatient = {
         ...editingPatient,
         name: formData.get('name') as string,
-        dateOfBirth: formData.get('dateOfBirth') as string,
+        dateOfBirth: convertToDBDate(formData.get('dateOfBirth') as string),
         sex: formData.get('sex') as 'Male' | 'Female',
         phone: formData.get('phone') as string,
         email: formData.get('email') as string,
@@ -177,6 +178,13 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">
                         <button
+                          onClick={() => setViewingPatient(patient)}
+                          className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
+                          title="View Patient"
+                        >
+                          <Eye className="w-5 h-5" />
+                        </button>
+                        <button
                           onClick={() => setEditingPatient(patient)}
                           className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
                           title="Edit Patient"
@@ -224,9 +232,10 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth *</label>
                   <input
-                    type="date"
+                    type="text"
                     name="dateOfBirth"
                     required
+                    placeholder="MM/DD/YYYY"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -343,10 +352,15 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth *</label>
                   <input
-                    type="date"
+                    type="text"
                     name="dateOfBirth"
                     required
-                    defaultValue={editingPatient.dateOfBirth}
+                    defaultValue={(() => {
+                      const dateStr = editingPatient.dateOfBirth.includes('T') ? editingPatient.dateOfBirth.split('T')[0] : editingPatient.dateOfBirth;
+                      const [year, month, day] = dateStr.split('-');
+                      return `${month}/${day}/${year}`;
+                    })()}
+                    placeholder="MM/DD/YYYY"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -464,6 +478,77 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
                 className="flex-1 border border-gray-300 py-2 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Patient Modal */}
+      {viewingPatient && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-blue-900">Patient Details</h3>
+              <button onClick={() => setViewingPatient(null)} className="text-gray-500 hover:text-gray-700">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Patient Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <label className="text-sm font-medium text-blue-900 block mb-1">Full Name</label>
+                <p className="text-gray-900 font-medium">{viewingPatient.name}</p>
+              </div>
+              
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <label className="text-sm font-medium text-blue-900 block mb-1">Age</label>
+                <p className="text-gray-900 font-medium">{calculateAge(viewingPatient.dateOfBirth)} years old</p>
+              </div>
+              
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <label className="text-sm font-medium text-blue-900 block mb-1">Date of Birth</label>
+                <p className="text-gray-900 font-medium">{new Date(viewingPatient.dateOfBirth).toLocaleDateString()}</p>
+              </div>
+              
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <label className="text-sm font-medium text-blue-900 block mb-1">Sex</label>
+                <p className="text-gray-900 font-medium">{viewingPatient.sex}</p>
+              </div>
+              
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <label className="text-sm font-medium text-blue-900 block mb-1">Email</label>
+                <p className="text-gray-900 font-medium">{viewingPatient.email}</p>
+              </div>
+              
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <label className="text-sm font-medium text-blue-900 block mb-1">Phone</label>
+                <p className="text-gray-900 font-medium">{viewingPatient.phone}</p>
+              </div>
+              
+              <div className="bg-blue-50 p-4 rounded-lg md:col-span-2">
+                <label className="text-sm font-medium text-blue-900 block mb-1">Address</label>
+                <p className="text-gray-900 font-medium">{viewingPatient.address}</p>
+              </div>
+              
+              <div className="bg-blue-50 p-4 rounded-lg md:col-span-2">
+                <label className="text-sm font-medium text-blue-900 block mb-1">Medical History</label>
+                <p className="text-gray-900 font-medium whitespace-pre-wrap">{viewingPatient.medicalHistory || 'No medical history recorded'}</p>
+              </div>
+              
+              <div className="bg-blue-50 p-4 rounded-lg md:col-span-2">
+                <label className="text-sm font-medium text-blue-900 block mb-1">Allergies</label>
+                <p className="text-gray-900 font-medium whitespace-pre-wrap">{viewingPatient.allergies || 'No known allergies'}</p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setViewingPatient(null)}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Close
               </button>
             </div>
           </div>

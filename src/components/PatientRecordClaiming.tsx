@@ -4,6 +4,7 @@ import { User, Calendar, Phone, CheckCircle, AlertCircle, Loader2, ArrowLeft, Sh
 import { toast } from 'sonner';
 import { patientClaimingAPI, setAuthToken } from '../api';
 import { handlePhoneInput } from '../utils/phoneValidation';
+import { convertToDBDate } from '../utils/dateHelpers';
 
 type ClaimingStep = 'initial' | 'search' | 'otp' | 'account' | 'success';
 
@@ -62,7 +63,11 @@ export function PatientRecordClaiming({ onComplete, onCancel, isLoginFlow = fals
     setIsLoading(true);
 
     try {
-      const result = await patientClaimingAPI.searchRecords(searchData);
+      const searchDataConverted = {
+        ...searchData,
+        dateOfBirth: convertToDBDate(searchData.dateOfBirth)
+      };
+      const result = await patientClaimingAPI.searchRecords(searchDataConverted);
 
       if (result.error) {
         setError(result.error);
@@ -347,9 +352,10 @@ export function PatientRecordClaiming({ onComplete, onCancel, isLoginFlow = fals
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                   <input
-                    type="date"
+                    type="text"
                     value={searchData.dateOfBirth}
                     onChange={(e) => setSearchData({ ...searchData, dateOfBirth: e.target.value })}
+                    placeholder="MM/DD/YYYY"
                     className="w-full pl-11 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                     required
                   />

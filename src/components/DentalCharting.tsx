@@ -4,13 +4,8 @@ import { ToothData } from './Tooth';
 import { RealisticTooth } from './dental/RealisticTooth';
 import { ToothDetailsSidebar } from './dental/ToothDetailsSidebar';
 import { 
-  HelpCircle,
-  Layers,
-  Grid,
-  Maximize2,
   Plus,
   History,
-  ChevronDown,
   X
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -51,6 +46,8 @@ interface ChartRecord {
 
 export function DentalCharting({ patients }: DentalChartingProps) {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [patientSearch, setPatientSearch] = useState('');
+  const [showPatientSuggestions, setShowPatientSuggestions] = useState(false);
   const [charts, setCharts] = useState<ChartRecord[]>([
     { 
       id: '1', 
@@ -67,6 +64,10 @@ export function DentalCharting({ patients }: DentalChartingProps) {
   const teeth = activeChart.data;
 
   const handleToothClick = (id: number) => {
+    if (!selectedPatient) {
+      toast.info('Please select a patient first.');
+      return;
+    }
     setSelectedTooth(id);
     setIsSidebarOpen(true);
   };
@@ -179,6 +180,29 @@ export function DentalCharting({ patients }: DentalChartingProps) {
     }
   };
 
+  const filteredPatients = patients.filter(patient =>
+    patient.name.toLowerCase().includes(patientSearch.trim().toLowerCase())
+  );
+
+  const recentPatientIds: Array<string | number> = JSON.parse(
+    localStorage.getItem('dentalChart_recentPatients') || '[]'
+  );
+
+  const recentPatients = recentPatientIds
+    .map(id => patients.find(patient => String(patient.id) === String(id)))
+    .filter((patient): patient is Patient => Boolean(patient));
+
+  const recentlyAddedPatients = [...patients].slice(-5).reverse();
+
+  const suggestionPatients = patientSearch.trim()
+    ? filteredPatients
+    : [
+        ...recentPatients,
+        ...recentlyAddedPatients.filter(
+          patient => !recentPatients.some(recent => String(recent.id) === String(patient.id))
+        )
+      ];
+
   return (
     <div className="flex flex-col h-full bg-white font-sans">
       {/* Header */}
@@ -189,40 +213,65 @@ export function DentalCharting({ patients }: DentalChartingProps) {
           </div>
           
           {/* Patient Selector */}
-          <select 
-            value={selectedPatient?.id || ''}
-            onChange={(e) => {
-              const patient = patients.find(p => p.id.toString() === e.target.value);
-              setSelectedPatient(patient || null);
-            }}
-            className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-sm text-slate-600 hover:border-slate-300 transition-colors cursor-pointer"
-          >
-            <option value="">Select Patient...</option>
-            {patients.map(patient => (
-              <option key={patient.id} value={patient.id}>
-                {patient.name}
-              </option>
-            ))}
-          </select>
-          
-          {/* Chart History Selector */}
-          <div className="relative group">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-sm text-slate-600 hover:border-slate-300 transition-colors cursor-pointer">
-              <History className="w-4 h-4 text-slate-400" />
-              <select 
-                value={activeChartId}
-                onChange={(e) => setActiveChartId(e.target.value)}
-                className="bg-transparent border-none outline-none appearance-none cursor-pointer pr-4 font-medium min-w-[140px]"
-              >
-                {charts.map(chart => (
-                  <option key={chart.id} value={chart.id}>
-                    {chart.date}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="w-3 h-3 absolute right-3 pointer-events-none text-slate-400" />
-            </div>
+          <div className="relative">
+            <input
+              type="text"
+              value={patientSearch}
+              onChange={(e) => {
+                const value = e.target.value;
+                setPatientSearch(value);
+                setShowPatientSuggestions(true);
+                if (!value.trim()) {
+                  setSelectedPatient(null);
+                }
+              }}
+              onFocus={() => setShowPatientSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowPatientSuggestions(false), 150)}
+              placeholder="Search patient..."
+              className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-sm text-slate-600 hover:border-slate-300 transition-colors w-64"
+            />
+            {showPatientSuggestions && (
+              <div className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-md shadow-lg">
+                {suggestionPatients.length > 0 ? (
+                  suggestionPatients.map(patient => (
+                    <button
+                      key={patient.id}
+                      type="button"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        setSelectedPatient(patient);
+                        setPatientSearch(patient.name);
+                        setShowPatientSuggestions(false);
+                        const nextRecent = [patient.id, ...recentPatientIds.filter(id => String(id) !== String(patient.id))].slice(0, 5);
+                        localStorage.setItem('dentalChart_recentPatients', JSON.stringify(nextRecent));
+                      }}
+                      className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                    >
+                      {patient.name}
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-3 py-2 text-sm text-slate-400">No matching patients</div>
+                )}
+              </div>
+            )}
           </div>
+
+          <button
+            onClick={() => {
+              if (!selectedPatient) {
+                toast.info('Please select a patient first.');
+                return;
+              }
+              setIsHistoryOpen(!isHistoryOpen);
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-sm text-slate-600 hover:border-slate-300 transition-colors"
+            title="View patient charts"
+          >
+            <History className="w-4 h-4 text-slate-400" />
+            <span>View {selectedPatient?.name || 'Patient'}&#39;s Charts</span>
+          </button>
+          
         </div>
 
         <button 
@@ -321,7 +370,7 @@ export function DentalCharting({ patients }: DentalChartingProps) {
             </div>
 
             {/* Tooth Numbers (Upper & Lower) */}
-            <div className="py-6 flex flex-col gap-2">
+            <div className="py-3 flex flex-col gap-1">
                {/* Upper Numbers */}
                <div className="flex justify-center gap-1 text-xs text-slate-400 font-medium">
                   {Array.from({ length: 16 }, (_, i) => i + 1).map(id => (
@@ -378,35 +427,6 @@ export function DentalCharting({ patients }: DentalChartingProps) {
             </div>
 
           </div>
-        </div>
-
-        {/* Right Controls (Floating) */}
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 bg-white shadow-lg border border-slate-200 rounded-lg p-2">
-           <button 
-             onClick={() => setIsHistoryOpen(!isHistoryOpen)}
-             className={`p-2 hover:bg-slate-100 rounded ${isHistoryOpen ? 'text-sky-600 bg-sky-50' : 'text-sky-500'}`}
-             title="Toggle Chart History"
-           >
-             <History className="w-5 h-5" />
-           </button>
-           <div className="w-full h-px bg-slate-200" />
-           <button className="p-2 hover:bg-slate-100 rounded text-slate-400">
-             <Layers className="w-5 h-5" />
-           </button>
-           <div className="w-full h-px bg-slate-200" />
-           <button className="p-2 hover:bg-slate-100 rounded text-slate-400">
-             <Grid className="w-5 h-5" />
-           </button>
-           <button className="p-2 hover:bg-slate-100 rounded text-slate-400">
-             <Maximize2 className="w-5 h-5" />
-           </button>
-        </div>
-
-        {/* Bottom Right Help */}
-        <div className="absolute bottom-6 right-6">
-           <button className="w-10 h-10 rounded-full border border-slate-800 flex items-center justify-center hover:bg-slate-50">
-             <HelpCircle className="w-6 h-6 text-slate-700" />
-           </button>
         </div>
 
         {/* Sidebar */}

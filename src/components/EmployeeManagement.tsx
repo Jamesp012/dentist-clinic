@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Plus, X, Edit, Trash2, Key, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { handlePhoneInput, formatPhoneNumber } from '../utils/phoneValidation';
+import { convertToDBDate } from '../utils/dateHelpers';
 
 type Employee = {
   id: number;
@@ -71,7 +72,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
         phone: formData.get('phone') as string,
         email: formData.get('email') as string,
         address: formData.get('address') as string,
-        dateHired: formData.get('dateHired') as string,
+        dateHired: convertToDBDate(formData.get('dateHired') as string),
       };
 
       const response = await fetch('http://localhost:5000/api/employees', {
@@ -112,7 +113,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
         phone: formData.get('phone') as string,
         email: formData.get('email') as string,
         address: formData.get('address') as string,
-        dateHired: formData.get('dateHired') as string,
+        dateHired: convertToDBDate(formData.get('dateHired') as string),
       };
 
       const response = await fetch(`http://localhost:5000/api/employees/${editingEmployee.id}`, {
@@ -386,9 +387,10 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Date Hired *</label>
                 <input
-                  type="date"
+                  type="text"
                   name="dateHired"
                   required
+                  placeholder="MM/DD/YYYY"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                 />
               </div>
@@ -490,10 +492,15 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Date Hired *</label>
                 <input
-                  type="date"
+                  type="text"
                   name="dateHired"
                   required
-                  defaultValue={editingEmployee.dateHired.split('T')[0]}
+                  defaultValue={(() => {
+                    const dateStr = editingEmployee.dateHired.split('T')[0];
+                    const [year, month, day] = dateStr.split('-');
+                    return `${month}/${day}/${year}`;
+                  })()}
+                  placeholder="MM/DD/YYYY"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                 />
               </div>

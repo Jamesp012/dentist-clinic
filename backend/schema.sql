@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS patients (
   nextAppointment DATE,
   totalBalance DECIMAL(10, 2) DEFAULT 0,
   has_account BOOLEAN DEFAULT FALSE,
+  profilePhoto LONGTEXT,
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -65,6 +66,7 @@ CREATE TABLE IF NOT EXISTS appointments (
   duration INT DEFAULT 60,
   status ENUM('scheduled', 'completed', 'cancelled') DEFAULT 'scheduled',
   notes TEXT CHARACTER SET utf8mb4,
+  createdByRole ENUM('patient', 'staff') DEFAULT 'staff',
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (patientId) REFERENCES patients(id) ON DELETE SET NULL,
   INDEX idx_patient_date (patientId, appointmentDateTime),
@@ -114,6 +116,7 @@ CREATE TABLE IF NOT EXISTS referrals (
   reason TEXT CHARACTER SET utf8mb4,
   date DATE,
   urgency ENUM('routine', 'urgent', 'emergency'),
+  createdByRole ENUM('patient', 'staff') DEFAULT 'staff',
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (patientId) REFERENCES patients(id) ON DELETE SET NULL
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

@@ -36,6 +36,7 @@ export interface Appointment {
   duration: number;
   status: 'scheduled' | 'completed' | 'cancelled';
   notes: string;
+  createdByRole?: 'patient' | 'staff';
 }
 
 export interface InventoryItem {
@@ -59,6 +60,7 @@ export interface Referral {
   reason: string;
   date: string;
   urgency: 'routine' | 'urgent' | 'emergency';
+  createdByRole?: 'patient' | 'staff';
 }
 
 export interface Announcement {

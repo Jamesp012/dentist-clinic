@@ -5,7 +5,7 @@ import { PatientPortal } from './components/PatientPortal';
 import { AuthPage, User as AuthUser, SignupData } from './components/AuthPage';
 import { LandingPage } from './components/ui/LandingPage';
 import { Toaster, toast } from 'sonner';
-import { authAPI, setAuthToken, photoAPI } from './api';
+import { authAPI, setAuthToken, photoAPI, patientAPI } from './api';
 import { useDataSync } from './hooks/useDataSync';
 
 // Type definitions
@@ -22,6 +22,7 @@ export type Patient = {
   lastVisit?: string;
   nextAppointment?: string;
   totalBalance?: number;
+  profilePhoto?: string;
 };
 
 export type Appointment = {
@@ -35,6 +36,8 @@ export type Appointment = {
   duration?: number;
   status: 'scheduled' | 'completed' | 'cancelled';
   notes: string;
+  createdAt?: string;
+  createdByRole?: 'patient' | 'staff';
 };
 
 export type InventoryItem = {
@@ -92,6 +95,7 @@ export type Referral = {
   reason: string;
   date: string;
   urgency: 'routine' | 'urgent' | 'emergency';
+  createdByRole?: 'patient' | 'staff';
 };
 
 export type PhotoUpload = {
@@ -398,7 +402,11 @@ export default function App() {
   if (!currentUser && showLandingPage) {
     return (
       <>
-        <LandingPage onGetStarted={() => setShowLandingPage(false)} />
+        <LandingPage 
+          onGetStarted={() => setShowLandingPage(false)}
+          onLogin={handleLogin}
+          onSignup={handleSignup}
+        />
         <Toaster 
           position="top-center" 
           richColors
@@ -574,8 +582,28 @@ export default function App() {
           appointments={appointments}
           setAppointments={setAppointmentsWithNormalization}
           treatmentRecords={patientTreatments}
-          onUpdatePatient={(updatedPatient) => {
-            setPatients(patients.map(p => String(p.id) === String(updatedPatient.id) ? updatedPatient : p));
+          onUpdatePatient={async (updatedPatient) => {
+            try {
+              console.log('Updating patient with photo:', {
+                id: updatedPatient.id,
+                name: updatedPatient.name,
+                hasPhoto: !!updatedPatient.profilePhoto,
+                photoLength: updatedPatient.profilePhoto?.length
+              });
+              
+              // Update patient in the backend
+              await patientAPI.update(updatedPatient.id, updatedPatient);
+              console.log('Patient updated successfully in backend');
+              
+              // Update local state
+              setPatients(patients.map(p => String(p.id) === String(updatedPatient.id) ? updatedPatient : p));
+              
+              // Refresh all data to ensure consistency
+              await refreshAll();
+              console.log('Data refreshed');
+            } catch (error) {
+              console.error('Failed to update patient:', error);
+            }
           }}
           photos={photos}
           setPhotos={setPhotos}

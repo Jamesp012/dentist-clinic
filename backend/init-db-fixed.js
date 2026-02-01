@@ -126,6 +126,7 @@ async function initializeDatabase() {
         reason TEXT,
         date DATE,
         urgency ENUM('routine', 'urgent', 'emergency'),
+        createdByRole ENUM('patient', 'staff') DEFAULT 'staff',
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);

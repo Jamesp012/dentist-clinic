@@ -30,12 +30,13 @@ router.get('/:id', authMiddleware, async (req, res) => {
 // Create referral
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { patientId, patientName, referringDentist, referredTo, specialty, reason, date, urgency } = req.body;
+    const { patientId, patientName, referringDentist, referredTo, specialty, reason, date, urgency, createdByRole } = req.body;
+    const roleValue = createdByRole === 'patient' ? 'patient' : 'staff';
     const [result] = await pool.query(
-      'INSERT INTO referrals (patientId, patientName, referringDentist, referredTo, specialty, reason, date, urgency) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [patientId, patientName, referringDentist, referredTo, specialty, reason, date, urgency]
+      'INSERT INTO referrals (patientId, patientName, referringDentist, referredTo, specialty, reason, date, urgency, createdByRole) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [patientId, patientName, referringDentist, referredTo, specialty, reason, date, urgency, roleValue]
     );
-    res.status(201).json({ id: result.insertId, ...req.body });
+    res.status(201).json({ id: result.insertId, ...req.body, createdByRole: roleValue });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -44,12 +45,13 @@ router.post('/', authMiddleware, async (req, res) => {
 // Update referral
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
-    const { patientId, patientName, referringDentist, referredTo, specialty, reason, date, urgency } = req.body;
+    const { patientId, patientName, referringDentist, referredTo, specialty, reason, date, urgency, createdByRole } = req.body;
+    const roleValue = createdByRole === 'patient' ? 'patient' : 'staff';
     await pool.query(
-      'UPDATE referrals SET patientId=?, patientName=?, referringDentist=?, referredTo=?, specialty=?, reason=?, date=?, urgency=? WHERE id=?',
-      [patientId, patientName, referringDentist, referredTo, specialty, reason, date, urgency, req.params.id]
+      'UPDATE referrals SET patientId=?, patientName=?, referringDentist=?, referredTo=?, specialty=?, reason=?, date=?, urgency=?, createdByRole=? WHERE id=?',
+      [patientId, patientName, referringDentist, referredTo, specialty, reason, date, urgency, roleValue, req.params.id]
     );
-    res.json({ id: req.params.id, ...req.body });
+    res.json({ id: req.params.id, ...req.body, createdByRole: roleValue });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -415,10 +415,17 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                 <div>
                   <label className="block text-sm font-semibold mb-2 text-gray-900">Date *</label>
                   <input
-                    type="date"
+                    type="text"
                     name="date"
                     required
-                    defaultValue={new Date().toISOString().split('T')[0]}
+                    defaultValue={(() => {
+                      const date = new Date();
+                      const month = String(date.getMonth() + 1).padStart(2, '0');
+                      const day = String(date.getDate()).padStart(2, '0');
+                      const year = date.getFullYear();
+                      return `${month}/${day}/${year}`;
+                    })()}
+                    placeholder="MM/DD/YYYY"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   />
                 </div>

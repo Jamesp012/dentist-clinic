@@ -78,6 +78,13 @@ export const patientAPI = {
     fetchWithAuth(`${API_BASE}/patients/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
+    }).then(result => {
+      console.log('Patient API update response:', {
+        patientId: id,
+        sentProfilePhoto: !!data.profilePhoto,
+        photoLength: data.profilePhoto?.length
+      });
+      return result;
     }),
   delete: (id) =>
     fetchWithAuth(`${API_BASE}/patients/${id}`, {

@@ -1,22 +1,206 @@
 import { motion } from 'motion/react';
-import { Stethoscope, Users, Award, Heart, MapPin, Phone, Mail } from 'lucide-react';
+import { Stethoscope, Users, Award, Heart, MapPin, Phone, Mail, ChevronLeft, ChevronRight, User, Lock, LogIn, UserPlus, Calendar, Eye, EyeOff } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { PatientRecordClaiming } from '../PatientRecordClaiming';
+import { convertToDBDate, convertToDisplayDate, formatDateInput } from '../../utils/dateHelpers';
 
 type LandingPageProps = {
   onGetStarted: () => void;
+  onLogin?: (username: string, password: string) => void;
+  onSignup?: (signupData: any) => void;
 };
 
-export function LandingPage({ onGetStarted }: LandingPageProps) {
+export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProps) {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [showAuthForm, setShowAuthForm] = useState(false);
+  const [showClaimingFlow, setShowClaimingFlow] = useState(false);
+  const [pendingSignupData, setPendingSignupData] = useState<any>(null);
+  const [isLoginMode, setIsLoginMode] = useState(true);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const birthdatePickerRef = useRef<HTMLInputElement | null>(null);
+  
+  const [signupData, setSignupData] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    dateOfBirth: '',
+    address: '',
+    sex: 'Male' as 'Male' | 'Female',
+    username: '',
+    password: '',
+    role: 'patient' as const
+  });
+
+  const formatPhoneNumber = (value: string) => {
+    // Remove all non-digit characters
+    const digits = value.replace(/\D/g, '');
+    
+    // If starts with 09, convert to +639
+    if (digits.startsWith('09')) {
+      return '+63' + digits.slice(1);
+    }
+    // If starts with 63, add +
+    if (digits.startsWith('63')) {
+      return '+' + digits;
+    }
+    // If already formatted or other format, return as is
+    return value;
+  };
+
+  const slides = [
+    {
+      icon: Stethoscope,
+      title: 'Modern Dental Management',
+      description: 'All-in-one solution for your clinic'
+    },
+    {
+      icon: Users,
+      title: 'Patient Care Excellence',
+      description: 'Comprehensive patient management system'
+    },
+    {
+      icon: Award,
+      title: 'Award-Winning Platform',
+      description: 'Trusted by leading dental professionals'
+    }
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
+  const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+  
+  const handleGetStarted = () => {
+    setShowAuthForm(true);
+  };
+
+  const handleClaimingComplete = (user: any, token: string) => {
+    // After claiming is complete, populate the login form with the created username
+    setUsername(user.username);
+    setPassword('');
+    
+    // Reset signup data and fields
+    setSignupData({
+      fullName: '',
+      email: '',
+      phone: '',
+      dateOfBirth: '',
+      address: '',
+      sex: 'Male' as 'Male' | 'Female',
+      username: '',
+      password: '',
+      role: 'patient' as const
+    });
+    setConfirmPassword('');
+    setError('');
+    
+    // Close claiming flow and switch to login mode
+    setShowClaimingFlow(false);
+    setPendingSignupData(null);
+    setIsLoginMode(true);
+    // Ensure auth form stays visible
+    setShowAuthForm(true);
+  };
+
+  const handleClaimingCancel = () => {
+    // User selected "No, I'm new" - create the account directly
+    if (pendingSignupData) {
+      const signupDataConverted = {
+        ...pendingSignupData,
+        dateOfBirth: convertToDBDate(pendingSignupData.dateOfBirth)
+      };
+      onSignup?.(signupDataConverted);
+      
+      // Close claiming flow
+      setShowClaimingFlow(false);
+      setPendingSignupData(null);
+      
+      // Clear all fields
+      setSignupData({
+        fullName: '',
+        email: '',
+        phone: '',
+        dateOfBirth: '',
+        address: '',
+        sex: 'Male' as 'Male' | 'Female',
+        username: '',
+        password: '',
+        role: 'patient' as const
+      });
+      setConfirmPassword('');
+      setUsername('');
+      setPassword('');
+      setError('');
+      
+      // Switch to login mode and keep auth form visible
+      setIsLoginMode(true);
+      setShowAuthForm(true);
+    } else {
+      // Just cancel without creating
+      setShowClaimingFlow(false);
+      setPendingSignupData(null);
+    }
+  };
+
   return (
     <div className="w-full bg-white overflow-x-hidden">
+      {/* Patient Record Claiming Modal */}
+      {showClaimingFlow && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full relative p-8"
+          >
+            <PatientRecordClaiming
+              onComplete={handleClaimingComplete}
+              onCancel={handleClaimingCancel}
+              isLoginFlow={false}
+            />
+          </motion.div>
+        </div>
+      )}
+
+      {/* Header */}
+      <header className="w-full bg-white shadow-md fixed top-0 left-0 right-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+          {/* Logo and Brand */}
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <span className="text-2xl">🦷</span>
+            </div>
+            <span className="text-xl font-semibold text-teal-600">DentaCare Pro</span>
+          </div>
+          {/* Navigation */}
+          <nav className="hidden md:flex gap-8">
+            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="text-slate-600 hover:text-teal-600 transition cursor-pointer">Home</button>
+            <button onClick={() => document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' })} className="text-slate-600 hover:text-teal-600 transition cursor-pointer">Services</button>
+            <button onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })} className="text-slate-600 hover:text-teal-600 transition cursor-pointer">Contact</button>
+            <button onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })} className="text-slate-600 hover:text-teal-600 transition cursor-pointer">About</button>
+          </nav>
+        </div>
+      </header>
       {/* Hero Section */}
-      <section className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-emerald-50 relative overflow-hidden pt-20">
-        {/* Decorative elements */}
+      <section className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-emerald-50 relative overflow-hidden pt-32">
+        {/* Animated background elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-teal-200/20 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-cyan-200/20 rounded-full blur-3xl"></div>
+          <div className="absolute top-0 right-0 w-96 h-96 bg-teal-400/10 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-10 left-10 w-80 h-80 bg-cyan-400/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+          <div className="absolute top-1/2 left-1/4 w-72 h-72 bg-slate-400/5 rounded-full blur-3xl"></div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pb-16">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[calc(100vh-100px)]">
             {/* Left content */}
             <motion.div
@@ -27,77 +211,385 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
             >
               <div>
                 <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", duration: 0.6 }}
-                  className="inline-flex items-center gap-3 mb-4"
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6 }}
+                  className="inline-block mb-6"
                 >
-                  <div className="w-14 h-14 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl flex items-center justify-center shadow-lg">
-                    <span className="text-3xl">🦷</span>
-                  </div>
-                  <span className="text-teal-600 font-semibold text-lg">DentaCare Pro</span>
+                  <span className="px-4 py-2 bg-gradient-to-r from-teal-400 to-cyan-400 text-slate-900 rounded-full text-sm font-bold uppercase tracking-wider">💎 Transform Your Smile Today</span>
                 </motion.div>
-                <h1 className="text-5xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight">
-                  Your Complete Dental Management Solution
+                <h1 className="text-6xl lg:text-7xl font-black mb-6 leading-tight text-slate-900">
+                  Quality Dental Care for Every Smile
                 </h1>
                 <p className="text-xl text-slate-600 mb-8 leading-relaxed">
-                  Streamline your dental clinic operations with our comprehensive management system. From patient scheduling to financial reporting, we've got everything you need.
+                  Because Every Smile Deserves Care
                 </p>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
                 <button
-                  onClick={onGetStarted}
-                  className="px-8 py-4 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl text-lg"
+                  onClick={handleGetStarted}
+                  className="px-8 py-4 bg-gradient-to-r from-teal-500 to-cyan-600 text-white font-bold rounded-lg hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 shadow-lg hover:shadow-2xl text-lg transform hover:scale-105"
                 >
                   Get Started Today
                 </button>
                 <button
-                  className="px-8 py-4 bg-white text-teal-600 border-2 border-teal-500 rounded-xl hover:bg-teal-50 transition-all duration-300 font-semibold text-lg"
+                  onClick={() => setShowAuthForm(false)}
+                  className="px-8 py-4 bg-white text-teal-600 border-2 border-teal-500 rounded-lg hover:bg-teal-50 transition-all duration-300 font-bold text-lg"
                 >
                   Learn More
                 </button>
               </div>
 
-              <div className="grid grid-cols-3 gap-6 pt-8">
-                <div>
-                  <p className="text-3xl font-bold text-teal-600">500+</p>
-                  <p className="text-slate-600">Active Clinics</p>
-                </div>
-                <div>
-                  <p className="text-3xl font-bold text-teal-600">50K+</p>
-                  <p className="text-slate-600">Happy Patients</p>
-                </div>
-                <div>
-                  <p className="text-3xl font-bold text-teal-600">24/7</p>
-                  <p className="text-slate-600">Support</p>
-                </div>
-              </div>
             </motion.div>
 
-            {/* Right illustration */}
+            {/* Right side - Slideshow or Auth Form */}
             <motion.div
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
               className="hidden lg:block"
             >
-              <div className="bg-gradient-to-br from-teal-400 to-cyan-500 rounded-3xl p-1 shadow-2xl">
-                <div className="bg-white rounded-2xl p-8 h-96 flex items-center justify-center">
-                  <div className="text-center">
-                    <Stethoscope className="w-24 h-24 text-teal-500 mx-auto mb-4" />
-                    <p className="text-2xl font-semibold text-slate-800">Modern Dental Management</p>
-                    <p className="text-slate-600 mt-2">All-in-one solution for your clinic</p>
+              {!showAuthForm ? (
+                // Slideshow
+                <div className="bg-gradient-to-br from-teal-400 to-cyan-500 rounded-3xl p-1 shadow-2xl h-[600px]">
+                  <div className="bg-white rounded-2xl p-8 pt-12 pb-28 flex flex-col items-center justify-center relative overflow-hidden h-full">
+                    {/* Slideshow content */}
+                    {slides.map((slide, index) => {
+                      const SlideIcon = slide.icon;
+                      return (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: index === currentSlide ? 1 : 0, scale: index === currentSlide ? 1 : 0.9 }}
+                          transition={{ duration: 0.5 }}
+                          className={`text-center flex-1 flex flex-col items-center justify-center ${index === currentSlide ? 'block' : 'hidden'}`}
+                        >
+                          <SlideIcon className="w-28 h-28 text-teal-500 mx-auto mb-4" />
+                          <p className="text-2xl font-semibold text-slate-800">{slide.title}</p>
+                          <p className="text-slate-600 mt-3 text-base">{slide.description}</p>
+                        </motion.div>
+                      );
+                    })}
+
+                    {/* Bottom controls container */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-50 to-transparent p-4 space-y-3">
+                      {/* Slide indicators */}
+                      <div className="flex gap-2 justify-center">
+                        {slides.map((_, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setCurrentSlide(index)}
+                            className={`h-2 rounded-full transition-all duration-300 ${
+                              index === currentSlide ? 'bg-teal-500 w-6' : 'bg-teal-300 w-2'
+                            }`}
+                            aria-label={`Go to slide ${index + 1}`}
+                          />
+                        ))}
+                      </div>
+
+                      {/* Navigation buttons */}
+                      <div className="flex justify-center gap-3">
+                        <button
+                          onClick={prevSlide}
+                          className="p-2 bg-teal-500 hover:bg-teal-600 text-white rounded-full transition-colors duration-300"
+                          aria-label="Previous slide"
+                        >
+                          <ChevronLeft className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={nextSlide}
+                          className="p-2 bg-teal-500 hover:bg-teal-600 text-white rounded-full transition-colors duration-300"
+                          aria-label="Next slide"
+                        >
+                          <ChevronRight className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
+              ) : (
+                // Auth Form
+              <div className="bg-white rounded-2xl shadow-2xl h-[600px] flex flex-col">
+                {/* Fixed Header */}
+                <div className="px-8 pt-8 pb-6 flex-shrink-0 border-b border-slate-200">
+                  <div className="text-center">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", duration: 0.6 }}
+                      className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl mb-4 shadow-lg"
+                    >
+                      {isLoginMode ? (
+                        <LogIn className="w-8 h-8 text-white" />
+                      ) : (
+                        <UserPlus className="w-8 h-8 text-white" />
+                      )}
+                    </motion.div>
+                    <h2 className="text-2xl font-bold text-slate-800 mb-2">
+                      {isLoginMode ? 'Welcome Back' : 'Create Account'}
+                    </h2>
+                    <p className="text-slate-600">
+                      {isLoginMode ? 'Sign in to access your portal' : 'Join our dental care platform'}
+                    </p>
+                  </div>
+
+                  {/* Toggle between Login and Signup */}
+                  <div className="flex mt-6 bg-slate-100 rounded-xl p-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsLoginMode(true);
+                        setError('');
+                      }}
+                      className={`flex-1 py-2.5 rounded-lg transition-all duration-300 font-medium ${
+                        isLoginMode
+                          ? 'bg-white shadow-md text-teal-600'
+                          : 'text-slate-600 hover:text-slate-800'
+                      }`}
+                    >
+                      Sign in
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsLoginMode(false);
+                        setError('');
+                      }}
+                      className={`flex-1 py-2.5 rounded-lg transition-all duration-300 font-medium ${
+                        !isLoginMode
+                          ? 'bg-white shadow-md text-teal-600'
+                          : 'text-slate-600 hover:text-slate-800'
+                      }`}
+                    >
+                      Sign Up
+                    </button>
+                  </div>
+                </div>
+
+                {/* Scrollable Form Content */}
+                <div className="flex-1 overflow-y-auto px-8 py-6">
+
+                {isLoginMode ? (
+                  // Login Form
+                  <form onSubmit={(e) => { e.preventDefault(); onLogin?.(username, password); }} className="space-y-5">
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-slate-700">Username</label>
+                      <div className="relative">
+                        <User className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                        <input
+                          type="text"
+                          value={username}
+                          onChange={(e) => setUsername(e.target.value)}
+                          required
+                          placeholder="Enter username"
+                          className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-slate-700">Password</label>
+                      <div className="relative">
+                        <Lock className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required
+                          placeholder="Enter password"
+                          className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                        >
+                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl font-medium"
+                    >
+                      <LogIn className="w-5 h-5" />
+                      Sign In
+                    </button>
+                  </form>
+                ) : (
+                  // Signup Form
+                  <form onSubmit={(e) => { 
+                    e.preventDefault(); 
+                    // Store signup data and show claiming flow
+                    setPendingSignupData(signupData);
+                    setShowClaimingFlow(true);
+                  }} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-slate-700">Full Name *</label>
+                      <div className="relative">
+                        <User className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                        <input
+                          type="text"
+                          value={signupData.fullName}
+                          onChange={(e) => setSignupData({ ...signupData, fullName: e.target.value })}
+                          required
+                          placeholder="Enter your full name"
+                          className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-slate-700">Email *</label>
+                      <div className="relative">
+                        <Mail className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                        <input
+                          type="email"
+                          value={signupData.email}
+                          onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
+                          required
+                          placeholder="your@email.com"
+                          className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-slate-700">Phone</label>
+                      <div className="relative">
+                        <Phone className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                        <input
+                          type="tel"
+                          value={signupData.phone}
+                          onChange={(e) => {
+                            const formatted = formatPhoneNumber(e.target.value);
+                            setSignupData({ ...signupData, phone: formatted });
+                          }}
+                          placeholder="+63 912 345 6789"
+                          className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-slate-700">Birthdate *</label>
+                      <div className="relative">
+                        <Calendar className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                        <input
+                          type="text"
+                          value={signupData.dateOfBirth}
+                          onChange={(e) => setSignupData({ ...signupData, dateOfBirth: formatDateInput(e.target.value) })}
+                          placeholder="MM/DD/YYYY"
+                          required
+                          className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            birthdatePickerRef.current?.focus();
+                            if (birthdatePickerRef.current?.showPicker) {
+                              birthdatePickerRef.current.showPicker();
+                            } else {
+                              birthdatePickerRef.current?.click();
+                            }
+                          }}
+                          className="absolute right-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                          aria-label="Open calendar"
+                        >
+                          <Calendar className="w-5 h-5" />
+                        </button>
+                        <input
+                          ref={birthdatePickerRef}
+                          type="date"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 opacity-0 cursor-pointer"
+                          onChange={(e) => setSignupData({ ...signupData, dateOfBirth: convertToDisplayDate(e.target.value) })}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-slate-700">Username *</label>
+                      <div className="relative">
+                        <User className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                        <input
+                          type="text"
+                          value={signupData.username}
+                          onChange={(e) => setSignupData({ ...signupData, username: e.target.value })}
+                          required
+                          placeholder="Choose a username"
+                          className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-slate-700">Password *</label>
+                      <div className="relative">
+                        <Lock className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          value={signupData.password}
+                          onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
+                          required
+                          placeholder="Create a password"
+                          className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                        >
+                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-slate-700">Confirm Password *</label>
+                      <div className="relative">
+                        <Lock className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                        <input
+                          type={showConfirmPassword ? "text" : "password"}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          required
+                          placeholder="Confirm your password"
+                          className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                        >
+                          {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                      </div>
+                      {confirmPassword && signupData.password !== confirmPassword && (
+                        <p className="text-red-500 text-sm mt-1">Passwords do not match</p>
+                      )}
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl font-medium"
+                    >
+                      <UserPlus className="w-5 h-5" />
+                      Create Account
+                    </button>
+                  </form>
+                )}
+                </div>
               </div>
+              )}
             </motion.div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-white">
+      <section id="services" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -152,8 +644,62 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
         </div>
       </section>
 
+      {/* Contact Section */}
+      <section id="contact" className="py-20 bg-gradient-to-br from-teal-50 to-cyan-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl font-bold text-slate-900 mb-4">Get In Touch</h2>
+            <p className="text-xl text-slate-600">Have questions? We'd love to hear from you</p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            {[
+              {
+                icon: Phone,
+                title: 'Phone',
+                value: 'Telephone: (042) 7171156\nMobile: 09773651397',
+                desc: ''
+              },
+              {
+                icon: MapPin,
+                title: 'Address',
+                value: '#29 Emilio Jacinto St. San Diego Zone 2',
+                desc: 'City of Tayabas, 4327 Quezon Province'
+              }
+            ].map((contact, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                viewport={{ once: true }}
+                className="bg-gradient-to-br from-slate-50 to-slate-100 p-8 rounded-xl text-center hover:shadow-lg transition-all duration-300"
+              >
+                <contact.icon className="w-12 h-12 text-teal-600 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">{contact.title}</h3>
+                {index === 0 ? (
+                  <div className="text-slate-700 font-medium mb-1">
+                    <p>Telephone: (042) 7171156</p>
+                    <p>Mobile: 09773651397</p>
+                  </div>
+                ) : (
+                  <p className="text-slate-700 font-medium mb-1">{contact.value}</p>
+                )}
+                <p className="text-sm text-slate-600">{contact.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* About Clinic Section */}
-      <section className="py-20 bg-gradient-to-br from-teal-50 to-cyan-50">
+      <section id="about" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -202,82 +748,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
                 </div>
               </div>
             </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 bg-white p-8 rounded-xl shadow-lg">
-              {[
-                { label: 'Years in Healthcare', value: '12+' },
-                { label: 'Active Clinics', value: '500+' },
-                { label: 'Patient Records', value: '2M+' },
-                { label: 'Daily Transactions', value: '10K+' }
-              ].map((stat, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
-                  viewport={{ once: true }}
-                  className="text-center"
-                >
-                  <p className="text-4xl font-bold text-teal-600 mb-2">{stat.value}</p>
-                  <p className="text-slate-600">{stat.label}</p>
-                </motion.div>
-              ))}
-            </div>
           </motion.div>
-        </div>
-      </section>
-
-      {/* Contact Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl font-bold text-slate-900 mb-4">Get In Touch</h2>
-            <p className="text-xl text-slate-600">Have questions? We'd love to hear from you</p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: Phone,
-                title: 'Phone',
-                value: '+639773651397',
-                desc: 'Available 5pm Weekdays and 8am Weekends'
-              },
-              {
-                icon: Mail,
-                title: 'Email',
-                value: 'support@dentacarepro.com',
-                desc: 'We respond within 2 hours'
-              },
-              {
-                icon: MapPin,
-                title: 'Address',
-                value: '2HGV+4FH, E. Jacinto Street, City of Tayabas, 4327 Quezon Province',
-                desc: 'Visit our clinic'
-              }
-            ].map((contact, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                className="bg-gradient-to-br from-slate-50 to-slate-100 p-8 rounded-xl text-center hover:shadow-lg transition-all duration-300"
-              >
-                <contact.icon className="w-12 h-12 text-teal-600 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">{contact.title}</h3>
-                <p className="text-slate-700 font-medium mb-1">{contact.value}</p>
-                <p className="text-sm text-slate-600">{contact.desc}</p>
-              </motion.div>
-            ))}
-          </div>
         </div>
       </section>
 
@@ -334,44 +805,6 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
       {/* Footer */}
       <footer className="bg-slate-950 text-slate-400 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-2xl">🦷</span>
-                <span className="text-white font-bold">DentaCare Pro</span>
-              </div>
-              <p className="text-sm">Professional dental management system for modern clinics</p>
-            </div>
-
-            {[
-              {
-                title: 'Product',
-                links: ['Features', 'Security', 'Pricing', 'FAQ']
-              },
-              {
-                title: 'Company',
-                links: ['About', 'Blog', 'Careers', 'Contact']
-              },
-              {
-                title: 'Legal',
-                links: ['Privacy Policy', 'Terms of Service', 'HIPAA Compliance', 'Sitemap']
-              }
-            ].map((column, index) => (
-              <div key={index}>
-                <h4 className="text-white font-semibold mb-4">{column.title}</h4>
-                <ul className="space-y-2">
-                  {column.links.map((link, linkIndex) => (
-                    <li key={linkIndex}>
-                      <a href="#" className="hover:text-teal-400 transition-colors duration-300 text-sm">
-                        {link}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-
           <div className="border-t border-slate-800 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <p className="text-sm text-center md:text-left">
