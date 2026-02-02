@@ -160,6 +160,24 @@ async function initializeDatabase() {
     `);
 
     await connection.execute(`
+      CREATE TABLE patient_notifications (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        patientId INT NOT NULL,
+        appointmentId INT,
+        type ENUM('appointment_created', 'appointment_updated', 'appointment_cancelled', 'reminder') DEFAULT 'appointment_created',
+        title VARCHAR(200),
+        message TEXT,
+        isRead TINYINT DEFAULT 0,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        readAt TIMESTAMP NULL,
+        FOREIGN KEY (patientId) REFERENCES patients(id) ON DELETE CASCADE,
+        FOREIGN KEY (appointmentId) REFERENCES appointments(id) ON DELETE SET NULL,
+        INDEX idx_patient_read (patientId, isRead),
+        INDEX idx_created (createdAt)
+      )
+    `);
+
+    await connection.execute(`
       CREATE TABLE announcements (
         id INT PRIMARY KEY AUTO_INCREMENT,
         title VARCHAR(200),

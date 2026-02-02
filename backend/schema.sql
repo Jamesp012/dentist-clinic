@@ -211,6 +211,23 @@ CREATE TABLE IF NOT EXISTS otp_verifications (
   INDEX idx_expires (expiresAt)
 );
 
+-- Patient notifications table for appointment notifications
+CREATE TABLE IF NOT EXISTS patient_notifications (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  patientId INT NOT NULL,
+  appointmentId INT,
+  type ENUM('appointment_created', 'appointment_updated', 'appointment_cancelled', 'reminder') DEFAULT 'appointment_created',
+  title VARCHAR(200) CHARACTER SET utf8mb4,
+  message TEXT CHARACTER SET utf8mb4,
+  isRead BOOLEAN DEFAULT FALSE,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  readAt TIMESTAMP NULL,
+  FOREIGN KEY (patientId) REFERENCES patients(id) ON DELETE CASCADE,
+  FOREIGN KEY (appointmentId) REFERENCES appointments(id) ON DELETE SET NULL,
+  INDEX idx_patient_read (patientId, isRead),
+  INDEX idx_created (createdAt)
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- Insert sample appointments
 INSERT INTO appointments (patientId, patientName, appointmentDateTime, type, duration, status, notes) VALUES
 (1, 'Krista', '2025-02-06 10:00:00', 'Braces Adjustment', 45, 'scheduled', 'Monthly braces adjustment'),

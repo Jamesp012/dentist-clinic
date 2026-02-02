@@ -72,6 +72,18 @@ export interface Announcement {
   createdBy: string;
 }
 
+export interface PatientNotification {
+  id: string | number;
+  patientId: string | number;
+  appointmentId?: string | number;
+  type: 'appointment_created' | 'appointment_updated' | 'appointment_cancelled' | 'reminder';
+  title: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+  readAt?: string;
+}
+
 export interface TreatmentRecord {
   id: string | number;
   patientId: string | number;
@@ -170,5 +182,15 @@ export const photoAPI: {
   getByPatientId: (patientId: string | number) => Promise<any[]>;
   upload: (data: FormData) => Promise<any>;
   update: (id: string | number, data: any) => Promise<any>;
+  delete: (id: string | number) => Promise<any>;
+};
+
+export const notificationAPI: {
+  getAll: () => Promise<PatientNotification[]>;
+  getUnreadCount: () => Promise<{ unreadCount: number }>;
+  getByPatientId: (patientId: string | number) => Promise<PatientNotification[]>;
+  markAsRead: (id: string | number) => Promise<any>;
+  markAllAsRead: (patientId: string | number) => Promise<any>;
+  create: (data: any) => Promise<PatientNotification>;
   delete: (id: string | number) => Promise<any>;
 };

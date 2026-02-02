@@ -481,7 +481,7 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
                           type="text"
                           value={signupData.dateOfBirth}
                           onChange={(e) => setSignupData({ ...signupData, dateOfBirth: formatDateInput(e.target.value) })}
-                          placeholder="MM/DD/YYYY"
+                          placeholder="DD/MM/YYYY"
                           required
                           className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
                         />

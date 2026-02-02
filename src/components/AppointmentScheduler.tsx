@@ -4,7 +4,7 @@ import { Calendar, Plus, X, Filter, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { appointmentAPI } from '../api';
 import { PatientSearchInput } from './PatientSearchInput';
-import { convertToDBDate, convertToDisplayDate, formatDateInput, isValidDateFormat } from '../utils/dateHelpers';
+import { convertToDBDate, convertToDisplayDate, formatDateInput, isValidDateFormat, formatToDD_MM_YYYY } from '../utils/dateHelpers';
 
 // Helper function to extract date string without timezone conversion
 const getDateString = (date: string | Date): string => {
@@ -105,11 +105,11 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
       const isDbDateValid = /^\d{4}-\d{2}-\d{2}$/.test(normalizedDate);
 
       if (!rawDate || (!isValidDateFormat(rawDate) && !isDbDateValid)) {
-        toast.error('Please enter a valid date (MM/DD/YYYY)');
+        toast.error('Please enter a valid date (DD/MM/YYYY)');
         return;
       }
       if (!isDbDateValid) {
-        toast.error('Please enter a valid date (MM/DD/YYYY)');
+        toast.error('Please enter a valid date (DD/MM/YYYY)');
         return;
       }
       
@@ -262,7 +262,7 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                   setSelectedDate(convertToDBDate(formatted));
                 }
               }}
-              placeholder="MM/DD/YYYY"
+              placeholder="DD/MM/YYYY"
               className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -316,20 +316,17 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
           <div className="p-6 bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200">
             <h2 className="text-2xl font-bold text-gray-900">
               {(() => {
-                const [year, month, day] = selectedDate.split('-').map(Number);
-                return new Date(year, month - 1, day).toLocaleDateString('en-US', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                });
+                const dateObj = new Date(selectedDate + 'T00:00:00Z');
+                const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+                const dateStr = formatToDD_MM_YYYY(selectedDate);
+                return `${dayName} • ${dateStr}`;
               })()}
             </h2>
           </div>
           <div className="p-6 space-y-8">
             {/* MORNING QUEUE */}
-            <div className={`rounded-lg border-2 transition-all ${isScheduleClosed(selectedDate, 'am') ? 'border-red-300 bg-red-50' : 'border-emerald-300 bg-emerald-50'}`}>
-              <div className="p-4 bg-gradient-to-r from-emerald-100 to-teal-100 border-b-2 border-emerald-300 flex items-center justify-between rounded-t">
+            <div className={`rounded-lg border-2 transition-all flex flex-col overflow-hidden ${isScheduleClosed(selectedDate, 'am') ? 'border-red-300 bg-red-50' : 'border-emerald-300 bg-emerald-50'}`}>
+              <div className="p-4 bg-gradient-to-r from-emerald-100 to-teal-100 border-b-2 border-emerald-300 flex items-center justify-between rounded-t flex-shrink-0">
                 <div>
                   <h3 className="text-lg font-bold text-emerald-900">Morning Queue</h3>
                   <p className="text-sm text-emerald-700">8:00 AM - 12:00 PM</p>
@@ -339,7 +336,7 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                   <p className="text-xs text-emerald-700">in queue</p>
                 </div>
               </div>
-              <div className="p-4">
+              <div className="p-4 flex flex-col overflow-hidden">
                 {isScheduleClosed(selectedDate, 'am') && (
                   <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-2 rounded mb-4 text-sm font-semibold">
                     ⛔ Schedule Closed
@@ -347,7 +344,7 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                 )}
                 
                 {/* Queue List */}
-                <div className="space-y-2 mb-4 max-h-96 overflow-y-auto">
+                <div className="space-y-2 mb-4 overflow-y-auto scrollbar-hover" style={{ maxHeight: '400px' }}>
                   {appointments.filter(apt => {
                     const aptDate = getDateString(apt.date);
                     if (aptDate !== selectedDate || apt.status === 'cancelled') return false;
@@ -418,8 +415,8 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
             </div>
 
             {/* AFTERNOON QUEUE */}
-            <div className={`rounded-lg border-2 transition-all ${isScheduleClosed(selectedDate, 'pm') ? 'border-red-300 bg-red-50' : 'border-orange-300 bg-orange-50'}`}>
-              <div className="p-4 bg-gradient-to-r from-orange-100 to-amber-100 border-b-2 border-orange-300 flex items-center justify-between rounded-t">
+            <div className={`rounded-lg border-2 transition-all flex flex-col overflow-hidden ${isScheduleClosed(selectedDate, 'pm') ? 'border-red-300 bg-red-50' : 'border-orange-300 bg-orange-50'}`}>
+              <div className="p-4 bg-gradient-to-r from-orange-100 to-amber-100 border-b-2 border-orange-300 flex items-center justify-between rounded-t flex-shrink-0">
                 <div>
                   <h3 className="text-lg font-bold text-orange-900">Afternoon Queue</h3>
                   <p className="text-sm text-orange-700">12:30 PM - 8:00 PM</p>
@@ -429,7 +426,7 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                   <p className="text-xs text-orange-700">in queue</p>
                 </div>
               </div>
-              <div className="p-4">
+              <div className="p-4 flex flex-col overflow-hidden">
                 {isScheduleClosed(selectedDate, 'pm') && (
                   <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-2 rounded mb-4 text-sm font-semibold">
                     ⛔ Schedule Closed
@@ -437,7 +434,7 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                 )}
                 
                 {/* Queue List */}
-                <div className="space-y-2 mb-4 max-h-96 overflow-y-auto">
+                <div className="space-y-2 mb-4 overflow-y-auto scrollbar-hover" style={{ maxHeight: '400px' }}>
                   {appointments.filter(apt => {
                     const aptDate = getDateString(apt.date);
                     if (aptDate !== selectedDate || apt.status === 'cancelled') return false;
@@ -615,7 +612,7 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                   onChange={(e) => {
                     e.currentTarget.value = formatDateInput(e.currentTarget.value);
                   }}
-                  placeholder="MM/DD/YYYY"
+                  placeholder="DD/MM/YYYY"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>

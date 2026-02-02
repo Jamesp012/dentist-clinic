@@ -253,3 +253,38 @@ button, a, input, select, textarea {
 .sidebar-scroll:hover::-webkit-scrollbar-thumb:hover {
   background: var(--sidebar-primary);
 }
+/* Hover-to-reveal scrollbars with overlay (doesn't affect content size) */
+.scrollbar-hover {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overflow-y: auto;
+}
+
+.scrollbar-hover::-webkit-scrollbar {
+  width: 8px;
+  background: transparent;
+}
+
+.scrollbar-hover::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-hover::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.scrollbar-hover:hover::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.scrollbar-hover:hover::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+/* Firefox */
+.scrollbar-hover:hover {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}

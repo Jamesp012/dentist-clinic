@@ -4,7 +4,7 @@ import { User, Calendar, Phone, CheckCircle, AlertCircle, Loader2, ArrowLeft, Sh
 import { toast } from 'sonner';
 import { patientClaimingAPI, setAuthToken } from '../api';
 import { handlePhoneInput } from '../utils/phoneValidation';
-import { convertToDBDate } from '../utils/dateHelpers';
+import { convertToDBDate, formatDateInput, formatToDD_MM_YYYY } from '../utils/dateHelpers';
 
 type ClaimingStep = 'initial' | 'search' | 'otp' | 'account' | 'success';
 
@@ -354,8 +354,8 @@ export function PatientRecordClaiming({ onComplete, onCancel, isLoginFlow = fals
                   <input
                     type="text"
                     value={searchData.dateOfBirth}
-                    onChange={(e) => setSearchData({ ...searchData, dateOfBirth: e.target.value })}
-                    placeholder="MM/DD/YYYY"
+                    onChange={(e) => setSearchData({ ...searchData, dateOfBirth: formatDateInput(e.target.value) })}
+                    placeholder="DD/MM/YYYY"
                     className="w-full pl-11 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                     required
                   />
@@ -407,7 +407,7 @@ export function PatientRecordClaiming({ onComplete, onCancel, isLoginFlow = fals
                       <p className="font-semibold text-slate-800">{patient.name}</p>
                       {patient.lastVisit && (
                         <p className="text-sm text-slate-600 mt-1">
-                          Last visit: {new Date(patient.lastVisit).toLocaleDateString()}
+                          Last visit: {formatToDD_MM_YYYY(patient.lastVisit)}
                         </p>
                       )}
                     </button>

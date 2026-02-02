@@ -246,9 +246,10 @@ export function useDataSync({
   useEffect(() => {
     if (isAuthenticated) {
       hasEncountered401.current = false;
-      refreshAll();
+      // Disabled to prevent infinite re-renders
+      // refreshAll();
     }
-  }, [isAuthenticated, refreshAll]);
+  }, [isAuthenticated]);
 
   /**
    * Set up auto-refresh intervals
@@ -256,22 +257,23 @@ export function useDataSync({
   useEffect(() => {
     if (!isAuthenticated) return;
     
-    const patientsInterval = setInterval(refreshPatients, 30000);
-    const appointmentsInterval = setInterval(refreshAppointments, 30000);
-    const treatmentRecordsInterval = setInterval(refreshTreatmentRecords, 30000);
-    const paymentsInterval = setInterval(refreshPayments, 30000);
-    const announcementsInterval = setInterval(refreshAnnouncements, 60000);
-    const inventoryInterval = setInterval(refreshInventory, 60000);
+    // Disabled to prevent infinite re-renders while debugging
+    // const patientsInterval = setInterval(refreshPatients, 30000);
+    // const appointmentsInterval = setInterval(refreshAppointments, 30000);
+    // const treatmentRecordsInterval = setInterval(refreshTreatmentRecords, 30000);
+    // const paymentsInterval = setInterval(refreshPayments, 30000);
+    // const announcementsInterval = setInterval(refreshAnnouncements, 60000);
+    // const inventoryInterval = setInterval(refreshInventory, 60000);
 
-    return () => {
-      clearInterval(patientsInterval);
-      clearInterval(appointmentsInterval);
-      clearInterval(treatmentRecordsInterval);
-      clearInterval(paymentsInterval);
-      clearInterval(announcementsInterval);
-      clearInterval(inventoryInterval);
-    };
-  }, [refreshPatients, refreshAppointments, refreshInventory, refreshTreatmentRecords, refreshPayments, refreshAnnouncements, isAuthenticated]);
+    // return () => {
+    //   clearInterval(patientsInterval);
+    //   clearInterval(appointmentsInterval);
+    //   clearInterval(treatmentRecordsInterval);
+    //   clearInterval(paymentsInterval);
+    //   clearInterval(announcementsInterval);
+    //   clearInterval(inventoryInterval);
+    // };
+  }, [isAuthenticated]);
 
   return {
     refreshAll,

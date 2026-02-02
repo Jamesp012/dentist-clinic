@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { Patient, Appointment, TreatmentRecord, PhotoUpload, Announcement, Payment, Service } from '../App';
-import { Calendar, FileText, User as UserIcon, Clock, X, Edit, Save, XCircle, Info, CheckCircle, AlertCircle, Camera, Sparkles, Heart, Smile, Shield, Megaphone, Plus, CreditCard, Settings, Check, Eye, EyeOff, Menu, LogOut, History } from 'lucide-react';
+import { Calendar, FileText, User as UserIcon, Clock, X, Edit, Save, XCircle, Info, CheckCircle, AlertCircle, Camera, Sparkles, Heart, Smile, Shield, Megaphone, Plus, CreditCard, Settings, Check, Eye, EyeOff, Menu, LogOut, History, RotateCcw, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import { handlePhoneInput, formatPhoneNumber } from '../utils/phoneValidation';
-import { convertToDBDate, convertToDisplayDate, formatDateInput } from '../utils/dateHelpers';
+import { convertToDBDate, convertToDisplayDate, formatDateInput, formatToDD_MM_YYYY } from '../utils/dateHelpers';
 import { appointmentAPI } from '../api';
 import { Notifications } from './Notifications';
+import { PatientNotifications } from './PatientNotifications';
 
 // Helper function to extract date string without timezone conversion
 const getDateString = (date: string | Date): string => {
@@ -34,11 +35,12 @@ type PatientPortalProps = {
   onLogout?: () => void;
   onDataChanged?: () => Promise<void>;
   services?: Service[];
+  userRole?: string;
 };
 
 const API_BASE = 'http://localhost:5000/api';
 
-export function PatientPortal({ patient, appointments, setAppointments, treatmentRecords, onUpdatePatient, photos, setPhotos: _, announcements, payments, onLogout, onDataChanged, services = [] }: PatientPortalProps) {
+export function PatientPortal({ patient, appointments, setAppointments, treatmentRecords, onUpdatePatient, photos, setPhotos: _, announcements, payments, onLogout, onDataChanged, services = [], userRole }: PatientPortalProps) {
   const birthdatePickerRef = useRef<HTMLInputElement | null>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'appointments' | 'records' | 'photos' | 'balance' | 'care-guide' | 'announcements'>('profile');
   const [announcementSubTab, setAnnouncementSubTab] = useState<'announcements' | 'services'>('announcements');
@@ -55,6 +57,10 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isDeletingPhotoId, setIsDeletingPhotoId] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [showReplaceModal, setShowReplaceModal] = useState<string | null>(null);
+  const [isUploadingReplace, setIsUploadingReplace] = useState(false);
 
   // Helper function to convert 24-hour time to 12-hour format with AM/PM
   const formatTime = (time: string) => {
@@ -300,6 +306,87 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
   const handleLogout = () => {
     if (onLogout) {
       onLogout();
+    }
+  };
+
+  const handleDeletePhoto = async (photoId: string) => {
+    try {
+      setIsDeletingPhotoId(photoId);
+      const response = await fetch(`${API_BASE}/photos/${photoId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) throw new Error('Delete failed');
+
+      setSelectedPhoto(null);
+      setShowDeleteConfirm(null);
+      toast.success('Photo deleted successfully');
+
+      if (onDataChanged) {
+        await onDataChanged();
+      }
+    } catch (error) {
+      console.error('Failed to delete photo:', error);
+      toast.error('Failed to delete photo');
+    } finally {
+      setIsDeletingPhotoId(null);
+    }
+  };
+
+  const handleReplacePhoto = async (photoId: string, file: File) => {
+    try {
+      setIsUploadingReplace(true);
+
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const uploadResponse = await fetch('http://localhost:5000/api/upload', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!uploadResponse.ok) throw new Error('Upload failed');
+
+      const uploadedData = await uploadResponse.json();
+      const newUrl = uploadedData.url;
+
+      // Update the photo with new URL
+      const updateResponse = await fetch(`${API_BASE}/photos/${photoId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          url: newUrl,
+          updatedAt: new Date().toISOString()
+        })
+      });
+
+      if (!updateResponse.ok) throw new Error('Update failed');
+
+      if (selectedPhoto?.id === photoId) {
+        setSelectedPhoto({ ...selectedPhoto, url: newUrl });
+      }
+
+      setShowReplaceModal(null);
+      toast.success('Photo replaced successfully');
+
+      if (onDataChanged) {
+        await onDataChanged();
+      }
+    } catch (error) {
+      console.error('Failed to replace photo:', error);
+      toast.error('Failed to replace photo');
+    } finally {
+      setIsUploadingReplace(false);
     }
   };
 
@@ -669,7 +756,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                           type="text"
                           value={convertToDisplayDate(editedPatient.dateOfBirth)}
                           onChange={(e) => setEditedPatient({ ...editedPatient, dateOfBirth: formatDateInput(e.target.value) })}
-                          placeholder="MM/DD/YYYY"
+                          placeholder="DD/MM/YYYY"
                           className="w-full px-3 pr-10 py-2 border border-purple-300 rounded-lg"
                         />
                         <button
@@ -927,11 +1014,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                                 <p className="text-lg mb-1 font-semibold">{apt.type}</p>
                                 <div className="flex items-center gap-2 text-sm text-gray-600">
                                   <Calendar className="w-4 h-4" />
-                                  <span>{(() => {
-                                    const dateStr = getDateString(apt.date);
-                                    const [year, month, day] = dateStr.split('-').map(Number);
-                                    return new Date(year, month - 1, day).toLocaleDateString();
-                                  })()}</span>
+                                  <span>{formatToDD_MM_YYYY(getDateString(apt.date))}</span>
                                   <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded font-semibold text-xs">
                                     Queue #{queueNumber} ({period})
                                   </span>
@@ -1004,7 +1087,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                               <p className="text-lg mb-1">{apt.type}</p>
                               <div className="flex items-center gap-2 text-sm text-gray-600">
                                 <Calendar className="w-4 h-4" />
-                                <span>{new Date(getDateString(apt.date) + 'T00:00:00Z').toLocaleDateString()}</span>
+                                <span>{formatToDD_MM_YYYY(getDateString(apt.date))}</span>
                                 <Clock className="w-4 h-4 ml-2" />
                                 <span>{formatTime(apt.time)}</span>
                               </div>
@@ -1041,7 +1124,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                           </div>
                           <div className="text-right">
                             <p className="text-sm text-gray-600 mb-1">
-                              {new Date(record.date).toLocaleDateString()}
+                              {formatToDD_MM_YYYY(record.date)}
                             </p>
                             <p className="text-lg">₱{record.cost.toFixed(2)}</p>
                           </div>
@@ -1076,19 +1159,21 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                     {patientPhotos.map(photo => (
                       <motion.div
                         key={photo.id}
-                        className="relative group cursor-pointer"
+                        className="relative group cursor-pointer overflow-hidden rounded-lg border-2 border-purple-200"
                         whileHover={{ scale: 1.05 }}
                         onClick={() => setSelectedPhoto(photo)}
                       >
-                        <img
-                          src={photo.url}
-                          alt={photo.type}
-                          className="w-full h-48 object-cover rounded-lg border-2 border-purple-200"
-                        />
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all rounded-lg flex items-center justify-center">
+                        <div className="bg-gray-100 flex items-center justify-center aspect-square">
+                          <img
+                            src={photo.url}
+                            alt={photo.type}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all flex items-center justify-center">
                           <div className="text-white opacity-0 group-hover:opacity-100 transition-opacity text-center">
                             <p className="font-semibold capitalize">{photo.type}</p>
-                            <p className="text-sm">{new Date(photo.date).toLocaleDateString()}</p>
+                            <p className="text-sm">{formatToDD_MM_YYYY(photo.date)}</p>
                           </div>
                         </div>
                         <div className="absolute top-2 right-2 px-2 py-1 bg-blue-600 text-white text-xs rounded capitalize">
@@ -1125,7 +1210,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                       <CreditCard className="w-8 h-8 text-red-600" />
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600">As of {new Date().toLocaleDateString()}</p>
+                  <p className="text-sm text-gray-600">As of {formatToDD_MM_YYYY(new Date())}</p>
                   {currentBalance > 0 && (
                     <div className="mt-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg flex items-start gap-2">
                       <AlertCircle className="w-5 h-5 text-yellow-700 flex-shrink-0 mt-0.5" />
@@ -1167,7 +1252,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                             </div>
                             <div>
                               <p className="font-medium text-gray-900">Payment Received</p>
-                              <p className="text-xs text-gray-500">{new Date(payment.paymentDate).toLocaleDateString()}</p>
+                              <p className="text-xs text-gray-500">{formatToDD_MM_YYYY(payment.paymentDate)}</p>
                               {payment.notes && <p className="text-xs text-gray-400 mt-0.5">{payment.notes}</p>}
                             </div>
                           </div>
@@ -1193,7 +1278,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                       <div key={record.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200 flex justify-between items-center">
                         <div>
                           <p className="font-medium">{record.treatment}</p>
-                          <p className="text-sm text-gray-600">{new Date(record.date).toLocaleDateString()}</p>
+                          <p className="text-sm text-gray-600">{formatToDD_MM_YYYY(record.date)}</p>
                         </div>
                         <p className="text-lg">₱{record.cost}</p>
                       </div>
@@ -1451,7 +1536,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                               <div className="flex-1">
                                 <h3 className="text-lg font-bold text-gray-900 mb-1">{ann.title}</h3>
                                 <p className="text-sm text-gray-600">
-                                  {new Date(ann.date).toLocaleDateString()} • {ann.createdBy}
+                                  {formatToDD_MM_YYYY(ann.date)} • {ann.createdBy}
                                 </p>
                               </div>
                               <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold capitalize">
@@ -1546,14 +1631,15 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-8"
+            className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4"
             onClick={() => setSelectedPhoto(null)}
           >
             <motion.div
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.8 }}
-              className="relative max-w-4xl max-h-full bg-white rounded-xl overflow-hidden"
+              className="relative bg-white rounded-xl overflow-hidden flex flex-col"
+              style={{ width: '90vw', height: '90vh', maxWidth: '1200px', maxHeight: '800px' }}
               onClick={(e) => e.stopPropagation()}
             >
               <button
@@ -1562,18 +1648,140 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
               >
                 <X className="w-6 h-6" />
               </button>
-              <img
-                src={selectedPhoto.url}
-                alt={selectedPhoto.type}
-                className="w-full h-auto max-h-[80vh] object-contain"
-              />
-              <div className="p-6 bg-white">
+
+              {/* Action Buttons for Doctor/Assistant */}
+              {userRole && (userRole === 'doctor' || userRole === 'assistant') && (
+                <div className="absolute top-4 left-4 flex gap-2 z-10">
+                  <button
+                    onClick={() => setShowReplaceModal(selectedPhoto.id)}
+                    className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors flex items-center gap-2"
+                    title="Replace photo"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Replace
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteConfirm(selectedPhoto.id)}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+                    title="Delete photo"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </button>
+                </div>
+              )}
+
+              <div className="flex-1 flex items-center justify-center bg-gray-50 overflow-hidden">
+                <img
+                  src={selectedPhoto.url}
+                  alt={selectedPhoto.type}
+                  className="w-full h-full object-contain"
+                  style={{ imageRendering: 'crisp-edges' }}
+                />
+              </div>
+              <div className="p-6 bg-white border-t border-gray-200">
                 <p className="font-semibold text-lg capitalize mb-2">{selectedPhoto.type} Photo</p>
-                <p className="text-sm text-gray-600 mb-2">Date: {new Date(selectedPhoto.date).toLocaleDateString()}</p>
+                <p className="text-sm text-gray-600 mb-2">Date: {formatToDD_MM_YYYY(selectedPhoto.date)}</p>
                 {selectedPhoto.notes && (
                   <p className="text-sm text-gray-700">{selectedPhoto.notes}</p>
                 )}
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Photo Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+            onClick={() => setShowDeleteConfirm(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-xl p-6 max-w-sm w-full"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                  <AlertCircle className="w-6 h-6 text-red-600" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900">Delete Photo</h3>
+              </div>
+              <p className="text-slate-600 mb-6">
+                Are you sure you want to delete this photo? This action cannot be undone.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(null)}
+                  className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDeletePhoto(showDeleteConfirm)}
+                  disabled={isDeletingPhotoId === showDeleteConfirm}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isDeletingPhotoId === showDeleteConfirm ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Replace Photo Modal */}
+      <AnimatePresence>
+        {showReplaceModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+            onClick={() => setShowReplaceModal(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-xl p-6 max-w-sm w-full"
+            >
+              <h3 className="text-xl font-bold text-slate-900 mb-4">Replace Photo</h3>
+              <p className="text-slate-600 mb-6">Select a new image to replace the current photo.</p>
+
+              <label className="relative block">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file && showReplaceModal) {
+                      handleReplacePhoto(showReplaceModal, file);
+                    }
+                  }}
+                  disabled={isUploadingReplace}
+                  className="hidden"
+                />
+                <div className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2">
+                  <Upload className="w-5 h-5" />
+                  {isUploadingReplace ? 'Uploading...' : 'Choose File'}
+                </div>
+              </label>
+
+              <button
+                onClick={() => setShowReplaceModal(null)}
+                className="w-full mt-3 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
             </motion.div>
           </motion.div>
         )}
@@ -1795,6 +2003,9 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Patient Notifications Component */}
+      <PatientNotifications patient={patient} appointments={appointments} />
       </>
     </div>
   );

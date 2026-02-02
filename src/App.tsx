@@ -612,6 +612,7 @@ export default function App() {
           onLogout={handleLogout}
           onDataChanged={async () => { await refreshAll(); }}
           services={services}
+          userRole={currentUser?.role}
         />
         <Toaster 
           position="top-center" 

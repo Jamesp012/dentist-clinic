@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { PesoSign } from './icons/PesoSign';
 import { generateReceipt, generatePatientHistoryPDF, generateFinancialPDF } from '../utils/pdfGenerator';
 import { PatientSearchInput } from './PatientSearchInput';
+import { formatToDD_MM_YYYY } from '../utils/dateHelpers';
 
 type FinancialReportProps = {
   patients: Patient[];
@@ -343,7 +344,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
             {/* Treatment Breakdown */}
             <div className="bg-white p-6 rounded-xl shadow-lg">
               <h2 className="text-xl mb-4">Treatment Revenue Breakdown</h2>
-              <div className="space-y-3">
+              <div className="space-y-3 max-h-[60vh] scrollbar-hover">
                 {Object.entries(treatmentBreakdown)
                   .sort(([, a], [, b]) => b.revenue - a.revenue)
                   .map(([treatment, data]) => {
@@ -379,7 +380,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-xl shadow-lg">
               <h2 className="text-xl mb-4">Transaction History</h2>
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-[60vh] scrollbar-hover">
                 {treatmentRecords
                   .slice()
                   .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -398,7 +399,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                           </div>
                           <div className="text-right">
                             <p className="text-sm text-gray-600 mb-1">
-                              {new Date(record.date).toLocaleDateString()}
+                              {formatToDD_MM_YYYY(record.date)}
                             </p>
                             <p className="text-lg font-semibold">₱{record.cost.toLocaleString('en-US')}</p>
                             <button
@@ -434,7 +435,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-xl shadow-lg">
               <h2 className="text-xl mb-4">Patient Account Balances</h2>
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-[60vh] scrollbar-hover">
                 {patientBalances
                   .filter(pb => pb.totalBilled > 0)
                   .sort((a, b) => b.balance - a.balance)
@@ -480,17 +481,6 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                             Update Balance
                           </button>
                         )}
-                        <button
-                          onClick={() => {
-                            const patient = patients.find(p => String(p.id) === String(pb.patientId));
-                            const records = treatmentRecords.filter(r => String(r.patientId) === String(pb.patientId));
-                            if (patient) generatePatientHistoryPDF(patient, records);
-                          }}
-                          className={`${pb.balance > 0 ? 'flex-1' : 'w-full'} px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded font-medium transition-colors flex items-center justify-center gap-2`}
-                        >
-                          <Printer className="w-4 h-4" />
-                          Print History
-                        </button>
                       </div>
                     </div>
                   ))}
@@ -634,7 +624,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                           <div>
                             <p className="font-medium">{patient?.name || 'Unknown Patient'}</p>
                             <p className="text-sm text-gray-600">
-                              {new Date(payment.paymentDate).toLocaleDateString()} • {payment.paymentMethod.replace('_', ' ')}
+                              {formatToDD_MM_YYYY(payment.paymentDate)} • {payment.paymentMethod.replace('_', ' ')}
                             </p>
                             {payment.notes && <p className="text-sm text-gray-700 mt-1">Note: {payment.notes}</p>}
                             <p className="text-xs text-gray-500 mt-1">Recorded by: {payment.recordedBy}</p>

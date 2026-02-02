@@ -155,6 +155,15 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
     }
   };
 
+  const formatToDD_MM_YYYY = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   const handleAddService = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoadingService(true);
@@ -218,23 +227,23 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
     <div className="p-8">
 
       {/* Tab Navigation */}
-      <div className="flex gap-4 mb-6 border-b border-gray-200">
+      <div className="flex gap-2 bg-white p-2 rounded-lg shadow-sm mb-6">
         <button
           onClick={() => setActiveTab('announcements')}
-          className={`px-6 py-3 font-semibold transition-colors ${
+          className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-colors text-center ${
             activeTab === 'announcements'
-              ? 'text-blue-600 border-b-2 border-blue-600'
-              : 'text-gray-600 hover:text-gray-900'
+              ? 'bg-emerald-500 text-white'
+              : 'text-gray-600 hover:bg-emerald-50'
           }`}
         >
           Announcements
         </button>
         <button
           onClick={() => setActiveTab('services')}
-          className={`px-6 py-3 font-semibold transition-colors ${
+          className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-colors text-center ${
             activeTab === 'services'
-              ? 'text-pink-600 border-b-2 border-pink-600'
-              : 'text-gray-600 hover:text-gray-900'
+              ? 'bg-cyan-500 text-white'
+              : 'text-gray-600 hover:bg-cyan-50'
           }`}
         >
           Services Offered
@@ -255,7 +264,7 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
             </button>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto scrollbar-hover">
             {announcements && announcements.length > 0 ? (
               announcements.map(announcement => (
                 <motion.div
@@ -270,7 +279,7 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
                       <div>
                         <h3 className="text-lg">{announcement.title}</h3>
                         <p className="text-sm text-gray-600">
-                          {new Date(announcement.date).toLocaleDateString()} • {announcement.createdBy}
+                          {formatToDD_MM_YYYY(announcement.date)} • {announcement.createdBy}
                         </p>
                       </div>
                     </div>
@@ -463,7 +472,7 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
           {/* Add/Edit Service Modal */}
           {showAddService && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+              <div className="bg-white rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto scrollbar-hover shadow-2xl">
                 <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-200">
                   <h2 className="text-3xl font-bold text-gray-900">{editingServiceId ? 'Edit Service' : 'Add Service'}</h2>
                   <button

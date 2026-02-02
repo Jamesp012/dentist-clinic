@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Plus, X, Edit, Trash2, Key, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { handlePhoneInput, formatPhoneNumber } from '../utils/phoneValidation';
-import { convertToDBDate } from '../utils/dateHelpers';
+import { convertToDBDate, formatToDD_MM_YYYY } from '../utils/dateHelpers';
 
 type Employee = {
   id: number;
@@ -225,7 +225,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
 
       {/* Employees Table */}
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-[60vh] overflow-y-scroll scrollbar-hover">
           <table className="w-full">
             <thead className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
               <tr>
@@ -253,7 +253,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                     <td className="px-6 py-4 text-gray-700">{employee.email}</td>
                     <td className="px-6 py-4 text-gray-700">{employee.phone}</td>
                     <td className="px-6 py-4 text-gray-700">
-                      {new Date(employee.dateHired).toLocaleDateString()}
+                      {formatToDD_MM_YYYY(employee.dateHired)}
                     </td>
                     <td className="px-6 py-4">
                       {employee.user_id ? (
@@ -318,7 +318,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
       {/* Add Employee Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto scrollbar-hover">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-2xl font-bold text-purple-900">Add New Employee</h3>
               <button onClick={() => setShowAddModal(false)} className="text-gray-500 hover:text-gray-700">
@@ -390,7 +390,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                   type="text"
                   name="dateHired"
                   required
-                  placeholder="MM/DD/YYYY"
+                  placeholder="DD/MM/YYYY"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                 />
               </div>
@@ -418,7 +418,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
       {/* Edit Employee Modal */}
       {editingEmployee && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto scrollbar-hover">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-2xl font-bold text-purple-900">Edit Employee</h3>
               <button onClick={() => setEditingEmployee(null)} className="text-gray-500 hover:text-gray-700">
@@ -495,12 +495,8 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                   type="text"
                   name="dateHired"
                   required
-                  defaultValue={(() => {
-                    const dateStr = editingEmployee.dateHired.split('T')[0];
-                    const [year, month, day] = dateStr.split('-');
-                    return `${month}/${day}/${year}`;
-                  })()}
-                  placeholder="MM/DD/YYYY"
+                  defaultValue={formatToDD_MM_YYYY(editingEmployee.dateHired)}
+                  placeholder="DD/MM/YYYY"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                 />
               </div>

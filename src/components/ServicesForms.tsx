@@ -3,6 +3,7 @@ import { Patient, TreatmentRecord, Payment } from '../App';
 import { FileText, Printer, Download, Plus, X, CreditCard } from 'lucide-react';
 import { treatmentRecordAPI, paymentAPI } from '../api';
 import { toast } from 'sonner';
+import { formatToDD_MM_YYYY } from '../utils/dateHelpers';
 import { generateReceipt, generatePrescriptionPDF, generatePatientHistoryPDF, generateDetailedReceiptPDF } from '../utils/pdfGenerator';
 
 type ServicesFormsProps = {
@@ -261,7 +262,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
       {/* Recent Receipts */}
       <div className="bg-white p-8 rounded-xl shadow-md border border-gray-200 mb-8">
         <h2 className="text-2xl font-bold mb-6 text-gray-900">Recent Receipts</h2>
-        <div className="space-y-3">
+        <div className="space-y-3 max-h-96 overflow-y-auto scrollbar-hover">
           {treatmentRecords.slice(-5).reverse().map((record) => {
             const patient = patients.find(p => String(p.id) === String(record.patientId));
             return (
@@ -270,7 +271,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                   <div className="flex-1">
                     <p className="text-lg font-semibold text-gray-900">{patient?.name}</p>
                     <p className="text-sm text-gray-700 mt-1">{record.treatment} {record.tooth ? `- Tooth ${record.tooth}` : ''}</p>
-                    <p className="text-sm text-gray-500 mt-1">{new Date(record.date).toLocaleDateString()} • Dr. {record.dentist}</p>
+                    <p className="text-sm text-gray-500 mt-1">{formatToDD_MM_YYYY(record.date)} • Dr. {record.dentist}</p>
                     <div className="mt-4 flex gap-4 text-sm">
                       <span className="font-bold text-lg text-gray-900">₱{Number(record.cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       {record.paymentType && (
@@ -310,16 +311,16 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
       </div>
 
       {/* Recent Prescriptions */}
-      <div className="bg-white p-8 rounded-xl shadow-md border border-gray-200">
+      <div className="bg-white p-8 rounded-xl shadow-md border border-gray-200 mb-8">
         <h2 className="text-2xl font-bold mb-6 text-gray-900">Recent Prescriptions</h2>
-        <div className="space-y-3">
+        <div className="space-y-3 max-h-96 overflow-y-auto scrollbar-hover">
           {prescriptions.slice(-5).reverse().map((prescription) => (
             <div key={prescription.id} className="p-6 border border-gray-200 rounded-lg hover:shadow-md transition-shadow bg-gradient-to-br from-white to-green-50">
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-lg font-semibold text-gray-900">{prescription.patientName}</p>
                   <p className="text-sm text-gray-700 mt-1">{prescription.medications.length} medication(s) prescribed</p>
-                  <p className="text-sm text-gray-500 mt-1">{new Date(prescription.date).toLocaleDateString()} • Dr. {prescription.dentist}</p>
+                  <p className="text-sm text-gray-500 mt-1">{formatToDD_MM_YYYY(prescription.date)} • Dr. {prescription.dentist}</p>
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -349,7 +350,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
       {/* Add Receipt Modal */}
       {activeForm === 'service' && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+          <div className="bg-white rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto scrollbar-hover shadow-2xl">
             <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-200">
               <h2 className="text-3xl font-bold text-gray-900">Record Receipt</h2>
               {!isFromAppointment && (
@@ -382,7 +383,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                     className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${isFromAppointment ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                   />
                   {patientSearch && showReceiptSuggestions && !isFromAppointment && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-64 overflow-y-auto">
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-64 scrollbar-hover">
                       {patients.filter(p => p.name.toLowerCase().includes(patientSearch.toLowerCase())).map(patient => (
                         <div
                           key={patient.id}
@@ -418,14 +419,8 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                     type="text"
                     name="date"
                     required
-                    defaultValue={(() => {
-                      const date = new Date();
-                      const month = String(date.getMonth() + 1).padStart(2, '0');
-                      const day = String(date.getDate()).padStart(2, '0');
-                      const year = date.getFullYear();
-                      return `${month}/${day}/${year}`;
-                    })()}
-                    placeholder="MM/DD/YYYY"
+                    defaultValue={formatToDD_MM_YYYY(new Date())}
+                    placeholder="DD/MM/YYYY"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   />
                 </div>
@@ -599,7 +594,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
       {/* Create Prescription Modal */}
       {activeForm === 'prescription' && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+          <div className="bg-white rounded-xl p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto scrollbar-hover shadow-2xl">
             <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-200">
               <h2 className="text-3xl font-bold text-gray-900">Create Prescription</h2>
               <button onClick={() => setActiveForm(null)} className="text-gray-500 hover:text-gray-700">
@@ -624,7 +619,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                     />
                     {prescriptionPatientSearch && showPrescriptionSuggestions && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-20 max-h-64 overflow-y-auto">
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-20 max-h-64 scrollbar-hover">
                         {patients.filter(p => p.name.toLowerCase().includes(prescriptionPatientSearch.toLowerCase())).map(patient => (
                           <div
                             key={patient.id}
@@ -763,7 +758,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
       {/* View Prescription Modal */}
       {viewingPrescription && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+          <div className="bg-white rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto scrollbar-hover shadow-2xl">
             <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-300">
               <h2 className="text-3xl font-bold text-gray-900">Prescription</h2>
               <button onClick={() => setViewingPrescription(null)} className="text-gray-500 hover:text-gray-700">
@@ -775,7 +770,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
               <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
                 <div>
                   <p className="text-sm text-gray-700 font-semibold mb-2">Date</p>
-                  <p className="text-gray-900 font-medium">{new Date(viewingPrescription.date).toLocaleDateString()}</p>
+                  <p className="text-gray-900 font-medium">{formatToDD_MM_YYYY(viewingPrescription.date)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-700 font-semibold mb-2">Prescription ID</p>
@@ -848,7 +843,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
       {/* View Receipt Modal */}
       {viewingReceipt && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+          <div className="bg-white rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto scrollbar-hover shadow-2xl">
             <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-300">
               <h2 className="text-3xl font-bold text-gray-900">Official Receipt</h2>
               <button onClick={() => setViewingReceipt(null)} className="text-gray-500 hover:text-gray-700">
@@ -864,7 +859,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                 </div>
                 <div>
                   <p className="text-sm text-gray-700 font-semibold mb-2">Date</p>
-                  <p className="text-gray-900 font-medium">{new Date(viewingReceipt.date).toLocaleDateString()}</p>
+                  <p className="text-gray-900 font-medium">{formatToDD_MM_YYYY(viewingReceipt.date)}</p>
                 </div>
               </div>
 

@@ -3,6 +3,7 @@ import { Users, Calendar, Package, TrendingUp, AlertTriangle, Activity, ArrowUp,
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import { motion } from 'motion/react';
 import { PesoSign } from './icons/PesoSign';
+import { formatToDD_MM_YYYY } from '../utils/dateHelpers';
 
 type DashboardProps = {
   patients: Patient[];
@@ -258,11 +259,11 @@ export function Dashboard({ patients, appointments, inventory, treatmentRecords,
               })
               .slice(0, 4)
               .map(apt => {
-                // Format date as readable format (e.g., "Jan 30, 2026")
+                // Format date as readable format (e.g., "30/01/2026")
                 const [year, month, day] = apt.date.split('-').map(Number);
                 const [hour, min] = (apt.time || '00:00').split(':').map(Number);
                 const appointmentDate = new Date(year, month - 1, day, hour, min);
-                const formattedDate = appointmentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const formattedDate = formatToDD_MM_YYYY(appointmentDate);
                 const periodLabel = appointmentDate.getHours() < 12 ? 'Morning' : 'Afternoon';
                 
                 return (

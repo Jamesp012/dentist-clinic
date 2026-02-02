@@ -185,7 +185,7 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
                         </div>
                         <div className="flex items-center gap-1.5">
                           <Calendar size={16} />
-                          <span>Sent: {new Date(ref.date).toLocaleDateString()}</span>
+                          <span>Sent: {formatToDD_MM_YYYY(ref.date)}</span>
                         </div>
                       </div>
                       <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 flex items-start gap-2">
@@ -298,7 +298,7 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
                           {receipt.treatment || receipt.type || receipt.description || 'Service'}
                         </td>
                         <td className="px-6 py-4 text-sm text-slate-600">
-                          {new Date(receipt.date).toLocaleDateString()}
+                          {formatToDD_MM_YYYY(receipt.date)}
                         </td>
                         <td className="px-6 py-4 font-semibold text-slate-900">
                           ₱{(receipt.cost || 0).toFixed(2)}
@@ -409,7 +409,7 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
                   </div>
                   <div>
                     <p className="text-xs text-slate-500 uppercase font-bold mb-2">Date Referred</p>
-                    <p className="text-slate-700">{new Date(selectedReferral.date).toLocaleDateString()}</p>
+                    <p className="text-slate-700">{formatToDD_MM_YYYY(selectedReferral.date)}</p>
                   </div>
                 </div>
 
@@ -476,7 +476,7 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-xs text-slate-500">Date</p>
-                      <p className="font-medium">{new Date(selectedReceipt.date).toLocaleDateString()}</p>
+                      <p className="font-medium">{formatToDD_MM_YYYY(selectedReceipt.date)}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-slate-500">Service</p>

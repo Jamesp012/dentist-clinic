@@ -14,6 +14,34 @@ interface ReferralGenerationProps {
   patients: Patient[];
 }
 
+interface UnderlineInputProps {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  className?: string;
+}
+
+const UnderlineInput = ({ label, value, onChange, className = '' }: UnderlineInputProps) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    onChange(newValue);
+  };
+
+  return (
+    <div className={`flex items-center gap-2 ${className}`}>
+      <span className="text-sm whitespace-nowrap font-semibold">{label}</span>
+      <input 
+        type="text" 
+        value={value}
+        onChange={handleChange}
+        autoComplete="off"
+        spellCheck="false"
+        className="flex-1 border-b-2 border-slate-400 focus:outline-none focus:border-yellow-500 focus:bg-yellow-50 bg-white px-2 py-2 text-sm transition-colors font-medium cursor-text" 
+      />
+    </div>
+  );
+};
+
 export function ReferralGeneration({ referrals, setReferrals, patients }: ReferralGenerationProps) {
   const [referralType, setReferralType] = useState<ReferralType>(null);
   const [showTypeSelection, setShowTypeSelection] = useState(false);
@@ -69,13 +97,27 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
       return;
     }
 
+    if (!formData.referredBy) {
+      toast.error('Please enter who is referring');
+      return;
+    }
+
+    if (!formData.specialty && referralType !== 'xray') {
+      toast.error('Please enter specialty');
+      return;
+    }
+
+    if (!formData.reason) {
+      toast.error('Please enter reason for referral');
+      return;
+    }
+
     try {
-      const newReferral: Referral = {
-        id: `REF-${Date.now()}`,
+      const newReferral = {
         patientId: formData.patientId,
         patientName: formData.patientName,
         referringDentist: formData.referredBy,
-        referredTo: formData.specialty,
+        referredTo: formData.specialty || (referralType === 'xray' ? 'X-Ray Facility' : ''),
         specialty: referralType === 'xray' ? 'X-Ray Imaging' : formData.specialty,
         reason: formData.reason,
         date: formData.date,
@@ -83,7 +125,9 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
         createdByRole: 'staff'
       };
 
+      console.log('Creating referral with data:', newReferral);
       const response = await referralAPI.create(newReferral);
+      console.log('Referral created successfully:', response);
       setReferrals([...referrals, response]);
       
       resetForm();
@@ -91,8 +135,9 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
       setShowTypeSelection(false);
       toast.success('Referral created successfully');
     } catch (error) {
-      console.error('Failed to create referral:', error);
-      toast.error('Failed to create referral');
+      console.error('Failed to create referral error:', error);
+      const errorMessage = error?.message || 'Failed to create referral';
+      toast.error(errorMessage);
     }
   };
 
@@ -132,27 +177,8 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
     </div>
   );
 
-  const UnderlineInput = ({ label, value, onChange, className = '' }: { label: string; value: string; onChange: (v: string) => void; className?: string }) => (
-    <div className={`flex items-center gap-2 ${className}`}>
-      <span className="text-sm whitespace-nowrap font-semibold">{label}</span>
-      <input 
-        type="text" 
-        value={value}
-        onChange={(e) => {
-          e.stopPropagation();
-          onChange(e.target.value);
-        }}
-        onClick={(e) => e.stopPropagation()}
-        onFocus={(e) => e.stopPropagation()}
-        autoComplete="off"
-        className="flex-1 border-b-2 border-slate-400 focus:outline-none focus:border-yellow-500 focus:bg-yellow-50 bg-white px-2 py-2 text-sm transition-colors font-medium" 
-        style={{ pointerEvents: 'auto' }}
-      />
-    </div>
-  );
-
   return (
-    <div className="p-8">
+    <div className="p-8 min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Type Selection Modal */}
       {showTypeSelection && referralType === null && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -189,13 +215,8 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
 
       {/* Doctor Referral Form */}
       {referralType === 'doctor' && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto" onClick={(e) => {
-          if (e.target === e.currentTarget) {
-            setReferralType(null);
-            setShowTypeSelection(false);
-          }
-        }}>
-          <div className="bg-white w-full max-w-4xl rounded-lg shadow-2xl my-8" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white w-full max-w-4xl rounded-lg shadow-2xl my-8">
             <div className="flex justify-between items-center p-6 border-b">
               <h1 className="text-2xl font-bold">Doctor Referral Form</h1>
               <button onClick={() => { setReferralType(null); setShowTypeSelection(false); }} className="text-gray-500 hover:text-gray-700">
@@ -236,7 +257,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
               </div>
 
               {/* Services Section */}
-              <div className="grid grid-cols-2 gap-8 mb-8 pb-8 border-b-4 border-yellow-400">
+              <div className="grid grid-cols-2 gap-8 mb-8 py-8 border-y-4 border-yellow-400">
                 <div className="space-y-3">
                   <h2 className="font-black text-lg uppercase mb-4">Diagnostic Services:</h2>
                   <ServiceItem label="STANDARD PANORAMIC" id="pano" />
@@ -255,36 +276,29 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                 </div>
               </div>
 
-              {/* Specialty & Urgency */}
-              <div className="space-y-4 mb-6">
-                <UnderlineInput 
-                  label="Specialty:" 
-                  value={formData.specialty} 
-                  onChange={(v) => handleInputChange('specialty', v)} 
-                />
-
-                <UnderlineInput 
-                  label="Urgency Level:" 
-                  value={formData.urgency} 
-                  onChange={(v) => handleInputChange('urgency', v)} 
-                />
-
-                <div className="flex items-start gap-2">
-                  <span className="text-sm whitespace-nowrap font-semibold pt-1">Reason for Referral:</span>
-                  <textarea
-                    value={formData.reason}
-                    onChange={(e) => {
-                      e.stopPropagation();
-                      handleInputChange('reason', e.target.value);
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                    onFocus={(e) => e.stopPropagation()}
-                    rows={3}
-                    className="flex-1 border-b-2 border-slate-400 focus:outline-none focus:border-yellow-500 focus:bg-yellow-50 bg-white px-2 py-1 text-sm transition-colors resize-none"
-                    style={{ pointerEvents: 'auto' }}
-                  />
+                {/* Clinic Information */}
+                <div className="mt-8 pt-8 space-y-3 text-sm">
+                  <div>
+                    <p className="font-bold text-gray-800">Address:</p>
+                    <p className="text-gray-700">#48 Luis Palad Street, Brgy. Angeles Zone 1, Tayabas City</p>
+                    <p className="text-gray-700">(infront of St. Jude Pharmacy, beside Motoposh Tayabas)</p>
+                    <p className="text-gray-700">Lucena-Tayabas Road, Luis Palad Street</p>
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-800">Email:</p>
+                    <p className="text-gray-700">j.aguilardentalclinic@gmail.com</p>
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-800">Facebook:</p>
+                    <p className="text-gray-700">J. Aguilar Dental Clinic Tayabas Branch</p>
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-800">Contact No.:</p>
+                    <p className="text-gray-700">0938-171-7695</p>
+                  </div>
                 </div>
-              </div>
+
+
             </div>
 
             <div className="flex gap-3 p-6 border-t justify-end">
@@ -307,8 +321,8 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
 
       {/* X-Ray Referral Form */}
       {referralType === 'xray' && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto pointer-events-auto" onClick={(e) => e.stopPropagation()}>
-          <div className="bg-white w-full max-w-5xl rounded-lg shadow-2xl my-8 pointer-events-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white w-full max-w-5xl rounded-lg shadow-2xl my-8">
             <div className="flex justify-between items-center p-6 border-b">
               <h1 className="text-2xl font-bold">X-Ray Referral Form</h1>
               <button onClick={() => { setReferralType(null); setShowTypeSelection(false); }} className="text-gray-500 hover:text-gray-700">
@@ -316,7 +330,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
               </button>
             </div>
 
-            <div className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto space-y-6 pointer-events-auto">
+            <div className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto space-y-6">
               {/* Patient Selection */}
               <div>
                 <label className="block text-sm font-bold mb-2">Search Patient</label>
@@ -428,17 +442,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                 </div>
               </div>
 
-              {/* Reason */}
-              <div>
-                <label className="block text-sm font-bold mb-2">Reason for X-Ray Imaging</label>
-                <textarea
-                  value={formData.reason}
-                  onChange={(e) => handleInputChange('reason', e.target.value)}
-                  rows={3}
-                  className="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Describe the clinical indication for x-ray imaging..."
-                />
-              </div>
+
             </div>
 
             <div className="flex gap-3 p-6 border-t justify-end">

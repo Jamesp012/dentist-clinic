@@ -3,6 +3,7 @@ import { Patient, ChatMessage } from '../App';
 import { MessageCircle, Send, User, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
+import { formatToDD_MM_YYYY } from '../utils/dateHelpers';
 
 type PatientChatProps = {
   patients: Patient[];
@@ -87,7 +88,7 @@ export function PatientChat({ patients, chatMessages, setChatMessages, currentUs
     } else if (diffInHours < 48) {
       return 'Yesterday';
     } else {
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      return formatToDD_MM_YYYY(date);
     }
   };
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Menu, Users, Calendar, ClipboardList, FileText, LayoutDashboard, Stethoscope, LogOut, Sparkles, UserCog, Settings, X, Check, Eye, EyeOff, Megaphone } from 'lucide-react';
+import { Menu, Users, Calendar, ClipboardList, FileText, LayoutDashboard, Stethoscope, LogOut, Sparkles, UserCog, Settings, X, Check, Eye, EyeOff, Megaphone, Camera } from 'lucide-react';
 import { PesoSign } from './icons/PesoSign';
 import { Dashboard } from './Dashboard';
 import { PatientManagement } from './PatientManagement';
@@ -11,6 +11,7 @@ import { ReferralGeneration } from './ReferralGeneration';
 import { ServicesForms } from './ServicesForms';
 import { FinancialReport } from './FinancialReport';
 import { AnnouncementsManagement } from './AnnouncementsManagement';
+import { PhotoManagement } from './PhotoManagement';
 import { Notifications } from './Notifications';
 import { EmployeeManagement } from './EmployeeManagement';
 import { motion, AnimatePresence } from 'motion/react';
@@ -208,6 +209,7 @@ export function DoctorDashboard({
     { id: 'patients', label: 'Patients', icon: Users, color: 'from-teal-500 to-teal-600' },
       { id: 'employees', label: 'Employees', icon: UserCog, color: 'from-cyan-600 to-teal-500' },
     { id: 'appointments', label: 'Appointments', icon: Calendar, color: 'from-teal-600 to-cyan-600' },
+    { id: 'photos', label: 'Patient Photos', icon: Camera, color: 'from-violet-500 to-purple-600' },
     { id: 'charting', label: 'Dental Charting', icon: ClipboardList, color: 'from-cyan-500 to-teal-500' },
     { id: 'braces', label: 'Braces Charting', icon: Sparkles, color: 'from-teal-500 to-emerald-600' },
     { id: 'referrals', label: 'Referrals', icon: FileText, color: 'from-cyan-500 to-emerald-600' },
@@ -439,6 +441,13 @@ export function DoctorDashboard({
                   treatmentRecords={treatmentRecords}
                   setTreatmentRecords={setTreatmentRecords}
                   onOpenServiceForm={handleOpenServiceForm}
+                  onDataChanged={onDataChanged}
+                />
+              )}
+              {activeTab === 'photos' && (
+                <PhotoManagement
+                  photos={photos}
+                  patients={patients}
                   onDataChanged={onDataChanged}
                 />
               )}

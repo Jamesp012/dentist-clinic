@@ -31,7 +31,9 @@ const fetchWithAuth = async (url, options = {}) => {
         localStorage.removeItem('user');
         window.location.href = '/'; // Redirect to home/login
       }
-      throw new Error(`API Error: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage = errorData.error || `API Error: ${response.status}`;
+      throw new Error(errorMessage);
     }
     return await response.json();
   } catch (error) {
@@ -262,3 +264,28 @@ export const patientClaimingAPI = {
     }).then((r) => r.json()),
 };
 
+// Notification APIs
+export const notificationAPI = {
+  getAll: () => fetchWithAuth(`${API_BASE}/notifications`),
+  getUnreadCount: () => fetchWithAuth(`${API_BASE}/notifications/unread/count`),
+  getByPatientId: (patientId) =>
+    fetchWithAuth(`${API_BASE}/notifications/patient/${patientId}`),
+  markAsRead: (id) =>
+    fetchWithAuth(`${API_BASE}/notifications/${id}/read`, {
+      method: 'PUT',
+    }),
+  markAllAsRead: (patientId) =>
+    fetchWithAuth(`${API_BASE}/notifications/read-all`, {
+      method: 'PUT',
+      body: JSON.stringify({ patientId }),
+    }),
+  create: (data) =>
+    fetchWithAuth(`${API_BASE}/notifications`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  delete: (id) =>
+    fetchWithAuth(`${API_BASE}/notifications/${id}`, {
+      method: 'DELETE',
+    }),
+};

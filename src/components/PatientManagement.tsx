@@ -4,6 +4,7 @@ import { Search, Plus, X, Edit, Trash2, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { patientAPI } from '../api';
 import { handlePhoneInput, formatPhoneNumber } from '../utils/phoneValidation';
+import { convertToDBDate, formatToDD_MM_YYYY } from '../utils/dateHelpers';
 
 type PatientManagementProps = {
   patients: Patient[];
@@ -148,7 +149,7 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
 
       {/* Patients Table */}
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-[60vh] overflow-y-auto scrollbar-hover">
           <table className="w-full">
             <thead className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white">
               <tr>
@@ -235,7 +236,7 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
                     type="text"
                     name="dateOfBirth"
                     required
-                    placeholder="MM/DD/YYYY"
+                    placeholder="DD/MM/YYYY"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -330,7 +331,7 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
       {/* Edit Patient Modal */}
       {editingPatient && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto scrollbar-hover">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-2xl font-bold text-blue-900">Edit Patient</h3>
               <button onClick={() => setEditingPatient(null)} className="text-gray-500 hover:text-gray-700">
@@ -355,12 +356,8 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
                     type="text"
                     name="dateOfBirth"
                     required
-                    defaultValue={(() => {
-                      const dateStr = editingPatient.dateOfBirth.includes('T') ? editingPatient.dateOfBirth.split('T')[0] : editingPatient.dateOfBirth;
-                      const [year, month, day] = dateStr.split('-');
-                      return `${month}/${day}/${year}`;
-                    })()}
-                    placeholder="MM/DD/YYYY"
+                    defaultValue={formatToDD_MM_YYYY(editingPatient.dateOfBirth)}
+                    placeholder="DD/MM/YYYY"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -487,7 +484,7 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
       {/* View Patient Modal */}
       {viewingPatient && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto scrollbar-hover">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-blue-900">Patient Details</h3>
               <button onClick={() => setViewingPatient(null)} className="text-gray-500 hover:text-gray-700">
@@ -509,7 +506,7 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
               
               <div className="bg-blue-50 p-4 rounded-lg">
                 <label className="text-sm font-medium text-blue-900 block mb-1">Date of Birth</label>
-                <p className="text-gray-900 font-medium">{new Date(viewingPatient.dateOfBirth).toLocaleDateString()}</p>
+                <p className="text-gray-900 font-medium">{formatToDD_MM_YYYY(viewingPatient.dateOfBirth)}</p>
               </div>
               
               <div className="bg-blue-50 p-4 rounded-lg">

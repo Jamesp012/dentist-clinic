@@ -6,7 +6,7 @@ import { authAPI, setAuthToken } from '../api';
 import { PasswordInput } from './PasswordInput';
 import { handlePhoneInput, formatPhoneNumber } from '../utils/phoneValidation';
 import { PatientRecordClaiming } from './PatientRecordClaiming';
-import { convertToDBDate, convertToDisplayDate, formatDateInput } from '../utils/dateHelpers';
+import { convertToDBDate, convertToDisplayDate, formatDateInput, formatToDD_MM_YYYY } from '../utils/dateHelpers';
 
 export type UserRole = 'doctor' | 'assistant' | 'patient';
 
@@ -613,7 +613,7 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
                       type="text"
                       value={signupData.dateOfBirth}
                       onChange={(e) => updateSignupField('dateOfBirth', formatDateInput(e.target.value))}
-                      placeholder="MM/DD/YYYY"
+                      placeholder="DD/MM/YYYY"
                       className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
                     />
                     <button

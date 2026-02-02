@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Patient, Appointment, Referral } from '../App';
-import { Bell, X, AlertCircle, Calendar, FileText, Check } from 'lucide-react';
+import { Bell, Calendar, FileText, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { convertToDBDate, convertToDisplayDate } from '../utils/dateHelpers';
+import { convertToDBDate, formatToMonthDayYear } from '../utils/dateHelpers';
 
 export type Notification = {
   id: string;
@@ -24,7 +24,7 @@ type NotificationsProps = {
   onNavigate?: (tab: string) => void; // Callback to navigate to a specific tab
 };
 
-export function Notifications({ patients, appointments, referrals, currentPatientId, onNavigate }: NotificationsProps) {
+export function Notifications({ patients: _patients, appointments, referrals, currentPatientId, onNavigate }: NotificationsProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showPanel, setShowPanel] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -73,9 +73,9 @@ export function Notifications({ patients, appointments, referrals, currentPatien
   const getDisplayDate = (dateStr: string) => {
     const normalized = normalizeDate(dateStr);
     if (normalized) {
-      return convertToDisplayDate(normalized);
+      return formatToMonthDayYear(normalized);
     }
-    return dateStr ? convertToDisplayDate(dateStr) : 'Invalid Date';
+    return dateStr ? formatToMonthDayYear(dateStr) : 'Invalid Date';
   };
 
   // Helper function to get queue number and queue period for an appointment
@@ -144,7 +144,7 @@ export function Notifications({ patients, appointments, referrals, currentPatien
         generatedNotifications.push({
           id: notifId,
           type: 'appointment',
-          patientId: appointment.patientId,
+          patientId: String(appointment.patientId),
           patientName: appointment.patientName,
           message,
           date: normalizedDate,
@@ -175,7 +175,7 @@ export function Notifications({ patients, appointments, referrals, currentPatien
         generatedNotifications.push({
           id: notifId,
           type: 'appointment',
-          patientId: appointment.patientId,
+          patientId: String(appointment.patientId),
           patientName: appointment.patientName,
           message,
           date: normalizedDate,
@@ -221,7 +221,7 @@ export function Notifications({ patients, appointments, referrals, currentPatien
         generatedNotifications.push({
           id: notifId,
           type: 'referral',
-          patientId: referral.patientId,
+          patientId: String(referral.patientId),
           patientName: referral.patientName,
           message,
           date: referral.date,
@@ -231,8 +231,15 @@ export function Notifications({ patients, appointments, referrals, currentPatien
       }
     });
 
-    setNotifications(generatedNotifications);
-    setUnreadCount(generatedNotifications.filter(n => !n.read).length);
+    // Sort notifications by date in descending order (most recent first)
+    const sortedNotifications = generatedNotifications.sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return dateB - dateA;
+    });
+
+    setNotifications(sortedNotifications);
+    setUnreadCount(sortedNotifications.filter(n => !n.read).length);
   }, [appointments, referrals, currentPatientId, readIds]);
 
   const markAsRead = (id: string) => {
@@ -256,14 +263,6 @@ export function Notifications({ patients, appointments, referrals, currentPatien
       saveReadIds(next);
       return next;
     });
-  };
-
-  const dismissNotification = (id: string) => {
-    setNotifications(notifications.filter(n => n.id !== id));
-    const notification = notifications.find(n => n.id === id);
-    if (notification && !notification.read) {
-      setUnreadCount(prev => Math.max(0, prev - 1));
-    }
   };
 
   return (

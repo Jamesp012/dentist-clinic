@@ -17,6 +17,9 @@ import {
   EyeOff,
   Camera,
   Upload,
+  RotateCcw,
+  Trash2,
+  AlertCircle,
 } from "lucide-react";
 import { PesoSign } from './icons/PesoSign';
 import { Dashboard } from "./Dashboard";
@@ -30,6 +33,7 @@ import { FinancialReport } from "./FinancialReport";
 import { AnnouncementsManagement } from "./AnnouncementsManagement";
 import { Notifications } from "./Notifications";
 import { motion, AnimatePresence } from "motion/react";
+import { formatToDD_MM_YYYY } from "../utils/dateHelpers";
 import type { User } from "./AuthPage";
 import type {
   Patient,
@@ -239,6 +243,17 @@ export function AssistantDashboard({
   const [photoUrl, setPhotoUrl] = useState('');
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [selectedPhotoForView, setSelectedPhotoForView] = useState<any>(null);
+  const [showReplacePhotoModal, setShowReplacePhotoModal] = useState<string | number | null>(null);
+  const [showDeletePhotoConfirm, setShowDeletePhotoConfirm] = useState<string | number | null>(null);
+  const [replacePhotoFile, setReplacePhotoFile] = useState<File | null>(null);
+  const [replacePhotoUrl, setReplacePhotoUrl] = useState<string>('');
+  const [isReplacingPhoto, setIsReplacingPhoto] = useState(false);
+  const [isDeletingPhoto, setIsDeletingPhoto] = useState(false);
+  const [photoSearchQuery, setPhotoSearchQuery] = useState('');
+  const [viewAllPhotos, setViewAllPhotos] = useState(false);
+  const [patientSearchQuery, setPatientSearchQuery] = useState('');
+  const [showPatientDropdown, setShowPatientDropdown] = useState(false);
 
   const handlePhotoFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -302,6 +317,90 @@ export function AssistantDashboard({
       alert('Failed to upload photo. Please try again.');
     } finally {
       setIsUploadingPhoto(false);
+    }
+  };
+
+  const handleReplacePhotoFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
+      }
+      setReplacePhotoFile(file);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setReplacePhotoUrl(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleReplacePhoto = async () => {
+    if (!showReplacePhotoModal || !replacePhotoUrl) {
+      alert('Please select a new photo');
+      return;
+    }
+
+    setIsReplacingPhoto(true);
+    try {
+      const response = await fetch(`${API_BASE}/photos/${showReplacePhotoModal}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          url: replacePhotoUrl
+        })
+      });
+
+      if (!response.ok) throw new Error('Replace failed');
+
+      const updatedPhoto = await response.json();
+      setPhotos(photos.map(p => p.id === showReplacePhotoModal ? updatedPhoto : p));
+      setShowReplacePhotoModal(null);
+      setReplacePhotoFile(null);
+      setReplacePhotoUrl('');
+      alert('Photo replaced successfully');
+
+      if (onDataChanged) {
+        await onDataChanged();
+      }
+    } catch (error) {
+      console.error('Error replacing photo:', error);
+      alert('Failed to replace photo');
+    } finally {
+      setIsReplacingPhoto(false);
+    }
+  };
+
+  const handleDeletePhoto = async () => {
+    if (!showDeletePhotoConfirm) return;
+
+    setIsDeletingPhoto(true);
+    try {
+      const response = await fetch(`${API_BASE}/photos/${showDeletePhotoConfirm}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) throw new Error('Delete failed');
+
+      setPhotos(photos.filter(p => p.id !== showDeletePhotoConfirm));
+      setShowDeletePhotoConfirm(null);
+      alert('Photo deleted successfully');
+
+      if (onDataChanged) {
+        await onDataChanged();
+      }
+    } catch (error) {
+      console.error('Error deleting photo:', error);
+      alert('Failed to delete photo');
+    } finally {
+      setIsDeletingPhoto(false);
     }
   };
 
@@ -555,7 +654,7 @@ export function AssistantDashboard({
             )}
             {activeTab === 'photos' && (
               <div>
-                <h2 className="text-3xl font-bold text-indigo-900">Photo Upload</h2>
+                <h2 className="text-3xl font-bold text-indigo-900">Patient Photos</h2>
                 <p className="text-gray-600 mt-1">Manage patient treatment photos</p>
               </div>
             )}
@@ -648,37 +747,78 @@ export function AssistantDashboard({
               )}
               {activeTab === "photos" && (
                 <div className="p-6 space-y-6">
-                  <h2 className="text-2xl font-bold text-slate-800">Upload Patient Photos</h2>
-                  
                   {/* Upload Form */}
-                  <div className="bg-white rounded-xl shadow-lg p-6 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      {/* Patient Selection */}
+                  <div className="bg-white rounded-xl shadow-lg p-8 space-y-6">
+                    {/* Header */}
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center">
+                        <Camera className="w-6 h-6 text-white" />
+                      </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Select Patient
+                        <h3 className="text-xl font-bold text-slate-900 font-poppins">Upload Patient Photo</h3>
+                        <p className="text-sm text-slate-500">Add treatment photos to patient records</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                      {/* Patient Selection - Searchable */}
+                      <div className="space-y-2 relative">
+                        <label className="block text-sm font-semibold text-slate-700">
+                          Select Patient <span className="text-red-500">*</span>
                         </label>
-                        <select
-                          value={selectedPatientForPhoto}
-                          onChange={(e) => setSelectedPatientForPhoto(e.target.value)}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                        >
-                          <option value="">-- Choose a patient --</option>
-                          {patients.map(p => (
-                            <option key={p.id} value={p.id}>{p.name}</option>
-                          ))}
-                        </select>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            placeholder="Search patients..."
+                            value={patientSearchQuery}
+                            onChange={(e) => {
+                              setPatientSearchQuery(e.target.value);
+                              setShowPatientDropdown(true);
+                            }}
+                            onFocus={() => setShowPatientDropdown(true)}
+                            className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all font-medium text-slate-700 hover:border-slate-300"
+                          />
+                          {selectedPatientForPhoto && !patientSearchQuery && (
+                            <span className="absolute right-4 top-3.5 text-sm text-teal-600 font-medium">
+                              ✓ Selected
+                            </span>
+                          )}
+                          
+                          {/* Dropdown */}
+                          {showPatientDropdown && (
+                            <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-slate-200 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+                              {patients
+                                .filter(p => p.name.toLowerCase().includes(patientSearchQuery.toLowerCase()))
+                                .map(p => (
+                                  <button
+                                    key={p.id}
+                                    onClick={() => {
+                                      setSelectedPatientForPhoto(String(p.id));
+                                      setPatientSearchQuery(p.name);
+                                      setShowPatientDropdown(false);
+                                    }}
+                                    className="w-full text-left px-4 py-3 hover:bg-teal-50 transition-colors border-b border-slate-100 last:border-b-0 font-medium text-slate-700"
+                                  >
+                                    {p.name}
+                                  </button>
+                                ))}
+                              {patients.filter(p => p.name.toLowerCase().includes(patientSearchQuery.toLowerCase())).length === 0 && (
+                                <div className="px-4 py-3 text-slate-500 text-center">No patients found</div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       {/* Photo Type */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Photo Type
+                      <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-slate-700">
+                          Photo Type <span className="text-red-500">*</span>
                         </label>
                         <select
                           value={photoType}
                           onChange={(e) => setPhotoType(e.target.value as 'before' | 'after' | 'xray')}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                          className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all font-medium text-slate-700 hover:border-slate-300"
                         >
                           <option value="before">Before Treatment</option>
                           <option value="after">After Treatment</option>
@@ -687,42 +827,53 @@ export function AssistantDashboard({
                       </div>
                     </div>
 
-                    {/* Photo URL */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Upload Photo
+                    {/* Photo Upload */}
+                    <div className="space-y-3">
+                      <label className="block text-sm font-semibold text-slate-700">
+                        Upload Photo <span className="text-red-500">*</span>
                       </label>
-                      <div className="flex items-center gap-4">
+                      <div className="relative border-2 border-dashed border-slate-300 rounded-xl p-8 bg-gradient-to-br from-slate-50 to-slate-100 hover:border-teal-400 hover:from-teal-50 hover:to-teal-100 transition-all cursor-pointer group">
                         <input
                           type="file"
                           accept="image/*"
                           onChange={handlePhotoFileSelect}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                         />
-                        {photoFile && (
-                          <div className="text-sm text-gray-600">
-                            ✓ {photoFile.name}
+                        <div className="flex flex-col items-center justify-center text-center">
+                          <div className="w-14 h-14 rounded-full bg-teal-100 flex items-center justify-center mb-3 group-hover:bg-teal-200 transition-colors">
+                            <Camera className="w-7 h-7 text-teal-600" />
                           </div>
-                        )}
+                          <p className="text-slate-900 font-semibold">Click to upload or drag and drop</p>
+                          <p className="text-slate-500 text-sm mt-1">PNG, JPG, GIF up to 10MB</p>
+                        </div>
                       </div>
+                      {photoFile && (
+                        <div className="flex items-center gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                          <Check className="w-5 h-5 text-emerald-600" />
+                          <span className="text-sm font-medium text-emerald-900">{photoFile.name}</span>
+                        </div>
+                      )}
                       {photoUrl && (
-                        <div className="mt-3 relative w-32 h-32 rounded-lg border border-gray-200 overflow-hidden bg-gray-50">
-                          <img src={photoUrl} alt="Preview" className="w-full h-full object-cover" />
+                        <div className="mt-4">
+                          <p className="text-xs font-semibold text-slate-600 mb-3">Preview</p>
+                          <div className="relative w-40 h-40 rounded-xl border-2 border-slate-200 overflow-hidden bg-white shadow-md">
+                            <img src={photoUrl} alt="Preview" className="w-full h-full object-cover" />
+                          </div>
                         </div>
                       )}
                     </div>
 
                     {/* Notes */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Notes (Optional)
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-slate-700">
+                        Notes <span className="text-slate-400">(Optional)</span>
                       </label>
                       <textarea
                         value={photoNotes}
                         onChange={(e) => setPhotoNotes(e.target.value)}
-                        placeholder="Add any notes about this photo..."
+                        placeholder="Add clinical notes or observations about this photo..."
                         rows={3}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all font-medium text-slate-700 placeholder-slate-400 hover:border-slate-300 resize-none"
                       />
                     </div>
 
@@ -730,30 +881,85 @@ export function AssistantDashboard({
                     <button
                       onClick={handlePhotoUpload}
                       disabled={isUploadingPhoto}
-                      className="w-full px-4 py-3 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 disabled:from-gray-400 disabled:to-gray-400 text-white rounded-lg transition-all duration-200 font-medium flex items-center justify-center gap-2"
+                      className="w-full px-6 py-3 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:from-slate-400 disabled:to-slate-300 text-white rounded-lg transition-all duration-200 font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl disabled:shadow-none"
                     >
                       <Upload className="w-5 h-5" />
-                      {isUploadingPhoto ? 'Uploading...' : 'Upload Photo to Patient'}
+                      {isUploadingPhoto ? 'Uploading...' : 'Upload Photo'}
                     </button>
                   </div>
 
-                  {/* Recent Photos */}
+                  {/* Recent Photos or All Patients Photos */}
                   {photos.length > 0 && (
                     <div className="bg-white rounded-xl shadow-lg p-6">
-                      <h3 className="text-lg font-semibold text-slate-800 mb-4">Recent Patient Photos</h3>
-                      <div className="space-y-3">
-                        {photos.slice(-10).reverse().map(photo => {
+                      <div className="flex justify-between items-center mb-4 gap-4">
+                        <h3 className="text-lg font-semibold text-slate-800">
+                          {viewAllPhotos ? 'All Patients Photos' : 'Recent Patient Photos'}
+                        </h3>
+                        <div className="flex items-center gap-3 flex-1 max-w-sm">
+                          <input
+                            type="text"
+                            placeholder="Search photos by patient name..."
+                            value={photoSearchQuery}
+                            onChange={(e) => setPhotoSearchQuery(e.target.value)}
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm"
+                          />
+                          <button
+                            onClick={() => setViewAllPhotos(!viewAllPhotos)}
+                            className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors text-sm font-medium whitespace-nowrap"
+                          >
+                            {viewAllPhotos ? 'View Recent' : 'View All Patients'}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="space-y-3 max-h-96 overflow-y-auto">
+                        {(viewAllPhotos 
+                          ? photos.reverse().filter(photo => {
+                              const patient = patients.find(p => String(p.id) === String(photo.patientId));
+                              return patient?.name.toLowerCase().includes(photoSearchQuery.toLowerCase());
+                            })
+                          : photos.slice(-10).reverse().filter(photo => {
+                              const patient = patients.find(p => String(p.id) === String(photo.patientId));
+                              return patient?.name.toLowerCase().includes(photoSearchQuery.toLowerCase());
+                            })
+                        ).map(photo => {
                           const patient = patients.find(p => String(p.id) === String(photo.patientId));
                           return (
-                            <div key={photo.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200 flex justify-between items-start">
-                              <div>
+                            <div key={photo.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200 flex justify-between items-start gap-3">
+                              <div className="flex-1">
                                 <p className="font-medium">{patient?.name || 'Unknown Patient'}</p>
-                                <p className="text-sm text-gray-600 capitalize">{photo.type} - {new Date(photo.date).toLocaleDateString()}</p>
+                                <p className="text-sm text-gray-600 capitalize">{photo.type} - {formatToDD_MM_YYYY(photo.date)}</p>
                                 {photo.notes && <p className="text-sm text-gray-700 mt-1">{photo.notes}</p>}
                               </div>
-                              <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded capitalize">
-                                {photo.type}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => setSelectedPhotoForView(photo)}
+                                  className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors flex items-center gap-1 text-sm"
+                                  title="View photo"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                  View
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setShowReplacePhotoModal(photo.id);
+                                    setReplacePhotoUrl('');
+                                    setReplacePhotoFile(null);
+                                  }}
+                                  className="px-3 py-1.5 bg-amber-100 text-amber-700 rounded hover:bg-amber-200 transition-colors flex items-center gap-1 text-sm"
+                                  title="Replace photo"
+                                >
+                                  <RotateCcw className="w-4 h-4" />
+                                  Replace
+                                </button>
+                                <button
+                                  onClick={() => setShowDeletePhotoConfirm(photo.id)}
+                                  className="px-3 py-1.5 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors flex items-center gap-1 text-sm"
+                                  title="Delete photo"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  Delete
+                                </button>
+                              </div>
                             </div>
                           );
                         })}
@@ -801,6 +1007,161 @@ export function AssistantDashboard({
           </AnimatePresence>
         </div>
       </div>
+
+      {/* View Photo Modal */}
+      <AnimatePresence>
+        {selectedPhotoForView && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+            onClick={() => setSelectedPhotoForView(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.8 }}
+              className="relative bg-white rounded-xl overflow-hidden flex flex-col"
+              style={{ width: '90vw', height: '90vh', maxWidth: '1000px', maxHeight: '700px' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setSelectedPhotoForView(null)}
+                className="absolute top-4 right-4 w-10 h-10 bg-red-600 text-white rounded-full flex items-center justify-center hover:bg-red-700 z-10"
+              >
+                <X className="w-6 h-6" />
+              </button>
+
+              <div className="flex-1 flex items-center justify-center bg-gray-50 overflow-hidden">
+                <img
+                  src={selectedPhotoForView.url}
+                  alt={selectedPhotoForView.type}
+                  className="w-full h-full object-contain"
+                  style={{ imageRendering: 'crisp-edges' }}
+                />
+              </div>
+              <div className="p-6 bg-white border-t border-gray-200">
+                <p className="font-semibold text-lg capitalize mb-2">{selectedPhotoForView.type} Photo</p>
+                <p className="text-sm text-gray-600 mb-2">Date: {formatToDD_MM_YYYY(selectedPhotoForView.date)}</p>
+                {selectedPhotoForView.notes && (
+                  <p className="text-sm text-gray-700">Notes: {selectedPhotoForView.notes}</p>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Replace Photo Modal */}
+      <AnimatePresence>
+        {showReplacePhotoModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+            onClick={() => setShowReplacePhotoModal(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-xl p-6 max-w-md w-full"
+            >
+              <h3 className="text-xl font-bold text-slate-900 mb-4">Replace Photo</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select New Photo
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleReplacePhotoFile}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                  />
+                  {replacePhotoFile && (
+                    <div className="text-sm text-gray-600 mt-2">
+                      ✓ {replacePhotoFile.name}
+                    </div>
+                  )}
+                </div>
+
+                {replacePhotoUrl && (
+                  <div className="mt-3 relative w-full h-40 rounded-lg border border-gray-200 overflow-hidden bg-gray-50">
+                    <img src={replacePhotoUrl} alt="New Preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setShowReplacePhotoModal(null)}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleReplacePhoto}
+                  disabled={isReplacingPhoto || !replacePhotoUrl}
+                  className="flex-1 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isReplacingPhoto ? 'Replacing...' : 'Replace'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Photo Confirmation Modal */}
+      <AnimatePresence>
+        {showDeletePhotoConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+            onClick={() => setShowDeletePhotoConfirm(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-xl p-6 max-w-sm w-full"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                  <AlertCircle className="w-6 h-6 text-red-600" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900">Delete Photo</h3>
+              </div>
+              <p className="text-slate-600 mb-6">
+                Are you sure you want to delete this photo? This action cannot be undone.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeletePhotoConfirm(null)}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeletePhoto}
+                  disabled={isDeletingPhoto}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isDeletingPhoto ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Settings Modal */}
       <AnimatePresence>

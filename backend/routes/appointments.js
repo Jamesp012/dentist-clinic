@@ -65,6 +65,23 @@ router.post('/', authMiddleware, async (req, res) => {
     
     const { date: dateOnly, time: timeOnly } = extractDateTime(appointmentDateTime);
     
+    // Create notification for patient if appointment was created by staff
+    if (roleValue === 'staff' && patientId) {
+      const { date: notifDate, time: notifTime } = extractDateTime(appointmentDateTime);
+      const notificationTitle = 'New Appointment Scheduled';
+      const notificationMessage = `Your ${type} appointment has been scheduled for ${notifDate} at ${notifTime}. Duration: ${duration} minutes.`;
+      
+      try {
+        await pool.query(
+          'INSERT INTO patient_notifications (patientId, appointmentId, type, title, message) VALUES (?, ?, ?, ?, ?)',
+          [patientId, result.insertId, 'appointment_created', notificationTitle, notificationMessage]
+        );
+      } catch (notifError) {
+        // Log notification error but don't fail the appointment creation
+        console.error('Error creating notification:', notifError.message);
+      }
+    }
+    
     res.status(201).json({ 
       id: result.insertId, 
       patientId, 
@@ -90,10 +107,45 @@ router.put('/:id', authMiddleware, async (req, res) => {
     const appointmentDateTime = parseAppointmentDateTime(date, time);
     const roleValue = createdByRole === 'patient' ? 'patient' : 'staff';
     
+    // Get the old appointment to check if status changed
+    const [oldAppointment] = await pool.query(
+      'SELECT * FROM appointments WHERE id = ?',
+      [req.params.id]
+    );
+    
     await pool.query(
       'UPDATE appointments SET patientId=?, patientName=?, appointmentDateTime=?, type=?, duration=?, status=?, notes=?, createdByRole=? WHERE id=?',
       [patientId, patientName, appointmentDateTime, type, duration, status, notes, roleValue, req.params.id]
     );
+    
+    // Create notification for status changes (by staff only)
+    if (roleValue === 'staff' && oldAppointment.length > 0 && oldAppointment[0].status !== status) {
+      const { date: notifDate, time: notifTime } = extractDateTime(appointmentDateTime);
+      let notificationTitle = '';
+      let notificationMessage = '';
+      let notificationType = 'appointment_updated';
+      
+      if (status === 'cancelled') {
+        notificationTitle = 'Appointment Cancelled';
+        notificationMessage = `Your ${type} appointment scheduled for ${notifDate} at ${notifTime} has been cancelled.`;
+        notificationType = 'appointment_cancelled';
+      } else if (status === 'completed') {
+        notificationTitle = 'Appointment Completed';
+        notificationMessage = `Your ${type} appointment on ${notifDate} has been marked as completed.`;
+      } else {
+        notificationTitle = 'Appointment Updated';
+        notificationMessage = `Your ${type} appointment has been rescheduled to ${notifDate} at ${notifTime}.`;
+      }
+      
+      try {
+        await pool.query(
+          'INSERT INTO patient_notifications (patientId, appointmentId, type, title, message) VALUES (?, ?, ?, ?, ?)',
+          [patientId, req.params.id, notificationType, notificationTitle, notificationMessage]
+        );
+      } catch (notifError) {
+        console.error('Error creating notification:', notifError.message);
+      }
+    }
     
     const { date: dateOnly, time: timeOnly } = extractDateTime(appointmentDateTime);
     

@@ -3,6 +3,7 @@ import { Patient } from '../App';
 import { Sparkles, Star, RotateCcw, History, Calendar } from 'lucide-react';
 import { motion } from 'motion/react';
 import { PatientSearch } from './PatientSearch';
+import { formatToDD_MM_YYYY } from '../utils/dateHelpers';
 
 type BracesChartingProps = {
   patients: Patient[];
@@ -716,11 +717,7 @@ export function BracesCharting({ patients }: BracesChartingProps) {
                               <p className="font-semibold text-gray-800">{entry.colorName}</p>
                               <p className="text-xs text-gray-500 flex items-center gap-1">
                                 <Calendar className="w-3 h-3" />
-                                {new Date(entry.date).toLocaleDateString('en-US', { 
-                                  month: 'long', 
-                                  day: 'numeric', 
-                                  year: 'numeric' 
-                                })}
+                                {formatToDD_MM_YYYY(entry.date)}
                               </p>
                               {entry.notes && (
                                 <p className="text-xs text-gray-600 mt-1 italic">{entry.notes}</p>
