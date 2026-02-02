@@ -36,24 +36,24 @@ type BracesData = {
   lastUpdated?: string;
 };
 
-// Available rubber band colors - Darker, more visible and professional
+// Available rubber band colors
 const rubberBandColorOptions = [
   { name: 'Clear', value: '#E8F4F8', stroke: '#B0C4DE' },
-  { name: 'Red', value: '#E63946', stroke: '#A01830' },
-  { name: 'Blue', value: '#1D3557', stroke: '#0F1F35' },
-  { name: 'Green', value: '#2D6A4F', stroke: '#1B4D35' },
-  { name: 'Purple', value: '#7209B7', stroke: '#4A0E7E' },
-  { name: 'Pink', value: '#D946EF', stroke: '#A01CB8' },
-  { name: 'Orange', value: '#F77F00', stroke: '#D45C00' },
-  { name: 'Yellow', value: '#FFBA08', stroke: '#CC8C00' },
-  { name: 'Teal', value: '#00A699', stroke: '#007A7A' },
-  { name: 'Lime', value: '#6FA800', stroke: '#558000' },
-  { name: 'Turquoise', value: '#0D7D7D', stroke: '#064D4D' },
-  { name: 'Lavender', value: '#7B2CBF', stroke: '#5A1F8F' },
-  { name: 'Coral', value: '#FF6B35', stroke: '#CC4D28' },
-  { name: 'Mint', value: '#00917C', stroke: '#006B5F' },
-  { name: 'Gold', value: '#B8860B', stroke: '#8A6400' },
-  { name: 'Silver', value: '#708090', stroke: '#4A5568' },
+  { name: 'Red', value: '#FF6B6B', stroke: '#DC143C' },
+  { name: 'Blue', value: '#4ECDC4', stroke: '#1E90FF' },
+  { name: 'Green', value: '#95E1D3', stroke: '#32CD32' },
+  { name: 'Purple', value: '#C197D2', stroke: '#9370DB' },
+  { name: 'Pink', value: '#FFB6C1', stroke: '#FF69B4' },
+  { name: 'Orange', value: '#FFB347', stroke: '#FF8C00' },
+  { name: 'Yellow', value: '#FFE66D', stroke: '#FFD700' },
+  { name: 'Teal', value: '#06D6A0', stroke: '#008B8B' },
+  { name: 'Lime', value: '#C7F464', stroke: '#7FFF00' },
+  { name: 'Turquoise', value: '#4DD0E1', stroke: '#00CED1' },
+  { name: 'Lavender', value: '#DCC6E0', stroke: '#9966CC' },
+  { name: 'Coral', value: '#FF7F7F', stroke: '#FF6347' },
+  { name: 'Mint', value: '#B5EAD7', stroke: '#98FF98' },
+  { name: 'Gold', value: '#FFD700', stroke: '#DAA520' },
+  { name: 'Silver', value: '#C0C0C0', stroke: '#A9A9A9' },
 ];
 
 export function BracesCharting({ patients }: BracesChartingProps) {
@@ -256,10 +256,10 @@ export function BracesCharting({ patients }: BracesChartingProps) {
               </div>
 
               {/* Professional Braces Chart - Improved Spacing and Anatomy */}
-              <div className="flex flex-col items-center justify-center gap-2">
+              <div className="space-y-3">
               {/* UPPER TEETH ARCH */}
-              <div className="relative mx-auto" style={{ width: '800px', height: '200px' }}>
-                <svg width="800" height="200" viewBox="0 0 800 200" className="w-full">
+              <div className="relative mx-auto" style={{ width: '800px', height: '220px' }}>
+                <svg width="800" height="220" viewBox="0 0 800 220" className="w-full">
                   <defs>
                     <filter id="gumShadow">
                       <feGaussianBlur in="SourceGraphic" stdDeviation="2" />
@@ -290,20 +290,20 @@ export function BracesCharting({ patients }: BracesChartingProps) {
 
                   {/* Upper Gum - Improved anatomical curve */}
                   <path
-                    d="M 40,50
-                       C 40,15 120,5 400,5
-                       C 680,5 760,15 760,50
-                       C 760,80 720,105 620,118
+                    d="M 40,60
+                       C 40,25 120,10 400,10
+                       C 680,10 760,25 760,60
+                       C 760,85 720,108 620,120
                        C 520,130 420,135 400,135
-                       C 380,135 280,130 180,118
-                       C 80,105 40,80 40,50
+                       C 380,135 280,130 180,120
+                       C 80,108 40,85 40,60
                        Z"
                     fill="url(#upperGumGradient)"
                     filter="url(#gumShadow)"
                   />
 
                   {/* Gum shine/highlight */}
-                  <ellipse cx="400" cy="18" rx="300" ry="12" fill="white" opacity="0.35" />
+                  <ellipse cx="400" cy="28" rx="300" ry="14" fill="white" opacity="0.3" />
                   
                   {/* Gum texture lines for realism */}
                   {[...Array(15)].map((_, i) => (
@@ -319,16 +319,16 @@ export function BracesCharting({ patients }: BracesChartingProps) {
 
                   {/* Individual Teeth - 16 teeth across - Improved anatomy */}
                   {upperTeeth.map((tooth, index) => {
-                    const teethSpacing = 43;  // Proper spacing matching reference image
+                    const teethSpacing = 44;  // Tighter spacing for professional look
                     const centerIndex = 7.5;
                     const offset = index - centerIndex;
                     
                     // Better teeth positioning - roots embedded in gums
-                    const startX = 28 + index * teethSpacing;
+                    const startX = 30 + index * teethSpacing;
                     const gumCurve = Math.pow(Math.abs(offset) * 0.12, 1.5) * 22;
                     const toothY = 132 - gumCurve; // Proper tooth emergence
-                    const toothWidth = 37;  // Wider teeth matching reference
-                    const toothHeight = 52;
+                    const toothWidth = 38;
+                    const toothHeight = 50;
                     
                     // Rotation to follow arch naturally
                     const rotation = offset * 2.5;
@@ -348,23 +348,19 @@ export function BracesCharting({ patients }: BracesChartingProps) {
                         style={{ cursor: 'pointer' }}
                         transform={`translate(${startX + toothWidth/2},${toothY + toothHeight/2}) rotate(${rotation}) translate(${-(startX + toothWidth/2)},${-(toothY + toothHeight/2)})`}
                       >
-                        {/* Tooth root (in gum) - anatomically correct */}
+                        {/* Tooth root (in gum) */}
                         <path
-                          d={`M ${startX + 10},135 Q ${startX + 8},150 ${startX + 16},160 Q ${startX + 24},150 ${startX + 22},135`}
-                          fill="#e8d4b8"
-                          opacity="0.7"
+                          d={`M ${startX + 15},135 L ${startX + 10},155 Q ${startX + 15},160 ${startX + 23},155 L ${startX + 18},135`}
+                          fill="#f5e6d3"
+                          opacity="0.6"
                         />
                         
-                        {/* Tooth crown - realistic rounded rectangle shape */}
+                        {/* Tooth crown - more realistic shape */}
                         <path
-                          d={`M ${startX + 11},135
-                             Q ${startX + 9},118 ${startX + 9},98
-                             L ${startX + 9},92
-                             Q ${startX + 9},70 ${startX + 15},68
-                             L ${startX + 28},68
-                             Q ${startX + 34},70 ${startX + 34},92
-                             L ${startX + 34},98
-                             Q ${startX + 34},118 ${startX + 32},135
+                          d={`M ${startX + 10},135
+                             L ${startX + 8},105 Q ${startX + 8},80 ${startX + 19},75
+                             L ${startX + 30},75 Q ${startX + 41},80 ${startX + 41},105
+                             L ${startX + 39},135
                              Z`}
                           fill="url(#upperToothGradient)"
                           stroke={isHovered ? '#4b90ff' : '#d0d0d0'}
@@ -375,54 +371,56 @@ export function BracesCharting({ patients }: BracesChartingProps) {
                         <ellipse
                           cx={startX + 15}
                           cy={90}
-                          rx="3"
-                          ry="13"
+                          rx="4"
+                          ry="10"
                           fill="white"
-                          opacity="0.5"
+                          opacity="0.6"
                         />
                         
                         {/* Tooth midline shadow for dimension */}
                         <line
-                          x1={startX + 21.5}
-                          y1={68}
-                          x2={startX + 21.5}
-                          y2={135}
+                          x1={startX + 19}
+                          y1={75}
+                          x2={startX + 19}
+                          y2={133}
                           stroke="#ddd"
-                          strokeWidth="0.4"
-                          opacity="0.25"
+                          strokeWidth="0.5"
+                          opacity="0.3"
                         />
                         
-                        {/* SINGLE centered bracket - smaller oval shape */}
-                        <ellipse
-                          cx={startX + 18.5}
-                          cy={toothY + 19}
-                          rx="6.5"
-                          ry="7"
-                          fill="#EEEEEE"
-                          stroke="#CCCCCC"
-                          strokeWidth="0.7"
+                        {/* SINGLE centered bracket */}
+                        <rect
+                          x={startX + 15}
+                          y={toothY + 25}
+                          width="10"
+                          height="10"
+                          rx="0.8"
+                          fill="url(#bracketGradient)"
+                          stroke="#555555"
+                          strokeWidth="0.5"
                         />
                         
-                        {/* Bracket slot detail */}
-                        <line x1={startX + 13} y1={toothY + 19} x2={startX + 24} y2={toothY + 19} stroke="#DDDDDD" strokeWidth="0.5" opacity="0.6" />
+                        {/* Bracket slot details for realism */}
+                        <line x1={startX + 16} y1={toothY + 28.5} x2={startX + 24} y2={toothY + 28.5} stroke="#333" strokeWidth="0.6" opacity="0.8" />
+                        <line x1={startX + 16} y1={toothY + 32} x2={startX + 24} y2={toothY + 32} stroke="#333" strokeWidth="0.6" opacity="0.8" />
                         
                         {/* Bracket shine */}
-                        <ellipse cx={startX + 17} cy={toothY + 17} rx="2" ry="2.5" fill="white" opacity="0.8" />
+                        <rect x={startX + 16} y={toothY + 25.5} width="1.2" height="2" fill="white" opacity="0.7" />
                         
-                        {/* Single rubber band centered on bracket - smaller size */}
+                        {/* Single rubber band centered on bracket */}
                         <circle
-                          cx={startX + 18.5}
-                          cy={toothY + 27}
+                          cx={startX + 20}
+                          cy={toothY + 30}
                           r="6.5"
                           fill={rubberBandColor}
                           stroke={colorOption.stroke}
-                          strokeWidth="1.2"
-                          opacity={isSelected ? 1 : 0.88}
+                          strokeWidth="1"
+                          opacity={isSelected ? 1 : 0.9}
                           filter="url(#gumShadow)"
                         />
                         
                         {/* Rubber band shine */}
-                        <ellipse cx={startX + 17} cy={toothY + 24} rx="1.8" ry="2.2" fill="white" opacity="0.4" />
+                        <ellipse cx={startX + 18} cy={toothY + 28} rx="2" ry="2.5" fill="white" opacity="0.5" />
                       </g>
                     );
                   })}
@@ -440,10 +438,10 @@ export function BracesCharting({ patients }: BracesChartingProps) {
                   
                   {/* Wire connection points to brackets - visual continuity */}
                   {upperTeeth.map((tooth, index) => {
-                    const teethSpacing = 43;
+                    const teethSpacing = 44;
                     const centerIndex = 7.5;
                     const offset = index - centerIndex;
-                    const startX = 28 + index * teethSpacing;
+                    const startX = 30 + index * teethSpacing;
                     const gumCurve = Math.pow(Math.abs(offset) * 0.12, 1.5) * 22;
                     const toothY = 132 - gumCurve;
                     
@@ -469,8 +467,8 @@ export function BracesCharting({ patients }: BracesChartingProps) {
               </div>
 
               {/* LOWER TEETH ARCH - Reduced spacing from 200px to ~60px gap */}
-              <div className="relative mx-auto" style={{ width: '800px', height: '200px' }}>
-                <svg width="800" height="200" viewBox="0 0 800 200" className="w-full">
+              <div className="relative mx-auto" style={{ width: '800px', height: '220px' }}>
+                <svg width="800" height="220" viewBox="0 0 800 220" className="w-full">
                   <defs>
                     <linearGradient id="lowerGumGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                       <stop offset="0%" style={{ stopColor: '#ff6a8f' }} />
@@ -484,20 +482,20 @@ export function BracesCharting({ patients }: BracesChartingProps) {
 
                   {/* Lower Gum - Improved anatomical curve */}
                   <path
-                    d="M 40,150
-                       C 40,185 120,195 400,200
-                       C 680,195 760,185 760,150
-                       C 760,120 720,95 620,82
-                       C 520,70 420,65 400,65
-                       C 380,65 280,70 180,82
-                       C 80,95 40,120 40,150
+                    d="M 40,160
+                       C 40,185 120,200 400,210
+                       C 680,200 760,185 760,160
+                       C 760,135 720,112 620,100
+                       C 520,90 420,85 400,85
+                       C 380,85 280,90 180,100
+                       C 80,112 40,135 40,160
                        Z"
                     fill="url(#lowerGumGradient)"
                     filter="url(#gumShadow)"
                   />
 
                   {/* Gum shine/highlight */}
-                  <ellipse cx="400" cy="182" rx="300" ry="12" fill="white" opacity="0.25" />
+                  <ellipse cx="400" cy="192" rx="300" ry="14" fill="white" opacity="0.2" />
                   
                   {/* Gum texture lines for realism */}
                   {[...Array(15)].map((_, i) => (
@@ -513,16 +511,16 @@ export function BracesCharting({ patients }: BracesChartingProps) {
 
                   {/* Individual Teeth - 16 teeth across - Improved anatomy */}
                   {lowerTeeth.map((tooth, index) => {
-                    const teethSpacing = 43;  // Proper spacing matching reference image
+                    const teethSpacing = 44;  // Tighter spacing for professional look
                     const centerIndex = 7.5;
                     const offset = index - centerIndex;
                     
                     // Better teeth positioning - roots embedded in gums
-                    const startX = 28 + index * teethSpacing;
+                    const startX = 30 + index * teethSpacing;
                     const gumCurve = Math.pow(Math.abs(offset) * 0.12, 1.5) * 22;
-                    const toothY = 65 + gumCurve; // Lower teeth start where gum begins
-                    const toothWidth = 37;  // Wider teeth matching reference
-                    const toothHeight = 52;
+                    const toothY = 85 + gumCurve; // Lower teeth start where gum begins
+                    const toothWidth = 38;
+                    const toothHeight = 50;
                     
                     // Rotation to follow arch
                     const rotation = -offset * 2.5;
@@ -542,23 +540,19 @@ export function BracesCharting({ patients }: BracesChartingProps) {
                         style={{ cursor: 'pointer' }}
                         transform={`translate(${startX + toothWidth/2},${toothY + toothHeight/2}) rotate(${rotation}) translate(${-(startX + toothWidth/2)},${-(toothY + toothHeight/2)})`}
                       >
-                        {/* Tooth root (in gum) - anatomically correct */}
+                        {/* Tooth root (in gum) */}
                         <path
-                          d={`M ${startX + 10},65 Q ${startX + 8},50 ${startX + 16},40 Q ${startX + 24},50 ${startX + 22},65`}
-                          fill="#e8d4b8"
-                          opacity="0.7"
+                          d={`M ${startX + 15},85 L ${startX + 10},65 Q ${startX + 15},60 ${startX + 23},65 L ${startX + 18},85`}
+                          fill="#f5e6d3"
+                          opacity="0.6"
                         />
                         
-                        {/* Tooth crown - realistic rounded rectangle shape for lower teeth */}
+                        {/* Tooth crown - more realistic shape for lower teeth */}
                         <path
-                          d={`M ${startX + 11},65
-                             Q ${startX + 9},80 ${startX + 9},100
-                             L ${startX + 9},105
-                             Q ${startX + 9},125 ${startX + 15},128
-                             L ${startX + 28},128
-                             Q ${startX + 34},125 ${startX + 34},105
-                             L ${startX + 34},100
-                             Q ${startX + 34},80 ${startX + 32},65
+                          d={`M ${startX + 10},85
+                             L ${startX + 8},115 Q ${startX + 8},140 ${startX + 19},145
+                             L ${startX + 30},145 Q ${startX + 41},140 ${startX + 41},115
+                             L ${startX + 39},85
                              Z`}
                           fill="url(#lowerToothGradient)"
                           stroke={isHovered ? '#4b90ff' : '#d0d0d0'}
@@ -568,63 +562,65 @@ export function BracesCharting({ patients }: BracesChartingProps) {
                         {/* Tooth highlight/shine for depth */}
                         <ellipse
                           cx={startX + 15}
-                          cy={100}
-                          rx="3"
-                          ry="13"
+                          cy={130}
+                          rx="4"
+                          ry="10"
                           fill="white"
-                          opacity="0.5"
+                          opacity="0.6"
                         />
                         
                         {/* Tooth midline shadow for dimension */}
                         <line
-                          x1={startX + 21.5}
-                          y1={128}
-                          x2={startX + 21.5}
-                          y2={65}
+                          x1={startX + 19}
+                          y1={145}
+                          x2={startX + 19}
+                          y2={87}
                           stroke="#ddd"
-                          strokeWidth="0.4"
-                          opacity="0.25"
+                          strokeWidth="0.5"
+                          opacity="0.3"
                         />
                         
-                        {/* SINGLE centered bracket - ON tooth surface with LIGHT neutral color */}
-                        <ellipse
-                          cx={startX + 18.5}
-                          cy={toothY + 19}
-                          rx="6.5"
-                          ry="7"
-                          fill="#EEEEEE"
-                          stroke="#CCCCCC"
-                          strokeWidth="0.7"
+                        {/* SINGLE centered bracket */}
+                        <rect
+                          x={startX + 15}
+                          y={toothY + 25}
+                          width="10"
+                          height="10"
+                          rx="0.8"
+                          fill="url(#bracketGradient)"
+                          stroke="#555555"
+                          strokeWidth="0.5"
                         />
                         
-                        {/* Bracket slot detail */}
-                        <line x1={startX + 13} y1={toothY + 19} x2={startX + 24} y2={toothY + 19} stroke="#DDDDDD" strokeWidth="0.5" opacity="0.6" />
+                        {/* Bracket slot details */}
+                        <line x1={startX + 16} y1={toothY + 28.5} x2={startX + 24} y2={toothY + 28.5} stroke="#333" strokeWidth="0.6" opacity="0.8" />
+                        <line x1={startX + 16} y1={toothY + 32} x2={startX + 24} y2={toothY + 32} stroke="#333" strokeWidth="0.6" opacity="0.8" />
                         
                         {/* Bracket shine */}
-                        <ellipse cx={startX + 17} cy={toothY + 17} rx="2" ry="2.5" fill="white" opacity="0.8" />
+                        <rect x={startX + 16} y={toothY + 25.5} width="1.2" height="2" fill="white" opacity="0.7" />
                         
-                        {/* Single rubber band centered on bracket - smaller size */}
+                        {/* Single rubber band centered on bracket */}
                         <circle
-                          cx={startX + 18.5}
-                          cy={toothY + 27}
+                          cx={startX + 20}
+                          cy={toothY + 30}
                           r="6.5"
                           fill={rubberBandColor}
                           stroke={colorOption.stroke}
-                          strokeWidth="1.2"
-                          opacity={isSelected ? 1 : 0.88}
+                          strokeWidth="1"
+                          opacity={isSelected ? 1 : 0.9}
                           filter="url(#gumShadow)"
                         />
                         
                         {/* Rubber band shine */}
-                        <ellipse cx={startX + 17} cy={toothY + 24} rx="1.8" ry="2.2" fill="white" opacity="0.4" />
+                        <ellipse cx={startX + 18} cy={toothY + 28} rx="2" ry="2.5" fill="white" opacity="0.5" />
                       </g>
                     );
                   })}
 
                   {/* Lower Archwire - Improved alignment */}
                   <path
-                    d="M 20,65
-                       Q 400,85 780,65"
+                    d="M 20,85
+                       Q 400,105 780,85"
                     stroke="url(#wireGradient)"
                     strokeWidth="2.5"
                     fill="none"
@@ -634,12 +630,12 @@ export function BracesCharting({ patients }: BracesChartingProps) {
                   
                   {/* Wire connection points to brackets */}
                   {lowerTeeth.map((tooth, index) => {
-                    const teethSpacing = 43;
+                    const teethSpacing = 44;
                     const centerIndex = 7.5;
                     const offset = index - centerIndex;
-                    const startX = 28 + index * teethSpacing;
+                    const startX = 30 + index * teethSpacing;
                     const gumCurve = Math.pow(Math.abs(offset) * 0.12, 1.5) * 22;
-                    const toothY = 65 + gumCurve;
+                    const toothY = 85 + gumCurve;
                     
                     return (
                       <g key={`lower-wire-connection-${tooth}`}>

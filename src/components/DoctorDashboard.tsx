@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Menu, Users, Calendar, ClipboardList, FileText, LayoutDashboard, Stethoscope, LogOut, Sparkles, UserCog, Settings, X, Check, Eye, EyeOff, Megaphone, Camera } from 'lucide-react';
+import { Menu, Users, Calendar, ClipboardList, FileText, LayoutDashboard, Stethoscope, LogOut, Sparkles, UserCog, Settings, X, Check, Eye, EyeOff, Megaphone, Camera, Package } from 'lucide-react';
 import { PesoSign } from './icons/PesoSign';
 import { Dashboard } from './Dashboard';
 import { PatientManagement } from './PatientManagement';
@@ -207,13 +207,14 @@ export function DoctorDashboard({
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, color: 'from-teal-500 to-cyan-600' },
     { id: 'patients', label: 'Patients', icon: Users, color: 'from-teal-500 to-teal-600' },
-      { id: 'employees', label: 'Employees', icon: UserCog, color: 'from-cyan-600 to-teal-500' },
+    { id: 'employees', label: 'Employees', icon: UserCog, color: 'from-cyan-600 to-teal-500' },
     { id: 'appointments', label: 'Appointments', icon: Calendar, color: 'from-teal-600 to-cyan-600' },
     { id: 'photos', label: 'Patient Photos', icon: Camera, color: 'from-violet-500 to-purple-600' },
     { id: 'charting', label: 'Dental Charting', icon: ClipboardList, color: 'from-cyan-500 to-teal-500' },
     { id: 'braces', label: 'Braces Charting', icon: Sparkles, color: 'from-teal-500 to-emerald-600' },
     { id: 'referrals', label: 'Referrals', icon: FileText, color: 'from-cyan-500 to-emerald-600' },
     { id: 'services', label: 'Services Forms', icon: Stethoscope, color: 'from-teal-600 to-cyan-600' },
+    { id: 'inventory', label: 'Inventory', icon: Package, color: 'from-cyan-600 to-teal-500' },
     { id: 'financial', label: 'Financial Report', icon: PesoSign, color: 'from-emerald-500 to-teal-600' },
     { id: 'announcements', label: 'Announcements', icon: Megaphone, color: 'from-cyan-600 to-teal-500' },
   ];
@@ -376,6 +377,12 @@ export function DoctorDashboard({
               <div>
                 <h2 className="text-3xl font-bold text-teal-900">Services Forms</h2>
                 <p className="text-gray-600 mt-1">Manage clinic services and treatments</p>
+              </div>
+            )}
+            {activeTab === 'inventory' && (
+              <div>
+                <h2 className="text-3xl font-bold text-orange-900">Inventory Management</h2>
+                <p className="text-gray-600 mt-1">Track supplies and manage inventory</p>
               </div>
             )}
             {activeTab === 'financial' && (
