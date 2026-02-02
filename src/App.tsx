@@ -90,6 +90,8 @@ export type Referral = {
   patientId: string | number;
   patientName: string;
   referringDentist: string;
+  referredByContact?: string;
+  referredByEmail?: string;
   referredTo: string;
   specialty: string;
   reason: string;

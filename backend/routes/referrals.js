@@ -30,11 +30,12 @@ router.get('/:id', authMiddleware, async (req, res) => {
 // Create referral
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { patientId, patientName, referringDentist, referredTo, specialty, reason, date, urgency, createdByRole } = req.body;
+    const { patientId, patientName, referringDentist, referredByContact, referredByEmail, referredTo, specialty, reason, selectedServices, date, urgency, createdByRole } = req.body;
     const roleValue = createdByRole === 'patient' ? 'patient' : 'staff';
+    const servicesJson = selectedServices ? JSON.stringify(selectedServices) : null;
     const [result] = await pool.query(
-      'INSERT INTO referrals (patientId, patientName, referringDentist, referredTo, specialty, reason, date, urgency, createdByRole) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [patientId, patientName, referringDentist, referredTo, specialty, reason, date, urgency, roleValue]
+      'INSERT INTO referrals (patientId, patientName, referringDentist, referredByContact, referredByEmail, referredTo, specialty, reason, selectedServices, date, urgency, createdByRole) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [patientId || null, patientName, referringDentist, referredByContact || null, referredByEmail || null, referredTo, specialty || null, reason || null, servicesJson, date, urgency || 'routine', roleValue]
     );
     res.status(201).json({ id: result.insertId, ...req.body, createdByRole: roleValue });
   } catch (error) {
@@ -45,11 +46,12 @@ router.post('/', authMiddleware, async (req, res) => {
 // Update referral
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
-    const { patientId, patientName, referringDentist, referredTo, specialty, reason, date, urgency, createdByRole } = req.body;
+    const { patientId, patientName, referringDentist, referredByContact, referredByEmail, referredTo, specialty, reason, selectedServices, date, urgency, createdByRole } = req.body;
     const roleValue = createdByRole === 'patient' ? 'patient' : 'staff';
+    const servicesJson = selectedServices ? JSON.stringify(selectedServices) : null;
     await pool.query(
-      'UPDATE referrals SET patientId=?, patientName=?, referringDentist=?, referredTo=?, specialty=?, reason=?, date=?, urgency=?, createdByRole=? WHERE id=?',
-      [patientId, patientName, referringDentist, referredTo, specialty, reason, date, urgency, roleValue, req.params.id]
+      'UPDATE referrals SET patientId=?, patientName=?, referringDentist=?, referredByContact=?, referredByEmail=?, referredTo=?, specialty=?, reason=?, selectedServices=?, date=?, urgency=?, createdByRole=? WHERE id=?',
+      [patientId || null, patientName, referringDentist, referredByContact || null, referredByEmail || null, referredTo, specialty || null, reason || null, servicesJson, date, urgency || 'routine', roleValue, req.params.id]
     );
     res.json({ id: req.params.id, ...req.body, createdByRole: roleValue });
   } catch (error) {

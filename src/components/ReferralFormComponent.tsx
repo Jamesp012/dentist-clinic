@@ -62,7 +62,7 @@ export const ReferralFormComponent: React.FC<ReferralFormComponentProps> = ({
   };
 
   const handleSubmit = () => {
-    if (!formData.patientName || !formData.referredTo || !formData.specialty || !formData.reason) {
+    if (!formData.patientName || !formData.referredTo) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -73,10 +73,10 @@ export const ReferralFormComponent: React.FC<ReferralFormComponentProps> = ({
       patientName: formData.patientName,
       referringDentist: formData.referredBy || currentUser?.name || 'Dr. Dentist',
       referredTo: formData.referredTo,
-      specialty: formData.specialty,
-      reason: formData.reason,
+      specialty: formData.specialty || '',
+      reason: formData.reason || '',
       date: formData.date,
-      urgency: formData.urgency
+      urgency: formData.urgency || 'routine'
     };
 
     onSubmit(newReferral);

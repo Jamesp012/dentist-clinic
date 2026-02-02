@@ -55,9 +55,12 @@ export interface Referral {
   patientId: string | number;
   patientName: string;
   referringDentist: string;
+  referredByContact?: string;
+  referredByEmail?: string;
   referredTo: string;
   specialty: string;
   reason: string;
+  selectedServices?: Record<string, boolean>;
   date: string;
   urgency: 'routine' | 'urgent' | 'emergency';
   createdByRole?: 'patient' | 'staff';

@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import { Patient, Referral, Payment, TreatmentRecord } from '../App';
+import { referralAPI } from '../api';
+import { generateReferralPDF } from '../utils/referralPdfGenerator';
+import clinicMap from '../assets/clinic-map.jpg';
+import clinicLogo from '../assets/jclinic-logo.png';
 import {
   FileText,
   X,
@@ -11,7 +15,9 @@ import {
   UserCircle2,
   Calendar,
   ArrowUpRight,
-  DollarSign
+  DollarSign,
+  Trash2,
+  Printer
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
@@ -32,6 +38,7 @@ type MergedFormsComponentProps = {
 
 export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
   referrals,
+  setReferrals,
   patients,
   treatmentRecords,
 }) => {
@@ -44,6 +51,8 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
   const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null);
   const [selectedReceipt, setSelectedReceipt] = useState<TreatmentRecord | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [referralToDelete, setReferralToDelete] = useState<string | number | null>(null);
 
   // Filter and search referrals
   const filteredReferrals = referrals.filter(ref => {
@@ -54,6 +63,12 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
 
     const matchesStatus = state.filterStatus === 'all' || ref.urgency === state.filterStatus;
     return matchesSearch && matchesStatus;
+  });
+
+  const sortedReferrals = [...filteredReferrals].sort((a, b) => {
+    const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+    if (dateDiff !== 0) return dateDiff;
+    return Number(b.id) - Number(a.id);
   });
 
   // Generate receipts from treatment records
@@ -85,6 +100,57 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
     'pending': { bg: 'bg-amber-100', text: 'text-amber-700', label: 'Pending' },
     'overdue': { bg: 'bg-red-100', text: 'text-red-700', label: 'Overdue' }
   };
+
+  const formatToDD_MM_YYYY = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }).split('/').reverse().join('/');
+  };
+
+  const handleDownloadReferralPDF = (referral: Referral) => {
+    const patient = patients.find(p => String(p.id) === String(referral.patientId));
+    generateReferralPDF(referral, patient);
+  };
+
+  const handleDeleteReferral = (referralId: string | number) => {
+    console.log('Delete button clicked. Referral ID:', referralId, 'Type:', typeof referralId);
+    setReferralToDelete(referralId);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!referralToDelete) return;
+    
+    try {
+      console.log('Calling delete API with ID:', referralToDelete);
+      const result = await referralAPI.delete(referralToDelete);
+      console.log('Delete API result:', result);
+      setReferrals(referrals.filter(r => r.id !== referralToDelete));
+      toast.success('Referral deleted successfully');
+      setShowDeleteConfirm(false);
+      setReferralToDelete(null);
+    } catch (error) {
+      toast.error('Failed to delete referral');
+      console.error('Delete referral error:', error);
+      setShowDeleteConfirm(false);
+      setReferralToDelete(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    console.log('Delete cancelled by user');
+    setShowDeleteConfirm(false);
+    setReferralToDelete(null);
+  };
+
+  const selectedPatient = selectedReferral
+    ? patients.find(p => String(p.id) === String(selectedReferral.patientId))
+    : undefined;
+  const selectedPatientAge = selectedPatient
+    ? String(new Date().getFullYear() - new Date(selectedPatient.dateOfBirth).getFullYear())
+    : '';
+  const isSelectedXrayReferral = selectedReferral
+    ? selectedReferral.specialty === 'X-Ray Imaging' || selectedReferral.referredTo === 'X-Ray Facility'
+    : false;
 
   return (
     <div className="space-y-6">
@@ -162,8 +228,8 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
             </div>
 
             <div className="divide-y divide-slate-100">
-              {filteredReferrals.length > 0 ? (
-                filteredReferrals.map((ref) => (
+              {sortedReferrals.length > 0 ? (
+                sortedReferrals.map((ref) => (
                   <div key={ref.id} className="p-6 hover:bg-slate-50 transition-colors flex flex-col lg:flex-row gap-6 lg:items-center">
                     <div className="flex-1 space-y-3">
                       <div className="flex items-center gap-3">
@@ -194,7 +260,7 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <button
                         onClick={() => {
                           setSelectedReferral(ref);
@@ -206,20 +272,18 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
                         View
                       </button>
                       <button
-                        onClick={() => {
-                          const content = `REFERRAL: ${ref.patientName}\nTo: ${ref.referredTo}\nSpecialty: ${ref.specialty}\nReason: ${ref.reason}`;
-                          const blob = new Blob([content], { type: 'text/plain' });
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = `referral-${ref.patientName}.txt`;
-                          a.click();
-                          toast.success('Referral downloaded');
-                        }}
-                        className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm"
+                        onClick={() => handleDownloadReferralPDF(ref)}
+                        className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2 border border-blue-300 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
                       >
                         <Download size={16} />
-                        Export
+                        PDF
+                      </button>
+                      <button
+                        onClick={() => handleDeleteReferral(ref.id)}
+                        className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2 border border-red-300 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium"
+                      >
+                        <Trash2 size={16} />
+                        Delete
                       </button>
                     </div>
                   </div>
@@ -365,66 +429,375 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
       {/* Referral Detail Modal */}
       <AnimatePresence>
         {showModal && selectedReferral && (
-          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl"
+              className="bg-white w-full max-w-4xl rounded-lg shadow-2xl my-8"
             >
-              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <FileText className="text-blue-600 w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-900">Referral Details</h3>
-                    <p className="text-xs text-slate-500">ID: {selectedReferral.id}</p>
-                  </div>
-                </div>
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-gradient-to-r from-yellow-50 to-slate-50">
+                <h1 className="text-2xl font-bold text-slate-900">
+                  {isSelectedXrayReferral ? 'X-Ray Referral Form' : 'Doctor Referral Form'}
+                </h1>
                 <button
                   onClick={() => setShowModal(false)}
                   className="p-2 hover:bg-slate-200 rounded-full transition-colors"
                 >
-                  <X size={20} />
+                  <X size={24} />
                 </button>
               </div>
 
-              <div className="p-8 space-y-6">
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <p className="text-xs text-slate-500 uppercase font-bold mb-2">Patient</p>
-                    <p className="font-bold text-lg text-slate-900">{selectedReferral.patientName}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500 uppercase font-bold mb-2">Specialist</p>
-                    <p className="font-bold text-lg text-slate-900">{selectedReferral.referredTo}</p>
-                  </div>
-                </div>
+              {/* Form Content */}
+              <div className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto">
+                {!isSelectedXrayReferral ? (
+                  <div className="space-y-6">
+                    <div className="space-y-4 mb-6">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm whitespace-nowrap font-semibold">Patient's Name:</span>
+                        <input
+                          type="text"
+                          value={selectedReferral.patientName}
+                          disabled
+                          className="flex-1 border-b-2 border-slate-400 bg-slate-50 px-2 py-2 text-sm font-medium cursor-not-allowed"
+                        />
+                      </div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm whitespace-nowrap font-semibold">Date:</span>
+                          <input
+                            type="text"
+                            value={formatToDD_MM_YYYY(selectedReferral.date)}
+                            disabled
+                            className="w-full border-b-2 border-slate-400 bg-slate-50 px-2 py-2 text-sm font-medium cursor-not-allowed"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm whitespace-nowrap font-semibold">Contact No.:</span>
+                          <input
+                            type="text"
+                            value={selectedPatient?.phone || ''}
+                            disabled
+                            className="w-full border-b-2 border-slate-400 bg-slate-50 px-2 py-2 text-sm font-medium cursor-not-allowed"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm whitespace-nowrap font-semibold">Age:</span>
+                          <input
+                            type="text"
+                            value={selectedPatientAge}
+                            disabled
+                            className="w-full border-b-2 border-slate-400 bg-slate-50 px-2 py-2 text-sm font-medium cursor-not-allowed"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm whitespace-nowrap font-semibold">Sex:</span>
+                          <input
+                            type="text"
+                            value={selectedPatient?.sex || ''}
+                            disabled
+                            className="w-full border-b-2 border-slate-400 bg-slate-50 px-2 py-2 text-sm font-medium cursor-not-allowed"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm whitespace-nowrap font-semibold">Date Of Birth:</span>
+                          <input
+                            type="text"
+                            value={selectedPatient?.dateOfBirth || ''}
+                            disabled
+                            className="w-full border-b-2 border-slate-400 bg-slate-50 px-2 py-2 text-sm font-medium cursor-not-allowed"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm whitespace-nowrap font-semibold">Referred by:</span>
+                        <input
+                          type="text"
+                          value={selectedReferral.referringDentist}
+                          disabled
+                          className="flex-1 border-b-2 border-slate-400 bg-slate-50 px-2 py-2 text-sm font-medium cursor-not-allowed"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm whitespace-nowrap font-semibold">Contact No.:</span>
+                          <input
+                            type="text"
+                            value={selectedReferral.referredByContact || ''}
+                            disabled
+                            className="w-full border-b-2 border-slate-400 bg-slate-50 px-2 py-2 text-sm font-medium cursor-not-allowed"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm whitespace-nowrap font-semibold">Clinic Email Address:</span>
+                          <input
+                            type="text"
+                            value={selectedReferral.referredByEmail || ''}
+                            disabled
+                            className="w-full border-b-2 border-slate-400 bg-slate-50 px-2 py-2 text-sm font-medium cursor-not-allowed"
+                          />
+                        </div>
+                      </div>
+                    </div>
 
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <p className="text-xs text-slate-500 uppercase font-bold mb-2">Specialty</p>
-                    <p className="text-slate-700">{selectedReferral.specialty}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500 uppercase font-bold mb-2">Date Referred</p>
-                    <p className="text-slate-700">{formatToDD_MM_YYYY(selectedReferral.date)}</p>
-                  </div>
-                </div>
+                    <div className="grid grid-cols-2 gap-8 mb-8 py-8 border-t-4 border-yellow-400">
+                      <div className="space-y-3">
+                        <h2 className="font-black text-lg uppercase mb-4">Diagnostic Services:</h2>
+                        {[
+                          { label: 'STANDARD PANORAMIC', id: 'pano' },
+                          { label: 'TMJ (OPEN & CLOSE)', id: 'tmj' },
+                          { label: 'SINUS PA', id: 'sinus' },
+                          { label: 'BITEWING LEFT SIDE', id: 'bite-l' },
+                          { label: 'BITEWING RIGHT SIDE', id: 'bite-r' },
+                          { label: 'PERIAPICAL XRAY TOOTH#', id: 'peri' }
+                        ].map(({ label, id }) => {
+                          const serviceValue = selectedReferral.selectedServices?.[id];
+                          const isChecked = serviceValue === true || (typeof serviceValue === 'string' && serviceValue !== '');
+                          const textValue = typeof serviceValue === 'string' ? serviceValue : '';
+                          
+                          return (
+                            <div key={label} className="flex items-center gap-3">
+                              <div className={`w-5 h-5 rounded-full border-2 border-yellow-400 flex items-center justify-center transition-colors ${
+                                isChecked ? 'bg-yellow-400' : 'bg-white'
+                              }`}>
+                                {isChecked && <Check className="text-white w-3.5 h-3.5 stroke-[4]" />}
+                              </div>
+                              <span className="text-sm font-bold tracking-tight">{label}</span>
+                              {id === 'peri' && textValue && <span className="text-sm text-gray-600 ml-1">{textValue}</span>}
+                            </div>
+                          );
+                        })}
+                      </div>
 
-                <div>
-                  <p className="text-xs text-slate-500 uppercase font-bold mb-3">Reason</p>
-                  <p className="p-4 bg-slate-50 rounded-lg border border-slate-100 text-slate-700">{selectedReferral.reason}</p>
-                </div>
+                      <div className="space-y-3 pt-6">
+                        <h2 className="font-black text-lg uppercase mb-4">OTHER SERVICES</h2>
+                        {[
+                          { label: 'DIAGNOSTIC MODEL CAST', id: 'model' },
+                          { label: 'INTRAORAL PHOTOGRAPH', id: 'intra' },
+                          { label: 'EXTRAORAL PHOTOGRAPH', id: 'extra' }
+                        ].map(({ label, id }) => {
+                          const serviceValue = selectedReferral.selectedServices?.[id];
+                          const isChecked = serviceValue === true || (typeof serviceValue === 'string' && serviceValue !== '');
+                          
+                          return (
+                            <div key={label} className="flex items-center gap-3">
+                              <div className={`w-5 h-5 rounded-full border-2 border-yellow-400 flex items-center justify-center transition-colors ${
+                                isChecked ? 'bg-yellow-400' : 'bg-white'
+                              }`}>
+                                {isChecked && <Check className="text-white w-3.5 h-3.5 stroke-[4]" />}
+                              </div>
+                              <span className="text-sm font-bold tracking-tight">{label}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="mt-4 pt-4 pb-8 grid grid-cols-2 gap-8 border-b-4 border-yellow-400">
+                      <div className="space-y-3 text-sm">
+                        <img
+                          src={clinicLogo}
+                          alt="Clinic Logo"
+                          className="w-full max-h-32 object-contain"
+                        />
+                        <div>
+                          <p className="font-bold text-gray-800">Address:</p>
+                          <p className="text-gray-700">#48 Luis Palad Street, Brgy. Angeles Zone 1, Tayabas City</p>
+                          <p className="text-gray-700">(infront of St. Jude Pharmacy, beside Motoposh Tayabas)</p>
+                          <p className="text-gray-700">Lucena-Tayabas Road, Luis Palad Street</p>
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-800">Email:</p>
+                          <p className="text-gray-700">j.aguilardentalclinic@gmail.com</p>
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-800">Facebook:</p>
+                          <p className="text-gray-700">J. Aguilar Dental Clinic Tayabas Branch</p>
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-800">Contact No.:</p>
+                          <p className="text-gray-700">0938-171-7695</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-center">
+                        <img 
+                          src={clinicMap} 
+                          alt="Clinic Location Map" 
+                          className="w-full h-auto object-contain rounded-lg border-2 border-gray-300"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Thank You Message */}
+                    <div className="mt-6 pt-6 text-left space-y-2">
+                      <p className="font-bold text-gray-800 text-lg">THANK YOU FOR YOUR REFERRAL!</p>
+                      <p className="text-gray-700 text-sm leading-relaxed">It is our policy to decline performing procedures that are not indicated in the referral form.<br />This is based on our strict observance of the Dental Code of Ethics.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="space-y-4 border-b pb-6">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm whitespace-nowrap font-semibold">Date:</span>
+                        <input
+                          type="text"
+                          value={formatToDD_MM_YYYY(selectedReferral.date)}
+                          disabled
+                          className="flex-1 border-b-2 border-slate-400 bg-slate-50 px-2 py-2 text-sm font-medium cursor-not-allowed"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm whitespace-nowrap font-semibold">Patient's Name:</span>
+                        <input
+                          type="text"
+                          value={selectedReferral.patientName}
+                          disabled
+                          className="flex-1 border-b-2 border-slate-400 bg-slate-50 px-2 py-2 text-sm font-medium cursor-not-allowed"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm whitespace-nowrap font-semibold">Birthday:</span>
+                          <input
+                            type="text"
+                            value={selectedPatient?.dateOfBirth || ''}
+                            disabled
+                            className="w-full border-b-2 border-slate-400 bg-slate-50 px-2 py-2 text-sm font-medium cursor-not-allowed"
+                          />
+                        </div>
+                        <div className="flex items-center gap-8">
+                          {['Male', 'Female'].map(sex => (
+                            <label key={sex} className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="radio"
+                                name="sex"
+                                value={sex}
+                                checked={selectedPatient?.sex === sex}
+                                disabled
+                                className="w-4 h-4"
+                              />
+                              <span className="font-bold">{sex}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm whitespace-nowrap font-semibold">Referred by Dr.:</span>
+                          <input
+                            type="text"
+                            value={selectedReferral.referringDentist}
+                            disabled
+                            className="w-full border-b-2 border-slate-400 bg-slate-50 px-2 py-2 text-sm font-medium cursor-not-allowed"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm whitespace-nowrap font-semibold">Dentist's Contact #:</span>
+                          <input
+                            type="text"
+                            value={selectedReferral.referredByContact || ''}
+                            disabled
+                            className="w-full border-b-2 border-slate-400 bg-slate-50 px-2 py-2 text-sm font-medium cursor-not-allowed"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="font-black text-center uppercase mb-4">X-RAY IMAGING SERVICES</h3>
+                      <div className="grid grid-cols-2 gap-6">
+                        {[
+                          { label: 'Panoramic X-Ray', id: 'panoramic' },
+                          { label: 'Periapical X-Ray', id: 'periapical' },
+                          { label: 'Bitewing X-Ray', id: 'bitewing' },
+                          { label: 'Occlusal X-Ray', id: 'occlusal' },
+                          { label: 'TMJ X-Ray', id: 'tmj' },
+                          { label: 'CBCT (3D Imaging)', id: 'cbct' }
+                        ].map(({ label, id }) => (
+                          <div key={label} className="flex items-center gap-3">
+                            <input
+                              type="checkbox"
+                              checked={selectedReferral.selectedServices?.[id] || false}
+                              disabled
+                              className="w-4 h-4"
+                            />
+                            <span className="font-bold">{label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="mt-4 pt-4 grid grid-cols-2 gap-8">
+                      <div className="space-y-3 text-sm">
+                        <img
+                          src={clinicLogo}
+                          alt="Clinic Logo"
+                          className="w-full max-h-32 object-contain"
+                        />
+                        <div>
+                          <p className="font-bold text-gray-800">Address:</p>
+                          <p className="text-gray-700">#48 Luis Palad Street, Brgy. Angeles Zone 1, Tayabas City</p>
+                          <p className="text-gray-700">(infront of St. Jude Pharmacy, beside Motoposh Tayabas)</p>
+                          <p className="text-gray-700">Lucena-Tayabas Road, Luis Palad Street</p>
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-800">Email:</p>
+                          <p className="text-gray-700">j.aguilardentalclinic@gmail.com</p>
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-800">Facebook:</p>
+                          <p className="text-gray-700">J. Aguilar Dental Clinic Tayabas Branch</p>
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-800">Contact No.:</p>
+                          <p className="text-gray-700">0938-171-7695</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-center">
+                        <img
+                          src={clinicMap}
+                          alt="Clinic Location Map"
+                          className="w-full h-auto object-contain rounded-lg border-2 border-gray-300"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div className="p-6 border-t border-slate-100 bg-slate-50 flex gap-3">
+              {/* Footer */}
+              <div className="flex gap-3 p-6 border-t border-slate-200 bg-slate-50">
                 <button
                   onClick={() => setShowModal(false)}
-                  className="flex-1 py-2.5 border border-slate-200 bg-white text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors"
+                  className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-100 transition-colors font-semibold"
                 >
                   Close
+                </button>
+                <button
+                  onClick={() => {
+                    if (selectedReferral) {
+                      handleDownloadReferralPDF(selectedReferral);
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 flex items-center justify-center gap-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                >
+                  <Download size={18} />
+                  Download PDF
+                </button>
+                <button
+                  onClick={() => {
+                    if (selectedReferral) {
+                      setShowModal(false);
+                      handleDeleteReferral(selectedReferral.id);
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 flex items-center justify-center gap-2 border border-red-300 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors font-semibold"
+                >
+                  <Trash2 size={18} />
+                  Delete
                 </button>
               </div>
             </motion.div>
@@ -512,6 +885,56 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={cancelDelete}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                  <Trash2 className="text-red-600" size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">Delete Referral</h3>
+                  <p className="text-sm text-slate-500">This action cannot be undone</p>
+                </div>
+              </div>
+              
+              <p className="text-slate-700 mb-6">
+                Are you sure you want to delete this referral? All information will be permanently removed.
+              </p>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={cancelDelete}
+                  className="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                >
+                  Delete
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
