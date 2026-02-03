@@ -10,7 +10,7 @@ type LandingPageProps = {
   onSignup?: (signupData: any) => void;
 };
 
-export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProps) {
+export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showAuthForm, setShowAuthForm] = useState(false);
   const [showClaimingFlow, setShowClaimingFlow] = useState(false);
@@ -21,8 +21,6 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const birthdatePickerRef = useRef<HTMLInputElement | null>(null);
   
   const [signupData, setSignupData] = useState({
@@ -85,7 +83,7 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
     setShowAuthForm(true);
   };
 
-  const handleClaimingComplete = (user: any, token: string) => {
+  const handleClaimingComplete = (user: any) => {
     // After claiming is complete, populate the login form with the created username
     setUsername(user.username);
     setPassword('');
@@ -103,7 +101,6 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
       role: 'patient' as const
     });
     setConfirmPassword('');
-    setError('');
     
     // Close claiming flow and switch to login mode
     setShowClaimingFlow(false);
@@ -141,7 +138,6 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
       setConfirmPassword('');
       setUsername('');
       setPassword('');
-      setError('');
       
       // Switch to login mode and keep auth form visible
       setIsLoginMode(true);
@@ -379,7 +375,6 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
                       type="button"
                       onClick={() => {
                         setIsLoginMode(true);
-                        setError('');
                       }}
                       className={`flex-1 py-2.5 rounded-lg transition-all duration-300 font-medium ${
                         isLoginMode
@@ -393,7 +388,6 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
                       type="button"
                       onClick={() => {
                         setIsLoginMode(false);
-                        setError('');
                       }}
                       className={`flex-1 py-2.5 rounded-lg transition-all duration-300 font-medium ${
                         !isLoginMode

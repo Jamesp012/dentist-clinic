@@ -231,20 +231,13 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
 
   const ServiceItem = ({ label, id, showInput, onInputChange }: { label: string; id: string; showInput?: boolean; onInputChange?: (id: string, value: string) => void }) => {
     const inputValue = typeof selectedServices[id] === 'string' ? selectedServices[id] : '';
-    const isChecked = Boolean(selectedServices[id]);
     
     return (
-      <button
-        type="button"
-        onClick={() => toggleService(id)}
-        className="flex items-center gap-3 w-full p-2 rounded hover:bg-yellow-50 transition-colors text-left cursor-pointer"
-      >
-        <div className={`w-5 h-5 rounded-full border-2 border-yellow-400 flex items-center justify-center flex-shrink-0 transition-colors ${
-          isChecked ? "bg-yellow-400" : "bg-white"
-        }`}>
-          {isChecked && <Check className="text-white w-3.5 h-3.5 stroke-[4]" />}
+      <div className="flex items-center gap-3 cursor-pointer group" onClick={() => toggleService(id)}>
+        <div className={`w-5 h-5 rounded-full border-2 border-yellow-400 flex items-center justify-center transition-colors ${selectedServices[id] ? "bg-yellow-400" : "bg-white"}`}>
+          {selectedServices[id] && <Check className="text-white w-3.5 h-3.5 stroke-[4]" />}
         </div>
-        <span className="text-sm font-bold tracking-tight flex-1">{label}</span>
+        <span className="text-sm font-bold tracking-tight">{label}</span>
         {showInput && (
           <input 
             type="text" 
@@ -253,14 +246,11 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
               e.stopPropagation();
               onInputChange?.(id, e.target.value);
             }}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-            }}
+            onClick={(e) => e.stopPropagation()}
             className="w-16 border-b border-slate-400 focus:outline-none focus:border-yellow-500 bg-transparent text-sm px-1 font-normal" 
           />
         )}
-      </button>
+      </div>
     );
   };
 
