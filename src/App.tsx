@@ -466,6 +466,7 @@ export default function App() {
           referrals={referrals}
           setReferrals={setReferrals}
           photos={photos}
+          setPhotos={setPhotos}
           payments={payments}
           setPayments={setPayments}
           announcements={announcements}
@@ -559,6 +560,7 @@ export default function App() {
           referrals={referrals}
           setReferrals={setReferrals}
           photos={photos}
+          setPhotos={setPhotos}
           payments={payments}
           setPayments={setPayments}
           announcements={announcements}

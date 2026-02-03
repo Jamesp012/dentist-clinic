@@ -36,19 +36,25 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
   const [copiedField, setCopiedField] = useState<'username' | 'password' | null>(null);
 
   useEffect(() => {
-    fetchEmployees();
-  }, []);
+    if (token) {
+      fetchEmployees();
+    }
+  }, [token]);
 
   const fetchEmployees = async () => {
     try {
+      console.log('Fetching employees with token:', token ? 'Present' : 'Missing');
       const response = await fetch('http://localhost:5000/api/employees', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      console.log('Response status:', response.status);
       if (response.ok) {
         const data = await response.json();
+        console.log('Employees fetched:', data);
         setEmployees(data);
       } else {
-        console.error('Failed to fetch employees:', response.status);
+        const errorData = await response.text();
+        console.error('Failed to fetch employees:', response.status, errorData);
       }
     } catch (error) {
       console.error('Failed to fetch employees:', error);
@@ -77,6 +83,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
         accessLevel: formData.get('accessLevel') as string,
       };
 
+      console.log('Submitting new employee:', newEmployee);
       const response = await fetch('http://localhost:5000/api/employees', {
         method: 'POST',
         headers: {
@@ -86,17 +93,22 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
         body: JSON.stringify(newEmployee)
       });
 
+      console.log('Add employee response status:', response.status);
       if (response.ok) {
+        const result = await response.json();
+        console.log('Employee added successfully:', result);
         form.reset();
         await fetchEmployees();
         setShowAddModal(false);
         toast.success('Employee added successfully!');
       } else {
-        throw new Error('Failed to add employee');
+        const errorData = await response.json();
+        console.error('API error response:', errorData);
+        throw new Error(errorData.error || 'Failed to add employee');
       }
     } catch (error) {
       console.error('Failed to add employee:', error);
-      toast.error('Failed to add employee');
+      toast.error(error instanceof Error ? error.message : 'Failed to add employee');
     } finally {
       setIsLoading(false);
     }

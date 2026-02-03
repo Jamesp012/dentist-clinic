@@ -136,6 +136,7 @@ export const inventoryAPI = {
 export const referralAPI = {
   getAll: () => fetchWithAuth(`${API_BASE}/referrals`),
   getById: (id) => fetchWithAuth(`${API_BASE}/referrals/${id}`),
+  getByPatientId: (patientId) => fetchWithAuth(`${API_BASE}/referrals/patient/${patientId}`),
   create: (data) =>
     fetchWithAuth(`${API_BASE}/referrals`, {
       method: 'POST',
@@ -148,6 +149,27 @@ export const referralAPI = {
     }),
   delete: (id) =>
     fetchWithAuth(`${API_BASE}/referrals/${id}`, {
+      method: 'DELETE',
+    }),
+};
+
+// Prescription APIs
+export const prescriptionAPI = {
+  getAll: () => fetchWithAuth(`${API_BASE}/prescriptions`),
+  getById: (id) => fetchWithAuth(`${API_BASE}/prescriptions/${id}`),
+  getByPatientId: (patientId) => fetchWithAuth(`${API_BASE}/prescriptions/patient/${patientId}`),
+  create: (data) =>
+    fetchWithAuth(`${API_BASE}/prescriptions`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  update: (id, data) =>
+    fetchWithAuth(`${API_BASE}/prescriptions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  delete: (id) =>
+    fetchWithAuth(`${API_BASE}/prescriptions/${id}`, {
       method: 'DELETE',
     }),
 };

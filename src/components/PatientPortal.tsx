@@ -8,6 +8,8 @@ import { convertToDBDate, convertToDisplayDate, formatDateInput, formatToDD_MM_Y
 import { appointmentAPI } from '../api';
 import { Notifications } from './Notifications';
 import { PatientNotifications } from './PatientNotifications';
+import { generatePrescriptionPDF } from '../utils/pdfGenerator';
+import { generateReferralPDF } from '../utils/referralPdfGenerator';
 import { SearchableSelect } from './SearchableSelect';
 
 // Helper function to extract date string without timezone conversion
@@ -445,6 +447,10 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
         if (refResponse.ok) {
           const refData = await refResponse.json();
           setReferrals(Array.isArray(refData) ? refData : []);
+        } else {
+          const text = await refResponse.text();
+          console.error('Failed to fetch referrals:', refResponse.status, text);
+          setReferrals([]);
         }
 
         // Fetch prescriptions for this patient
@@ -452,9 +458,16 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
         if (presResponse.ok) {
           const presData = await presResponse.json();
           setPrescriptions(Array.isArray(presData) ? presData : []);
+        } else {
+          const text = await presResponse.text();
+          console.error('Failed to fetch prescriptions:', presResponse.status, text);
+          setPrescriptions([]);
         }
       } catch (error) {
         console.error('Failed to load patient forms:', error);
+        setReferrals([]);
+        setPrescriptions([]);
+        toast.error('Unable to load forms. Please refresh or contact support.');
       } finally {
         setIsLoadingForms(false);
       }
@@ -654,7 +667,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
         <motion.div 
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className={`bg-white/80 backdrop-blur-xl border-b border-slate-200/50 px-6 py-0 ${sidebarOpen ? 'min-h-[92px]' : 'min-h-[88px]'} flex justify-between items-center shadow-sm relative`}
+          className={`sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/50 px-6 py-0 ${sidebarOpen ? 'min-h-[92px]' : 'min-h-[88px]'} flex justify-between items-center shadow-sm relative`}
         >
           <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-transparent to-indigo-500/5 pointer-events-none"></div>
           <div className="relative z-10 flex-1">
@@ -712,8 +725,8 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
               patients={[patient]}
               appointments={patientAppointments}
               referrals={[]}
-              currentPatientId={patient.id}
-              onNavigate={setActiveTab}
+              currentPatientId={String(patient.id)}
+              onNavigate={(tab: string) => setActiveTab(tab as any)}
             />
           </div>
         </motion.div>
@@ -1231,14 +1244,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                                   </div>
                                   <div className="flex gap-2 ml-4">
                                     <button
-                                      onClick={() => {
-                                        const downloadLink = document.createElement('a');
-                                        downloadLink.href = `${API_BASE}/referrals/${referral.id}/pdf`;
-                                        downloadLink.download = `referral-${referral.id}.pdf`;
-                                        document.body.appendChild(downloadLink);
-                                        downloadLink.click();
-                                        document.body.removeChild(downloadLink);
-                                      }}
+                                      onClick={() => generateReferralPDF(referral, patient)}
                                       className="px-3 py-1.5 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700 transition-colors flex items-center gap-1"
                                     >
                                       <Download size={14} />
@@ -1284,14 +1290,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                                   </div>
                                   <div className="flex gap-2 ml-4">
                                     <button
-                                      onClick={() => {
-                                        const downloadLink = document.createElement('a');
-                                        downloadLink.href = `${API_BASE}/referrals/${referral.id}/pdf`;
-                                        downloadLink.download = `xray-referral-${referral.id}.pdf`;
-                                        document.body.appendChild(downloadLink);
-                                        downloadLink.click();
-                                        document.body.removeChild(downloadLink);
-                                      }}
+                                      onClick={() => generateReferralPDF(referral, patient)}
                                       className="px-3 py-1.5 bg-cyan-600 text-white rounded text-sm hover:bg-cyan-700 transition-colors flex items-center gap-1"
                                     >
                                       <Download size={14} />
@@ -1351,14 +1350,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                                       View
                                     </button>
                                     <button
-                                      onClick={() => {
-                                        const downloadLink = document.createElement('a');
-                                        downloadLink.href = `${API_BASE}/prescriptions/${prescription.id}/pdf`;
-                                        downloadLink.download = `prescription-${prescription.id}.pdf`;
-                                        document.body.appendChild(downloadLink);
-                                        downloadLink.click();
-                                        document.body.removeChild(downloadLink);
-                                      }}
+                                      onClick={() => generatePrescriptionPDF(patient, prescription)}
                                       className="px-3 py-1.5 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors flex items-center gap-1"
                                     >
                                       <Download size={14} />
@@ -1908,7 +1900,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
               {userRole && (userRole === 'doctor' || userRole === 'assistant') && (
                 <div className="absolute top-4 left-4 flex gap-2 z-10">
                   <button
-                    onClick={() => setShowReplaceModal(selectedPhoto.id)}
+                    onClick={() => setShowReplaceModal(String(selectedPhoto?.id))}
                     className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors flex items-center gap-2"
                     title="Replace photo"
                   >
@@ -1916,7 +1908,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                     Replace
                   </button>
                   <button
-                    onClick={() => setShowDeleteConfirm(selectedPhoto.id)}
+                    onClick={() => setShowDeleteConfirm(String(selectedPhoto?.id))}
                     className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
                     title="Delete photo"
                   >

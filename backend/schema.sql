@@ -168,6 +168,24 @@ CREATE TABLE IF NOT EXISTS payments (
   FOREIGN KEY (treatmentRecordId) REFERENCES treatmentRecords(id) ON DELETE SET NULL
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- Prescriptions table
+CREATE TABLE IF NOT EXISTS prescriptions (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  patientId INT NOT NULL,
+  patientName VARCHAR(100) CHARACTER SET utf8mb4,
+  dentist VARCHAR(100) CHARACTER SET utf8mb4 NOT NULL,
+  licenseNumber VARCHAR(50),
+  ptrNumber VARCHAR(50),
+  medications JSON NOT NULL,
+  notes TEXT CHARACTER SET utf8mb4,
+  date DATE NOT NULL,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (patientId) REFERENCES patients(id) ON DELETE CASCADE,
+  INDEX idx_patient_id (patientId),
+  INDEX idx_created_date (createdAt),
+  INDEX idx_patient_date (patientId, createdAt)
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- Announcements table
 CREATE TABLE IF NOT EXISTS announcements (
   id INT PRIMARY KEY AUTO_INCREMENT,

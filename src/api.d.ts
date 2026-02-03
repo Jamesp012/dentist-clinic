@@ -147,6 +147,17 @@ export const inventoryAPI: {
 
 export const referralAPI: {
   getAll: () => Promise<any[]>;
+  getById: (id: string | number) => Promise<any>;
+  getByPatientId: (patientId: string | number) => Promise<any[]>;
+  create: (data: any) => Promise<any>;
+  update: (id: string | number, data: any) => Promise<any>;
+  delete: (id: string | number) => Promise<any>;
+};
+
+export const prescriptionAPI: {
+  getAll: () => Promise<any[]>;
+  getById: (id: string | number) => Promise<any>;
+  getByPatientId: (patientId: string | number) => Promise<any[]>;
   create: (data: any) => Promise<any>;
   update: (id: string | number, data: any) => Promise<any>;
   delete: (id: string | number) => Promise<any>;

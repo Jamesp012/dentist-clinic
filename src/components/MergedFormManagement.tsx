@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Patient, Referral, Payment, TreatmentRecord } from '../App';
 import { referralAPI } from '../api';
 import { generateReferralPDF } from '../utils/referralPdfGenerator';
-import clinicMap from '../assets/clinic-map.jpg';
-import clinicLogo from '../assets/jclinic-logo.png';
+// Note: Asset imports removed - images should be placed in public folder
+// and referenced via relative paths (e.g., '/clinic-map.jpg')
+const clinicMap = '/clinic-map.jpg';
+const clinicLogo = '/jclinic-logo.png';
 import {
   FileText,
   X,
@@ -17,7 +19,7 @@ import {
   ArrowUpRight,
   DollarSign,
   Trash2,
-  Printer
+  Check
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
@@ -720,7 +722,7 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
                           <div key={label} className="flex items-center gap-3">
                             <input
                               type="checkbox"
-                              checked={selectedReferral.selectedServices?.[id] || false}
+                              checked={Boolean(selectedReferral.selectedServices?.[id])}
                               disabled
                               className="w-4 h-4"
                             />

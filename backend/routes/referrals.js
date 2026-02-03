@@ -7,7 +7,20 @@ const router = express.Router();
 // Get all referrals
 router.get('/', authMiddleware, async (req, res) => {
   try {
-    const [referrals] = await pool.query('SELECT * FROM referrals');
+    const [referrals] = await pool.query('SELECT * FROM referrals ORDER BY createdAt DESC');
+    res.json(referrals);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get referrals by patient ID
+router.get('/patient/:patientId', authMiddleware, async (req, res) => {
+  try {
+    const [referrals] = await pool.query(
+      'SELECT * FROM referrals WHERE patientId = ? ORDER BY createdAt DESC',
+      [req.params.patientId]
+    );
     res.json(referrals);
   } catch (error) {
     res.status(500).json({ error: error.message });

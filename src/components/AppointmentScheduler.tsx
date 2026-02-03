@@ -4,8 +4,7 @@ import { Calendar, Plus, X, Filter, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { appointmentAPI } from '../api';
 import { PatientSearchInput } from './PatientSearchInput';
-import { SearchableSelect } from './SearchableSelect';
-import { convertToDBDate, convertToDisplayDate, formatDateInput, isValidDateFormat, formatToDD_MM_YYYY, formatToWordedDate } from '../utils/dateHelpers';
+import { convertToDBDate, convertToDisplayDate, formatDateInput, isValidDateFormat } from '../utils/dateHelpers';
 
 // Helper function to extract date string without timezone conversion
 const getDateString = (date: string | Date): string => {
@@ -669,16 +668,21 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
 
               <div>
                 <label className="block text-sm mb-1 font-semibold">Service Type *</label>
-                <SearchableSelect
-                  options={services && services.length > 0
-                    ? services.flatMap(s => s.description || [])
-                    : ['Dental consultation', 'Oral examination', 'Dental cleaning', 'Tooth extraction', 'Braces installation', 'Consultation']
+                <select
+                  name="type"
+                  required
+                  defaultValue="Dental consultation"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {services && services.length > 0
+                    ? services.flatMap(s => s.description || []).map(desc => (
+                      <option key={desc} value={desc}>{desc}</option>
+                    ))
+                    : ['Dental consultation', 'Oral examination', 'Dental cleaning', 'Tooth extraction', 'Braces installation', 'Consultation'].map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))
                   }
-                  value={formData.type}
-                  onChange={(value) => setFormData({...formData, type: value})}
-                  placeholder="Select service..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                />
+                </select>
               </div>
               <div>
                 <label className="block text-sm mb-1 font-semibold">Notes (Optional)</label>

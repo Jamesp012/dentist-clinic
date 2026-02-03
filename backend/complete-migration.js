@@ -76,7 +76,31 @@ async function completeMigration() {
       console.log('✓ OTP verifications table created');
     }
 
-    // 4. Add missing columns to users table
+    // 4. Create prescriptions table if missing
+    if (!tableNames.includes('prescriptions')) {
+      console.log('Creating prescriptions table...');
+      await connection.execute(`
+        CREATE TABLE prescriptions (
+          id INT PRIMARY KEY AUTO_INCREMENT,
+          patientId INT NOT NULL,
+          patientName VARCHAR(100) CHARACTER SET utf8mb4,
+          dentist VARCHAR(100) CHARACTER SET utf8mb4 NOT NULL,
+          licenseNumber VARCHAR(50),
+          ptrNumber VARCHAR(50),
+          medications JSON NOT NULL,
+          notes TEXT CHARACTER SET utf8mb4,
+          date DATE NOT NULL,
+          createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (patientId) REFERENCES patients(id) ON DELETE CASCADE,
+          INDEX idx_patient_id (patientId),
+          INDEX idx_created_date (createdAt),
+          INDEX idx_patient_date (patientId, createdAt)
+        ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+      `);
+      console.log('✓ Prescriptions table created');
+    }
+
+    // 5. Add missing columns to users table
     console.log('\nChecking users table columns...');
     const [userColumns] = await connection.query(
       "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'users' AND TABLE_SCHEMA = 'dental_clinic'"

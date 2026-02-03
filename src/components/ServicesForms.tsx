@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Patient, TreatmentRecord, Payment } from '../App';
 import { FileText, Printer, Download, Plus, X, CreditCard } from 'lucide-react';
-import { treatmentRecordAPI, paymentAPI } from '../api';
+import { treatmentRecordAPI, paymentAPI, prescriptionAPI } from '../api';
 import { toast } from 'sonner';
 import { formatToDD_MM_YYYY } from '../utils/dateHelpers';
-import { generateReceipt, generatePrescriptionPDF, generatePatientHistoryPDF, generateDetailedReceiptPDF } from '../utils/pdfGenerator';
+import { generatePrescriptionPDF, generateDetailedReceiptPDF } from '../utils/pdfGenerator';
 
 type ServicesFormsProps = {
   patients: Patient[];
@@ -73,14 +73,12 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
   const [paymentType, setPaymentType] = useState<'full' | 'installment'>('full');
   const [amountPaid, setAmountPaid] = useState<number>(0);
   const [numberOfInstallments, setNumberOfInstallments] = useState<number>(3);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFromAppointment, setIsFromAppointment] = useState<boolean>(!!prefilledAppointment);
 
   const services: ServiceType[] = ['Extraction', 'Pasta', 'Braces', 'Cleaning', 'Pustiso/Dentures'];
 
   const handleCreateService = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsSubmitting(true);
     try {
       const formData = new FormData(e.currentTarget);
       const patientId = formData.get('patientId') as string;
@@ -172,95 +170,119 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
     } catch (error) {
       console.error('Failed to save service:', error);
       toast.error('Failed to save service record');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
-  const handleCreatePrescription = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleCreatePrescription = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const patientId = prescriptionPatientId || selectedPatient;
-    const patient = patients.find(p => String(p.id) === String(patientId));
+    try {
+      const formData = new FormData(e.currentTarget);
+      const patientId = prescriptionPatientId || selectedPatient;
+      const patient = patients.find(p => String(p.id) === String(patientId));
 
-    if (!patientId || !patient) {
-      toast.error('Please select a patient');
-      return;
-    }
-
-    const medications = [];
-    
-    // Check each medicine
-    if (formData.get('med_mefenamic') === 'on') {
-      const dosage = formData.get('mefenamic_dosage') as string || '';
-      const quantity = formData.get('mefenamic_quantity') as string || '';
-      const sig = formData.get('mefenamic_sig') as string || 'Take 1 cap 3x a day';
-      
-      if (quantity) {
-        medications.push({
-          name: 'MEFENAMIC Acid',
-          dosage: dosage,
-          frequency: sig,
-          duration: `Quantity: ${quantity}`,
-          slot: 'mefenamic1',
-        });
+      if (!patientId || !patient) {
+        toast.error('Please select a patient');
+        return;
       }
-    }
-    
-    if (formData.get('med_amoxicillin') === 'on') {
-      const dosage = formData.get('amoxicillin_dosage') as string || '';
-      const quantity = formData.get('amoxicillin_quantity') as string || '';
-      const sig = formData.get('amoxicillin_sig') as string || 'Take 1 cap 3x a day';
+
+      const medications = [];
       
-      if (quantity) {
-        medications.push({
-          name: 'AMOXICILIN',
-          dosage: dosage,
-          frequency: sig,
-          duration: `Quantity: ${quantity}`,
-          slot: 'amoxicilin',
-        });
+      // Check each medicine
+      if (formData.get('med_mefenamic') === 'on') {
+        const dosage = formData.get('mefenamic_dosage') as string || '';
+        const quantity = formData.get('mefenamic_quantity') as string || '';
+        const sig = formData.get('mefenamic_sig') as string || 'Take 1 cap 3x a day';
+        
+        if (quantity) {
+          medications.push({
+            name: 'MEFENAMIC Acid',
+            dosage: dosage,
+            frequency: sig,
+            duration: `Quantity: ${quantity}`,
+            slot: 'mefenamic1' as const,
+          });
+        }
       }
-    }
-    
-    if (formData.get('med_mefenamic_2') === 'on') {
-      const dosage = formData.get('mefenamic2_dosage') as string || '';
-      const quantity = formData.get('mefenamic2_quantity') as string || '';
-      const sig = formData.get('mefenamic2_sig') as string || 'Take 1 cap 3x a day';
       
-      if (quantity) {
-        medications.push({
-          name: 'MEFENAMIC Acid',
-          dosage: dosage,
-          frequency: sig,
-          duration: `Quantity: ${quantity}`,
-          slot: 'mefenamic2',
-        });
+      if (formData.get('med_amoxicillin') === 'on') {
+        const dosage = formData.get('amoxicillin_dosage') as string || '';
+        const quantity = formData.get('amoxicillin_quantity') as string || '';
+        const sig = formData.get('amoxicillin_sig') as string || 'Take 1 cap 3x a day';
+        
+        if (quantity) {
+          medications.push({
+            name: 'AMOXICILIN',
+            dosage: dosage,
+            frequency: sig,
+            duration: `Quantity: ${quantity}`,
+            slot: 'amoxicilin' as const,
+          });
+        }
       }
+      
+      if (formData.get('med_mefenamic_2') === 'on') {
+        const dosage = formData.get('mefenamic2_dosage') as string || '';
+        const quantity = formData.get('mefenamic2_quantity') as string || '';
+        const sig = formData.get('mefenamic2_sig') as string || 'Take 1 cap 3x a day';
+        
+        if (quantity) {
+          medications.push({
+            name: 'MEFENAMIC Acid',
+            dosage: dosage,
+            frequency: sig,
+            duration: `Quantity: ${quantity}`,
+            slot: 'mefenamic2' as const,
+          });
+        }
+      }
+
+      if (medications.length === 0) {
+        toast.error('Please select at least one medication and specify quantity');
+        return;
+      }
+
+      const prescriptionData = {
+        patientId,
+        patientName: patient?.name || '',
+        date: formData.get('date') as string,
+        medications,
+        dentist: formData.get('dentist') as string,
+        notes: formData.get('notes') as string,
+        licenseNumber: formData.get('license_number') as string,
+        ptrNumber: formData.get('ptr_number') as string,
+      };
+
+      // Save to backend
+      const savedPrescription = await prescriptionAPI.create(prescriptionData);
+      
+      const newPrescription: Prescription = {
+        id: savedPrescription.id.toString(),
+        patientId,
+        patientName: patient?.name || '',
+        date: formData.get('date') as string,
+        medications,
+        dentist: formData.get('dentist') as string,
+        notes: formData.get('notes') as string,
+        licenseNumber: formData.get('license_number') as string,
+        ptrNumber: formData.get('ptr_number') as string,
+      };
+
+      setPrescriptions([...prescriptions, newPrescription]);
+      setViewingPrescription(newPrescription);
+      setActiveForm(null);
+      setPrescriptionPatientSearch('');
+      setPrescriptionPatientId('');
+      
+      toast.success('Prescription created and saved successfully');
+      
+      // Refresh all data
+      if (onDataChanged) {
+        await onDataChanged();
+      }
+    } catch (error) {
+      console.error('Failed to create prescription:', error);
+      toast.error('Failed to create prescription');
     }
-
-    if (medications.length === 0) {
-      toast.error('Please select at least one medication and specify quantity');
-      return;
-    }
-
-    const newPrescription: Prescription = {
-      id: Date.now().toString(),
-      patientId,
-      patientName: patient?.name || '',
-      date: formData.get('date') as string,
-      medications,
-      dentist: formData.get('dentist') as string,
-      notes: formData.get('notes') as string,
-      licenseNumber: formData.get('license_number') as string,
-      ptrNumber: formData.get('ptr_number') as string,
-    };
-
-    setPrescriptions([...prescriptions, newPrescription]);
-    setViewingPrescription(newPrescription);
-    setActiveForm(null);
-    setPrescriptionPatientSearch('');
-    setPrescriptionPatientId('');
   };
 
   const printPrescription = (prescription: Prescription) => {
@@ -440,7 +462,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                         <div
                           key={patient.id}
                           onMouseDown={() => {
-                            setSelectedPatient(patient.id);
+                            setSelectedPatient(String(patient.id));
                             setPatientSearch(patient.name);
                             setShowReceiptSuggestions(false);
                           }}
@@ -1239,7 +1261,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
               <button
                 onClick={() => {
                   setShowPrescriptionPrompt(false);
-                  setSelectedPatient(lastCreatedService.patientId);
+                  setSelectedPatient(`${lastCreatedService.patientId}`);
                   setActiveForm('prescription');
                 }}
                 className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all font-semibold"
