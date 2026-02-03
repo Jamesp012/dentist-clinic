@@ -184,24 +184,63 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
           </div>
           {/* Navigation */}
           <nav className="hidden md:flex gap-8">
-            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="text-slate-600 hover:text-teal-600 transition cursor-pointer">Home</button>
-            <button onClick={() => document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' })} className="text-slate-600 hover:text-teal-600 transition cursor-pointer">Services</button>
-            <button onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })} className="text-slate-600 hover:text-teal-600 transition cursor-pointer">Contact</button>
-            <button onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })} className="text-slate-600 hover:text-teal-600 transition cursor-pointer">About</button>
+            <button onClick={() => {
+              const element = document.getElementById('home');
+              if (element) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+            }} className="text-slate-600 hover:text-teal-600 transition cursor-pointer">Home</button>
+            <button onClick={() => {
+              const element = document.getElementById('services');
+              if (element) {
+                const offset = 80;
+                const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+                window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
+              }
+            }} className="text-slate-600 hover:text-teal-600 transition cursor-pointer">Services</button>
+            <button onClick={() => {
+              const element = document.getElementById('contact');
+              if (element) {
+                const offset = 80;
+                const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+                window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
+              }
+            }} className="text-slate-600 hover:text-teal-600 transition cursor-pointer">Contact</button>
+            <button onClick={() => {
+              const element = document.getElementById('about');
+              if (element) {
+                const offset = 80;
+                const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+                window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
+              }
+            }} className="text-slate-600 hover:text-teal-600 transition cursor-pointer">About</button>
           </nav>
         </div>
       </header>
       {/* Hero Section */}
-      <section className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-emerald-50 relative overflow-hidden pt-32">
-        {/* Animated background elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-teal-400/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-10 left-10 w-80 h-80 bg-cyan-400/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-          <div className="absolute top-1/2 left-1/4 w-72 h-72 bg-slate-400/5 rounded-full blur-3xl"></div>
+      <section id="home" className="min-h-screen relative overflow-hidden pt-24 pb-16 flex items-center">
+        {/* Dental Office Photo Background */}
+        <div className="absolute inset-0">
+          {/* Background image with blur */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center"
+            style={{
+              backgroundImage: 'url(https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=1920&q=80)',
+              filter: 'blur(4px)',
+            }}
+          ></div>
+          
+          {/* Overlay for text readability and color harmony */}
+          <div className="absolute inset-0 bg-gradient-to-br from-teal-500/40 via-cyan-500/30 to-blue-400/40"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-white/50 via-white/40 to-transparent"></div>
+          
+          {/* Additional subtle overlays for depth */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-teal-400/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-10 left-10 w-80 h-80 bg-cyan-400/10 rounded-full blur-3xl"></div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pb-16">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[calc(100vh-100px)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left content */}
             <motion.div
               initial={{ opacity: 0, x: -50 }}
@@ -310,7 +349,7 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
                 </div>
               ) : (
                 // Auth Form
-              <div className="bg-white rounded-2xl shadow-2xl h-[600px] flex flex-col">
+              <div className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col" style={{ height: 'calc(100vh - 180px)', maxHeight: '700px' }}>
                 {/* Fixed Header */}
                 <div className="px-8 pt-8 pb-6 flex-shrink-0 border-b border-slate-200">
                   <div className="text-center">
@@ -589,7 +628,7 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
       </section>
 
       {/* Features Section */}
-      <section id="services" className="py-20 bg-white">
+      <section id="services" className="min-h-screen py-20 bg-white flex items-center">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}

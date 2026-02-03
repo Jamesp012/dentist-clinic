@@ -132,6 +132,51 @@ export const inventoryAPI = {
     }),
 };
 
+// Inventory Management APIs
+export const inventoryManagementAPI = {
+  // Overview endpoints
+  getOverview: () => fetchWithAuth(`${API_BASE}/inventory-management/overview`),
+  getAlerts: () => fetchWithAuth(`${API_BASE}/inventory-management/alerts`),
+
+  // Auto-reduction rules
+  getAutoReductionRules: () => fetchWithAuth(`${API_BASE}/inventory-management/auto-reduction/rules`),
+  getRulesByType: (appointmentType) => fetchWithAuth(`${API_BASE}/inventory-management/auto-reduction/rules/type/${appointmentType}`),
+  createAutoReductionRule: (data) =>
+    fetchWithAuth(`${API_BASE}/inventory-management/auto-reduction/rules`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateAutoReductionRule: (id, data) =>
+    fetchWithAuth(`${API_BASE}/inventory-management/auto-reduction/rules/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  deleteAutoReductionRule: (id) =>
+    fetchWithAuth(`${API_BASE}/inventory-management/auto-reduction/rules/${id}`, {
+      method: 'DELETE',
+    }),
+  resetAutoReductionRules: (appointmentType) =>
+    fetchWithAuth(`${API_BASE}/inventory-management/auto-reduction/rules/reset/${appointmentType}`, {
+      method: 'POST',
+    }),
+
+  // Reduction history
+  getReductionHistory: (limit = 100, offset = 0) =>
+    fetchWithAuth(`${API_BASE}/inventory-management/history?limit=${limit}&offset=${offset}`),
+  getReductionHistoryByPatient: (patientId) =>
+    fetchWithAuth(`${API_BASE}/inventory-management/history/patient/${patientId}`),
+  getReductionHistoryByAppointment: (appointmentId) =>
+    fetchWithAuth(`${API_BASE}/inventory-management/history/appointment/${appointmentId}`),
+  getReductionHistoryByItem: (itemId) =>
+    fetchWithAuth(`${API_BASE}/inventory-management/history/item/${itemId}`),
+
+  // Auto-reduce endpoint (called when appointment is completed)
+  autoReduceForAppointment: (appointmentId) =>
+    fetchWithAuth(`${API_BASE}/inventory-management/auto-reduce/appointment/${appointmentId}`, {
+      method: 'POST',
+    }),
+};
+
 // Referral APIs
 export const referralAPI = {
   getAll: () => fetchWithAuth(`${API_BASE}/referrals`),

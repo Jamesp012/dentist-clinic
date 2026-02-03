@@ -7,6 +7,7 @@ import { LandingPage } from './components/ui/LandingPage';
 import { Toaster, toast } from 'sonner';
 import { authAPI, setAuthToken, photoAPI, patientAPI } from './api';
 import { useDataSync } from './hooks/useDataSync';
+import './styles/scrollbar.css';
 
 // Type definitions
 export type Patient = {

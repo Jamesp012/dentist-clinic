@@ -8,7 +8,11 @@ const router = express.Router();
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const [referrals] = await pool.query('SELECT * FROM referrals ORDER BY createdAt DESC');
-    res.json(referrals);
+    const parsedReferrals = referrals.map(ref => ({
+      ...ref,
+      selectedServices: ref.selectedServices ? JSON.parse(ref.selectedServices) : {}
+    }));
+    res.json(parsedReferrals);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -21,7 +25,11 @@ router.get('/patient/:patientId', authMiddleware, async (req, res) => {
       'SELECT * FROM referrals WHERE patientId = ? ORDER BY createdAt DESC',
       [req.params.patientId]
     );
-    res.json(referrals);
+    const parsedReferrals = referrals.map(ref => ({
+      ...ref,
+      selectedServices: ref.selectedServices ? JSON.parse(ref.selectedServices) : {}
+    }));
+    res.json(parsedReferrals);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -34,7 +42,11 @@ router.get('/:id', authMiddleware, async (req, res) => {
     if (referrals.length === 0) {
       return res.status(404).json({ error: 'Referral not found' });
     }
-    res.json(referrals[0]);
+    const referral = referrals[0];
+    res.json({
+      ...referral,
+      selectedServices: referral.selectedServices ? JSON.parse(referral.selectedServices) : {}
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -50,7 +62,12 @@ router.post('/', authMiddleware, async (req, res) => {
       'INSERT INTO referrals (patientId, patientName, referringDentist, referredByContact, referredByEmail, referredTo, specialty, reason, selectedServices, date, urgency, createdByRole) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [patientId || null, patientName, referringDentist, referredByContact || null, referredByEmail || null, referredTo, specialty || null, reason || null, servicesJson, date, urgency || 'routine', roleValue]
     );
-    res.status(201).json({ id: result.insertId, ...req.body, createdByRole: roleValue });
+    res.status(201).json({ 
+      id: result.insertId, 
+      ...req.body, 
+      createdByRole: roleValue,
+      selectedServices: selectedServices || {}
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -66,7 +83,12 @@ router.put('/:id', authMiddleware, async (req, res) => {
       'UPDATE referrals SET patientId=?, patientName=?, referringDentist=?, referredByContact=?, referredByEmail=?, referredTo=?, specialty=?, reason=?, selectedServices=?, date=?, urgency=?, createdByRole=? WHERE id=?',
       [patientId || null, patientName, referringDentist, referredByContact || null, referredByEmail || null, referredTo, specialty || null, reason || null, servicesJson, date, urgency || 'routine', roleValue, req.params.id]
     );
-    res.json({ id: req.params.id, ...req.body, createdByRole: roleValue });
+    res.json({ 
+      id: req.params.id, 
+      ...req.body, 
+      createdByRole: roleValue,
+      selectedServices: selectedServices || {}
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

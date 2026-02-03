@@ -144,6 +144,39 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
     setReferralToDelete(null);
   };
 
+  // Helper to ensure selectedServices is always an object
+  const normalizeSelectedServices = (referral: Referral): Record<string, boolean | string> => {
+    if (!referral.selectedServices) return {};
+    if (typeof referral.selectedServices === 'string') {
+      try {
+        return JSON.parse(referral.selectedServices);
+      } catch {
+        return {};
+      }
+    }
+    return referral.selectedServices;
+  };
+
+  // Handler to toggle a service in the selected referral
+  const handleToggleService = (serviceId: string, isCheckboxType: boolean = false) => {
+    if (!selectedReferral) return;
+    
+    const currentServices = normalizeSelectedServices(selectedReferral);
+    const newServices = { ...currentServices };
+    const currentValue = newServices[serviceId];
+    const isCurrentlyChecked = currentValue === true || (typeof currentValue === 'string' && currentValue !== '');
+    
+    if (serviceId === 'peri') {
+      // For periapical with input, toggle between value and empty
+      newServices[serviceId] = isCurrentlyChecked ? '' : (typeof currentValue === 'string' ? currentValue : 'tooth');
+    } else {
+      // For regular services, toggle boolean
+      newServices[serviceId] = !isCurrentlyChecked;
+    }
+    
+    setSelectedReferral({ ...selectedReferral, selectedServices: newServices });
+  };
+
   const selectedPatient = selectedReferral
     ? patients.find(p => String(p.id) === String(selectedReferral.patientId))
     : undefined;
@@ -265,7 +298,11 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
                     <div className="flex items-center gap-2 flex-wrap">
                       <button
                         onClick={() => {
-                          setSelectedReferral(ref);
+                          const normalizedRef = {
+                            ...ref,
+                            selectedServices: normalizeSelectedServices(ref)
+                          };
+                          setSelectedReferral(normalizedRef);
                           setShowModal(true);
                         }}
                         className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2 border border-slate-200 bg-white text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium"
@@ -556,20 +593,24 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
                           { label: 'BITEWING RIGHT SIDE', id: 'bite-r' },
                           { label: 'PERIAPICAL XRAY TOOTH#', id: 'peri' }
                         ].map(({ label, id }) => {
-                          const serviceValue = selectedReferral.selectedServices?.[id];
-                          const isChecked = serviceValue === true || (typeof serviceValue === 'string' && serviceValue !== '');
-                          const textValue = typeof serviceValue === 'string' ? serviceValue : '';
+                          if (!selectedReferral) return null;
+                          const services = normalizeSelectedServices(selectedReferral);
+                          const isChecked = services[id] === true || (typeof services[id] === 'string' && services[id] !== '');
                           
                           return (
-                            <div key={label} className="flex items-center gap-3">
-                              <div className={`w-5 h-5 rounded-full border-2 border-yellow-400 flex items-center justify-center transition-colors ${
+                            <button
+                              key={id}
+                              type="button"
+                              onClick={() => handleToggleService(id, false)}
+                              className="flex items-center gap-3 w-full p-2 rounded hover:bg-yellow-50 transition-colors text-left cursor-pointer"
+                            >
+                              <div className={`w-5 h-5 rounded-full border-2 border-yellow-400 flex items-center justify-center flex-shrink-0 transition-colors ${
                                 isChecked ? 'bg-yellow-400' : 'bg-white'
                               }`}>
                                 {isChecked && <Check className="text-white w-3.5 h-3.5 stroke-[4]" />}
                               </div>
                               <span className="text-sm font-bold tracking-tight">{label}</span>
-                              {id === 'peri' && textValue && <span className="text-sm text-gray-600 ml-1">{textValue}</span>}
-                            </div>
+                            </button>
                           );
                         })}
                       </div>
@@ -581,18 +622,24 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
                           { label: 'INTRAORAL PHOTOGRAPH', id: 'intra' },
                           { label: 'EXTRAORAL PHOTOGRAPH', id: 'extra' }
                         ].map(({ label, id }) => {
-                          const serviceValue = selectedReferral.selectedServices?.[id];
-                          const isChecked = serviceValue === true || (typeof serviceValue === 'string' && serviceValue !== '');
+                          if (!selectedReferral) return null;
+                          const services = normalizeSelectedServices(selectedReferral);
+                          const isChecked = services[id] === true || (typeof services[id] === 'string' && services[id] !== '');
                           
                           return (
-                            <div key={label} className="flex items-center gap-3">
-                              <div className={`w-5 h-5 rounded-full border-2 border-yellow-400 flex items-center justify-center transition-colors ${
+                            <button
+                              key={id}
+                              type="button"
+                              onClick={() => handleToggleService(id, false)}
+                              className="flex items-center gap-3 w-full p-2 rounded hover:bg-yellow-50 transition-colors text-left cursor-pointer"
+                            >
+                              <div className={`w-5 h-5 rounded-full border-2 border-yellow-400 flex items-center justify-center flex-shrink-0 transition-colors ${
                                 isChecked ? 'bg-yellow-400' : 'bg-white'
                               }`}>
                                 {isChecked && <Check className="text-white w-3.5 h-3.5 stroke-[4]" />}
                               </div>
                               <span className="text-sm font-bold tracking-tight">{label}</span>
-                            </div>
+                            </button>
                           );
                         })}
                       </div>
@@ -709,7 +756,7 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
                     </div>
 
                     <div className="space-y-4">
-                      <h3 className="font-black text-center uppercase mb-4">X-RAY IMAGING SERVICES</h3>
+                      <h3 className="font-black text-center uppercase mb-4">DIAGNOSTIC SERVICES</h3>
                       <div className="grid grid-cols-2 gap-6">
                         {[
                           { label: 'Panoramic X-Ray', id: 'panoramic' },
@@ -718,17 +765,27 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
                           { label: 'Occlusal X-Ray', id: 'occlusal' },
                           { label: 'TMJ X-Ray', id: 'tmj' },
                           { label: 'CBCT (3D Imaging)', id: 'cbct' }
-                        ].map(({ label, id }) => (
-                          <div key={label} className="flex items-center gap-3">
-                            <input
-                              type="checkbox"
-                              checked={Boolean(selectedReferral.selectedServices?.[id])}
-                              disabled
-                              className="w-4 h-4"
-                            />
-                            <span className="font-bold">{label}</span>
-                          </div>
-                        ))}
+                        ].map(({ label, id }) => {
+                          if (!selectedReferral) return null;
+                          const services = normalizeSelectedServices(selectedReferral);
+                          const isChecked = Boolean(services[id]);
+                          
+                          return (
+                            <button
+                              key={id}
+                              type="button"
+                              onClick={() => handleToggleService(id, true)}
+                              className="flex items-center gap-3 w-full p-2 rounded hover:bg-blue-50 transition-colors text-left cursor-pointer"
+                            >
+                              <div className={`w-5 h-5 rounded-full border-2 border-blue-400 flex items-center justify-center flex-shrink-0 transition-colors ${
+                                isChecked ? 'bg-blue-400' : 'bg-white'
+                              }`}>
+                                {isChecked && <Check className="text-white w-3.5 h-3.5 stroke-[4]" />}
+                              </div>
+                              <span className="font-bold">{label}</span>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
 
@@ -778,6 +835,24 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
                 >
                   Close
                 </button>
+                {!isSelectedXrayReferral && (
+                  <button
+                    onClick={async () => {
+                      if (selectedReferral) {
+                        try {
+                          await referralAPI.update(selectedReferral.id, selectedReferral);
+                          toast.success('Referral updated successfully');
+                        } catch (error) {
+                          toast.error('Failed to update referral');
+                        }
+                      }
+                    }}
+                    className="flex-1 px-4 py-2 flex items-center justify-center gap-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold"
+                  >
+                    <Check size={18} />
+                    Save Changes
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     if (selectedReferral) {

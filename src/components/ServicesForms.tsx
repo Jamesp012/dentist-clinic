@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Patient, TreatmentRecord, Payment } from '../App';
 import { FileText, Printer, Download, Plus, X, CreditCard } from 'lucide-react';
 import { treatmentRecordAPI, paymentAPI, prescriptionAPI } from '../api';
@@ -76,6 +76,21 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
   const [isFromAppointment, setIsFromAppointment] = useState<boolean>(!!prefilledAppointment);
 
   const services: ServiceType[] = ['Extraction', 'Pasta', 'Braces', 'Cleaning', 'Pustiso/Dentures'];
+
+  // Load prescriptions on component mount
+  useEffect(() => {
+    const loadPrescriptions = async () => {
+      try {
+        const allPrescriptions = await prescriptionAPI.getAll();
+        if (allPrescriptions) {
+          setPrescriptions(allPrescriptions);
+        }
+      } catch (error) {
+        console.error('Failed to load prescriptions:', error);
+      }
+    };
+    loadPrescriptions();
+  }, []);
 
   const handleCreateService = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -274,6 +289,16 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
       setPrescriptionPatientId('');
       
       toast.success('Prescription created and saved successfully');
+      
+      // Reload prescriptions to show new one
+      try {
+        const allPrescriptions = await prescriptionAPI.getAll();
+        if (allPrescriptions) {
+          setPrescriptions(allPrescriptions);
+        }
+      } catch (error) {
+        console.error('Failed to reload prescriptions:', error);
+      }
       
       // Refresh all data
       if (onDataChanged) {
@@ -748,12 +773,12 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                   />
                 </div>
                 <div className="grid grid-cols-12 gap-2 items-center">
-                  <label className="col-span-1 text-sm font-semibold text-gray-900">ADDRESS:</label>
+                  <label className="col-span-2 text-sm font-semibold text-gray-900">ADDRESS:</label>
                   <input
                     type="text"
                     value={prescriptionPatientId ? patients.find(p => String(p.id) === String(prescriptionPatientId))?.address || '' : ''}
                     readOnly
-                    className="col-span-7 border-b border-gray-400 focus:outline-none bg-transparent px-2 py-1"
+                    className="col-span-6 border-b border-gray-400 focus:outline-none bg-transparent px-2 py-1"
                   />
                   <label className="col-span-1 text-sm font-semibold text-gray-900 text-right">DATE:</label>
                   <input
@@ -1020,8 +1045,8 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                       </div>
                     </div>
                     <div className="grid grid-cols-12 gap-2 items-center">
-                      <label className="col-span-1 text-sm font-semibold text-gray-900">ADDRESS:</label>
-                      <div className="col-span-7 border-b border-gray-400 px-2 py-1 text-sm text-gray-900">
+                      <label className="col-span-2 text-sm font-semibold text-gray-900">ADDRESS:</label>
+                      <div className="col-span-6 border-b border-gray-400 px-2 py-1 text-sm text-gray-900">
                         {patient?.address || ''}
                       </div>
                       <label className="col-span-1 text-sm font-semibold text-gray-900 text-right">DATE:</label>
