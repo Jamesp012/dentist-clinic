@@ -234,39 +234,34 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
 
   const ServiceItem = ({ label, id, showInput, onInputChange }: { label: string; id: string; showInput?: boolean; onInputChange?: (id: string, value: string) => void }) => {
     const inputValue = typeof selectedServices[id] === 'string' ? selectedServices[id] : '';
-    
-    const handleClick = () => {
-      toggleService(id);
-    };
-    
     return (
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={handleClick}
-          className={`w-5 h-5 rounded-full border-2 border-yellow-400 flex items-center justify-center transition-colors flex-shrink-0 ${selectedServices[id] ? "bg-yellow-400" : "bg-white"}`}
-        >
-          {selectedServices[id] && <Check className="text-white w-3.5 h-3.5 stroke-[4]" />}
-        </button>
-        <button
-          type="button"
-          onClick={handleClick}
-          className="text-sm font-bold tracking-tight text-left cursor-pointer hover:opacity-80 transition-opacity"
-        >
-          {label}
-        </button>
+      <div className="flex items-center gap-3 relative z-50" style={{ pointerEvents: 'auto' }}>
+        <label className="flex items-center cursor-pointer relative">
+          <input
+            type="checkbox"
+            checked={!!selectedServices[id]}
+            onChange={() => toggleService(id)}
+            className="w-5 h-5 rounded-full border-2 border-yellow-400 transition-colors flex-shrink-0 checked:bg-yellow-400 checked:border-yellow-400 focus:ring-2 focus:ring-yellow-500"
+          />
+          {selectedServices[id] && (
+            <span className="absolute left-1 top-1 pointer-events-none">
+              <Check className="text-white w-3.5 h-3.5 stroke-[4]" />
+            </span>
+          )}
+          <span className="ml-2 text-sm font-bold tracking-tight text-left select-none">{label}</span>
+        </label>
         {showInput && (
-          <input 
+          <input
             id={`service-${id}`}
             name={`service-${id}`}
-            type="text" 
+            type="text"
             value={inputValue}
             onChange={(e) => {
               e.stopPropagation();
               onInputChange?.(id, e.target.value);
             }}
             onClick={(e) => e.stopPropagation()}
-            className="w-16 border-b border-slate-400 focus:outline-none focus:border-yellow-500 bg-transparent text-sm px-1 font-normal" 
+            className="w-16 border-b border-slate-400 focus:outline-none focus:border-yellow-500 bg-transparent text-sm px-1 font-normal"
           />
         )}
       </div>
@@ -311,129 +306,137 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
         </div>
       )}
 
-      {/* Doctor Referral Form */}
+      {/* Doctor Referral Form - fixed JSX structure */}
       {referralType === 'doctor' && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-white w-full max-w-4xl rounded-lg shadow-2xl my-8">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4 overflow-y-auto" style={{ pointerEvents: 'auto', zIndex: 9999 }}>
+          <div className="bg-white w-full max-w-3xl rounded-lg shadow-2xl my-8 relative" style={{ pointerEvents: 'auto', zIndex: 9999 }}>
             <div className="flex justify-between items-center p-6 border-b">
               <h1 className="text-2xl font-bold">Doctor Referral Form</h1>
               <button type="button" onClick={() => { setReferralType(null); setShowTypeSelection(false); }} className="text-gray-500 hover:text-gray-700">
                 <X className="w-6 h-6" />
               </button>
             </div>
-
-            <div className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto">
-              {/* Patient Selection */}
+            <form className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto" onSubmit={e => { e.preventDefault(); handleCreateReferral(); }}>
               <div className="mb-6">
                 <label className="block text-sm font-bold mb-2">Search Patient</label>
                 <PatientSearchInput
                   patients={patients}
                   selectedPatientId={formData.patientId}
-                  onSelectPatient={(id) => handlePatientSelect(id)}
+                  onSelectPatient={handlePatientSelect}
                   placeholder="Search patient..."
                   required
                 />
               </div>
-
-              {/* Header Form Fields */}
               <div className="space-y-4 mb-6">
-                <UnderlineInput label="Patient's Name:" value={formData.patientName} onChange={(v) => handleInputChange('patientName', v)} disabled />
+                <UnderlineInput label="Patient's Name:" value={formData.patientName} onChange={v => handleInputChange('patientName', v)} disabled />
                 <div className="grid grid-cols-3 gap-4">
-                  <UnderlineInput label="Date:" value={formData.date} onChange={(v) => handleInputChange('date', v)} />
-                  <UnderlineInput label="Contact No.:" value={formData.contactNo} onChange={(v) => handleInputChange('contactNo', v)} disabled />
-                  <UnderlineInput label="Age:" value={formData.age} onChange={(v) => handleInputChange('age', v)} disabled />
+                  <UnderlineInput label="Date:" value={formData.date} onChange={v => handleInputChange('date', v)} />
+                  <UnderlineInput label="Contact No.:" value={formData.contactNo} onChange={v => handleInputChange('contactNo', v)} disabled />
+                  <UnderlineInput label="Age:" value={formData.age} onChange={v => handleInputChange('age', v)} disabled />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <UnderlineInput label="Sex:" value={formData.sex} onChange={(v) => handleInputChange('sex', v)} disabled />
-                  <UnderlineInput label="Date Of Birth:" value={formData.dateOfBirth} onChange={(v) => handleInputChange('dateOfBirth', v)} disabled />
+                  <UnderlineInput label="Sex:" value={formData.sex} onChange={v => handleInputChange('sex', v)} disabled />
+                  <UnderlineInput label="Date Of Birth:" value={formData.dateOfBirth} onChange={v => handleInputChange('dateOfBirth', v)} disabled />
                 </div>
-                <UnderlineInput label="Referred by:" value={formData.referredBy} onChange={(v) => handleInputChange('referredBy', v)} />
+                <UnderlineInput label="Referred by:" value={formData.referredBy} onChange={v => handleInputChange('referredBy', v)} />
                 <div className="grid grid-cols-2 gap-4">
-                  <UnderlineInput label="Contact No.:" value={formData.referredByContact} onChange={(v) => handleInputChange('referredByContact', v)} />
-                  <UnderlineInput label="Clinic Email Address:" value={formData.referredByEmail} onChange={(v) => handleInputChange('referredByEmail', v)} />
+                  <UnderlineInput label="Contact No.:" value={formData.referredByContact} onChange={v => handleInputChange('referredByContact', v)} />
+                  <UnderlineInput label="Clinic Email Address:" value={formData.referredByEmail} onChange={v => handleInputChange('referredByEmail', v)} />
                 </div>
               </div>
-
-              {/* Services Section */}
-              <div className="grid grid-cols-2 gap-8 mb-8 py-8 border-t-4 border-yellow-400">
-                <div className="space-y-3">
-                  <h2 className="font-black text-lg uppercase mb-4">Diagnostic Services:</h2>
-                  <ServiceItem label="STANDARD PANORAMIC" id="pano" onInputChange={handleServiceInputChange} />
-                  <ServiceItem label="TMJ (OPEN & CLOSE)" id="tmj" onInputChange={handleServiceInputChange} />
-                  <ServiceItem label="SINUS PA" id="sinus" onInputChange={handleServiceInputChange} />
-                  <ServiceItem label="BITEWING LEFT SIDE" id="bite-l" onInputChange={handleServiceInputChange} />
-                  <ServiceItem label="BITEWING RIGHT SIDE" id="bite-r" onInputChange={handleServiceInputChange} />
-                  <ServiceItem label="PERIAPICAL XRAY TOOTH#" id="peri" showInput onInputChange={handleServiceInputChange} />
+              <div className="mb-8 py-8 border-t-4 border-yellow-400">
+                <h2 className="font-black text-lg uppercase mb-4">Diagnostic Services:</h2>
+                <div className="grid grid-cols-2 gap-6">
+                  {[
+                    { label: 'STANDARD PANORAMIC', id: 'pano' },
+                    { label: 'TMJ (OPEN & CLOSE)', id: 'tmj' },
+                    { label: 'SINUS PA', id: 'sinus' },
+                    { label: 'BITEWING LEFT SIDE', id: 'bite-l' },
+                    { label: 'BITEWING RIGHT SIDE', id: 'bite-r' },
+                  ].map(item => (
+                    <label key={item.id} className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={!!selectedServices[item.id]}
+                        onChange={() => toggleService(item.id)}
+                        className="w-5 h-5 border-2 border-yellow-400 rounded focus:ring-2 focus:ring-yellow-500"
+                        style={{ zIndex: 10000, pointerEvents: 'auto' }}
+                      />
+                      <span className="font-bold text-sm">{item.label}</span>
+                    </label>
+                  ))}
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={!!selectedServices['peri']}
+                      onChange={() => toggleService('peri')}
+                      className="w-5 h-5 border-2 border-yellow-400 rounded focus:ring-2 focus:ring-yellow-500"
+                      style={{ zIndex: 10000, pointerEvents: 'auto' }}
+                    />
+                    <span className="font-bold text-sm">PERIAPICAL XRAY TOOTH#</span>
+                    <input
+                      type="text"
+                      value={typeof selectedServices['peri'] === 'string' ? selectedServices['peri'] : ''}
+                      onChange={e => handleServiceInputChange('peri', e.target.value)}
+                      className="ml-2 w-16 border-b border-slate-400 bg-transparent text-sm px-1 font-normal"
+                      style={{ zIndex: 10000, pointerEvents: 'auto' }}
+                    />
+                  </label>
                 </div>
-
-                <div className="space-y-3 pt-6">
-                  <h2 className="font-black text-lg uppercase mb-4">OTHER SERVICES</h2>
-                  <ServiceItem label="DIAGNOSTIC MODEL CAST" id="model" onInputChange={handleServiceInputChange} />
-                  <ServiceItem label="INTRAORAL PHOTOGRAPH" id="intra" onInputChange={handleServiceInputChange} />
-                  <ServiceItem label="EXTRAORAL PHOTOGRAPH" id="extra" onInputChange={handleServiceInputChange} />
+                <h2 className="font-black text-lg uppercase mt-8 mb-4">Other Services:</h2>
+                <div className="grid grid-cols-2 gap-6">
+                  {[
+                    { label: 'DIAGNOSTIC MODEL CAST', id: 'model' },
+                    { label: 'INTRAORAL PHOTOGRAPH', id: 'intra' },
+                    { label: 'EXTRAORAL PHOTOGRAPH', id: 'extra' },
+                  ].map(item => (
+                    <label key={item.id} className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={!!selectedServices[item.id]}
+                        onChange={() => toggleService(item.id)}
+                        className="w-5 h-5 border-2 border-yellow-400 rounded focus:ring-2 focus:ring-yellow-500"
+                        style={{ zIndex: 10000, pointerEvents: 'auto' }}
+                      />
+                      <span className="font-bold text-sm">{item.label}</span>
+                    </label>
+                  ))}
                 </div>
               </div>
-
-                {/* Clinic Information */}
-                <div className="mt-4 pt-4 pb-8 grid grid-cols-2 gap-8 border-b-4 border-yellow-400">
-                  <div className="space-y-3 text-sm">
-                    <img
-                      src={clinicLogo}
-                      alt="Clinic Logo"
-                      className="w-full max-h-32 object-contain"
-                    />
-                    <div>
-                      <p className="font-bold text-gray-800">Address:</p>
-                      <p className="text-gray-700">#48 Luis Palad Street, Brgy. Angeles Zone 1, Tayabas City</p>
-                      <p className="text-gray-700">(infront of St. Jude Pharmacy, beside Motoposh Tayabas)</p>
-                      <p className="text-gray-700">Lucena-Tayabas Road, Luis Palad Street</p>
-                    </div>
-                    <div>
-                      <p className="font-bold text-gray-800">Email:</p>
-                      <p className="text-gray-700">j.aguilardentalclinic@gmail.com</p>
-                    </div>
-                    <div>
-                      <p className="font-bold text-gray-800">Facebook:</p>
-                      <p className="text-gray-700">J. Aguilar Dental Clinic Tayabas Branch</p>
-                    </div>
-                    <div>
-                      <p className="font-bold text-gray-800">Contact No.:</p>
-                      <p className="text-gray-700">0938-171-7695</p>
-                    </div>
+              <div className="mt-4 pt-4 pb-8 grid grid-cols-2 gap-8 border-b-4 border-yellow-400">
+                <div className="space-y-3 text-sm">
+                  <img src={clinicLogo} alt="Clinic Logo" className="w-full max-h-32 object-contain" />
+                  <div>
+                    <p className="font-bold text-gray-800">Address:</p>
+                    <p className="text-gray-700">#48 Luis Palad Street, Brgy. Angeles Zone 1, Tayabas City</p>
+                    <p className="text-gray-700">(infront of St. Jude Pharmacy, beside Motoposh Tayabas)</p>
+                    <p className="text-gray-700">Lucena-Tayabas Road, Luis Palad Street</p>
                   </div>
-                  <div className="flex items-center justify-center">
-                    <img
-                      src={clinicMap}
-                      alt="Clinic Location Map"
-                      className="w-full h-auto object-contain rounded-lg border-2 border-gray-300"
-                    />
+                  <div>
+                    <p className="font-bold text-gray-800">Email:</p>
+                    <p className="text-gray-700">j.aguilardentalclinic@gmail.com</p>
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-800">Facebook:</p>
+                    <p className="text-gray-700">J. Aguilar Dental Clinic Tayabas Branch</p>
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-800">Contact No.:</p>
+                    <p className="text-gray-700">0938-171-7695</p>
                   </div>
                 </div>
-
-                {/* Thank You Message */}
-                <div className="mt-6 pt-6 text-left space-y-2">
-                  <p className="font-bold text-gray-800 text-lg">THANK YOU FOR YOUR REFERRAL!</p>
-                  <p className="text-gray-700 text-sm leading-relaxed">It is our policy to decline performing procedures that are not indicated in the referral form.<br />This is based on our strict observance of the Dental Code of Ethics.</p>
+                <div className="flex items-center justify-center">
+                  <img src={redorLogo} alt="Redor Logo" className="w-32 h-32 object-contain" />
                 </div>
-
-            </div>
-
-            <div className="flex gap-3 p-6 border-t justify-end">
-              <button
-                type="button"
-                onClick={() => { setReferralType(null); setShowTypeSelection(false); resetForm(); }}
-                className="px-6 py-2 border border-slate-300 rounded hover:bg-slate-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleCreateReferral}
-                className="px-6 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-              >
-                Create Referral
-              </button>
-            </div>
+              </div>
+              <div className="mt-6 pt-6 text-left space-y-2">
+                <p className="font-bold text-gray-800 text-lg">THANK YOU FOR YOUR REFERRAL!</p>
+                <p className="text-gray-700 text-sm leading-relaxed">It is our policy to decline performing procedures that are not indicated in the referral form.<br />This is based on our strict observance of the Dental Code of Ethics.</p>
+              </div>
+              <div className="flex justify-end mt-8">
+                <button type="submit" className="px-6 py-3 bg-yellow-500 text-white font-bold rounded-lg shadow hover:bg-yellow-600 transition-colors">Create Referral</button>
+              </div>
+            </form>
           </div>
         </div>
       )}

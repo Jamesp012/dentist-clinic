@@ -567,7 +567,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                   </button>
                 )}
               </div>
-            <form onSubmit={handleCreateService} className="space-y-6 relative">
+              <form onSubmit={handleCreateService} className="space-y-6 relative">
               <div>
                 <label className="block text-xs font-extrabold uppercase tracking-widest mb-4 text-slate-700 flex items-center gap-2">
                   <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
@@ -830,6 +830,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                 </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}
@@ -1152,6 +1153,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                 </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}
