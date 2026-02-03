@@ -21,10 +21,10 @@ export const XrayReferralFormRedor: React.FC = () => {
   };
 
   const CheckableItem = ({ label, id, className = "" }: { label: string; id: string; className?: string }) => (
-    <div className={`flex items-center gap-2 cursor-pointer group ${className}`} onClick={() => toggleItem(id)}>
-      <div className="w-10 border-b border-slate-400 relative h-6">
+    <div className={`flex items-center gap-2 cursor-pointer group pointer-events-auto ${className}`} onClick={() => toggleItem(id)}>
+      <div className="w-10 border-b border-slate-400 relative h-6 pointer-events-auto">
         {selectedItems[id] && (
-          <Check className="absolute bottom-0.5 left-1/2 -translate-x-1/2 text-blue-700 w-5 h-5 stroke-[4]" />
+          <Check className="absolute bottom-0.5 left-1/2 -translate-x-1/2 text-blue-700 w-5 h-5 stroke-[4] pointer-events-none" />
         )}
       </div>
       <span className="font-bold">{label}</span>

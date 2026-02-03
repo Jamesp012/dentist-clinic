@@ -30,8 +30,10 @@ const UnderlineInput = ({ label, value, onChange, className = '', disabled = fal
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <span className="text-sm whitespace-nowrap font-semibold">{label}</span>
+      <label htmlFor={`input-${label}`} className="text-sm whitespace-nowrap font-semibold">{label}</label>
       <input 
+        id={`input-${label}`}
+        name={label.toLowerCase().replace(/\s+/g, '-')}
         type="text" 
         value={value}
         onChange={handleChange}
@@ -114,6 +116,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
   };
 
   const handleCreateReferral = async () => {
+    console.log('handleCreateReferral called');
     if (!formData.patientName) {
       toast.error('Please select a patient');
       return;
@@ -232,14 +235,30 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
   const ServiceItem = ({ label, id, showInput, onInputChange }: { label: string; id: string; showInput?: boolean; onInputChange?: (id: string, value: string) => void }) => {
     const inputValue = typeof selectedServices[id] === 'string' ? selectedServices[id] : '';
     
+    const handleClick = () => {
+      toggleService(id);
+    };
+    
     return (
-      <div className="flex items-center gap-3 cursor-pointer group" onClick={() => toggleService(id)}>
-        <div className={`w-5 h-5 rounded-full border-2 border-yellow-400 flex items-center justify-center transition-colors ${selectedServices[id] ? "bg-yellow-400" : "bg-white"}`}>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={handleClick}
+          className={`w-5 h-5 rounded-full border-2 border-yellow-400 flex items-center justify-center transition-colors flex-shrink-0 ${selectedServices[id] ? "bg-yellow-400" : "bg-white"}`}
+        >
           {selectedServices[id] && <Check className="text-white w-3.5 h-3.5 stroke-[4]" />}
-        </div>
-        <span className="text-sm font-bold tracking-tight">{label}</span>
+        </button>
+        <button
+          type="button"
+          onClick={handleClick}
+          className="text-sm font-bold tracking-tight text-left cursor-pointer hover:opacity-80 transition-opacity"
+        >
+          {label}
+        </button>
         {showInput && (
           <input 
+            id={`service-${id}`}
+            name={`service-${id}`}
             type="text" 
             value={inputValue}
             onChange={(e) => {
@@ -262,13 +281,14 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
           <div className="bg-white rounded-lg p-8 max-w-2xl w-full">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">Select Referral Type</h2>
-              <button onClick={() => setShowTypeSelection(false)} className="text-gray-500 hover:text-gray-700">
+              <button type="button" onClick={() => setShowTypeSelection(false)} className="text-gray-500 hover:text-gray-700">
                 <X className="w-6 h-6" />
               </button>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <button
+                type="button"
                 onClick={() => setReferralType('doctor')}
                 className="p-6 border-2 border-yellow-400 rounded-lg hover:bg-yellow-50 transition-colors text-center"
               >
@@ -278,6 +298,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
               </button>
 
               <button
+                type="button"
                 onClick={() => setReferralType('xray')}
                 className="p-6 border-2 border-blue-600 rounded-lg hover:bg-blue-50 transition-colors text-center"
               >
@@ -296,7 +317,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
           <div className="bg-white w-full max-w-4xl rounded-lg shadow-2xl my-8">
             <div className="flex justify-between items-center p-6 border-b">
               <h1 className="text-2xl font-bold">Doctor Referral Form</h1>
-              <button onClick={() => { setReferralType(null); setShowTypeSelection(false); }} className="text-gray-500 hover:text-gray-700">
+              <button type="button" onClick={() => { setReferralType(null); setShowTypeSelection(false); }} className="text-gray-500 hover:text-gray-700">
                 <X className="w-6 h-6" />
               </button>
             </div>
@@ -399,12 +420,14 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
 
             <div className="flex gap-3 p-6 border-t justify-end">
               <button
+                type="button"
                 onClick={() => { setReferralType(null); setShowTypeSelection(false); resetForm(); }}
                 className="px-6 py-2 border border-slate-300 rounded hover:bg-slate-50"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleCreateReferral}
                 className="px-6 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
               >
@@ -420,7 +443,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-white w-full max-w-5xl rounded-lg shadow-2xl my-8">
             <div className="absolute top-4 right-4 z-10">
-              <button onClick={() => { setReferralType(null); setShowTypeSelection(false); }} className="text-gray-500 hover:text-gray-700 bg-white rounded-full p-2 shadow-lg">
+              <button type="button" onClick={() => { setReferralType(null); setShowTypeSelection(false); }} className="text-gray-500 hover:text-gray-700 bg-white rounded-full p-2 shadow-lg">
                 <X className="w-6 h-6" />
               </button>
             </div>
@@ -461,6 +484,8 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                   <div className="flex items-center gap-6">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
+                        id="xray-sex-male"
+                        name="sex"
                         type="checkbox"
                         checked={formData.sex === 'Male'}
                         onChange={(e) => handleInputChange('sex', e.target.checked ? 'Male' : '')}
@@ -470,6 +495,8 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
+                        id="xray-sex-female"
+                        name="sex"
                         type="checkbox"
                         checked={formData.sex === 'Female'}
                         onChange={(e) => handleInputChange('sex', e.target.checked ? 'Female' : '')}
@@ -502,19 +529,19 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" className="w-4 h-4" />
+                      <input id="xray-periapical" name="xray-periapical" type="checkbox" className="w-4 h-4" />
                       <span>Peri-apical (please encircle no./nos.)</span>
                     </label>
                   </div>
                   <div className="space-y-1">
                     <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['occlusal'])} onChange={() => toggleXrayItem('occlusal')} className="w-4 h-4" />
+                      <input id="xray-occlusal" name="xray-occlusal" type="checkbox" checked={getCheckboxValue(selectedXrayItems['occlusal'])} onChange={() => toggleXrayItem('occlusal')} className="w-4 h-4" />
                       <span>Occlusal</span>
-                      <input type="checkbox" className="w-3 h-3 ml-4" />
+                      <input id="xray-occlusal-upper" name="xray-occlusal-upper" type="checkbox" className="w-3 h-3 ml-4" />
                       <span className="text-xs">Upper</span>
                     </label>
                     <label className="flex items-center gap-2 text-sm ml-28">
-                      <input type="checkbox" className="w-3 h-3" />
+                      <input id="xray-occlusal-lower" name="xray-occlusal-lower" type="checkbox" className="w-3 h-3" />
                       <span className="text-xs">Lower</span>
                     </label>
                   </div>
@@ -618,33 +645,33 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['panoramic'])} onChange={() => toggleXrayItem('panoramic')} className="w-4 h-4" />
+                      <input id="xray-panoramic" name="xray-panoramic" type="checkbox" checked={getCheckboxValue(selectedXrayItems['panoramic'])} onChange={() => toggleXrayItem('panoramic')} className="w-4 h-4" />
                       <span>Panoramic</span>
                     </label>
                     <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['cephalometric'])} onChange={() => toggleXrayItem('cephalometric')} className="w-4 h-4" />
+                      <input id="xray-cephalometric" name="xray-cephalometric" type="checkbox" checked={getCheckboxValue(selectedXrayItems['cephalometric'])} onChange={() => toggleXrayItem('cephalometric')} className="w-4 h-4" />
                       <span>Cephalometric</span>
                     </label>
                     <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['tmj'])} onChange={() => toggleXrayItem('tmj')} className="w-4 h-4" />
+                      <input id="xray-tmj" name="xray-tmj" type="checkbox" checked={getCheckboxValue(selectedXrayItems['tmj'])} onChange={() => toggleXrayItem('tmj')} className="w-4 h-4" />
                       <span>TMJ/Transcranial</span>
                     </label>
                     <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['sinus'])} onChange={() => toggleXrayItem('sinus')} className="w-4 h-4" />
+                      <input id="xray-sinus" name="xray-sinus" type="checkbox" checked={getCheckboxValue(selectedXrayItems['sinus'])} onChange={() => toggleXrayItem('sinus')} className="w-4 h-4" />
                       <span>Sinus</span>
                     </label>
                   </div>
                   <div className="space-y-2">
                     <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['handwrist'])} onChange={() => toggleXrayItem('handwrist')} className="w-4 h-4" />
+                      <input id="xray-handwrist" name="xray-handwrist" type="checkbox" checked={getCheckboxValue(selectedXrayItems['handwrist'])} onChange={() => toggleXrayItem('handwrist')} className="w-4 h-4" />
                       <span>Handwrist/Carpal</span>
                     </label>
                     <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['smv'])} onChange={() => toggleXrayItem('smv')} className="w-4 h-4" />
+                      <input id="xray-smv" name="xray-smv" type="checkbox" checked={getCheckboxValue(selectedXrayItems['smv'])} onChange={() => toggleXrayItem('smv')} className="w-4 h-4" />
                       <span>Submentovertex (SMV)</span>
                     </label>
                     <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['waters'])} onChange={() => toggleXrayItem('waters')} className="w-4 h-4" />
+                      <input id="xray-waters" name="xray-waters" type="checkbox" checked={getCheckboxValue(selectedXrayItems['waters'])} onChange={() => toggleXrayItem('waters')} className="w-4 h-4" />
                       <span>Water's View</span>
                     </label>
                   </div>
@@ -657,19 +684,19 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                 
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['photographs'])} onChange={() => toggleXrayItem('photographs')} className="w-4 h-4" />
+                    <input id="xray-photographs" name="xray-photographs" type="checkbox" checked={getCheckboxValue(selectedXrayItems['photographs'])} onChange={() => toggleXrayItem('photographs')} className="w-4 h-4" />
                     <span>Extra and Intra-oral Photographs</span>
                   </label>
                   <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['model-cast'])} onChange={() => toggleXrayItem('model-cast')} className="w-4 h-4" />
+                    <input id="xray-model-cast" name="xray-model-cast" type="checkbox" checked={getCheckboxValue(selectedXrayItems['model-cast'])} onChange={() => toggleXrayItem('model-cast')} className="w-4 h-4" />
                     <span>Diagnostic Study Model Cast with duplicate casts</span>
                   </label>
                   <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['ortho-records'])} onChange={() => toggleXrayItem('ortho-records')} className="w-4 h-4" />
+                    <input id="xray-ortho-records" name="xray-ortho-records" type="checkbox" checked={getCheckboxValue(selectedXrayItems['ortho-records'])} onChange={() => toggleXrayItem('ortho-records')} className="w-4 h-4" />
                     <span>Complete Orthodontic Records (Pano, Ceph, Photos, Caph with free digital tracing)</span>
                   </label>
                   <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['ceph-tracing'])} onChange={() => toggleXrayItem('ceph-tracing')} className="w-4 h-4" />
+                    <input id="xray-ceph-tracing" name="xray-ceph-tracing" type="checkbox" checked={getCheckboxValue(selectedXrayItems['ceph-tracing'])} onChange={() => toggleXrayItem('ceph-tracing')} className="w-4 h-4" />
                     <span>Digitalized Ceph Tracing</span>
                   </label>
                 </div>
@@ -679,11 +706,11 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['bleeding-tray'])} onChange={() => toggleXrayItem('bleeding-tray')} className="w-4 h-4" />
+                      <input id="xray-bleeding-tray" name="xray-bleeding-tray" type="checkbox" checked={getCheckboxValue(selectedXrayItems['bleeding-tray'])} onChange={() => toggleXrayItem('bleeding-tray')} className="w-4 h-4" />
                       <span>Bleeding Tray</span>
                     </label>
                     <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['post-ortho'])} onChange={() => toggleXrayItem('post-ortho')} className="w-4 h-4" />
+                      <input id="xray-post-ortho" name="xray-post-ortho" type="checkbox" checked={getCheckboxValue(selectedXrayItems['post-ortho'])} onChange={() => toggleXrayItem('post-ortho')} className="w-4 h-4" />
                       <span>Post-Ortho Positioner</span>
                     </label>
                     <label className="flex items-center gap-2 text-sm">
@@ -733,12 +760,14 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
 
             <div className="flex gap-3 p-6 border-t justify-end">
               <button
+                type="button"
                 onClick={() => { setReferralType(null); setShowTypeSelection(false); resetForm(); }}
                 className="px-6 py-2 border border-slate-300 rounded hover:bg-slate-50"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleCreateReferral}
                 className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
               >
@@ -752,6 +781,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
       {/* Main Content - List and Create Button */}
       <div className="flex justify-end mb-6">
         <button
+          type="button"
           onClick={() => { setShowTypeSelection(true); setReferralType(null); }}
           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2 font-bold"
         >
@@ -762,14 +792,15 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
 
       {/* Referrals List */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {[...referrals]
-          .sort((a, b) => {
-            const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
-            if (dateDiff !== 0) return dateDiff;
-            return Number(b.id) - Number(a.id);
-          })
-          .map((referral) => (
-          <div key={referral.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        {(referrals && referrals.length > 0) ? (
+          [...referrals]
+            .sort((a, b) => {
+              const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+              if (dateDiff !== 0) return dateDiff;
+              return Number(b.id) - Number(a.id);
+            })
+            .map((referral) => (
+              <div key={referral.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h3 className="text-lg font-bold mb-1">{referral.patientName}</h3>
@@ -799,12 +830,13 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
               </div>
               <div>
                 <p className="text-sm text-gray-600">Reason</p>
-                <p className="text-sm">{referral.reason.substring(0, 60)}...</p>
+                <p className="text-sm">{referral.reason ? referral.reason.substring(0, 60) : 'N/A'}...</p>
               </div>
             </div>
 
             <div className="flex flex-wrap gap-2">
               <button
+                type="button"
                 onClick={() => {
                   setSelectedReferral(referral);
                   setShowDetailModal(true);
@@ -815,6 +847,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                 View
               </button>
               <button
+                type="button"
                 onClick={() => handleDownloadReferralPDF(referral)}
                 className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-blue-300 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
               >
@@ -822,6 +855,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                 PDF
               </button>
               <button
+                type="button"
                 onClick={() => handleDeleteReferral(referral.id)}
                 className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-red-300 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium"
               >
@@ -830,12 +864,12 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
               </button>
             </div>
           </div>
-        ))}
-
-        {referrals.length === 0 && (
+            ))
+        ) : (
           <div className="col-span-2 bg-white p-12 rounded-lg shadow-sm border border-gray-200 text-center">
             <p className="text-gray-600 mb-4">No referrals created yet</p>
             <button
+              type="button"
               onClick={() => { setShowTypeSelection(true); setReferralType(null); }}
               className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
@@ -855,6 +889,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                 {isSelectedXrayReferral ? 'X-Ray Referral Form' : 'Doctor Referral Form'}
               </h1>
               <button
+                type="button"
                 onClick={() => {
                   setShowDetailModal(false);
                   setSelectedReferral(null);
@@ -970,7 +1005,17 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                         { label: 'BITEWING RIGHT SIDE', id: 'bite-r' },
                         { label: 'PERIAPICAL XRAY TOOTH#', id: 'peri' }
                       ].map(({ label, id }) => {
-                        const serviceValue = selectedReferral.selectedServices?.[id];
+                        // Parse selectedServices if it's a JSON string
+                        let selectedServicesObj = selectedReferral.selectedServices;
+                        if (typeof selectedServicesObj === 'string') {
+                          try {
+                            selectedServicesObj = JSON.parse(selectedServicesObj);
+                          } catch (e) {
+                            selectedServicesObj = {};
+                          }
+                        }
+                        
+                        const serviceValue = selectedServicesObj?.[id];
                         const isChecked = serviceValue === true || (typeof serviceValue === 'string' && serviceValue !== '');
                         const textValue = typeof serviceValue === 'string' ? serviceValue : '';
                         
@@ -995,7 +1040,17 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                         { label: 'INTRAORAL PHOTOGRAPH', id: 'intra' },
                         { label: 'EXTRAORAL PHOTOGRAPH', id: 'extra' }
                       ].map(({ label, id }) => {
-                        const serviceValue = selectedReferral.selectedServices?.[id];
+                        // Parse selectedServices if it's a JSON string
+                        let selectedServicesObj = selectedReferral.selectedServices;
+                        if (typeof selectedServicesObj === 'string') {
+                          try {
+                            selectedServicesObj = JSON.parse(selectedServicesObj);
+                          } catch (e) {
+                            selectedServicesObj = {};
+                          }
+                        }
+                        
+                        const serviceValue = selectedServicesObj?.[id];
                         const isChecked = serviceValue === true || (typeof serviceValue === 'string' && serviceValue !== '');
                         
                         return (

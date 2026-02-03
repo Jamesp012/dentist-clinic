@@ -51,6 +51,7 @@ export type InventoryItem = {
   supplier: string;
   lastOrdered?: string;
   cost: number;
+  quantityPerBox?: number;
 };
 
 export type TreatmentRecord = {
@@ -676,9 +677,6 @@ export default function App() {
     // Calculate billing balance from treatment records
     // Balance = Total cost - Total paid for this patient
     const patientTreatments = treatmentRecords.filter(t => String(t.patientId) === String(currentUser.patientId));
-    console.log('App.tsx - Current User PatientId:', currentUser.patientId);
-    console.log('App.tsx - All Treatment Records:', treatmentRecords);
-    console.log('App.tsx - Filtered Patient Treatments:', patientTreatments);
     void patientTreatments.reduce((sum, treatment) => sum + (treatment.remainingBalance !== undefined ? Number(treatment.remainingBalance) : Number(treatment.cost || 0)), 0);
 
     return (

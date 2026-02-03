@@ -289,11 +289,10 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
   const totalPaid = patientRecords.reduce((sum, record) => sum + Number(record.amountPaid || 0), 0);
   const currentBalance = patient.totalBalance !== undefined ? Number(patient.totalBalance) : (totalSpent - totalPaid);
 
-  // Debug logging
+  // Debug logging - only when patientRecords changes
   useEffect(() => {
-    console.log('PatientPortal - Treatment Records:', patientRecords);
-    console.log('PatientPortal - Calculations:', { totalSpent, totalPaid, currentBalance });
-  }, [patientRecords, totalSpent, totalPaid, currentBalance]);
+    // Removed: console.log statements to reduce noise
+  }, []);
 
   const handleSaveProfile = () => {
     if (onUpdatePatient) {
@@ -571,10 +570,10 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
       >
         <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-transparent to-cyan-500/5 pointer-events-none"></div>
         
-        <div className="p-6 flex items-center gap-3 border-b border-teal-600/40 relative z-10">
+        <div className={`px-6 py-6 flex items-center justify-start gap-3 border-b border-teal-300 relative z-10 ${sidebarOpen ? 'min-h-[104px]' : 'min-h-[100px]'}`}>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2.5 hover:bg-teal-800/40 rounded-lg transition-all duration-200 backdrop-blur-sm"
+            className="p-2.5 hover:bg-teal-200 rounded-lg transition-all duration-200 backdrop-blur-sm text-gray-700"
           >
             <Menu className="w-5 h-5" />
           </button>
@@ -587,7 +586,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
             >
               <div className="min-w-0">
                 <h1 className="text-lg font-semibold text-gray-800 whitespace-nowrap overflow-hidden text-ellipsis">{patient.name}</h1>
-                <p className="text-xs text-gray-600 flex items-center gap-1">
+                <p className="text-xs text-gray-600 flex items-center gap-1 mt-1">
                   Patient
                   <Settings className="w-3 h-3" />
                 </p>
@@ -633,7 +632,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                   <Icon className="w-5 h-5" />
                 </div>
                 {sidebarOpen && (
-                  <span className={`text-sm font-medium transition-colors duration-300 ${activeTab === item.id ? 'text-white' : 'text-teal-100'}`}>
+                  <span className={`text-sm font-medium transition-colors duration-300 ${activeTab === item.id ? 'text-gray-900' : 'text-gray-700'}`}>
                     {item.label}
                   </span>
                 )}
@@ -665,61 +664,61 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
       </motion.div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto flex flex-col">
+      <div className="flex-1 overflow-auto flex flex-col bg-gradient-to-br from-slate-50 via-slate-25 to-[#C4FFF9]/20">
         {/* Header */}
         <motion.div 
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className={`sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/50 px-6 py-0 ${sidebarOpen ? 'min-h-[92px]' : 'min-h-[88px]'} flex justify-between items-center shadow-sm relative`}
+          className={`sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-white/40 px-8 py-6 ${sidebarOpen ? 'min-h-[104px]' : 'min-h-[100px]'} flex justify-between items-center shadow-sm relative`}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-transparent to-indigo-500/5 pointer-events-none"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#9CEAEF]/30 via-transparent to-[#68D8D6]/20 pointer-events-none"></div>
           <div className="relative z-10 flex-1">
             {activeTab === 'profile' && (
               <div>
-                <h2 className="text-3xl font-bold text-teal-900">My Profile</h2>
-                <p className="text-gray-600 mt-1">View and manage your personal information</p>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">My Profile</h2>
+                <p className="text-slate-500 mt-1.5 text-sm font-medium">View and manage your personal information</p>
               </div>
             )}
             {activeTab === 'appointments' && (
               <div>
-                <h2 className="text-3xl font-bold text-teal-900">Appointments</h2>
-                <p className="text-gray-600 mt-1">View your appointment schedule</p>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Appointments</h2>
+                <p className="text-slate-500 mt-1.5 text-sm font-medium">View your appointment schedule</p>
               </div>
             )}
             {activeTab === 'records' && (
               <div>
-                <h2 className="text-3xl font-bold text-cyan-900">Records</h2>
-                <p className="text-gray-600 mt-1">View your dental treatment records</p>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Records</h2>
+                <p className="text-slate-500 mt-1.5 text-sm font-medium">View your dental treatment records</p>
               </div>
             )}
             {activeTab === 'forms' && (
               <div>
-                <h2 className="text-3xl font-bold text-blue-900">Forms</h2>
-                <p className="text-gray-600 mt-1">View your referrals, X-ray referrals, and prescriptions</p>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Forms</h2>
+                <p className="text-slate-500 mt-1.5 text-sm font-medium">View your referrals, X-ray referrals, and prescriptions</p>
               </div>
             )}
             {activeTab === 'photos' && (
               <div>
-                <h2 className="text-3xl font-bold text-indigo-900">Photos</h2>
-                <p className="text-gray-600 mt-1">View your treatment photos</p>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Photos</h2>
+                <p className="text-slate-500 mt-1.5 text-sm font-medium">View your treatment photos</p>
               </div>
             )}
             {activeTab === 'balance' && (
               <div>
-                <h2 className="text-3xl font-bold text-green-900">Balance</h2>
-                <p className="text-gray-600 mt-1">View your account balance and payments</p>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Balance</h2>
+                <p className="text-slate-500 mt-1.5 text-sm font-medium">View your account balance and payments</p>
               </div>
             )}
             {activeTab === 'care-guide' && (
               <div>
-                <h2 className="text-3xl font-bold text-purple-900">Care Guide</h2>
-                <p className="text-gray-600 mt-1">Dental care tips and guidance</p>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Care Guide</h2>
+                <p className="text-slate-500 mt-1.5 text-sm font-medium">Dental care tips and guidance</p>
               </div>
             )}
             {activeTab === 'announcements' && (
               <div>
-                <h2 className="text-3xl font-bold text-indigo-900">Announcements</h2>
-                <p className="text-gray-600 mt-1">Latest clinic announcements and updates</p>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Announcements</h2>
+                <p className="text-slate-500 mt-1.5 text-sm font-medium">Latest clinic announcements and updates</p>
               </div>
             )}
           </div>
@@ -748,13 +747,13 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
               {activeTab === 'profile' && (
                 <div className="p-8 space-y-6">
                   <div className="flex justify-between items-center">
-                    <h2 className="text-xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    <h3 className="text-lg font-bold text-slate-900 tracking-tight">
                       Personal Information
-                    </h2>
+                    </h3>
                   {!isEditing ? (
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                      className="px-4 py-2 bg-gradient-to-r from-[#07BEB8] to-[#3DCCC7] text-white rounded-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 font-medium"
                     >
                       <Edit className="w-4 h-4" />
                       Edit Profile
@@ -763,7 +762,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                     <div className="flex gap-2">
                       <button
                         onClick={handleSaveProfile}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                        className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 font-medium"
                       >
                         <Save className="w-4 h-4" />
                         Save

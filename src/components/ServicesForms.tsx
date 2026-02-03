@@ -340,127 +340,239 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
   };
 
   return (
-    <div className="p-8">
-      <div className="flex justify-end gap-3 mb-8">
-        <button
-          onClick={() => setActiveForm('service')}
-          className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-2 font-semibold"
-        >
-          <Plus className="w-5 h-5" />
-          New Receipt
-        </button>
-        <button
-          onClick={() => setActiveForm('prescription')}
-          className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-2 font-semibold"
-        >
-          <FileText className="w-5 h-5" />
-          Create Prescription
-        </button>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 flex flex-col flex-1">
+      <div className="p-10 space-y-10 flex flex-col flex-1 max-w-[1600px] mx-auto w-full">
+        {/* Premium Header Section */}
+        <div className="relative">
+          <div className="absolute -top-4 -left-4 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-4 -right-4 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"></div>
+          
+          <div className="relative bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-slate-200/60 p-8 hover:shadow-2xl transition-all duration-500">
+            <div className="flex items-center justify-between">
+              <div className="space-y-3">
+                <h1 className="text-5xl font-extrabold bg-gradient-to-r from-teal-600 via-cyan-600 to-blue-600 bg-clip-text text-transparent tracking-tight">
+                  Service Records & Prescriptions
+                </h1>
+                <p className="text-slate-600 font-medium text-base tracking-wide flex items-center gap-2">
+                  <span className="w-1 h-1 bg-cyan-500 rounded-full"></span>
+                  Create treatment records, prescriptions, and manage patient services
+                </p>
+              </div>
+              
+              {/* Action Buttons - Right Side */}
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setActiveForm('service')}
+                  className="group relative px-8 py-4 bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white rounded-2xl hover:shadow-2xl hover:shadow-cyan-500/30 hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-3 font-bold overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <Plus className="w-6 h-6 relative z-10" />
+                  <span className="relative z-10">New Receipt</span>
+                </button>
+                <button
+                  onClick={() => setActiveForm('prescription')}
+                  className="group relative px-8 py-4 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white rounded-2xl hover:shadow-2xl hover:shadow-emerald-500/30 hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-3 font-bold overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <FileText className="w-6 h-6 relative z-10" />
+                  <span className="relative z-10">Create Prescription</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
 
-      {/* Recent Receipts */}
-      <div className="bg-white p-8 rounded-xl shadow-md border border-gray-200 mb-8">
-        <h2 className="text-2xl font-bold mb-6 text-gray-900">Recent Receipts</h2>
-        <div className="space-y-3 max-h-96 overflow-y-auto scrollbar-hover">
-          {treatmentRecords.slice(-5).reverse().map((record) => {
-            const patient = patients.find(p => String(p.id) === String(record.patientId));
-            return (
-              <div key={record.id} className="p-6 border border-gray-200 rounded-lg hover:shadow-md transition-shadow bg-gradient-to-br from-white to-gray-50">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <p className="text-lg font-semibold text-gray-900">{patient?.name}</p>
-                    <p className="text-sm text-gray-700 mt-1">{record.treatment} {record.tooth ? `- Tooth ${record.tooth}` : ''}</p>
-                    <p className="text-sm text-gray-500 mt-1">{formatToDD_MM_YYYY(record.date)} • Dr. {record.dentist}</p>
-                    <div className="mt-4 flex gap-4 text-sm">
-                      <span className="font-bold text-lg text-gray-900">₱{Number(record.cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                      {record.paymentType && (
-                        <>
-                          <span className={`px-3 py-1 rounded-full font-medium ${record.paymentType === 'full' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
-                            {record.paymentType === 'full' ? 'Full Payment' : 'Installment'}
+        {/* Recent Receipts - Premium Card Design */}
+        <div className="relative group">
+          <div className="absolute -inset-1 bg-gradient-to-r from-teal-500 via-cyan-500 to-blue-500 rounded-3xl opacity-20 group-hover:opacity-30 blur transition-all duration-500"></div>
+          <div className="relative bg-white/90 backdrop-blur-xl p-10 rounded-3xl shadow-xl border border-slate-200/60 hover:shadow-2xl transition-all duration-500">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <CreditCard className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="text-3xl font-bold text-slate-900">Recent Receipts</h2>
+              </div>
+              <span className="px-4 py-2 bg-teal-50 text-teal-700 rounded-xl text-sm font-bold">
+                {treatmentRecords.length} Total
+              </span>
+            </div>
+            
+            <div className="space-y-4 max-h-[500px] overflow-y-auto scrollbar-hover pr-2">
+              {treatmentRecords.slice(-5).reverse().map((record) => {
+                const patient = patients.find(p => String(p.id) === String(record.patientId));
+                return (
+                  <div key={record.id} className="group/item relative p-6 border-2 border-slate-100 rounded-2xl hover:border-cyan-300/60 transition-all duration-300 bg-gradient-to-br from-white via-slate-50/30 to-cyan-50/20 hover:shadow-xl hover:scale-[1.01]">
+                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-teal-500/5 rounded-2xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-300"></div>
+                    
+                    <div className="relative flex justify-between items-start gap-6">
+                      <div className="flex-1 space-y-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-xl flex items-center justify-center font-bold text-cyan-700 text-sm">
+                            {patient?.name?.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="text-xl font-bold text-slate-900">{patient?.name}</p>
+                            <p className="text-sm text-slate-500 mt-0.5">{formatToDD_MM_YYYY(record.date)} • Dr. {record.dentist}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 pl-1">
+                          <span className="w-1.5 h-1.5 bg-cyan-500 rounded-full"></span>
+                          <p className="text-base text-slate-700 font-medium">{record.treatment} {record.tooth ? `- Tooth ${record.tooth}` : ''}</p>
+                        </div>
+                        
+                        <div className="flex gap-3 flex-wrap items-center">
+                          <span className="text-2xl font-extrabold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
+                            ₱{Number(record.cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </span>
-                          {record.amountPaid !== undefined && record.amountPaid > 0 && (
-                            <span className="text-gray-700 font-medium">Paid: ₱{Number(record.amountPaid).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          {record.paymentType && (
+                            <>
+                              <span className={`px-4 py-1.5 rounded-xl font-bold text-xs tracking-wider shadow-sm ${record.paymentType === 'full' ? 'bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-700' : 'bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700'}`}>
+                                {record.paymentType === 'full' ? '✓ FULL PAYMENT' : '⚡ INSTALLMENT'}
+                              </span>
+                              {record.amountPaid !== undefined && record.amountPaid > 0 && (
+                                <span className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-xs">
+                                  Paid: ₱{Number(record.amountPaid).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
+                              )}
+                              {record.remainingBalance !== undefined && record.remainingBalance > 0 && (
+                                <span className="px-3 py-1.5 bg-gradient-to-r from-orange-100 to-red-100 text-orange-700 rounded-xl font-bold text-xs shadow-sm">
+                                  Balance: ₱{Number(record.remainingBalance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
+                              )}
+                            </>
                           )}
-                          {record.remainingBalance !== undefined && record.remainingBalance > 0 && (
-                            <span className="text-orange-600 font-bold">Balance: ₱{Number(record.remainingBalance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                          )}
-                        </>
-                      )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => {
+                            setViewingReceipt(record);
+                          }}
+                          className="group/btn px-6 py-3 bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white rounded-xl hover:shadow-xl hover:shadow-cyan-500/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 font-bold duration-300"
+                        >
+                          <CreditCard className="w-5 h-5" />
+                          View Receipt
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => {
-                        setViewingReceipt(record);
-                      }}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 hover:shadow-md transition-all flex items-center gap-2 text-sm font-semibold"
-                    >
-                      <CreditCard className="w-4 h-4" />
-                      View Receipt
-                    </button>
+                );
+              })}
+              {treatmentRecords.length === 0 && (
+                <div className="text-center py-16">
+                  <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CreditCard className="w-10 h-10 text-slate-400" />
                   </div>
+                  <p className="text-slate-500 text-lg font-medium">No receipts recorded yet</p>
+                  <p className="text-slate-400 text-sm mt-2">Click "New Receipt" to create your first record</p>
                 </div>
-              </div>
-            );
-          })}
-          {treatmentRecords.length === 0 && (
-            <p className="text-gray-500 text-center py-8">No receipts recorded yet</p>
-          )}
-        </div>
-      </div>
-
-      {/* Recent Prescriptions */}
-      <div className="bg-white p-8 rounded-xl shadow-md border border-gray-200 mb-8">
-        <h2 className="text-2xl font-bold mb-6 text-gray-900">Recent Prescriptions</h2>
-        <div className="space-y-3 max-h-96 overflow-y-auto scrollbar-hover">
-          {prescriptions.slice(-5).reverse().map((prescription) => (
-            <div key={prescription.id} className="p-6 border border-gray-200 rounded-lg hover:shadow-md transition-shadow bg-gradient-to-br from-white to-green-50">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-lg font-semibold text-gray-900">{prescription.patientName}</p>
-                  <p className="text-sm text-gray-700 mt-1">{prescription.medications.length} medication(s) prescribed</p>
-                  <p className="text-sm text-gray-500 mt-1">{formatToDD_MM_YYYY(prescription.date)} • Dr. {prescription.dentist}</p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setViewingPrescription(prescription)}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 hover:shadow-md transition-all flex items-center gap-2 text-sm font-semibold"
-                  >
-                    <FileText className="w-4 h-4" />
-                    View
-                  </button>
-                  <button
-                    onClick={() => printPrescription(prescription)}
-                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 hover:shadow-md transition-all flex items-center gap-2 text-sm font-semibold"
-                    title="Print Prescription"
-                  >
-                    <Download className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-          {prescriptions.length === 0 && (
-            <p className="text-gray-500 text-center py-8">No prescriptions created yet</p>
-          )}
-        </div>
-      </div>
-
-      {/* Add Receipt Modal */}
-      {activeForm === 'service' && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto scrollbar-hover shadow-2xl">
-            <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-200">
-              <h2 className="text-3xl font-bold text-gray-900">Record Receipt</h2>
-              {!isFromAppointment && (
-                <button onClick={() => setActiveForm(null)} className="text-gray-500 hover:text-gray-700">
-                  <X className="w-6 h-6" />
-                </button>
               )}
             </div>
-            <form onSubmit={handleCreateService} className="space-y-5">
+          </div>
+        </div>
+
+        {/* Recent Prescriptions - Premium Card Design */}
+        <div className="relative group">
+          <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-3xl opacity-20 group-hover:opacity-30 blur transition-all duration-500"></div>
+          <div className="relative bg-white/90 backdrop-blur-xl p-10 rounded-3xl shadow-xl border border-slate-200/60 hover:shadow-2xl transition-all duration-500">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <FileText className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="text-3xl font-bold text-slate-900">Recent Prescriptions</h2>
+              </div>
+              <span className="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-xl text-sm font-bold">
+                {prescriptions.length} Total
+              </span>
+            </div>
+            
+            <div className="space-y-4 max-h-[500px] overflow-y-auto scrollbar-hover pr-2">
+              {prescriptions.slice(-5).reverse().map((prescription) => (
+                <div key={prescription.id} className="group/item relative p-6 border-2 border-slate-100 rounded-2xl hover:border-emerald-300/60 transition-all duration-300 bg-gradient-to-br from-white via-slate-50/30 to-emerald-50/20 hover:shadow-xl hover:scale-[1.01]">
+                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-teal-500/5 rounded-2xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-300"></div>
+                  
+                  <div className="relative flex justify-between items-start gap-6">
+                    <div className="flex-1 space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-xl flex items-center justify-center font-bold text-emerald-700 text-sm">
+                          {prescription.patientName?.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="text-xl font-bold text-slate-900">{prescription.patientName}</p>
+                          <p className="text-sm text-slate-500 mt-0.5">{formatToDD_MM_YYYY(prescription.date)} • Dr. {prescription.dentist}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 pl-1">
+                        <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+                        <p className="text-base text-slate-700 font-medium">{prescription.medications.length} medication(s) prescribed</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => setViewingPrescription(prescription)}
+                        className="group/btn px-6 py-3 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white rounded-xl hover:shadow-xl hover:shadow-emerald-500/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 font-bold duration-300"
+                      >
+                        <FileText className="w-5 h-5" />
+                        View
+                      </button>
+                      <button
+                        onClick={() => printPrescription(prescription)}
+                        className="px-5 py-3 bg-gradient-to-br from-slate-600 to-slate-700 text-white rounded-xl hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 font-bold duration-300"
+                        title="Print Prescription"
+                      >
+                        <Download className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {prescriptions.length === 0 && (
+                <div className="text-center py-16">
+                  <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <FileText className="w-10 h-10 text-slate-400" />
+                  </div>
+                  <p className="text-slate-500 text-lg font-medium">No prescriptions created yet</p>
+                  <p className="text-slate-400 text-sm mt-2">Click "Create Prescription" to start</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Add Receipt Modal - Premium Design */}
+      {activeForm === 'service' && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="relative bg-white/98 backdrop-blur-2xl rounded-3xl p-10 max-w-3xl w-full max-h-[90vh] overflow-y-auto scrollbar-hover shadow-2xl border border-slate-200/60">
+            <div className="absolute -top-20 -right-20 w-60 h-60 bg-cyan-500/20 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-teal-500/20 rounded-full blur-3xl"></div>
+            
+            <div className="relative">
+              <div className="flex justify-between items-center mb-8 pb-6 border-b-2 border-slate-200/60">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
+                    <CreditCard className="w-7 h-7 text-white" />
+                  </div>
+                  <h2 className="text-4xl font-extrabold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">Record Receipt</h2>
+                </div>
+                {!isFromAppointment && (
+                  <button onClick={() => setActiveForm(null)} className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full p-2 transition-all">
+                    <X className="w-7 h-7" />
+                  </button>
+                )}
+              </div>
+            <form onSubmit={handleCreateService} className="space-y-6 relative">
               <div>
-                <label className="block text-sm font-semibold mb-2 text-gray-900">Patient *</label>
+                <label className="block text-xs font-extrabold uppercase tracking-widest mb-4 text-slate-700 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
+                  Patient *
+                </label>
                 <div className="relative">
                   <input
                     type="text"
@@ -479,10 +591,10 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                     }}
                     onBlur={() => setTimeout(() => setShowReceiptSuggestions(false), 200)}
                     readOnly={isFromAppointment}
-                    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${isFromAppointment ? 'bg-gray-50 cursor-not-allowed' : ''}`}
+                    className={`w-full px-5 py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-cyan-400/30 focus:border-cyan-400 transition-all text-base font-medium placeholder:text-slate-400 ${isFromAppointment ? 'bg-slate-100/70 cursor-not-allowed' : ''}`}
                   />
                   {patientSearch && showReceiptSuggestions && !isFromAppointment && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-64 scrollbar-hover">
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white/98 backdrop-blur-xl border-2 border-slate-200 rounded-2xl shadow-2xl z-10 max-h-64 overflow-y-auto scrollbar-hover">
                       {patients.filter(p => p.name.toLowerCase().includes(patientSearch.toLowerCase())).map(patient => (
                         <div
                           key={patient.id}
@@ -491,14 +603,14 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                             setPatientSearch(patient.name);
                             setShowReceiptSuggestions(false);
                           }}
-                          className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-200 last:border-b-0"
+                          className="px-5 py-4 hover:bg-gradient-to-r hover:from-cyan-50 hover:to-teal-50 cursor-pointer border-b border-slate-100 last:border-b-0 transition-all"
                         >
-                          <p className="font-semibold text-gray-900">{patient.name}</p>
-                          <p className="text-sm text-gray-500">{patient.phone}</p>
+                          <p className="font-bold text-slate-900">{patient.name}</p>
+                          <p className="text-sm text-slate-500 mt-1">{patient.phone}</p>
                         </div>
                       ))}
                       {patients.filter(p => p.name.toLowerCase().includes(patientSearch.toLowerCase())).length === 0 && (
-                        <div className="px-4 py-3 text-gray-500 text-center">No patients found</div>
+                        <div className="px-5 py-4 text-slate-500 text-center">No patients found</div>
                       )}
                     </div>
                   )}
@@ -511,26 +623,32 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-semibold mb-2 text-gray-900">Date *</label>
+                  <label className="block text-xs font-extrabold uppercase tracking-widest mb-4 text-slate-700 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
+                    Date *
+                  </label>
                   <input
                     type="text"
                     name="date"
                     required
                     defaultValue={formatToDD_MM_YYYY(new Date())}
                     placeholder="DD/MM/YYYY"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full px-5 py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-cyan-400/30 focus:border-cyan-400 transition-all text-base font-medium placeholder:text-slate-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-2 text-gray-900">Service Type *</label>
+                  <label className="block text-xs font-extrabold uppercase tracking-widest mb-4 text-slate-700 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
+                    Service Type *
+                  </label>
                   <select
                     name="service"
                     required
                     value={selectedService}
                     onChange={(e) => setSelectedService(e.target.value as ServiceType)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full px-5 py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-cyan-400/30 focus:border-cyan-400 transition-all text-base font-medium"
                   >
                     {services.map(service => (
                       <option key={service} value={service}>
@@ -542,59 +660,71 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-gray-900">Tooth (Optional)</label>
+                <label className="block text-xs font-extrabold uppercase tracking-widest mb-4 text-slate-700 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-slate-400 rounded-full"></span>
+                  Tooth (Optional)
+                </label>
                 <input
                   type="text"
                   name="tooth"
                   placeholder="e.g., #14, Upper Right"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-5 py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-cyan-400/30 focus:border-cyan-400 transition-all text-base font-medium placeholder:text-slate-400"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-gray-900">Cost (₱) *</label>
+                <label className="block text-xs font-extrabold uppercase tracking-widest mb-4 text-slate-700 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
+                  Cost (₱) *
+                </label>
                 <input
                   type="number"
                   name="cost"
                   required
                   step="1"
                   placeholder="0"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-5 py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-cyan-400/30 focus:border-cyan-400 transition-all text-base font-medium placeholder:text-slate-400"
                 />
               </div>
 
               {/* Payment Type Selection */}
-              <div className="p-5 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-300 rounded-lg">
-                <label className="block text-sm font-bold mb-4 text-gray-900">Payment Method *</label>
-                <div className="space-y-3">
-                  <label className="flex items-center cursor-pointer">
+              <div className="p-6 bg-gradient-to-br from-cyan-50 via-teal-50 to-blue-50 border-2 border-cyan-200/60 rounded-2xl backdrop-blur-sm shadow-inner">
+                <label className="block text-xs font-extrabold uppercase tracking-widest mb-5 text-slate-700 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-cyan-500 rounded-full"></span>
+                  Payment Method *
+                </label>
+                <div className="space-y-4">
+                  <label className="flex items-center cursor-pointer p-4 bg-white/70 rounded-xl hover:bg-white transition-all border border-transparent hover:border-cyan-300">
                     <input
                       type="radio"
                       name="paymentType"
                       value="full"
                       checked={paymentType === 'full'}
                       onChange={(e) => setPaymentType(e.target.value as 'full' | 'installment')}
-                      className="mr-3 w-5 h-5 cursor-pointer"
+                      className="mr-4 w-5 h-5 cursor-pointer accent-teal-500"
                     />
-                    <span className="text-sm font-medium text-gray-900">Full Payment</span>
+                    <span className="text-base font-bold text-slate-900">Full Payment</span>
                   </label>
-                  <label className="flex items-center cursor-pointer">
+                  <label className="flex items-center cursor-pointer p-4 bg-white/70 rounded-xl hover:bg-white transition-all border border-transparent hover:border-cyan-300">
                     <input
                       type="radio"
                       name="paymentType"
                       value="installment"
                       checked={paymentType === 'installment'}
                       onChange={(e) => setPaymentType(e.target.value as 'full' | 'installment')}
-                      className="mr-3 w-5 h-5 cursor-pointer"
+                      className="mr-4 w-5 h-5 cursor-pointer accent-teal-500"
                     />
-                    <span className="text-sm font-medium text-gray-900">Installment Plan</span>
+                    <span className="text-base font-bold text-slate-900">Installment Plan</span>
                   </label>
                 </div>
               </div>
 
               {/* Payment Amount */}
               <div>
-                <label className="block text-sm font-semibold mb-2 text-gray-900">Amount Paid (₱)</label>
+                <label className="block text-xs font-extrabold uppercase tracking-widest mb-4 text-slate-700 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                  Amount Paid (₱)
+                </label>
                 <input
                   type="number"
                   name="amountPaid"
@@ -606,20 +736,26 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                     const parsed = parseFloat(value) || 0;
                     setAmountPaid(parsed);
                   }}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-5 py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all text-base font-medium placeholder:text-slate-400"
                 />
-                <p className="text-xs text-gray-500 mt-2 font-medium">Leave empty or 0 if no payment yet</p>
+                <p className="text-sm text-slate-500 mt-3 font-medium flex items-center gap-2">
+                  <span className="text-emerald-500">ℹ️</span>
+                  Leave empty or 0 if no payment yet
+                </p>
               </div>
 
               {/* Number of Installments */}
               {paymentType === 'installment' && (
                 <div>
-                  <label className="block text-sm font-semibold mb-2 text-gray-900">Number of Installments</label>
+                  <label className="block text-xs font-extrabold uppercase tracking-widest mb-4 text-slate-700 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    Number of Installments
+                  </label>
                   <select
                     name="numberOfInstallments"
                     value={numberOfInstallments}
                     onChange={(e) => setNumberOfInstallments(parseInt(e.target.value))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full px-5 py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-400 transition-all text-base font-medium"
                   >
                     <option value="2">2 months</option>
                     <option value="3">3 months</option>
@@ -632,55 +768,63 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
               )}
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-gray-900">Dentist *</label>
+                <label className="block text-xs font-extrabold uppercase tracking-widest mb-4 text-slate-700 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
+                  Dentist *
+                </label>
                 <input
                   type="text"
                   name="dentist"
                   required
                   placeholder="Dr. Name"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-5 py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-cyan-400/30 focus:border-cyan-400 transition-all text-base font-medium placeholder:text-slate-400"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-gray-900">Notes</label>
+                <label className="block text-xs font-extrabold uppercase tracking-widest mb-4 text-slate-700 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-slate-400 rounded-full"></span>
+                  Notes
+                </label>
                 <textarea
                   name="notes"
                   rows={3}
                   placeholder="Receipt details and observations"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+                  className="w-full px-5 py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-cyan-400/30 focus:border-cyan-400 transition-all resize-none text-base font-medium placeholder:text-slate-400"
                 />
               </div>
 
               {selectedService === 'Extraction' && (
-                <div className="p-4 bg-gradient-to-r from-yellow-50 to-yellow-100 border border-yellow-300 rounded-lg">
-                  <p className="text-sm text-yellow-900 font-medium">
-                    💊 After recording this extraction, you will be prompted to create a prescription for the patient.
+                <div className="p-5 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300/60 rounded-2xl backdrop-blur-sm shadow-sm">
+                  <p className="text-base text-amber-900 font-bold flex items-center gap-2">
+                    <span className="text-2xl">💊</span>
+                    After recording this extraction, you will be prompted to create a prescription for the patient.
                   </p>
                 </div>
               )}
 
               {selectedService === 'Braces' && (
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-300 rounded-lg">
-                  <p className="text-sm text-blue-900 font-medium">
-                    📋 For braces, you may need to create a referral form for x-ray or if referring to another dentist.
+                <div className="p-5 bg-gradient-to-r from-cyan-50 to-blue-50 border-2 border-cyan-300/60 rounded-2xl backdrop-blur-sm shadow-sm">
+                  <p className="text-base text-cyan-900 font-bold flex items-center gap-2">
+                    <span className="text-2xl">📋</span>
+                    For braces, you may need to create a referral form for x-ray or if referring to another dentist.
                   </p>
                 </div>
               )}
 
-              <div className="flex gap-3 justify-end pt-6 border-t-2 border-gray-200">
+              <div className="flex gap-4 justify-end pt-8 border-t-2 border-slate-200/60">
                 {!isFromAppointment && (
                   <button
                     type="button"
                     onClick={() => setActiveForm(null)}
-                    className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors font-semibold text-gray-900"
+                    className="px-8 py-4 border-2 border-slate-200 rounded-2xl hover:bg-slate-50 transition-all font-bold text-slate-900 duration-300 hover:scale-105 active:scale-95"
                   >
                     Cancel
                   </button>
                 )}
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all font-semibold"
+                  className="px-10 py-4 bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white rounded-2xl hover:shadow-2xl hover:shadow-cyan-500/40 hover:scale-105 active:scale-95 transition-all font-bold duration-300"
                 >
                   Record Receipt
                 </button>
@@ -690,19 +834,26 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
         </div>
       )}
 
-      {/* Create Prescription Modal */}
+      {/* Create Prescription Modal - Premium Design */}
       {activeForm === 'prescription' && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto scrollbar-hover shadow-2xl">
-            <div className="flex justify-end mb-4">
-              <button onClick={() => setActiveForm(null)} className="text-gray-500 hover:text-gray-700">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <form onSubmit={handleCreatePrescription} className="space-y-6">
-              {/* Patient Search Bar - ABOVE Header */}
-              <div className="mb-6">
-                <label className="block text-sm font-semibold mb-2 text-gray-900">Search Patient *</label>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="relative bg-white/98 backdrop-blur-2xl rounded-3xl p-10 max-w-4xl w-full max-h-[90vh] overflow-y-auto scrollbar-hover shadow-2xl border border-slate-200/60">
+            <div className="absolute -top-20 -right-20 w-60 h-60 bg-emerald-500/20 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-teal-500/20 rounded-full blur-3xl"></div>
+            
+            <div className="relative">
+              <div className="flex justify-end mb-6">
+                <button onClick={() => setActiveForm(null)} className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full p-2 transition-all">
+                  <X className="w-7 h-7" />
+                </button>
+              </div>
+            <form onSubmit={handleCreatePrescription} className="space-y-8 relative">
+              {/* Patient Search Bar - Premium Style */}
+              <div className="mb-8 p-6 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 rounded-2xl border-2 border-emerald-200/60">
+                <label className="block text-xs font-extrabold uppercase tracking-widest mb-4 text-slate-700 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                  Search Patient *
+                </label>
                 <div className="relative">
                   <input
                     type="text"
@@ -714,10 +865,10 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                     }}
                     onFocus={() => setShowPrescriptionSuggestions(true)}
                     onBlur={() => setTimeout(() => setShowPrescriptionSuggestions(false), 200)}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                    className="w-full px-5 py-4 bg-white backdrop-blur-sm border-2 border-emerald-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all text-base font-medium placeholder:text-slate-400"
                   />
                   {prescriptionPatientSearch && showPrescriptionSuggestions && (
-                    <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-lg mt-1 max-h-48 overflow-y-auto shadow-lg">
+                    <div className="absolute z-10 w-full bg-white/98 backdrop-blur-xl border-2 border-emerald-200 rounded-2xl mt-2 max-h-56 overflow-y-auto shadow-2xl">
                       {patients
                         .filter(p => p.name.toLowerCase().includes(prescriptionPatientSearch.toLowerCase()))
                         .map(patient => (
@@ -728,7 +879,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                               setPrescriptionPatientSearch(patient.name);
                               setShowPrescriptionSuggestions(false);
                             }}
-                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                            className="px-5 py-4 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 cursor-pointer border-b border-slate-100 last:border-b-0 transition-all font-medium"
                           >
                             {patient.name}
                           </div>
@@ -985,17 +1136,17 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
               <input type="hidden" name="dentist" value="Joseph E. Maaño" />
               <input type="hidden" name="notes" value="" />
 
-              <div className="flex gap-3 justify-end pt-6 border-t-2 border-gray-200">
+              <div className="flex gap-3 justify-end pt-6 border-t border-slate-200/60">
                 <button
                   type="button"
                   onClick={() => setActiveForm(null)}
-                  className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors font-semibold text-gray-900"
+                  className="px-6 py-3 border border-slate-200/60 rounded-xl hover:bg-slate-100/50 transition-all font-semibold text-slate-900 duration-300"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all font-semibold"
+                  className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl hover:shadow-lg hover:scale-105 active:scale-95 transition-all font-semibold duration-300"
                 >
                   Create Prescription
                 </button>

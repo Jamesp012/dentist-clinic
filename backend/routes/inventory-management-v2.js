@@ -96,32 +96,37 @@ router.get('/appointment-types', authMiddleware, async (req, res) => {
 // Get all auto-reduction rules with their items
 router.get('/auto-reduction/rules', authMiddleware, async (req, res) => {
   try {
+    // Get all rules
     const [rules] = await pool.query(`
       SELECT 
-        r.id,
-        r.appointmentType,
-        r.isActive,
-        r.createdAt,
-        r.updatedAt,
-        JSON_ARRAYAGG(
-          JSON_OBJECT(
-            'itemId', ri.inventoryItemId,
-            'itemName', i.name,
-            'quantityToReduce', ri.quantityToReduce
-          )
-        ) as items
-      FROM inventory_auto_reduction_rules_v2 r
-      LEFT JOIN inventory_auto_reduction_rule_items ri ON r.id = ri.ruleId
-      LEFT JOIN inventory i ON ri.inventoryItemId = i.id
-      GROUP BY r.id, r.appointmentType, r.isActive, r.createdAt, r.updatedAt
-      ORDER BY r.appointmentType ASC
+        id,
+        appointmentType,
+        isActive,
+        createdAt,
+        updatedAt
+      FROM inventory_auto_reduction_rules_v2
+      ORDER BY appointmentType ASC
     `);
 
-    // Parse JSON arrays
-    const formattedRules = rules.map(rule => ({
-      ...rule,
-      items: rule.items ? JSON.parse(rule.items).filter(item => item.itemId !== null) : []
-    }));
+    // For each rule, get its items
+    const formattedRules = [];
+    for (const rule of rules) {
+      const [items] = await pool.query(`
+        SELECT 
+          ri.id as itemId,
+          ri.inventoryItemId,
+          i.name as itemName,
+          ri.quantityToReduce
+        FROM inventory_auto_reduction_rule_items ri
+        LEFT JOIN inventory i ON ri.inventoryItemId = i.id
+        WHERE ri.ruleId = ?
+      `, [rule.id]);
+
+      formattedRules.push({
+        ...rule,
+        items: items || []
+      });
+    }
 
     res.json(formattedRules);
   } catch (error) {
@@ -163,9 +168,9 @@ router.post('/auto-reduction/rules', authMiddleware, async (req, res) => {
   const connection = await pool.getConnection();
   
   try {
-    const { appointmentType, items } = req.body;
+    const { appointmentType, items: newItems } = req.body;
 
-    if (!appointmentType || !Array.isArray(items) || items.length === 0) {
+    if (!appointmentType || !Array.isArray(newItems) || newItems.length === 0) {
       return res.status(400).json({ 
         error: 'appointmentType and items array are required' 
       });
@@ -183,7 +188,7 @@ router.post('/auto-reduction/rules', authMiddleware, async (req, res) => {
     const ruleId = ruleResult.insertId;
 
     // Insert items
-    for (const item of items) {
+    for (const item of newItems) {
       await connection.query(`
         INSERT INTO inventory_auto_reduction_rule_items (ruleId, inventoryItemId, quantityToReduce)
         VALUES (?, ?, ?)
@@ -193,28 +198,27 @@ router.post('/auto-reduction/rules', authMiddleware, async (req, res) => {
     await connection.commit();
 
     // Return created rule with items
-    const [createdRule] = await connection.query(`
+    const [ruleData] = await connection.query(`
       SELECT 
-        r.id,
-        r.appointmentType,
-        r.isActive,
-        JSON_ARRAYAGG(
-          JSON_OBJECT(
-            'itemId', ri.inventoryItemId,
-            'itemName', i.name,
-            'quantityToReduce', ri.quantityToReduce
-          )
-        ) as items
-      FROM inventory_auto_reduction_rules_v2 r
-      LEFT JOIN inventory_auto_reduction_rule_items ri ON r.id = ri.ruleId
-      LEFT JOIN inventory i ON ri.inventoryItemId = i.id
-      WHERE r.id = ?
-      GROUP BY r.id, r.appointmentType, r.isActive
+        id,
+        appointmentType,
+        isActive,
+        createdAt,
+        updatedAt
+      FROM inventory_auto_reduction_rules_v2
+      WHERE id = ?
     `, [ruleId]);
 
-    const rule = createdRule[0];
-    rule.items = JSON.parse(rule.items);
+    const [items] = await connection.query(`
+      SELECT 
+        id as itemId,
+        inventoryItemId,
+        quantityToReduce
+      FROM inventory_auto_reduction_rule_items
+      WHERE ruleId = ?
+    `, [ruleId]);
 
+    const rule = { ...ruleData[0], items };
     res.json(rule);
   } catch (error) {
     await connection.rollback();
@@ -231,9 +235,9 @@ router.put('/auto-reduction/rules/:ruleId', authMiddleware, async (req, res) => 
   
   try {
     const { ruleId } = req.params;
-    const { items } = req.body;
+    const { items: newItems } = req.body;
 
-    if (!Array.isArray(items)) {
+    if (!Array.isArray(newItems)) {
       return res.status(400).json({ error: 'items array is required' });
     }
 
@@ -245,7 +249,7 @@ router.put('/auto-reduction/rules/:ruleId', authMiddleware, async (req, res) => 
     `, [ruleId]);
 
     // Insert new items
-    for (const item of items) {
+    for (const item of newItems) {
       await connection.query(`
         INSERT INTO inventory_auto_reduction_rule_items (ruleId, inventoryItemId, quantityToReduce)
         VALUES (?, ?, ?)
@@ -255,28 +259,27 @@ router.put('/auto-reduction/rules/:ruleId', authMiddleware, async (req, res) => 
     await connection.commit();
 
     // Return updated rule
-    const [updatedRule] = await connection.query(`
+    const [ruleData] = await connection.query(`
       SELECT 
-        r.id,
-        r.appointmentType,
-        r.isActive,
-        JSON_ARRAYAGG(
-          JSON_OBJECT(
-            'itemId', ri.inventoryItemId,
-            'itemName', i.name,
-            'quantityToReduce', ri.quantityToReduce
-          )
-        ) as items
-      FROM inventory_auto_reduction_rules_v2 r
-      LEFT JOIN inventory_auto_reduction_rule_items ri ON r.id = ri.ruleId
-      LEFT JOIN inventory i ON ri.inventoryItemId = i.id
-      WHERE r.id = ?
-      GROUP BY r.id, r.appointmentType, r.isActive
+        id,
+        appointmentType,
+        isActive,
+        createdAt,
+        updatedAt
+      FROM inventory_auto_reduction_rules_v2
+      WHERE id = ?
     `, [ruleId]);
 
-    const rule = updatedRule[0];
-    rule.items = JSON.parse(rule.items).filter(item => item.itemId !== null);
+    const [items] = await connection.query(`
+      SELECT 
+        id as itemId,
+        inventoryItemId,
+        quantityToReduce
+      FROM inventory_auto_reduction_rule_items
+      WHERE ruleId = ?
+    `, [ruleId]);
 
+    const rule = { ...ruleData[0], items };
     res.json(rule);
   } catch (error) {
     await connection.rollback();

@@ -145,6 +145,16 @@ export const inventoryAPI: {
   delete: (id: string | number) => Promise<any>;
 };
 
+export const inventoryManagementAPI: {
+  getAll: () => Promise<any[]>;
+  getById: (id: string | number) => Promise<any>;
+  create: (data: any) => Promise<any>;
+  update: (id: string | number, data: any) => Promise<any>;
+  delete: (id: string | number) => Promise<any>;
+  getActiveRules: () => Promise<any[]>;
+  autoReduceForAppointment: (appointmentId: string | number) => Promise<any>;
+};
+
 export const referralAPI: {
   getAll: () => Promise<any[]>;
   getById: (id: string | number) => Promise<any>;

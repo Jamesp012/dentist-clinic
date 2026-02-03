@@ -158,7 +158,7 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
   };
 
   // Handler to toggle a service in the selected referral
-  const handleToggleService = (serviceId: string) => {
+  const handleToggleService = (serviceId: string, isCheckboxType: boolean = false) => {
     if (!selectedReferral) return;
     
     const currentServices = normalizeSelectedServices(selectedReferral);
@@ -601,7 +601,7 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
                             <button
                               key={id}
                               type="button"
-                              onClick={() => handleToggleService(id)}
+                              onClick={() => handleToggleService(id, false)}
                               className="flex items-center gap-3 w-full p-2 rounded hover:bg-yellow-50 transition-colors text-left cursor-pointer"
                             >
                               <div className={`w-5 h-5 rounded-full border-2 border-yellow-400 flex items-center justify-center flex-shrink-0 transition-colors ${
@@ -630,7 +630,7 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
                             <button
                               key={id}
                               type="button"
-                              onClick={() => handleToggleService(id)}
+                              onClick={() => handleToggleService(id, false)}
                               className="flex items-center gap-3 w-full p-2 rounded hover:bg-yellow-50 transition-colors text-left cursor-pointer"
                             >
                               <div className={`w-5 h-5 rounded-full border-2 border-yellow-400 flex items-center justify-center flex-shrink-0 transition-colors ${
@@ -774,7 +774,7 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
                             <button
                               key={id}
                               type="button"
-                              onClick={() => handleToggleService(id)}
+                              onClick={() => handleToggleService(id, true)}
                               className="flex items-center gap-3 w-full p-2 rounded hover:bg-blue-50 transition-colors text-left cursor-pointer"
                             >
                               <div className={`w-5 h-5 rounded-full border-2 border-blue-400 flex items-center justify-center flex-shrink-0 transition-colors ${

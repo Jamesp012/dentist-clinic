@@ -478,7 +478,7 @@ export function AssistantDashboard({
         {/* Decorative gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-transparent to-cyan-500/5 pointer-events-none"></div>
 
-        <div className="p-6 flex items-center gap-3 border-b border-teal-300 relative z-10">
+        <div className={`px-6 py-6 flex items-center justify-start gap-3 border-b border-teal-300 relative z-10 ${sidebarOpen ? 'min-h-[104px]' : 'min-h-[100px]'}`}>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="p-2.5 hover:bg-teal-200 rounded-lg transition-all duration-200 backdrop-blur-sm text-gray-700"
@@ -496,7 +496,7 @@ export function AssistantDashboard({
                 <h1 className="text-lg font-semibold text-gray-800 whitespace-nowrap overflow-hidden text-ellipsis">
                   {currentUser.fullName || currentUser.username || 'Assistant'}
                 </h1>
-                <p className="text-xs text-gray-600 flex items-center gap-1">
+                <p className="text-xs text-gray-600 flex items-center gap-1 mt-1">
                   Staff Access
                   <Settings className="w-3 h-3" />
                 </p>
@@ -596,91 +596,91 @@ export function AssistantDashboard({
       </motion.div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto flex flex-col">
-        {/* Header with Notifications - Modern Design */}
+      <div className="flex-1 overflow-auto flex flex-col bg-gradient-to-br from-slate-50 via-slate-25 to-[#C4FFF9]/20">
+        {/* Header with Notifications - Premium Design */}
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className={`bg-white/80 backdrop-blur-xl border-b border-slate-200/50 px-6 py-0 ${sidebarOpen ? 'min-h-[92px]' : 'min-h-[88px]'} flex justify-between items-center shadow-sm relative`}
+          className={`bg-white/80 backdrop-blur-md border-b border-white/40 px-8 py-6 ${sidebarOpen ? 'min-h-[104px]' : 'min-h-[100px]'} flex justify-between items-center shadow-sm relative`}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-transparent to-indigo-500/5 pointer-events-none"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#9CEAEF]/30 via-transparent to-[#68D8D6]/20 pointer-events-none"></div>
           <div className="relative z-10 flex-1">
             {activeTab === 'patients' && (
               <div>
-                <h2 className="text-3xl font-bold text-blue-900">Patient Management</h2>
-                <p className="text-gray-600 mt-1">Manage patient records and medical information</p>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Patient Management</h2>
+                <p className="text-slate-500 mt-1.5 text-sm font-medium">Manage patient records and medical information</p>
               </div>
             )}
             {activeTab === 'appointments' && (
               <div>
-                <h2 className="text-3xl font-bold text-purple-900">Appointments</h2>
-                <p className="text-gray-600 mt-1">Schedule and manage patient appointments</p>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Appointments</h2>
+                <p className="text-slate-500 mt-1.5 text-sm font-medium">Schedule and manage patient appointments</p>
               </div>
             )}
             {activeTab === 'employees' && (
               <div>
-                <h2 className="text-3xl font-bold text-purple-900">Employee Management</h2>
-                <p className="text-gray-600 mt-1">Manage clinic staff and their access credentials</p>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Employee Management</h2>
+                <p className="text-slate-500 mt-1.5 text-sm font-medium">Manage clinic staff and their access credentials</p>
               </div>
             )}
             {activeTab === 'dental-charting' && (
               <div>
-                <h2 className="text-3xl font-bold text-pink-900">Dental Charting</h2>
-                <p className="text-gray-600 mt-1">Track dental conditions and treatments</p>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Dental Charting</h2>
+                <p className="text-slate-500 mt-1.5 text-sm font-medium">Track dental conditions and treatments</p>
               </div>
             )}
             {activeTab === 'financial-report' && (
               <div>
-                <h2 className="text-3xl font-bold text-green-900">Financial Report</h2>
-                <p className="text-gray-600 mt-1">View financial data and reports</p>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Financial Report</h2>
+                <p className="text-slate-500 mt-1.5 text-sm font-medium">View financial data and reports</p>
               </div>
             )}
             {activeTab === 'braces-charting' && (
               <div>
-                <h2 className="text-3xl font-bold text-cyan-900">Braces Charting</h2>
-                <p className="text-gray-600 mt-1">Track and manage patient braces records</p>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Braces Charting</h2>
+                <p className="text-slate-500 mt-1.5 text-sm font-medium">Track and manage patient braces records</p>
               </div>
             )}
             {activeTab === 'inventory' && (
               <div>
-                <h2 className="text-3xl font-bold text-orange-900">Inventory Management</h2>
-                <p className="text-gray-600 mt-1">Manage clinic supplies and equipment</p>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Inventory Management</h2>
+                <p className="text-slate-500 mt-1.5 text-sm font-medium">Manage clinic supplies and equipment</p>
               </div>
             )}
             {activeTab === 'braces' && (
               <div>
-                <h2 className="text-3xl font-bold text-cyan-900">Braces Charting</h2>
-                <p className="text-gray-600 mt-1">Track and manage patient braces records</p>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Braces Charting</h2>
+                <p className="text-slate-500 mt-1.5 text-sm font-medium">Track and manage patient braces records</p>
               </div>
             )}
             {activeTab === 'photos' && (
               <div>
-                <h2 className="text-3xl font-bold text-indigo-900">Patient Photos</h2>
-                <p className="text-gray-600 mt-1">Manage patient treatment photos</p>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Patient Photos</h2>
+                <p className="text-slate-500 mt-1.5 text-sm font-medium">Manage patient treatment photos</p>
               </div>
             )}
             {activeTab === 'referrals' && (
               <div>
-                <h2 className="text-3xl font-bold text-orange-900">Referrals</h2>
-                <p className="text-gray-600 mt-1">Generate and manage patient referrals</p>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Referrals</h2>
+                <p className="text-slate-500 mt-1.5 text-sm font-medium">Generate and manage patient referrals</p>
               </div>
             )}
             {activeTab === 'services' && (
               <div>
-                <h2 className="text-3xl font-bold text-teal-900">Services Forms</h2>
-                <p className="text-gray-600 mt-1">Manage clinic services and treatments</p>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Services Forms</h2>
+                <p className="text-slate-500 mt-1.5 text-sm font-medium">Manage clinic services and treatments</p>
               </div>
             )}
             {activeTab === 'financial' && (
               <div>
-                <h2 className="text-3xl font-bold text-green-900">Financial Report</h2>
-                <p className="text-gray-600 mt-1">View financial data and reports</p>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Financial Report</h2>
+                <p className="text-slate-500 mt-1.5 text-sm font-medium">View financial data and reports</p>
               </div>
             )}
             {(activeTab === 'dashboard' || !activeTab) && (
               <div>
-                <h2 className="text-3xl font-bold text-cyan-900">Dashboard</h2>
-                <p className="text-gray-600 mt-1">Overview of clinic operations</p>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Dashboard</h2>
+                <p className="text-slate-500 mt-1.5 text-sm font-medium">Overview of clinic operations</p>
               </div>
             )}
           </div>
@@ -738,7 +738,6 @@ export function AssistantDashboard({
                   inventory={inventory}
                   setInventory={setInventory}
                   onDataChanged={onDataChanged}
-                  services={services}
                 />
               )}
               {activeTab === "braces" && (

@@ -5,7 +5,6 @@ import { PatientRecordClaiming } from '../PatientRecordClaiming';
 import { convertToDBDate, convertToDisplayDate, formatDateInput } from '../../utils/dateHelpers';
 
 type LandingPageProps = {
-  onGetStarted: () => void;
   onLogin?: (username: string, password: string) => void;
   onSignup?: (signupData: any) => void;
 };
@@ -101,6 +100,7 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
       role: 'patient' as const
     });
     setConfirmPassword('');
+    setError('');
     
     // Close claiming flow and switch to login mode
     setShowClaimingFlow(false);
@@ -345,9 +345,9 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                 </div>
               ) : (
                 // Auth Form
-              <div className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col" style={{ height: 'calc(100vh - 180px)', maxHeight: '700px' }}>
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
                 {/* Fixed Header */}
-                <div className="px-8 pt-8 pb-6 flex-shrink-0 border-b border-slate-200">
+                <div className="px-8 pt-8 pb-6 border-b border-slate-200">
                   <div className="text-center">
                     <motion.div
                       initial={{ scale: 0 }}
@@ -401,16 +401,21 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                 </div>
 
                 {/* Scrollable Form Content */}
-                <div className="flex-1 overflow-y-auto px-8 py-6">
+                <div className="px-8 py-6 custom-scrollbar" style={{
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: '#14b8a6 transparent'
+                }}>
 
                 {isLoginMode ? (
                   // Login Form
                   <form onSubmit={(e) => { e.preventDefault(); onLogin?.(username, password); }} className="space-y-5">
                     <div>
-                      <label className="block text-sm font-medium mb-2 text-slate-700">Username</label>
+                      <label htmlFor="login-username" className="block text-sm font-medium mb-2 text-slate-700">Username</label>
                       <div className="relative">
                         <User className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
                         <input
+                          id="login-username"
+                          name="username"
                           type="text"
                           value={username}
                           onChange={(e) => setUsername(e.target.value)}
@@ -422,10 +427,12 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2 text-slate-700">Password</label>
+                      <label htmlFor="login-password" className="block text-sm font-medium mb-2 text-slate-700">Password</label>
                       <div className="relative">
                         <Lock className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
                         <input
+                          id="login-password"
+                          name="password"
                           type={showPassword ? "text" : "password"}
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
@@ -445,7 +452,7 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
 
                     <button
                       type="submit"
-                      className="w-full py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl font-medium"
+                      className="w-full py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl font-medium mb-6"
                     >
                       <LogIn className="w-5 h-5" />
                       Sign In
@@ -460,10 +467,12 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                     setShowClaimingFlow(true);
                   }} className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium mb-2 text-slate-700">Full Name *</label>
+                      <label htmlFor="signup-fullname" className="block text-sm font-medium mb-2 text-slate-700">Full Name *</label>
                       <div className="relative">
                         <User className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
                         <input
+                          id="signup-fullname"
+                          name="fullName"
                           type="text"
                           value={signupData.fullName}
                           onChange={(e) => setSignupData({ ...signupData, fullName: e.target.value })}
@@ -475,10 +484,12 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2 text-slate-700">Email *</label>
+                      <label htmlFor="signup-email" className="block text-sm font-medium mb-2 text-slate-700">Email *</label>
                       <div className="relative">
                         <Mail className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
                         <input
+                          id="signup-email"
+                          name="email"
                           type="email"
                           value={signupData.email}
                           onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
@@ -490,10 +501,12 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2 text-slate-700">Phone</label>
+                      <label htmlFor="signup-phone" className="block text-sm font-medium mb-2 text-slate-700">Phone</label>
                       <div className="relative">
                         <Phone className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
                         <input
+                          id="signup-phone"
+                          name="phone"
                           type="tel"
                           value={signupData.phone}
                           onChange={(e) => {
@@ -507,10 +520,12 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2 text-slate-700">Birthdate *</label>
+                      <label htmlFor="signup-birthdate" className="block text-sm font-medium mb-2 text-slate-700">Birthdate *</label>
                       <div className="relative">
                         <Calendar className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
                         <input
+                          id="signup-birthdate"
+                          name="dateOfBirth"
                           type="text"
                           value={signupData.dateOfBirth}
                           onChange={(e) => setSignupData({ ...signupData, dateOfBirth: formatDateInput(e.target.value) })}
@@ -543,10 +558,12 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2 text-slate-700">Username *</label>
+                      <label htmlFor="signup-username" className="block text-sm font-medium mb-2 text-slate-700">Username *</label>
                       <div className="relative">
                         <User className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
                         <input
+                          id="signup-username"
+                          name="username"
                           type="text"
                           value={signupData.username}
                           onChange={(e) => setSignupData({ ...signupData, username: e.target.value })}
@@ -558,10 +575,12 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2 text-slate-700">Password *</label>
+                      <label htmlFor="signup-password" className="block text-sm font-medium mb-2 text-slate-700">Password *</label>
                       <div className="relative">
                         <Lock className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
                         <input
+                          id="signup-password"
+                          name="password"
                           type={showPassword ? "text" : "password"}
                           value={signupData.password}
                           onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
@@ -580,10 +599,12 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2 text-slate-700">Confirm Password *</label>
+                      <label htmlFor="signup-confirm-password" className="block text-sm font-medium mb-2 text-slate-700">Confirm Password *</label>
                       <div className="relative">
                         <Lock className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
                         <input
+                          id="signup-confirm-password"
+                          name="confirmPassword"
                           type={showConfirmPassword ? "text" : "password"}
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
@@ -606,7 +627,7 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
 
                     <button
                       type="submit"
-                      className="w-full py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl font-medium"
+                      className="w-full py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl font-medium mb-6"
                     >
                       <UserPlus className="w-5 h-5" />
                       Create Account

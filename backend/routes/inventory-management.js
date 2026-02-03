@@ -76,18 +76,20 @@ router.get('/auto-reduction/rules', authMiddleware, async (req, res) => {
   try {
     const [rules] = await pool.query(`
       SELECT 
-        r.id,
+        r.id as ruleId,
         r.appointmentType,
-        r.inventoryItemId,
-        r.quantityToReduce,
+        ri.id as itemId,
+        ri.inventoryItemId,
+        ri.quantityToReduce,
         r.isActive,
         i.name as inventoryItemName,
         i.category,
         i.quantity as currentQuantity,
         r.createdAt,
         r.updatedAt
-      FROM inventory_auto_reduction_rules r
-      LEFT JOIN inventory i ON r.inventoryItemId = i.id
+      FROM inventory_auto_reduction_rules_v2 r
+      LEFT JOIN inventory_auto_reduction_rule_items ri ON r.id = ri.ruleId
+      LEFT JOIN inventory i ON ri.inventoryItemId = i.id
       ORDER BY r.appointmentType, i.name
     `);
 
@@ -103,15 +105,17 @@ router.get('/auto-reduction/rules/type/:appointmentType', authMiddleware, async 
   try {
     const [rules] = await pool.query(`
       SELECT 
-        r.id,
+        r.id as ruleId,
         r.appointmentType,
-        r.inventoryItemId,
-        r.quantityToReduce,
+        ri.id as itemId,
+        ri.inventoryItemId,
+        ri.quantityToReduce,
         r.isActive,
         i.name as inventoryItemName,
         i.quantity as currentQuantity
-      FROM inventory_auto_reduction_rules r
-      LEFT JOIN inventory i ON r.inventoryItemId = i.id
+      FROM inventory_auto_reduction_rules_v2 r
+      LEFT JOIN inventory_auto_reduction_rule_items ri ON r.id = ri.ruleId
+      LEFT JOIN inventory i ON ri.inventoryItemId = i.id
       WHERE r.appointmentType = ? AND r.isActive = TRUE
       ORDER BY i.name
     `, [req.params.appointmentType]);
@@ -125,30 +129,53 @@ router.get('/auto-reduction/rules/type/:appointmentType', authMiddleware, async 
 // Create new auto-reduction rule
 router.post('/auto-reduction/rules', authMiddleware, async (req, res) => {
   try {
-    const { appointmentType, inventoryItemId, quantityToReduce } = req.body;
+    const { appointmentType, inventoryItemIds, quantityToReduce } = req.body;
 
-    if (!appointmentType || !inventoryItemId || !quantityToReduce) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    if (!appointmentType || !inventoryItemIds || !Array.isArray(inventoryItemIds) || inventoryItemIds.length === 0) {
+      return res.status(400).json({ error: 'Missing required fields: appointmentType and non-empty inventoryItemIds array' });
     }
 
-    // Check if rule already exists
-    const [existing] = await pool.query(
-      'SELECT id FROM inventory_auto_reduction_rules WHERE appointmentType = ? AND inventoryItemId = ?',
-      [appointmentType, inventoryItemId]
+    // Ensure quantityToReduce is provided (default to 1)
+    const qty = quantityToReduce || 1;
+
+    // Check if rule already exists for this appointment type
+    const [existingRule] = await pool.query(
+      'SELECT id FROM inventory_auto_reduction_rules_v2 WHERE appointmentType = ?',
+      [appointmentType]
     );
 
-    if (existing.length > 0) {
-      return res.status(400).json({ error: 'Rule already exists for this appointment type and item' });
+    let ruleId;
+    if (existingRule.length > 0) {
+      ruleId = existingRule[0].id;
+    } else {
+      // Create new rule
+      const [result] = await pool.query(
+        'INSERT INTO inventory_auto_reduction_rules_v2 (appointmentType, isActive) VALUES (?, TRUE)',
+        [appointmentType]
+      );
+      ruleId = result.insertId;
     }
 
-    const [result] = await pool.query(
-      'INSERT INTO inventory_auto_reduction_rules (appointmentType, inventoryItemId, quantityToReduce, isActive) VALUES (?, ?, ?, TRUE)',
-      [appointmentType, inventoryItemId, quantityToReduce]
-    );
+    // Add items to the rule
+    const itemIds = Array.isArray(inventoryItemIds) ? inventoryItemIds : [inventoryItemIds];
+    for (const itemId of itemIds) {
+      // Check if item already exists for this rule
+      const [existingItem] = await pool.query(
+        'SELECT id FROM inventory_auto_reduction_rule_items WHERE ruleId = ? AND inventoryItemId = ?',
+        [ruleId, itemId]
+      );
+
+      if (existingItem.length === 0) {
+        await pool.query(
+          'INSERT INTO inventory_auto_reduction_rule_items (ruleId, inventoryItemId, quantityToReduce) VALUES (?, ?, ?)',
+          [ruleId, itemId, qty]
+        );
+      }
+    }
 
     res.status(201).json({ 
       message: 'Auto-reduction rule created successfully',
-      ruleId: result.insertId 
+      ruleId: ruleId 
     });
   } catch (error) {
     console.error('Error creating auto-reduction rule:', error);
@@ -156,43 +183,37 @@ router.post('/auto-reduction/rules', authMiddleware, async (req, res) => {
   }
 });
 
-// Update auto-reduction rule
+// Update auto-reduction rule item
 router.put('/auto-reduction/rules/:id', authMiddleware, async (req, res) => {
   try {
     const { quantityToReduce, isActive } = req.body;
-    const ruleId = req.params.id;
+    const itemId = req.params.id;
 
-    // Verify rule exists
+    // Verify item exists (this is the rule_item id, not rule id)
     const [existing] = await pool.query(
-      'SELECT id FROM inventory_auto_reduction_rules WHERE id = ?',
-      [ruleId]
+      'SELECT * FROM inventory_auto_reduction_rule_items WHERE id = ?',
+      [itemId]
     );
 
     if (existing.length === 0) {
-      return res.status(404).json({ error: 'Rule not found' });
+      return res.status(404).json({ error: 'Rule item not found' });
     }
-
-    const query = 'UPDATE inventory_auto_reduction_rules SET';
-    const updates = [];
-    const values = [];
 
     if (quantityToReduce !== undefined) {
-      updates.push('quantityToReduce = ?');
-      values.push(quantityToReduce);
+      await pool.query(
+        'UPDATE inventory_auto_reduction_rule_items SET quantityToReduce = ? WHERE id = ?',
+        [quantityToReduce, itemId]
+      );
     }
+
+    // Update rule-level isActive if provided
     if (isActive !== undefined) {
-      updates.push('isActive = ?');
-      values.push(isActive);
+      const ruleId = existing[0].ruleId;
+      await pool.query(
+        'UPDATE inventory_auto_reduction_rules_v2 SET isActive = ?, updatedAt = NOW() WHERE id = ?',
+        [isActive, ruleId]
+      );
     }
-
-    if (updates.length === 0) {
-      return res.status(400).json({ error: 'No fields to update' });
-    }
-
-    values.push(ruleId);
-    const fullQuery = query + ' ' + updates.join(', ') + ', updatedAt = NOW() WHERE id = ?';
-
-    await pool.query(fullQuery, values);
 
     res.json({ message: 'Auto-reduction rule updated successfully' });
   } catch (error) {
@@ -201,23 +222,34 @@ router.put('/auto-reduction/rules/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// Delete auto-reduction rule
+// Delete auto-reduction rule item
 router.delete('/auto-reduction/rules/:id', authMiddleware, async (req, res) => {
   try {
-    const ruleId = req.params.id;
+    const itemId = req.params.id;
 
     const [existing] = await pool.query(
-      'SELECT id FROM inventory_auto_reduction_rules WHERE id = ?',
-      [ruleId]
+      'SELECT ruleId FROM inventory_auto_reduction_rule_items WHERE id = ?',
+      [itemId]
     );
 
     if (existing.length === 0) {
-      return res.status(404).json({ error: 'Rule not found' });
+      return res.status(404).json({ error: 'Rule item not found' });
     }
 
-    await pool.query('DELETE FROM inventory_auto_reduction_rules WHERE id = ?', [ruleId]);
+    // Delete the item from the rule
+    await pool.query('DELETE FROM inventory_auto_reduction_rule_items WHERE id = ?', [itemId]);
 
-    res.json({ message: 'Auto-reduction rule deleted successfully' });
+    // Check if the rule has any items left; if not, delete the rule
+    const [remainingItems] = await pool.query(
+      'SELECT COUNT(*) as count FROM inventory_auto_reduction_rule_items WHERE ruleId = ?',
+      [existing[0].ruleId]
+    );
+
+    if (remainingItems[0].count === 0) {
+      await pool.query('DELETE FROM inventory_auto_reduction_rules_v2 WHERE id = ?', [existing[0].ruleId]);
+    }
+
+    res.json({ message: 'Auto-reduction rule item deleted successfully' });
   } catch (error) {
     console.error('Error deleting auto-reduction rule:', error);
     res.status(500).json({ error: error.message });
@@ -229,10 +261,25 @@ router.post('/auto-reduction/rules/reset/:appointmentType', authMiddleware, asyn
   try {
     const appointmentType = req.params.appointmentType;
 
-    await pool.query(
-      'DELETE FROM inventory_auto_reduction_rules WHERE appointmentType = ?',
+    // Find the rule ID for this appointment type
+    const [rules] = await pool.query(
+      'SELECT id FROM inventory_auto_reduction_rules_v2 WHERE appointmentType = ?',
       [appointmentType]
     );
+
+    if (rules.length > 0) {
+      // Delete all items for this rule
+      await pool.query(
+        'DELETE FROM inventory_auto_reduction_rule_items WHERE ruleId = ?',
+        [rules[0].id]
+      );
+      
+      // Delete the rule
+      await pool.query(
+        'DELETE FROM inventory_auto_reduction_rules_v2 WHERE id = ?',
+        [rules[0].id]
+      );
+    }
 
     res.json({ message: 'Auto-reduction rules reset successfully' });
   } catch (error) {
@@ -387,19 +434,23 @@ router.post('/auto-reduce/appointment/:appointmentId', authMiddleware, async (re
     const appointment = appointments[0];
 
     // Get auto-reduction rules for this appointment type
-    const [rules] = await pool.query(
-      'SELECT * FROM inventory_auto_reduction_rules WHERE appointmentType = ? AND isActive = TRUE',
-      [appointment.appointmentType]
-    );
+    const [ruleRows] = await pool.query(`
+      SELECT r.id as ruleId, r.appointmentType, ri.id as itemId, ri.inventoryItemId, ri.quantityToReduce
+      FROM inventory_auto_reduction_rules_v2 r
+      LEFT JOIN inventory_auto_reduction_rule_items ri ON r.id = ri.ruleId
+      WHERE r.appointmentType = ? AND r.isActive = TRUE
+    `, [appointment.appointmentType]);
 
-    if (rules.length === 0) {
+    if (ruleRows.length === 0 || !ruleRows[0].itemId) {
       return res.json({ message: 'No auto-reduction rules found for this appointment type' });
     }
 
     const reductionRecords = [];
 
-    // Process each rule
-    for (const rule of rules) {
+    // Process each rule item
+    for (const rule of ruleRows) {
+      if (!rule.itemId || !rule.inventoryItemId) continue;
+
       // Get current inventory quantity
       const [inventoryItems] = await pool.query(
         'SELECT id, name, quantity FROM inventory WHERE id = ?',

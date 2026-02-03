@@ -216,156 +216,195 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
   };
 
   return (
-    <div className="px-6 space-y-6">
-      {/* Search */}
-      <div className="relative flex items-center justify-between gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Search employees by name, position, or email..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-          />
+    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-cyan-50/40 flex flex-col flex-1">
+      <div className="p-8 space-y-8 flex flex-col flex-1">
+        {/* Header Section */}
+        <div className="space-y-3">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 via-cyan-800 to-teal-700 bg-clip-text text-transparent">
+            Employee Management
+          </h1>
+          <p className="text-slate-600 font-medium text-sm tracking-wide">
+            Manage clinic staff, permissions, and access credentials
+          </p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg flex items-center gap-2"
-        >
-          <Plus className="w-5 h-5" />
-          Add Employee
-        </button>
-      </div>
 
-      {/* Employees Table */}
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="overflow-x-auto max-h-[60vh] overflow-y-scroll scrollbar-hover">
-          <table className="w-full">
-            <thead className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
-              <tr>
-                <th className="px-6 py-4 text-left">Name</th>
-                <th className="px-6 py-4 text-left">Position</th>
-                <th className="px-6 py-4 text-left">Access Level</th>
-                <th className="px-6 py-4 text-left">Email</th>
-                <th className="px-6 py-4 text-left">Phone</th>
-                <th className="px-6 py-4 text-left">Date Hired</th>
-                <th className="px-6 py-4 text-left">Account Status</th>
-                <th className="px-6 py-4 text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredEmployees.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
-                    {searchTerm ? 'No employees found matching your search' : 'No employees added yet'}
-                  </td>
-                </tr>
-              ) : (
-                filteredEmployees.map((employee) => (
-                  <tr key={employee.id} className="hover:bg-purple-50 transition-colors">
-                    <td className="px-6 py-4 font-medium text-gray-900">{employee.name}</td>
-                    <td className="px-6 py-4 text-gray-700">{employee.position}</td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+        {/* Search & Add Button */}
+        <div className="relative flex items-center justify-between gap-4 sticky top-0 bg-gradient-to-b from-white/80 via-white/60 to-transparent backdrop-blur-lg z-30 -mx-8 px-8 py-4 mb-2">
+          <div className="relative flex-1 group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-teal-500 transition-colors" />
+            <input
+              type="text"
+              placeholder="Search employees by name, position, or email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-4 py-3.5 bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 placeholder:text-slate-400 text-slate-900 shadow-sm hover:shadow-md group-focus-within:bg-white group-focus-within:shadow-lg"
+            />
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-teal-400/0 via-teal-400/0 to-cyan-400/0 group-focus-within:from-teal-400/10 group-focus-within:via-cyan-400/10 group-focus-within:to-teal-400/10 pointer-events-none transition-all duration-300"></div>
+          </div>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="relative group bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-6 py-3.5 rounded-xl hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-teal-500/20 flex items-center gap-2.5 whitespace-nowrap font-semibold text-sm tracking-wide transform hover:scale-105 active:scale-95"
+          >
+            <Plus className="w-5 h-5" />
+            <span>Add Employee</span>
+            <div className="absolute inset-0 rounded-xl bg-white/0 group-hover:bg-white/10 transition-colors duration-300"></div>
+          </button>
+        </div>
+
+        {/* Employees List */}
+        <div className="flex-1 flex flex-col min-h-0">
+          {filteredEmployees.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center py-16 px-6">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-teal-100 to-cyan-100 flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl font-bold text-teal-600">EM</span>
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">
+                  {searchTerm ? 'No employees found' : 'No employees added yet'}
+                </h3>
+                <p className="text-slate-600 text-sm mb-6">
+                  {searchTerm
+                    ? 'Try adjusting your search criteria'
+                    : 'Add your first team member to get started'}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent">
+              {filteredEmployees.map((employee) => (
+                <div
+                  key={employee.id}
+                  className="group relative bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6 hover:bg-white/90 transition-all duration-300 shadow-md hover:shadow-xl hover:shadow-teal-500/10 overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-transparent to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-teal-400/10 to-transparent rounded-full -translate-y-20 translate-x-20 group-hover:scale-125 transition-transform duration-500 blur-2xl pointer-events-none"></div>
+
+                  <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-10 gap-6 items-center">
+                    <div className="xl:col-span-2">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Name</p>
+                      <p className="text-lg font-bold text-slate-900">{employee.name}</p>
+                    </div>
+
+                    <div className="xl:col-span-1">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Position</p>
+                      <p className="text-sm font-medium text-slate-700">{employee.position}</p>
+                    </div>
+
+                    <div className="xl:col-span-1">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Access</p>
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide ${
                         employee.accessLevel === 'Super Admin' ? 'bg-purple-100 text-purple-800' :
                         employee.accessLevel === 'Admin' ? 'bg-blue-100 text-blue-800' :
                         'bg-gray-100 text-gray-800'
                       }`}>
                         {employee.accessLevel || 'Default Accounts'}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 text-gray-700">{employee.email}</td>
-                    <td className="px-6 py-4 text-gray-700">{employee.phone}</td>
-                    <td className="px-6 py-4 text-gray-700">
-                      {formatToDD_MM_YYYY(employee.dateHired)}
-                    </td>
-                    <td className="px-6 py-4">
+                    </div>
+
+                    <div className="xl:col-span-2">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Email</p>
+                      <p className="text-sm text-slate-700 truncate" title={employee.email}>{employee.email}</p>
+                    </div>
+
+                    <div className="xl:col-span-1">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Phone</p>
+                      <p className="text-sm font-medium text-slate-700">{employee.phone}</p>
+                    </div>
+
+                    <div className="xl:col-span-1">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Date Hired</p>
+                      <p className="text-sm font-medium text-slate-700">{formatToDD_MM_YYYY(employee.dateHired)}</p>
+                    </div>
+
+                    <div className="xl:col-span-1">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Status</p>
                       {employee.user_id ? (
                         employee.accountStatus === 'pending' ? (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
-                            Pending (Not logged in)
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide bg-yellow-100 text-yellow-800">
+                            Pending
                           </span>
                         ) : employee.accountStatus === 'active' ? (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide bg-green-100 text-green-800">
                             Active
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide bg-red-100 text-red-800">
                             Inactive
                           </span>
                         )
                       ) : (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide bg-gray-100 text-gray-800">
                           No Account
                         </span>
                       )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-2">
-                        {(!employee.user_id || employee.accountStatus === 'pending' || !employee.isCodeUsed) && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleGenerateCredentials(employee.id);
-                            }}
-                            className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors cursor-pointer"
-                            title={employee.accountStatus === 'pending' ? 'Regenerate Login Credentials' : 'Generate Login Credentials'}
-                            type="button"
-                          >
-                            <Key className="w-5 h-5" />
-                          </button>
-                        )}
+                    </div>
+
+                    <div className="xl:col-span-1 flex items-center justify-end gap-2">
+                      {(!employee.user_id || employee.accountStatus === 'pending' || !employee.isCodeUsed) && (
                         <button
-                          onClick={() => setEditingEmployee(employee)}
-                          className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-                          title="Edit Employee"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleGenerateCredentials(employee.id);
+                          }}
+                          className="p-2.5 rounded-lg bg-gradient-to-br from-emerald-50 to-teal-50 text-emerald-600 hover:from-emerald-100 hover:to-teal-100 hover:shadow-lg transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer"
+                          title={employee.accountStatus === 'pending' ? 'Regenerate Login Credentials' : 'Generate Login Credentials'}
+                          type="button"
                         >
-                          <Edit className="w-5 h-5" />
+                          <Key className="w-5 h-5" />
                         </button>
-                        <button
-                          onClick={() => setDeletingEmployee(employee)}
-                          className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-                          title="Delete Employee"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                      )}
+                      <button
+                        onClick={() => setEditingEmployee(employee)}
+                        className="p-2.5 rounded-lg bg-gradient-to-br from-blue-50 to-cyan-50 text-blue-600 hover:from-blue-100 hover:to-cyan-100 hover:shadow-lg transition-all duration-300 hover:scale-110 active:scale-95"
+                        title="Edit Employee"
+                      >
+                        <Edit className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => setDeletingEmployee(employee)}
+                        className="p-2.5 rounded-lg bg-gradient-to-br from-red-50 to-pink-50 text-red-600 hover:from-red-100 hover:to-pink-100 hover:shadow-lg transition-all duration-300 hover:scale-110 active:scale-95"
+                        title="Delete Employee"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Add Employee Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto scrollbar-hover">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-2xl font-bold text-purple-900">Add New Employee</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-gray-500 hover:text-gray-700">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white/95 backdrop-blur-md rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto scrollbar-thumb-teal-300 scrollbar-track-transparent shadow-2xl border border-white/40">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h3 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-teal-700 bg-clip-text text-transparent">Add New Employee</h3>
+                <p className="text-slate-600 text-sm mt-1">Create a new staff profile</p>
+              </div>
+              <button onClick={() => setShowAddModal(false)} className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all duration-300 hover:scale-110 active:scale-95">
                 <X className="w-6 h-6" />
               </button>
             </div>
-            <form onSubmit={handleAddEmployee} className="space-y-4">
+            <form onSubmit={handleAddEmployee} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Full Name *</label>
                 <input
                   type="text"
                   name="name"
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Position *</label>
+                <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Position *</label>
                 <select
                   name="position"
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 shadow-sm hover:shadow-md cursor-pointer"
                 >
                   <option value="">Select a position</option>
                   <option value="dentist">Dentist</option>
@@ -373,9 +412,9 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                   <option value="assistant">Assistant</option>
                 </select>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Phone *</label>
                   <input
                     type="tel"
                     name="phone"
@@ -388,62 +427,62 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                         e.target.value = formatted;
                       }
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Email *</label>
                   <input
                     type="email"
                     name="email"
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Address</label>
                 <textarea
                   name="address"
                   rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md resize-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date Hired *</label>
+                <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Date Hired *</label>
                 <input
                   type="text"
                   name="dateHired"
                   required
                   placeholder="DD/MM/YYYY"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Access Level *</label>
+                <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Access Level *</label>
                 <select
                   name="accessLevel"
                   required
                   defaultValue="Default Accounts"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 shadow-sm hover:shadow-md cursor-pointer"
                 >
                   <option value="Default Accounts">Default Accounts</option>
                   <option value="Admin">Admin</option>
                   <option value="Super Admin">Super Admin</option>
                 </select>
               </div>
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-4 pt-6 border-t border-slate-200/40">
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all disabled:opacity-50"
+                  className="flex-1 bg-gradient-to-r from-teal-500 to-cyan-500 text-white py-3.5 rounded-xl hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-sm tracking-wide uppercase shadow-lg hover:shadow-xl hover:shadow-teal-500/20 transform hover:scale-105 active:scale-95"
                 >
                   {isLoading ? 'Adding...' : 'Add Employee'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-6 py-3.5 border-2 border-slate-200 rounded-xl hover:bg-slate-50 transition-all duration-300 font-bold text-sm tracking-wide uppercase text-slate-900 hover:border-slate-300"
                 >
                   Cancel
                 </button>
@@ -455,32 +494,35 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
 
       {/* Edit Employee Modal */}
       {editingEmployee && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto scrollbar-hover">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-2xl font-bold text-purple-900">Edit Employee</h3>
-              <button onClick={() => setEditingEmployee(null)} className="text-gray-500 hover:text-gray-700">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white/95 backdrop-blur-md rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto scrollbar-thumb-teal-300 scrollbar-track-transparent shadow-2xl border border-white/40">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h3 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-teal-700 bg-clip-text text-transparent">Edit Employee</h3>
+                <p className="text-slate-600 text-sm mt-1">Update staff information</p>
+              </div>
+              <button onClick={() => setEditingEmployee(null)} className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all duration-300 hover:scale-110 active:scale-95">
                 <X className="w-6 h-6" />
               </button>
             </div>
-            <form onSubmit={handleUpdateEmployee} className="space-y-4">
+            <form onSubmit={handleUpdateEmployee} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Full Name *</label>
                 <input
                   type="text"
                   name="name"
                   required
                   defaultValue={editingEmployee.name}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Position *</label>
+                <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Position *</label>
                 <select
                   name="position"
                   required
                   defaultValue={editingEmployee.position}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 shadow-sm hover:shadow-md cursor-pointer"
                 >
                   <option value="">Select a position</option>
                   <option value="dentist">Dentist</option>
@@ -488,9 +530,9 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                   <option value="assistant">Assistant</option>
                 </select>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Phone *</label>
                   <input
                     type="tel"
                     name="phone"
@@ -504,65 +546,65 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                         e.target.value = formatted;
                       }
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Email *</label>
                   <input
                     type="email"
                     name="email"
                     required
                     defaultValue={editingEmployee.email}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Address</label>
                 <textarea
                   name="address"
                   rows={2}
                   defaultValue={editingEmployee.address}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md resize-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date Hired *</label>
+                <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Date Hired *</label>
                 <input
                   type="text"
                   name="dateHired"
                   required
                   defaultValue={formatToDD_MM_YYYY(editingEmployee.dateHired)}
                   placeholder="DD/MM/YYYY"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Access Level *</label>
+                <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Access Level *</label>
                 <select
                   name="accessLevel"
                   required
                   defaultValue={editingEmployee.accessLevel || 'Default Accounts'}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 shadow-sm hover:shadow-md cursor-pointer"
                 >
                   <option value="Admin">Admin</option>
                   <option value="Super Admin">Super Admin</option>
                   <option value="Default Accounts">Default Accounts</option>
                 </select>
               </div>
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-4 pt-6 border-t border-slate-200/40">
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all disabled:opacity-50"
+                  className="flex-1 bg-gradient-to-r from-teal-500 to-cyan-500 text-white py-3.5 rounded-xl hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-sm tracking-wide uppercase shadow-lg hover:shadow-xl hover:shadow-teal-500/20 transform hover:scale-105 active:scale-95"
                 >
                   {isLoading ? 'Updating...' : 'Update Employee'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setEditingEmployee(null)}
-                  className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-6 py-3.5 border-2 border-slate-200 rounded-xl hover:bg-slate-50 transition-all duration-300 font-bold text-sm tracking-wide uppercase text-slate-900 hover:border-slate-300"
                 >
                   Cancel
                 </button>
@@ -574,24 +616,34 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
 
       {/* Delete Confirmation Modal */}
       {deletingEmployee && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Delete Employee</h3>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to delete <strong>{deletingEmployee.name}</strong>? 
-              {deletingEmployee.user_id && ' This will also delete their login account.'}
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white/95 backdrop-blur-md rounded-2xl p-8 max-w-md w-full shadow-2xl border border-white/40">
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-red-100 to-pink-100 flex items-center justify-center">
+                <Trash2 className="w-8 h-8 text-red-600" />
+              </div>
+            </div>
+            <h3 className="text-2xl font-bold text-center text-slate-900 mb-3">Delete Employee?</h3>
+            <p className="text-center text-slate-600 mb-2">
+              Are you sure you want to delete
+            </p>
+            <p className="text-center font-bold text-slate-900 mb-4">
+              {deletingEmployee.name}
+            </p>
+            <p className="text-center text-sm text-red-600 mb-8 leading-relaxed">
+              This action cannot be undone.{deletingEmployee.user_id ? ' This will also delete their login account.' : ''}
             </p>
             <div className="flex gap-3">
               <button
                 onClick={handleDeleteEmployee}
                 disabled={isLoading}
-                className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                className="flex-1 bg-gradient-to-r from-red-500 to-pink-500 text-white py-3.5 rounded-xl hover:from-red-600 hover:to-pink-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-sm tracking-wide uppercase shadow-lg hover:shadow-xl hover:shadow-red-500/20 transform hover:scale-105 active:scale-95"
               >
                 {isLoading ? 'Deleting...' : 'Delete'}
               </button>
               <button
                 onClick={() => setDeletingEmployee(null)}
-                className="flex-1 border border-gray-300 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex-1 border-2 border-slate-200 rounded-xl hover:bg-slate-50 transition-all duration-300 font-bold text-sm tracking-wide uppercase text-slate-900 hover:border-slate-300 py-3.5"
               >
                 Cancel
               </button>
@@ -602,32 +654,35 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
 
       {/* Generated Credentials Modal */}
       {generatedCredentials && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-2xl font-bold text-green-900">Login Credentials Generated!</h3>
-              <button onClick={() => setGeneratedCredentials(null)} className="text-gray-500 hover:text-gray-700">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white/95 backdrop-blur-md rounded-2xl p-8 max-w-md w-full shadow-2xl border border-white/40">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-2xl font-bold bg-gradient-to-r from-emerald-700 to-teal-600 bg-clip-text text-transparent">Login Credentials Generated!</h3>
+                <p className="text-slate-600 text-sm mt-1">Save these details securely</p>
+              </div>
+              <button onClick={() => setGeneratedCredentials(null)} className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all duration-300 hover:scale-110 active:scale-95">
                 <X className="w-6 h-6" />
               </button>
             </div>
             <div className="space-y-4">
-              <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
-                <p className="text-sm text-green-800 mb-3 font-medium">
+              <div className="bg-emerald-50/70 border border-emerald-200/60 rounded-2xl p-5">
+                <p className="text-sm text-emerald-800 mb-4 font-semibold">
                   ⚠️ Save these credentials! They will only be shown once.
                 </p>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Username</label>
                     <div className="flex items-center gap-2">
                       <input
                         type="text"
                         value={generatedCredentials.username}
                         readOnly
-                        className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg font-mono text-sm"
+                        className="flex-1 px-3.5 py-2.5 bg-white border border-slate-200/60 rounded-lg font-mono text-sm"
                       />
                       <button
                         onClick={() => copyToClipboard(generatedCredentials.username, 'username')}
-                        className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
+                        className="p-2.5 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-all duration-300"
                         title="Copy Username"
                       >
                         {copiedField === 'username' ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
@@ -635,17 +690,17 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Temporary Password</label>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Temporary Password</label>
                     <div className="flex items-center gap-2">
                       <input
                         type="text"
                         value={generatedCredentials.password}
                         readOnly
-                        className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg font-mono text-sm"
+                        className="flex-1 px-3.5 py-2.5 bg-white border border-slate-200/60 rounded-lg font-mono text-sm"
                       />
                       <button
                         onClick={() => copyToClipboard(generatedCredentials.password, 'password')}
-                        className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
+                        className="p-2.5 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-all duration-300"
                         title="Copy Password"
                       >
                         {copiedField === 'password' ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
@@ -653,13 +708,13 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                     </div>
                   </div>
                 </div>
-                <p className="text-xs text-green-700 mt-3">
+                <p className="text-xs text-emerald-700 mt-4">
                   The employee will be prompted to change their password on first login.
                 </p>
               </div>
               <button
                 onClick={() => setGeneratedCredentials(null)}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all"
+                className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 text-white py-3 rounded-xl hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl"
               >
                 Close
               </button>

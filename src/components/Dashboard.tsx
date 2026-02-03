@@ -65,30 +65,30 @@ export function Dashboard({ patients, appointments, inventory, treatmentRecords,
 
   return (
     <div className="p-8 space-y-8">
-      {/* Stats Cards */}
+      {/* Stats Cards - Premium Glassmorphism */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <motion.button
           onClick={() => onNavigate?.('patients')}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="group relative bg-gradient-to-br from-white to-blue-50/30 p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-blue-100/50 overflow-hidden cursor-pointer text-left hover:scale-105 transform"
+          className="group relative bg-white/60 backdrop-blur-xl p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-white/60 overflow-hidden cursor-pointer text-left hover:border-white/80 transform hover:-translate-y-1 hover:bg-white/70"
         >
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-transparent rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-500"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-[#07BEB8]/10 via-transparent to-transparent rounded-2xl group-hover:from-[#07BEB8]/15 transition-all duration-500"></div>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#68D8D6]/20 to-transparent rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-500 blur-xl"></div>
           <div className="relative z-10">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <Users className="w-7 h-7 text-white" />
+            <div className="flex items-center justify-between mb-6">
+              <div className="p-3.5 bg-gradient-to-br from-[#07BEB8] to-[#3DCCC7] rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
+                <Users className="w-6 h-6 text-white" />
               </div>
-              <div className="flex items-center gap-1 text-green-600 text-sm font-semibold">
+              <div className="flex items-center gap-1.5 text-[#07BEB8] text-xs font-bold tracking-wide uppercase">
                 <ArrowUp className="w-4 h-4" />
-                <span>12%</span>
+                <span>+12%</span>
               </div>
             </div>
-            <p className="text-slate-600 text-sm mb-2 font-medium">Total Patients</p>
-            <p className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-              {patients.length}
-            </p>
+            <p className="text-slate-500 text-xs mb-3 font-bold tracking-widest uppercase">Total Patients</p>
+            <p className="text-4xl font-bold text-slate-900 mb-1">{patients.length}</p>
+            <div className="h-1 w-8 bg-gradient-to-r from-[#07BEB8] to-[#3DCCC7] rounded-full"></div>
           </div>
         </motion.button>
 
@@ -97,23 +97,23 @@ export function Dashboard({ patients, appointments, inventory, treatmentRecords,
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="group relative bg-gradient-to-br from-white to-emerald-50/30 p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-emerald-100/50 overflow-hidden cursor-pointer text-left hover:scale-105 transform"
+          className="group relative bg-white/60 backdrop-blur-xl p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-white/60 overflow-hidden cursor-pointer text-left hover:border-white/80 transform hover:-translate-y-1 hover:bg-white/70"
         >
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-500/10 to-transparent rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-500"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-[#3DCCC7]/10 via-transparent to-transparent rounded-2xl group-hover:from-[#3DCCC7]/15 transition-all duration-500"></div>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#9CEAEF]/20 to-transparent rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-500 blur-xl"></div>
           <div className="relative z-10">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-4 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <Calendar className="w-7 h-7 text-white" />
+            <div className="flex items-center justify-between mb-6">
+              <div className="p-3.5 bg-gradient-to-br from-[#3DCCC7] to-[#07BEB8] rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
+                <Calendar className="w-6 h-6 text-white" />
               </div>
-              <div className="flex items-center gap-1 text-emerald-600 text-sm font-semibold">
+              <div className="flex items-center gap-1.5 text-[#07BEB8] text-xs font-bold tracking-wide uppercase">
                 <Activity className="w-4 h-4" />
                 <span>Today</span>
               </div>
             </div>
-            <p className="text-slate-600 text-sm mb-2 font-medium">Today's Appointments</p>
-            <p className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-800 bg-clip-text text-transparent">
-              {todayAppointments.length}
-            </p>
+            <p className="text-slate-500 text-xs mb-3 font-bold tracking-widest uppercase">Today's Appointments</p>
+            <p className="text-4xl font-bold text-slate-900 mb-1">{todayAppointments.length}</p>
+            <div className="h-1 w-8 bg-gradient-to-r from-[#3DCCC7] to-[#07BEB8] rounded-full"></div>
           </div>
         </motion.button>
 
@@ -122,25 +122,25 @@ export function Dashboard({ patients, appointments, inventory, treatmentRecords,
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="group relative bg-gradient-to-br from-white to-orange-50/30 p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-orange-100/50 overflow-hidden cursor-pointer text-left hover:scale-105 transform"
+          className="group relative bg-white/60 backdrop-blur-xl p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-white/60 overflow-hidden cursor-pointer text-left hover:border-white/80 transform hover:-translate-y-1 hover:bg-white/70"
         >
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-500/10 to-transparent rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-500"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-[#68D8D6]/10 via-transparent to-transparent rounded-2xl group-hover:from-[#68D8D6]/15 transition-all duration-500"></div>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#C4FFF9]/20 to-transparent rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-500 blur-xl"></div>
           <div className="relative z-10">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-4 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <Package className="w-7 h-7 text-white" />
+            <div className="flex items-center justify-between mb-6">
+              <div className="p-3.5 bg-gradient-to-br from-[#68D8D6] to-[#3DCCC7] rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
+                <Package className="w-6 h-6 text-white" />
               </div>
               {lowStockItems.length > 0 && (
-                <div className="flex items-center gap-1 text-red-600 text-sm font-semibold">
+                <div className="flex items-center gap-1.5 text-red-600 text-xs font-bold tracking-wide uppercase">
                   <AlertTriangle className="w-4 h-4" />
                   <span>Alert</span>
                 </div>
               )}
             </div>
-            <p className="text-slate-600 text-sm mb-2 font-medium">Low Stock Items</p>
-            <p className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-orange-800 bg-clip-text text-transparent">
-              {lowStockItems.length}
-            </p>
+            <p className="text-slate-500 text-xs mb-3 font-bold tracking-widest uppercase">Low Stock Items</p>
+            <p className="text-4xl font-bold text-slate-900 mb-1">{lowStockItems.length}</p>
+            <div className="h-1 w-8 bg-gradient-to-r from-[#68D8D6] to-[#3DCCC7] rounded-full"></div>
           </div>
         </motion.button>
 
@@ -149,30 +149,38 @@ export function Dashboard({ patients, appointments, inventory, treatmentRecords,
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="group relative bg-gradient-to-br from-white to-purple-50/30 p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-purple-100/50 overflow-hidden cursor-pointer text-left hover:scale-105 transform"
+          className="group relative bg-white/60 backdrop-blur-xl p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-white/60 overflow-hidden cursor-pointer text-left hover:border-white/80 transform hover:-translate-y-1 hover:bg-white/70"
         >
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-transparent rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-500"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-[#9CEAEF]/10 via-transparent to-transparent rounded-2xl group-hover:from-[#9CEAEF]/15 transition-all duration-500"></div>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#68D8D6]/20 to-transparent rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-500 blur-xl"></div>
           <div className="relative z-10">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-4 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <PesoSign className="w-7 h-7 text-white" /></div>
-              <div className="flex items-center gap-1 text-green-600 text-sm font-semibold">
+            <div className="flex items-center justify-between mb-6">
+              <div className="p-3.5 bg-gradient-to-br from-[#9CEAEF] to-[#68D8D6] rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
+                <PesoSign className="w-6 h-6 text-white" /></div>
+              <div className="flex items-center gap-1.5 text-[#07BEB8] text-xs font-bold tracking-wide uppercase">
                 <ArrowUp className="w-4 h-4" />
-                <span>8%</span>
+                <span>+8%</span>
               </div>
             </div>
-            <p className="text-slate-600 text-sm mb-2 font-medium">Total Revenue</p>
-            <p className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
-              ₱{totalRevenue.toLocaleString()}
-            </p>
+            <p className="text-slate-500 text-xs mb-3 font-bold tracking-widest uppercase">Total Revenue</p>
+            <p className="text-4xl font-bold text-slate-900 mb-1">₱{totalRevenue.toLocaleString()}</p>
+            <div className="h-1 w-8 bg-gradient-to-r from-[#9CEAEF] to-[#68D8D6] rounded-full"></div>
           </div>
         </motion.button>
       </div>
 
-      {/* Charts */}
+      {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h2 className="mb-4">Appointment Trends</h2>
+        <div className="bg-white/60 backdrop-blur-xl p-8 rounded-2xl shadow-lg border border-white/60 hover:shadow-xl transition-all duration-300">
+          <div className="mb-6 pb-4 border-b border-white/40 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Appointment Trends</h2>
+              <p className="text-xs text-slate-500 mt-1.5 font-medium">5-day appointment overview</p>
+            </div>
+            <div className="px-3 py-1.5 bg-gradient-to-r from-[#3DCCC7]/20 to-[#07BEB8]/20 border border-[#3DCCC7]/30 rounded-lg">
+              <span className="text-xs font-bold text-[#07BEB8]">Live</span>
+            </div>
+          </div>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={appointmentData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -185,8 +193,16 @@ export function Dashboard({ patients, appointments, inventory, treatmentRecords,
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h2 className="mb-4">Revenue Overview</h2>
+        <div className="bg-white/60 backdrop-blur-xl p-8 rounded-2xl shadow-lg border border-white/60 hover:shadow-xl transition-all duration-300">
+          <div className="mb-6 pb-4 border-b border-white/40 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Revenue Overview</h2>
+              <p className="text-xs text-slate-500 mt-1.5 font-medium">Monthly revenue comparison</p>
+            </div>
+            <div className="px-3 py-1.5 bg-gradient-to-r from-[#9CEAEF]/20 to-[#68D8D6]/20 border border-[#9CEAEF]/30 rounded-lg">
+              <span className="text-xs font-bold text-[#07BEB8]">₱</span>
+            </div>
+          </div>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={revenueData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -200,39 +216,55 @@ export function Dashboard({ patients, appointments, inventory, treatmentRecords,
         </div>
       </div>
 
-      {/* Alerts and Upcoming */}
+      {/* Alerts and Upcoming - Premium Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Low Stock Alerts */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center gap-2 mb-4">
-            <AlertTriangle className="w-5 h-5 text-orange-500" />
-            <h2>Low Stock Alerts</h2>
+        <div className="bg-white/60 backdrop-blur-xl p-8 rounded-2xl shadow-lg border border-white/60 hover:shadow-xl transition-all duration-300">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-white/40">
+            <div className="p-2.5 bg-gradient-to-br from-[#68D8D6]/20 to-[#68D8D6]/10 rounded-lg border border-[#68D8D6]/30">
+              <AlertTriangle className="w-5 h-5 text-[#07BEB8]" />
+            </div>
+            <div className="flex-1">
+              <h2 className="font-bold text-slate-900">Low Stock Alerts</h2>
+              <p className="text-xs text-slate-500 mt-0.5 font-medium">Items below minimum threshold</p>
+            </div>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {lowStockItems.length > 0 ? (
               lowStockItems.map(item => (
-                <div key={item.id} className="flex justify-between items-center p-3 bg-orange-50 rounded border border-orange-200">
-                  <div>
-                    <p>{item.name}</p>
-                    <p className="text-sm text-gray-600">{item.category}</p>
+                <div key={item.id} className="flex justify-between items-center p-4 bg-gradient-to-r from-[#C4FFF9]/40 to-[#C4FFF9]/20 rounded-xl border border-[#68D8D6]/40 hover:border-[#68D8D6]/60 hover:bg-gradient-to-r hover:from-[#C4FFF9]/60 hover:to-[#C4FFF9]/40 transition-all duration-300 group backdrop-blur-sm">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-slate-900 text-sm">{item.name}</p>
+                    <p className="text-xs text-slate-500 mt-1 font-medium">{item.category}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-orange-600">{item.quantity} {item.unit}</p>
-                    <p className="text-xs text-gray-500">Min: {item.minQuantity}</p>
+                  <div className="text-right ml-4">
+                    <p className="font-bold text-[#07BEB8] text-sm">{item.quantity} {item.unit}</p>
+                    <p className="text-xs text-slate-500 mt-1 font-medium">Min: {item.minQuantity}</p>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-gray-500">All inventory levels are adequate</p>
+              <div className="text-center py-8">
+                <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-gradient-to-br from-[#3DCCC7]/20 to-[#07BEB8]/20 flex items-center justify-center">
+                  <span className="text-lg">✓</span>
+                </div>
+                <p className="text-sm font-semibold text-slate-900">All Stocked</p>
+                <p className="text-xs text-slate-500 mt-1">All inventory levels are adequate</p>
+              </div>
             )}
           </div>
         </div>
 
         {/* Upcoming Appointments */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center gap-2 mb-4">
-            <Calendar className="w-5 h-5 text-blue-500" />
-            <h2>Upcoming Appointments</h2>
+        <div className="bg-white/60 backdrop-blur-xl p-8 rounded-2xl shadow-lg border border-white/60 hover:shadow-xl transition-all duration-300">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-white/40">
+            <div className="p-2.5 bg-gradient-to-br from-[#3DCCC7]/20 to-[#3DCCC7]/10 rounded-lg border border-[#3DCCC7]/30">
+              <Calendar className="w-5 h-5 text-[#07BEB8]" />
+            </div>
+            <div className="flex-1">
+              <h2 className="font-bold text-slate-900">Upcoming Appointments</h2>
+              <p className="text-xs text-slate-500 mt-0.5 font-medium">Next 4 scheduled appointments</p>
+            </div>
           </div>
           <div className="space-y-3">
             {appointments
@@ -267,13 +299,13 @@ export function Dashboard({ patients, appointments, inventory, treatmentRecords,
                 const periodLabel = appointmentDate.getHours() < 12 ? 'Morning' : 'Afternoon';
                 
                 return (
-                  <div key={apt.id} className="flex justify-between items-center p-3 bg-blue-50 rounded border border-blue-200">
-                    <div>
-                      <p className="font-medium">{apt.patientName}</p>
+                  <div key={apt.id} className="flex justify-between items-center p-4 bg-gradient-to-r from-[#9CEAEF]/40 to-[#9CEAEF]/20 rounded-xl border border-[#3DCCC7]/40 hover:border-[#3DCCC7]/60 hover:bg-gradient-to-r hover:from-[#9CEAEF]/60 hover:to-[#9CEAEF]/40 transition-all duration-300 group backdrop-blur-sm">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-slate-900 text-sm">{apt.patientName}</p>
+                      <p className="text-xs text-slate-500 mt-1 font-medium">{periodLabel}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm text-blue-600 font-medium">{formattedDate}</p>
-                      <p className="text-sm text-gray-600">{periodLabel}</p>
+                    <div className="text-right ml-4">
+                      <p className="font-bold text-[#07BEB8] text-sm">{formattedDate}</p>
                     </div>
                   </div>
                 );
@@ -288,7 +320,13 @@ export function Dashboard({ patients, appointments, inventory, treatmentRecords,
                 today.setHours(0, 0, 0, 0);
                 return aptDate >= today;
               }).length === 0 && (
-              <p className="text-gray-500 text-center py-4">No upcoming appointments</p>
+              <div className="text-center py-8">
+                <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-gradient-to-br from-[#3DCCC7]/20 to-[#07BEB8]/20 flex items-center justify-center">
+                  <Calendar className="w-5 h-5 text-[#07BEB8]" />
+                </div>
+                <p className="text-sm font-semibold text-slate-900">No Appointments</p>
+                <p className="text-xs text-slate-500 mt-1">No upcoming appointments scheduled</p>
+              </div>
             )}
           </div>
         </div>

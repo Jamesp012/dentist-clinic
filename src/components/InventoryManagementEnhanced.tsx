@@ -1,22 +1,13 @@
 import { useState, useEffect } from 'react';
 import { InventoryItem } from '../App';
-import { Package, Plus, X, Edit, Search, Zap, AlertCircle, TrendingDown, History, Settings, Eye, Trash, Save, Loader } from 'lucide-react';
+import { Package, Plus, X, Edit, Search, Zap, AlertCircle, TrendingDown, History, Settings, Eye, Trash2, Save, Loader, Trash } from 'lucide-react';
 import { toast } from 'sonner';
-
-interface Service {
-  id: string;
-  serviceName: string;
-  category: string;
-  description: string[];
-  duration: string;
-  price?: string;
-}
+import { inventoryAPI } from '../api';
 
 type InventoryManagementProps = {
   inventory: InventoryItem[];
   setInventory: (inventory: InventoryItem[]) => void;
   onDataChanged?: () => Promise<void>;
-  services?: Service[];
 };
 
 // Types for auto-reduction
@@ -49,12 +40,18 @@ interface ReductionHistory {
   reducedAt: string;
 }
 
-export function InventoryManagement({ inventory, setInventory, onDataChanged, services = [] }: InventoryManagementProps) {
+export function InventoryManagement({ inventory, setInventory, onDataChanged }: InventoryManagementProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'auto-reduction' | 'history'>('overview');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [autoReductionRules, setAutoReductionRules] = useState<AutoReductionRule[]>([]);
   const [reductionHistory, setReductionHistory] = useState<ReductionHistory[]>([]);
   const [loading, setLoading] = useState(false);
+  const [creatingRule, setCreatingRule] = useState(false);
+
+  // Edit form state
+  const [editFormData, setEditFormData] = useState<InventoryItem | null>(null);
 
   // Auto-reduction form state
   const [appointmentType, setAppointmentType] = useState('');
@@ -86,33 +83,34 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged, se
     }
   };
 
-  // Load appointment types from services
-  const loadAppointmentTypes = () => {
+  // Load appointment types
+  const loadAppointmentTypes = async () => {
     try {
-      // Extract service names from services prop
-      if (services && services.length > 0) {
-        const serviceNames = services.map(service => service.serviceName);
-        setAvailableAppointmentTypes(serviceNames);
-      } else {
-        // Fallback to fetching from API if no services provided
-        const fetchTypes = async () => {
-          try {
-            const response = await fetch('http://localhost:5000/api/inventory-management/appointment-types', {
-              headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-            });
-            if (response.ok) {
-              const data = await response.json();
-              setAvailableAppointmentTypes(data.appointmentTypes || []);
-            }
-          } catch (error) {
-            console.error('Error loading appointment types:', error);
-          }
-        };
-        fetchTypes();
+      // First try to fetch from API
+      const response = await fetch('http://localhost:5000/api/inventory-management/appointment-types', {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.appointmentTypes && data.appointmentTypes.length > 0) {
+          setAvailableAppointmentTypes(data.appointmentTypes);
+          return;
+        }
       }
     } catch (error) {
-      console.error('Error loading appointment types from services:', error);
+      console.error('Error loading appointment types from API:', error);
     }
+    
+    // Fallback to hardcoded types matching the appointment system
+    const defaultAppointmentTypes = [
+      'Dental consultation',
+      'Oral examination',
+      'Dental cleaning',
+      'Tooth extraction',
+      'Braces installation',
+      'Consultation'
+    ];
+    setAvailableAppointmentTypes(defaultAppointmentTypes);
   };
 
   // Load reduction history
@@ -163,33 +161,43 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged, se
     }
   }, [activeTab]);
 
-  // Update appointment types when services change
-  useEffect(() => {
-    if (services && services.length > 0) {
-      const serviceNames = services.map(service => service.serviceName);
-      setAvailableAppointmentTypes(serviceNames);
-    }
-  }, [services]);
-
   // Add item to rule
   const addItemToRule = () => {
+    console.log('Add item clicked. selectedItemToAdd:', selectedItemToAdd);
+    
     if (!selectedItemToAdd) {
       toast.error('Please select an item');
       return;
     }
 
-    const item = inventory.find(i => i.id === selectedItemToAdd);
-    if (!item) return;
+    const itemId = parseInt(selectedItemToAdd.toString());
+    console.log('Looking for item with ID:', itemId);
+    console.log('Available inventory items:', inventory.map(i => ({ id: i.id, name: i.name })));
+    
+    const item = inventory.find(i => i.id === itemId);
+    if (!item) {
+      console.error('Item not found:', itemId);
+      toast.error('Item not found in inventory');
+      return;
+    }
+
+    // Check if item is already added
+    if (selectedItems.some(si => si.itemId === itemId)) {
+      toast.error('This item is already added to the rule');
+      return;
+    }
 
     const newItem: RuleItem = {
-      itemId: parseInt(selectedItemToAdd.toString()),
+      itemId: itemId,
       itemName: item.name,
       quantityToReduce: quantityForItem
     };
 
+    console.log('Adding item:', newItem);
     setSelectedItems([...selectedItems, newItem]);
     setSelectedItemToAdd('');
     setQuantityForItem(1);
+    toast.success('Item added to rule');
   };
 
   // Remove item from rule
@@ -199,6 +207,10 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged, se
 
   // Create auto-reduction rule
   const createAutoReductionRule = async () => {
+    console.log('Create rule clicked');
+    console.log('Appointment type:', appointmentType);
+    console.log('Selected items:', selectedItems);
+    
     if (!appointmentType) {
       toast.error('Please select an appointment type');
       return;
@@ -209,31 +221,91 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged, se
       return;
     }
 
+    setCreatingRule(true);
     try {
+      const payload = {
+        appointmentType,
+        items: selectedItems,
+      };
+
+      console.log('Creating rule with payload:', payload);
+      console.log('Sending to:', 'http://localhost:5000/api/inventory-management/auto-reduction/rules');
+
       const response = await fetch('http://localhost:5000/api/inventory-management/auto-reduction/rules', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
-        body: JSON.stringify({
-          appointmentType,
-          items: selectedItems,
-        }),
+        body: JSON.stringify(payload),
       });
+
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+
+      // Check if response is JSON or HTML
+      const contentType = response.headers.get('content-type');
+      let responseData;
+      
+      if (contentType?.includes('application/json')) {
+        responseData = await response.json();
+      } else {
+        // If not JSON, it's likely an error page
+        const text = await response.text();
+        console.error('Non-JSON response:', text);
+        throw new Error('Backend returned non-JSON response. Backend may not be running or database tables may not exist.');
+      }
+
+      console.log('Response data:', responseData);
 
       if (response.ok) {
         toast.success('Auto-reduction rule created successfully!');
+        // Reset all form fields
         setAppointmentType('');
         setSelectedItems([]);
+        setQuantityForItem(1);
+        setSelectedItemToAdd('');
         await loadAutoReductionRules();
       } else {
-        const error = await response.json();
-        toast.error(error.error || 'Failed to create rule');
+        const errorMsg = responseData.error || responseData.message || 'Failed to create rule';
+        console.error('Server error:', errorMsg);
+        toast.error(errorMsg);
       }
     } catch (error) {
       console.error('Error creating rule:', error);
-      toast.error('Failed to create rule');
+      const errorMsg = (error as Error).message;
+      if (errorMsg.includes('Failed to fetch')) {
+        toast.error('Cannot connect to backend. Is the server running on localhost:5000?');
+      } else {
+        toast.error('Failed to create rule: ' + errorMsg);
+      }
+    } finally {
+      setCreatingRule(false);
+    }
+  };
+
+  // Update auto-reduction rule
+  const updateAutoReductionRule = async (ruleId: number, newItems: RuleItem[]) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/inventory-management/auto-reduction/rules/${ruleId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ items: newItems }),
+      });
+
+      if (response.ok) {
+        toast.success('Rule updated successfully!');
+        setEditingRuleId(null);
+        await loadAutoReductionRules();
+      } else {
+        toast.error('Failed to update rule');
+      }
+    } catch (error) {
+      console.error('Error updating rule:', error);
+      toast.error('Failed to update rule');
     }
   };
 
@@ -431,9 +503,11 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged, se
                     <tr>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Item Name</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Quantity</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Per Box/Pack</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Unit</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Min Level</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
@@ -457,6 +531,9 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged, se
                               {item.quantity}
                             </span>
                           </td>
+                          <td className="px-6 py-4 text-gray-600">
+                            {item.quantityPerBox ? `${item.quantityPerBox} ${item.unit}` : '-'}
+                          </td>
                           <td className="px-6 py-4 text-gray-600">{item.unit}</td>
                           <td className="px-6 py-4 text-gray-600">{minLevel}</td>
                           <td className="px-6 py-4">
@@ -470,6 +547,19 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged, se
                                'In Stock'}
                             </span>
                           </td>
+                          <td className="px-6 py-4">
+                            <button
+                              onClick={() => {
+                                setEditingItem(item);
+                                setEditFormData({ ...item });
+                              }}
+                              className="inline-flex items-center gap-2 px-3 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 font-medium rounded-lg transition-colors"
+                              title="Edit this inventory item"
+                            >
+                              <Edit className="w-4 h-4" />
+                              Edit
+                            </button>
+                          </td>
                         </tr>
                       );
                     })}
@@ -478,6 +568,138 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged, se
               </div>
             )}
           </div>
+
+          {/* Edit Item Modal */}
+          {editingItem && editFormData && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+                  <h3 className="text-lg font-semibold text-gray-900">Edit Inventory Item</h3>
+                  <button
+                    onClick={() => {
+                      setEditingItem(null);
+                      setEditFormData(null);
+                    }}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Item Name</label>
+                    <input
+                      type="text"
+                      value={editFormData.name}
+                      onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
+                    <input
+                      type="number"
+                      value={editFormData.quantity}
+                      onChange={(e) => setEditFormData({ ...editFormData, quantity: parseInt(e.target.value) || 0 })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Quantity Per Box/Pack</label>
+                    <input
+                      type="number"
+                      value={editFormData.quantityPerBox || ''}
+                      onChange={(e) => setEditFormData({ ...editFormData, quantityPerBox: e.target.value ? parseInt(e.target.value) : undefined })}
+                      placeholder="e.g., 12 items per box"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Unit</label>
+                    <input
+                      type="text"
+                      value={editFormData.unit}
+                      onChange={(e) => setEditFormData({ ...editFormData, unit: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Minimum Level</label>
+                    <input
+                      type="number"
+                      value={editFormData.minQuantity}
+                      onChange={(e) => setEditFormData({ ...editFormData, minQuantity: parseInt(e.target.value) || 0 })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                    <input
+                      type="text"
+                      value={editFormData.category}
+                      onChange={(e) => setEditFormData({ ...editFormData, category: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Supplier</label>
+                    <input
+                      type="text"
+                      value={editFormData.supplier}
+                      onChange={(e) => setEditFormData({ ...editFormData, supplier: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Cost</label>
+                    <input
+                      type="number"
+                      value={editFormData.cost}
+                      onChange={(e) => setEditFormData({ ...editFormData, cost: parseFloat(e.target.value) || 0 })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-6 border-t border-gray-200 flex gap-3">
+                  <button
+                    onClick={() => {
+                      setEditingItem(null);
+                      setEditFormData(null);
+                    }}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (editFormData) {
+                        const updatedInventory = inventory.map(item => 
+                          item.id === editingItem.id ? editFormData : item
+                        );
+                        setInventory(updatedInventory);
+                        setEditingItem(null);
+                        setEditFormData(null);
+                        toast.success('Item updated successfully');
+                      }
+                    }}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2"
+                  >
+                    <Save className="w-4 h-4" />
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -488,6 +710,20 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged, se
           <div>
             <h2 className="text-3xl font-bold text-gray-900">Auto-Reduction Settings</h2>
             <p className="text-gray-600 mt-2">Configure which items reduce for each procedure type</p>
+          </div>
+
+          {/* Backend Status Alert */}
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-medium text-yellow-900">Backend Server Required</h3>
+              <p className="text-sm text-yellow-800 mt-1">
+                The backend server must be running for this feature to work. If you see a "cannot connect to backend" error when creating a rule, please start the backend server:
+              </p>
+              <code className="block mt-2 bg-yellow-100 px-3 py-1 rounded text-xs font-mono text-yellow-900">
+                cd backend && npm start
+              </code>
+            </div>
           </div>
 
           {/* Create New Rule Form */}
@@ -553,8 +789,8 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged, se
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
                     >
                       <option value="">Select item...</option>
-                      {inventory.filter(item => !selectedItems.some(si => si.itemId === item.id)).map(item => (
-                        <option key={item.id} value={item.id}>
+                      {inventory.filter(item => !selectedItems.some(si => si.itemId.toString() === item.id.toString())).map(item => (
+                        <option key={item.id} value={item.id.toString()}>
                           {item.name} ({item.quantity} {item.unit})
                         </option>
                       ))}
@@ -565,9 +801,9 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged, se
                     <label className="block text-xs font-medium text-gray-700 mb-1">Quantity</label>
                     <input
                       type="number"
-                      min="1"
+                      min="0"
                       value={quantityForItem}
-                      onChange={(e) => setQuantityForItem(Math.max(1, parseInt(e.target.value) || 1))}
+                      onChange={(e) => setQuantityForItem(Math.max(0, parseInt(e.target.value) || 0))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
                     />
                   </div>
@@ -587,11 +823,20 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged, se
               {/* Create Rule Button */}
               <button
                 onClick={createAutoReductionRule}
-                disabled={!appointmentType || selectedItems.length === 0}
+                disabled={!appointmentType || selectedItems.length === 0 || creatingRule}
                 className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                <Save className="w-4 h-4" />
-                Create Rule
+                {creatingRule ? (
+                  <>
+                    <Loader className="w-4 h-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    Create Rule
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -652,7 +897,7 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged, se
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm flex items-center gap-2"
                       >
                         <Edit className="w-4 h-4" />
-                        Edit
+                        {editingRuleId === rule.id ? 'Cancel Edit' : 'Edit'}
                       </button>
                       <button
                         onClick={() => deleteAutoReductionRule(rule.id)}
@@ -662,6 +907,137 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged, se
                         Delete
                       </button>
                     </div>
+
+                    {/* Edit Form */}
+                    {editingRuleId === rule.id && (
+                      <div className="mt-6 pt-6 border-t border-gray-200 bg-blue-50 p-4 rounded-lg space-y-4">
+                        <h5 className="font-medium text-gray-900">Edit Items for {rule.appointmentType}</h5>
+                        
+                        {/* Current Items List with Inline Editing */}
+                        <div className="space-y-3">
+                          {rule.items.map((item, index) => (
+                            <div key={index} className="flex gap-2 items-end bg-white p-3 rounded border border-gray-200">
+                              <div className="flex-1">
+                                <p className="text-xs font-medium text-gray-700 mb-1">Item: {item.itemName}</p>
+                              </div>
+                              <div className="w-20">
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Qty</label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={item.quantityToReduce}
+                                  onChange={(e) => {
+                                    const newItems = [...rule.items];
+                                    newItems[index] = {
+                                      ...item,
+                                      quantityToReduce: Math.max(0, parseInt(e.target.value) || 0)
+                                    };
+                                    const updatedRules = autoReductionRules.map(r =>
+                                      r.id === rule.id ? { ...r, items: newItems } : r
+                                    );
+                                    setAutoReductionRules(updatedRules);
+                                  }}
+                                  className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
+                                />
+                              </div>
+                              <button
+                                onClick={() => {
+                                  const newItems = rule.items.filter((_, i) => i !== index);
+                                  const updatedRules = autoReductionRules.map(r =>
+                                    r.id === rule.id ? { ...r, items: newItems } : r
+                                  );
+                                  setAutoReductionRules(updatedRules);
+                                }}
+                                className="text-red-600 hover:text-red-800 p-1"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Add More Items */}
+                        <div className="border-t border-blue-200 pt-4">
+                          <h6 className="text-xs font-medium text-gray-700 mb-2">Add More Items</h6>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                            <div>
+                              <select
+                                value={selectedItemToAdd}
+                                onChange={(e) => setSelectedItemToAdd(e.target.value)}
+                                className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                              >
+                                <option value="">Select item...</option>
+                                {inventory.filter(item => !rule.items.some(si => si.itemId === item.id)).map(item => (
+                                  <option key={item.id} value={item.id}>
+                                    {item.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <input
+                                type="number"
+                                min="0"
+                                placeholder="Qty"
+                                value={quantityForItem}
+                                onChange={(e) => setQuantityForItem(Math.max(0, parseInt(e.target.value) || 0))}
+                                className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                              />
+                            </div>
+                            <button
+                              onClick={() => {
+                                if (!selectedItemToAdd) {
+                                  toast.error('Please select an item');
+                                  return;
+                                }
+
+                                const item = inventory.find(i => i.id === selectedItemToAdd);
+                                if (!item) return;
+
+                                const newItem: RuleItem = {
+                                  itemId: parseInt(selectedItemToAdd.toString()),
+                                  itemName: item.name,
+                                  quantityToReduce: quantityForItem
+                                };
+
+                                const newItems = [...rule.items, newItem];
+                                const updatedRules = autoReductionRules.map(r =>
+                                  r.id === rule.id ? { ...r, items: newItems } : r
+                                );
+                                setAutoReductionRules(updatedRules);
+                                setSelectedItemToAdd('');
+                                setQuantityForItem(1);
+                              }}
+                              className="w-full px-2 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm flex items-center justify-center gap-1"
+                            >
+                              <Plus className="w-4 h-4" />
+                              Add
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Save/Cancel */}
+                        <div className="flex gap-2 pt-4 border-t border-blue-200">
+                          <button
+                            onClick={() => setEditingRuleId(null)}
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 font-medium text-sm"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => {
+                              updateAutoReductionRule(rule.id, rule.items);
+                              setSelectedItemToAdd('');
+                              setQuantityForItem(1);
+                            }}
+                            className="flex-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm flex items-center justify-center gap-1"
+                          >
+                            <Save className="w-4 h-4" />
+                            Save Changes
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

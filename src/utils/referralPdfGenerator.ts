@@ -375,11 +375,37 @@ export const generateReferralPDF = (referral: Referral, patient?: Patient) => {
       // Peri-apical with tooth diagram
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
-      doc.text("_____ Peri-apical (please encircle no./nos.)", 20, yPosition);
-      doc.text("_____ Occlusal", 115, yPosition);
-      doc.text("_____ Upper", 155, yPosition);
+      
+      // X-Ray Film Format selections
+      const periapicalChecked = referral.selectedServices?.['periapical'];
+      doc.text('_____', 20, yPosition);
+      doc.text('Peri-apical (please encircle no./nos.)', 28, yPosition);
+      if (periapicalChecked) {
+        doc.text('X', 21, yPosition);
+      }
       yPosition += 5;
-      doc.text("_____ Lower", 155, yPosition);
+      
+      const occlusalsalChecked = referral.selectedServices?.['occlusal'];
+      doc.text('_____', 115, yPosition - 5);
+      doc.text('Occlusal', 123, yPosition - 5);
+      if (occlusalsalChecked) {
+        doc.text('X', 116, yPosition - 5);
+      }
+      
+      const occlusalsalUpperChecked = referral.selectedServices?.['occlusal-upper'];
+      doc.text('_____', 155, yPosition - 5);
+      doc.text('Upper', 163, yPosition - 5);
+      if (occlusalsalUpperChecked) {
+        doc.text('X', 156, yPosition - 5);
+      }
+      yPosition += 5;
+      
+      const occlusalsalLowerChecked = referral.selectedServices?.['occlusal-lower'];
+      doc.text('_____', 155, yPosition - 5);
+      doc.text('Lower', 163, yPosition - 5);
+      if (occlusalsalLowerChecked) {
+        doc.text('X', 156, yPosition - 5);
+      }
       yPosition += 6;
 
       // Tooth diagram

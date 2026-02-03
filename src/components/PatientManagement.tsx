@@ -125,126 +125,182 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
   };
 
   return (
-    <div className="px-6 space-y-6 flex flex-col flex-1">
-      {/* Search */}
-      <div className="relative flex items-center justify-between gap-4 sticky top-0 bg-slate-50 z-30 py-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Search patients by name, email, or phone..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
+    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50/40 flex flex-col flex-1">
+      <div className="p-8 space-y-8 flex flex-col flex-1">
+        {/* Header Section */}
+        <div className="space-y-3">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 via-blue-800 to-teal-700 bg-clip-text text-transparent">
+            Patient Management
+          </h1>
+          <p className="text-slate-600 font-medium text-sm tracking-wide">
+            Manage and organize your patient database
+          </p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-all shadow-lg flex items-center gap-2 whitespace-nowrap"
-        >
-          <Plus className="w-5 h-5" />
-          Add Patient
-        </button>
-      </div>
 
-      {/* Patients Table */}
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col flex-1">
-        <div className="overflow-x-auto overflow-y-scroll flex-1 scrollbar-thumb-blue-600 scrollbar-track-gray-100">
-          <table className="w-full">
-            <thead className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white sticky top-0 z-10">
-              <tr>
-                <th className="px-6 py-4 text-left">Name</th>
-                <th className="px-6 py-4 text-left">Age</th>
-                <th className="px-6 py-4 text-left">Email</th>
-                <th className="px-6 py-4 text-left">Phone</th>
-                <th className="px-6 py-4 text-left">Address</th>
-                <th className="px-6 py-4 text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredPatients.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                    {searchTerm ? 'No patients found matching your search' : 'No patients added yet'}
-                  </td>
-                </tr>
-              ) : (
-                filteredPatients.map((patient) => (
-                  <tr key={patient.id} className="hover:bg-blue-50 transition-colors">
-                    <td className="px-6 py-4 font-medium text-gray-900">{patient.name}</td>
-                    <td className="px-6 py-4 text-gray-700">{calculateAge(patient.dateOfBirth)}</td>
-                    <td className="px-6 py-4 text-gray-700">{patient.email}</td>
-                    <td className="px-6 py-4 text-gray-700">{patient.phone}</td>
-                    <td className="px-6 py-4 text-gray-700">{patient.address}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => setViewingPatient(patient)}
-                          className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
-                          title="View Patient"
-                        >
-                          <Eye className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => setEditingPatient(patient)}
-                          className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-                          title="Edit Patient"
-                        >
-                          <Edit className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => setDeletingPatient(patient)}
-                          className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-                          title="Delete Patient"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
+        {/* Search & Add Button */}
+        <div className="relative flex items-center justify-between gap-4 sticky top-0 bg-gradient-to-b from-white/80 via-white/60 to-transparent backdrop-blur-lg z-30 -mx-8 px-8 py-4 mb-2">
+          <div className="relative flex-1 group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-teal-500 transition-colors" />
+            <input
+              type="text"
+              placeholder="Search patients by name, email, or phone..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-4 py-3.5 bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 placeholder:text-slate-400 text-slate-900 shadow-sm hover:shadow-md group-focus-within:bg-white group-focus-within:shadow-lg"
+            />
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-teal-400/0 via-teal-400/0 to-cyan-400/0 group-focus-within:from-teal-400/10 group-focus-within:via-cyan-400/10 group-focus-within:to-teal-400/10 pointer-events-none transition-all duration-300"></div>
+          </div>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="relative group bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-6 py-3.5 rounded-xl hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-teal-500/20 flex items-center gap-2.5 whitespace-nowrap font-semibold text-sm tracking-wide transform hover:scale-105 active:scale-95"
+          >
+            <Plus className="w-5 h-5" />
+            <span>Add Patient</span>
+            <div className="absolute inset-0 rounded-xl bg-white/0 group-hover:bg-white/10 transition-colors duration-300"></div>
+          </button>
+        </div>
+
+        {/* Patients Grid/List */}
+        <div className="flex-1 flex flex-col min-h-0">
+          {filteredPatients.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center py-16 px-6">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-teal-100 to-cyan-100 flex items-center justify-center mx-auto mb-4">
+                  <Users className="w-10 h-10 text-teal-600" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">
+                  {searchTerm ? 'No patients found' : 'No patients added yet'}
+                </h3>
+                <p className="text-slate-600 text-sm mb-6">
+                  {searchTerm 
+                    ? 'Try adjusting your search criteria' 
+                    : 'Get started by adding your first patient'}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent">
+              {filteredPatients.map((patient, idx) => (
+                <div
+                  key={patient.id}
+                  className="group relative bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6 hover:bg-white/90 transition-all duration-300 shadow-md hover:shadow-xl hover:shadow-teal-500/10 overflow-hidden"
+                >
+                  {/* Gradient accent background */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-transparent to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-teal-400/10 to-transparent rounded-full -translate-y-20 translate-x-20 group-hover:scale-125 transition-transform duration-500 blur-2xl pointer-events-none"></div>
+                  
+                  <div className="relative z-10 grid grid-cols-1 md:grid-cols-6 gap-6 items-center">
+                    {/* Name Column */}
+                    <div className="md:col-span-1">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Name</p>
+                      <p className="text-lg font-bold text-slate-900">{patient.name}</p>
+                    </div>
+
+                    {/* Age Column */}
+                    <div className="md:col-span-1">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Age</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-bold text-slate-900">{calculateAge(patient.dateOfBirth)}</span>
+                        <span className="text-xs text-slate-500">years</span>
                       </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                    </div>
+
+                    {/* Email Column */}
+                    <div className="md:col-span-2">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Email</p>
+                      <p className="text-sm text-slate-700 truncate hover:text-teal-600 transition-colors cursor-help" title={patient.email}>{patient.email}</p>
+                    </div>
+
+                    {/* Phone Column */}
+                    <div className="md:col-span-1">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Phone</p>
+                      <p className="text-sm font-medium text-slate-700">{patient.phone}</p>
+                    </div>
+
+                    {/* Actions Column */}
+                    <div className="md:col-span-1 flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => setViewingPatient(patient)}
+                        className="p-2.5 rounded-lg bg-gradient-to-br from-emerald-50 to-teal-50 text-emerald-600 hover:from-emerald-100 hover:to-teal-100 hover:shadow-lg transition-all duration-300 hover:scale-110 active:scale-95"
+                        title="View Patient"
+                      >
+                        <Eye className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => setEditingPatient(patient)}
+                        className="p-2.5 rounded-lg bg-gradient-to-br from-blue-50 to-cyan-50 text-blue-600 hover:from-blue-100 hover:to-cyan-100 hover:shadow-lg transition-all duration-300 hover:scale-110 active:scale-95"
+                        title="Edit Patient"
+                      >
+                        <Edit className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => setDeletingPatient(patient)}
+                        className="p-2.5 rounded-lg bg-gradient-to-br from-red-50 to-pink-50 text-red-600 hover:from-red-100 hover:to-pink-100 hover:shadow-lg transition-all duration-300 hover:scale-110 active:scale-95"
+                        title="Delete Patient"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Address (hidden on mobile, shown on hover for desktop) */}
+                  <div className="mt-4 pt-4 border-t border-slate-200/40 hidden md:block group-hover:block">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Address</p>
+                    <p className="text-sm text-slate-600 line-clamp-1">{patient.address}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Add Patient Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-white rounded-xl p-4 max-w-2xl w-full my-auto">
-            <div className="flex items-center justify-end mb-3">
-              <button onClick={() => setShowAddModal(false)} className="text-gray-500 hover:text-gray-700">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white/95 backdrop-blur-md rounded-2xl p-8 max-w-2xl w-full my-auto shadow-2xl border border-white/40">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h3 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-teal-700 bg-clip-text text-transparent">
+                  Add New Patient
+                </h3>
+                <p className="text-slate-600 text-sm mt-1">Enter patient information to create a new record</p>
+              </div>
+              <button 
+                onClick={() => setShowAddModal(false)} 
+                className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all duration-300 hover:scale-110 active:scale-95"
+              >
                 <X className="w-6 h-6" />
               </button>
             </div>
-            <form onSubmit={handleAddPatient} className="space-y-3">
+            <form onSubmit={handleAddPatient} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Full Name *</label>
                 <input
                   type="text"
                   name="name"
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
+                  placeholder="John Doe"
                 />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth *</label>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Date of Birth *</label>
                   <input
                     type="text"
                     name="dateOfBirth"
                     required
                     placeholder="DD/MM/YYYY"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Sex *</label>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Sex *</label>
                   <select
                     name="sex"
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 shadow-sm hover:shadow-md cursor-pointer"
                   >
                     <option value="">Select sex</option>
                     <option value="Male">Male</option>
@@ -252,9 +308,9 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
                   </select>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Phone *</label>
                   <input
                     type="tel"
                     name="phone"
@@ -267,57 +323,60 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
                         e.target.value = formatted;
                       }
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Email *</label>
                   <input
                     type="email"
                     name="email"
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
+                    placeholder="john@example.com"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Address *</label>
+                <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Address *</label>
                 <textarea
                   name="address"
                   rows={2}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md resize-none"
+                  placeholder="Enter complete address"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Medical History</label>
+                <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Medical History</label>
                 <textarea
                   name="medicalHistory"
                   rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md resize-none"
+                  placeholder="Enter any relevant medical history (optional)"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Allergies</label>
+                <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Allergies</label>
                 <input
                   type="text"
                   name="allergies"
-                  placeholder="Enter allergies or 'None'"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter allergies or 'None' (optional)"
+                  className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
                 />
               </div>
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-4 pt-6 border-t border-slate-200/40">
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-2 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-all disabled:opacity-50"
+                  className="flex-1 bg-gradient-to-r from-teal-500 to-cyan-500 text-white py-3.5 rounded-xl hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-sm tracking-wide uppercase shadow-lg hover:shadow-xl hover:shadow-teal-500/20 transform hover:scale-105 active:scale-95"
                 >
                   {isLoading ? 'Adding...' : 'Add Patient'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-6 py-3.5 border-2 border-slate-200 rounded-xl hover:bg-slate-50 transition-all duration-300 font-bold text-sm tracking-wide uppercase text-slate-900 hover:border-slate-300"
                 >
                   Cancel
                 </button>
@@ -329,44 +388,52 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
 
       {/* Edit Patient Modal */}
       {editingPatient && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto scrollbar-hover">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-2xl font-bold text-blue-900">Edit Patient</h3>
-              <button onClick={() => setEditingPatient(null)} className="text-gray-500 hover:text-gray-700">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white/95 backdrop-blur-md rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto scrollbar-thumb-teal-300 scrollbar-track-transparent shadow-2xl border border-white/40">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h3 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-teal-700 bg-clip-text text-transparent">
+                  Edit Patient
+                </h3>
+                <p className="text-slate-600 text-sm mt-1">Update patient information</p>
+              </div>
+              <button 
+                onClick={() => setEditingPatient(null)} 
+                className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all duration-300 hover:scale-110 active:scale-95"
+              >
                 <X className="w-6 h-6" />
               </button>
             </div>
-            <form onSubmit={handleUpdatePatient} className="space-y-4">
+            <form onSubmit={handleUpdatePatient} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Full Name *</label>
                 <input
                   type="text"
                   name="name"
                   required
                   defaultValue={editingPatient.name}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
                 />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth *</label>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Date of Birth *</label>
                   <input
                     type="text"
                     name="dateOfBirth"
                     required
                     defaultValue={formatToDD_MM_YYYY(editingPatient.dateOfBirth)}
                     placeholder="DD/MM/YYYY"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Sex *</label>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Sex *</label>
                   <select
                     name="sex"
                     required
                     defaultValue={editingPatient.sex}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 shadow-sm hover:shadow-md cursor-pointer"
                   >
                     <option value="">Select sex</option>
                     <option value="Male">Male</option>
@@ -374,9 +441,9 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
                   </select>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Phone *</label>
                   <input
                     type="tel"
                     name="phone"
@@ -390,60 +457,60 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
                         e.target.value = formatted;
                       }
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Email *</label>
                   <input
                     type="email"
                     name="email"
                     required
                     defaultValue={editingPatient.email}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Address *</label>
+                <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Address *</label>
                 <textarea
                   name="address"
                   rows={2}
                   required
                   defaultValue={editingPatient.address}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md resize-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Medical History</label>
+                <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Medical History</label>
                 <textarea
                   name="medicalHistory"
                   rows={2}
                   defaultValue={editingPatient.medicalHistory}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md resize-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Allergies</label>
+                <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Allergies</label>
                 <input
                   type="text"
                   name="allergies"
                   defaultValue={editingPatient.allergies}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
                 />
               </div>
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-4 pt-6 border-t border-slate-200/40">
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-2 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-all disabled:opacity-50"
+                  className="flex-1 bg-gradient-to-r from-teal-500 to-cyan-500 text-white py-3.5 rounded-xl hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-sm tracking-wide uppercase shadow-lg hover:shadow-xl hover:shadow-teal-500/20 transform hover:scale-105 active:scale-95"
                 >
                   {isLoading ? 'Updating...' : 'Update Patient'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setEditingPatient(null)}
-                  className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-6 py-3.5 border-2 border-slate-200 rounded-xl hover:bg-slate-50 transition-all duration-300 font-bold text-sm tracking-wide uppercase text-slate-900 hover:border-slate-300"
                 >
                   Cancel
                 </button>
@@ -455,23 +522,34 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
 
       {/* Delete Confirmation Modal */}
       {deletingPatient && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Delete Patient</h3>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to delete <strong>{deletingPatient.name}</strong>?
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white/95 backdrop-blur-md rounded-2xl p-8 max-w-md w-full shadow-2xl border border-white/40">
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-red-100 to-pink-100 flex items-center justify-center">
+                <Trash2 className="w-8 h-8 text-red-600" />
+              </div>
+            </div>
+            <h3 className="text-2xl font-bold text-center text-slate-900 mb-3">Delete Patient?</h3>
+            <p className="text-center text-slate-600 mb-2">
+              Are you sure you want to delete
+            </p>
+            <p className="text-center font-bold text-slate-900 mb-6">
+              {deletingPatient.name}
+            </p>
+            <p className="text-center text-sm text-red-600 mb-8 leading-relaxed">
+              This action cannot be undone. All patient records and associated data will be permanently deleted.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={handleDeletePatient}
                 disabled={isLoading}
-                className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                className="flex-1 bg-gradient-to-r from-red-500 to-pink-500 text-white py-3.5 rounded-xl hover:from-red-600 hover:to-pink-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-sm tracking-wide uppercase shadow-lg hover:shadow-xl hover:shadow-red-500/20 transform hover:scale-105 active:scale-95"
               >
                 {isLoading ? 'Deleting...' : 'Delete'}
               </button>
               <button
                 onClick={() => setDeletingPatient(null)}
-                className="flex-1 border border-gray-300 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex-1 border-2 border-slate-200 rounded-xl hover:bg-slate-50 transition-all duration-300 font-bold text-sm tracking-wide uppercase text-slate-900 hover:border-slate-300 py-3.5"
               >
                 Cancel
               </button>
@@ -482,67 +560,85 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
 
       {/* View Patient Modal */}
       {viewingPatient && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto scrollbar-hover">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-blue-900">Patient Details</h3>
-              <button onClick={() => setViewingPatient(null)} className="text-gray-500 hover:text-gray-700">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white/95 backdrop-blur-md rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto scrollbar-thumb-teal-300 scrollbar-track-transparent shadow-2xl border border-white/40">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h3 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-teal-700 bg-clip-text text-transparent">
+                  Patient Details
+                </h3>
+                <p className="text-slate-600 text-sm mt-1">Complete patient information</p>
+              </div>
+              <button 
+                onClick={() => setViewingPatient(null)} 
+                className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all duration-300 hover:scale-110 active:scale-95"
+              >
                 <X className="w-6 h-6" />
               </button>
             </div>
 
-            {/* Patient Information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <label className="text-sm font-medium text-blue-900 block mb-1">Full Name</label>
-                <p className="text-gray-900 font-medium">{viewingPatient.name}</p>
+            {/* Patient Information Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              {/* Name Card */}
+              <div className="group bg-gradient-to-br from-emerald-50/80 to-teal-50/80 backdrop-blur-sm p-6 rounded-2xl border border-teal-200/40 hover:border-teal-300/60 transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-teal-500/10">
+                <label className="text-xs font-bold text-teal-700 uppercase tracking-widest mb-2 block">Full Name</label>
+                <p className="text-2xl font-bold text-slate-900">{viewingPatient.name}</p>
               </div>
               
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <label className="text-sm font-medium text-blue-900 block mb-1">Age</label>
-                <p className="text-gray-900 font-medium">{calculateAge(viewingPatient.dateOfBirth)} years old</p>
+              {/* Age Card */}
+              <div className="group bg-gradient-to-br from-blue-50/80 to-cyan-50/80 backdrop-blur-sm p-6 rounded-2xl border border-cyan-200/40 hover:border-cyan-300/60 transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-cyan-500/10">
+                <label className="text-xs font-bold text-blue-700 uppercase tracking-widest mb-2 block">Age</label>
+                <p className="text-2xl font-bold text-slate-900">{calculateAge(viewingPatient.dateOfBirth)}<span className="text-sm text-slate-600 ml-2 font-normal">years old</span></p>
               </div>
               
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <label className="text-sm font-medium text-blue-900 block mb-1">Date of Birth</label>
-                <p className="text-gray-900 font-medium">{formatToDD_MM_YYYY(viewingPatient.dateOfBirth)}</p>
+              {/* Date of Birth Card */}
+              <div className="group bg-gradient-to-br from-purple-50/80 to-pink-50/80 backdrop-blur-sm p-6 rounded-2xl border border-pink-200/40 hover:border-pink-300/60 transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-pink-500/10">
+                <label className="text-xs font-bold text-purple-700 uppercase tracking-widest mb-2 block">Date of Birth</label>
+                <p className="text-lg font-bold text-slate-900">{formatToDD_MM_YYYY(viewingPatient.dateOfBirth)}</p>
               </div>
               
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <label className="text-sm font-medium text-blue-900 block mb-1">Sex</label>
-                <p className="text-gray-900 font-medium">{viewingPatient.sex}</p>
+              {/* Sex Card */}
+              <div className="group bg-gradient-to-br from-orange-50/80 to-amber-50/80 backdrop-blur-sm p-6 rounded-2xl border border-amber-200/40 hover:border-amber-300/60 transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-amber-500/10">
+                <label className="text-xs font-bold text-orange-700 uppercase tracking-widest mb-2 block">Sex</label>
+                <p className="text-lg font-bold text-slate-900">{viewingPatient.sex}</p>
               </div>
               
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <label className="text-sm font-medium text-blue-900 block mb-1">Email</label>
-                <p className="text-gray-900 font-medium">{viewingPatient.email}</p>
+              {/* Email Card */}
+              <div className="group bg-gradient-to-br from-indigo-50/80 to-blue-50/80 backdrop-blur-sm p-6 rounded-2xl border border-indigo-200/40 hover:border-indigo-300/60 transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-indigo-500/10">
+                <label className="text-xs font-bold text-indigo-700 uppercase tracking-widest mb-2 block">Email</label>
+                <p className="text-sm font-semibold text-slate-900 truncate" title={viewingPatient.email}>{viewingPatient.email}</p>
               </div>
               
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <label className="text-sm font-medium text-blue-900 block mb-1">Phone</label>
-                <p className="text-gray-900 font-medium">{viewingPatient.phone}</p>
+              {/* Phone Card */}
+              <div className="group bg-gradient-to-br from-rose-50/80 to-red-50/80 backdrop-blur-sm p-6 rounded-2xl border border-red-200/40 hover:border-red-300/60 transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-red-500/10">
+                <label className="text-xs font-bold text-rose-700 uppercase tracking-widest mb-2 block">Phone</label>
+                <p className="text-lg font-bold text-slate-900">{viewingPatient.phone}</p>
               </div>
               
-              <div className="bg-blue-50 p-4 rounded-lg md:col-span-2">
-                <label className="text-sm font-medium text-blue-900 block mb-1">Address</label>
-                <p className="text-gray-900 font-medium">{viewingPatient.address}</p>
+              {/* Address Card - Full Width */}
+              <div className="group md:col-span-2 bg-gradient-to-br from-slate-50/80 to-gray-50/80 backdrop-blur-sm p-6 rounded-2xl border border-slate-200/40 hover:border-slate-300/60 transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-slate-500/10">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-widest mb-2 block">Address</label>
+                <p className="text-sm font-medium text-slate-900 leading-relaxed">{viewingPatient.address}</p>
               </div>
               
-              <div className="bg-blue-50 p-4 rounded-lg md:col-span-2">
-                <label className="text-sm font-medium text-blue-900 block mb-1">Medical History</label>
-                <p className="text-gray-900 font-medium whitespace-pre-wrap">{viewingPatient.medicalHistory || 'No medical history recorded'}</p>
+              {/* Medical History Card - Full Width */}
+              <div className="group md:col-span-2 bg-gradient-to-br from-lime-50/80 to-green-50/80 backdrop-blur-sm p-6 rounded-2xl border border-green-200/40 hover:border-green-300/60 transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-green-500/10">
+                <label className="text-xs font-bold text-green-700 uppercase tracking-widest mb-2 block">Medical History</label>
+                <p className="text-sm font-medium text-slate-900 whitespace-pre-wrap">{viewingPatient.medicalHistory || <span className="text-slate-500 italic">No medical history recorded</span>}</p>
               </div>
               
-              <div className="bg-blue-50 p-4 rounded-lg md:col-span-2">
-                <label className="text-sm font-medium text-blue-900 block mb-1">Allergies</label>
-                <p className="text-gray-900 font-medium whitespace-pre-wrap">{viewingPatient.allergies || 'No known allergies'}</p>
+              {/* Allergies Card - Full Width */}
+              <div className="group md:col-span-2 bg-gradient-to-br from-yellow-50/80 to-orange-50/80 backdrop-blur-sm p-6 rounded-2xl border border-orange-200/40 hover:border-orange-300/60 transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-orange-500/10">
+                <label className="text-xs font-bold text-orange-700 uppercase tracking-widest mb-2 block">Allergies</label>
+                <p className="text-sm font-medium text-slate-900 whitespace-pre-wrap">{viewingPatient.allergies || <span className="text-slate-500 italic">No known allergies</span>}</p>
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end">
+            {/* Close Button */}
+            <div className="flex justify-end pt-6 border-t border-slate-200/40">
               <button
                 onClick={() => setViewingPatient(null)}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-8 py-3.5 bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-xl hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 font-bold text-sm tracking-wide uppercase shadow-lg hover:shadow-xl hover:shadow-teal-500/20 transform hover:scale-105 active:scale-95"
               >
                 Close
               </button>
