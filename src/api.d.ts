@@ -60,7 +60,7 @@ export interface Referral {
   referredTo: string;
   specialty: string;
   reason: string;
-  selectedServices?: Record<string, boolean>;
+  selectedServices?: Record<string, boolean | string>;
   date: string;
   urgency: 'routine' | 'urgent' | 'emergency';
   createdByRole?: 'patient' | 'staff';

@@ -32,7 +32,7 @@ async function generateUsername(name) {
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const [employees] = await pool.query(`
-      SELECT e.*, u.username, u.email as userEmail, u.isFirstLogin, u.accountStatus
+      SELECT e.*, u.username, u.email as userEmail, u.isFirstLogin, u.accountStatus, u.accessLevel
       FROM employees e
       LEFT JOIN users u ON e.user_id = u.id
       ORDER BY e.createdAt DESC
@@ -48,7 +48,7 @@ router.get('/', authMiddleware, async (req, res) => {
 router.get('/:id', authMiddleware, async (req, res) => {
   try {
     const [employees] = await pool.query(`
-      SELECT e.*, u.username, u.email as userEmail, u.isFirstLogin, u.accountStatus
+      SELECT e.*, u.username, u.email as userEmail, u.isFirstLogin, u.accountStatus, u.accessLevel
       FROM employees e
       LEFT JOIN users u ON e.user_id = u.id
       WHERE e.id = ?
@@ -68,11 +68,11 @@ router.get('/:id', authMiddleware, async (req, res) => {
 router.post('/', authMiddleware, async (req, res) => {
   try {
     console.log('Adding new employee:', req.body);
-    const { name, position, phone, email, address, dateHired } = req.body;
+    const { name, position, phone, email, address, dateHired, accessLevel } = req.body;
     
     const [result] = await pool.query(
-      'INSERT INTO employees (name, position, phone, email, address, dateHired) VALUES (?, ?, ?, ?, ?, ?)',
-      [name, position, phone, email, address, dateHired]
+      'INSERT INTO employees (name, position, phone, email, address, dateHired, accessLevel) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [name, position, phone, email, address, dateHired, accessLevel || 'Default Accounts']
     );
     
     console.log('Employee added successfully with ID:', result.insertId);
@@ -118,6 +118,14 @@ router.post('/:id/generate-credentials', authMiddleware, async (req, res) => {
       role = 'assistant';
     }
     
+    // Determine accessLevel: set defaults for Dr. Joseph and Almira if not already set
+    let accessLevel = employee.accessLevel || 'Default Accounts';
+    if (employee.name === 'Dr. Joseph Maaño' || employee.name === 'Dr. Joseph') {
+      accessLevel = 'Super Admin';
+    } else if (employee.name === 'Almira') {
+      accessLevel = 'Admin';
+    }
+    
     // Generate unique username and code
     const username = await generateUsername(employee.name);
     const generatedCode = generateUniqueCode();
@@ -125,16 +133,16 @@ router.post('/:id/generate-credentials', authMiddleware, async (req, res) => {
     // Hash the generated code as password
     const hashedPassword = await bcryptjs.hash(generatedCode, 10);
     
-    // Create user account with position (pending status until first login)
+    // Create user account with position and accessLevel (pending status until first login)
     const [userResult] = await pool.query(
-      'INSERT INTO users (username, password, fullName, email, phone, role, position, isFirstLogin, accountStatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [username, hashedPassword, employee.name, employee.email, employee.phone, role, employee.position, true, 'pending']
+      'INSERT INTO users (username, password, fullName, email, phone, role, position, accessLevel, isFirstLogin, accountStatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [username, hashedPassword, employee.name, employee.email, employee.phone, role, employee.position, accessLevel, true, 'pending']
     );
     
-    // Update employee with user_id and generated code
+    // Update employee with user_id, generated code, and accessLevel
     await pool.query(
-      'UPDATE employees SET user_id = ?, generatedCode = ?, isCodeUsed = FALSE WHERE id = ?',
-      [userResult.insertId, generatedCode, employeeId]
+      'UPDATE employees SET user_id = ?, generatedCode = ?, isCodeUsed = FALSE, accessLevel = ? WHERE id = ?',
+      [userResult.insertId, generatedCode, accessLevel, employeeId]
     );
     
     res.json({
@@ -150,19 +158,19 @@ router.post('/:id/generate-credentials', authMiddleware, async (req, res) => {
 // Update employee
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
-    const { name, position, phone, email, address, dateHired } = req.body;
+    const { name, position, phone, email, address, dateHired, accessLevel } = req.body;
     
     await pool.query(
-      'UPDATE employees SET name = ?, position = ?, phone = ?, email = ?, address = ?, dateHired = ? WHERE id = ?',
-      [name, position, phone, email, address, dateHired, req.params.id]
+      'UPDATE employees SET name = ?, position = ?, phone = ?, email = ?, address = ?, dateHired = ?, accessLevel = ? WHERE id = ?',
+      [name, position, phone, email, address, dateHired, accessLevel, req.params.id]
     );
     
     // Also update user table if user_id exists
     const [employee] = await pool.query('SELECT user_id FROM employees WHERE id = ?', [req.params.id]);
     if (employee.length > 0 && employee[0].user_id) {
       await pool.query(
-        'UPDATE users SET fullName = ?, email = ?, phone = ? WHERE id = ?',
-        [name, email, phone, employee[0].user_id]
+        'UPDATE users SET fullName = ?, email = ?, phone = ?, accessLevel = ? WHERE id = ?',
+        [name, email, phone, accessLevel, employee[0].user_id]
       );
     }
     

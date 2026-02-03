@@ -17,6 +17,7 @@ export type User = {
   username: string;
   role: UserRole;
   position?: UserPosition;
+  accessLevel?: 'Admin' | 'Super Admin' | 'Default Accounts';
   fullName: string;
   email?: string;
   phone?: string;

@@ -95,6 +95,7 @@ export type Referral = {
   referredTo: string;
   specialty: string;
   reason: string;
+  selectedServices?: Record<string, boolean | string>;
   date: string;
   urgency: 'routine' | 'urgent' | 'emergency';
   createdByRole?: 'patient' | 'staff';
@@ -290,6 +291,13 @@ export default function App() {
     }
   }, []);
 
+  // Refresh data from database when user is authenticated
+  useEffect(() => {
+    if (currentUser) {
+      refreshAll();
+    }
+  }, [currentUser, refreshAll]);
+
 
 
   // Persist photos to localStorage
@@ -439,9 +447,9 @@ export default function App() {
     return <AuthPage onLogin={handleLogin} onSignup={handleSignup} />;
   }
 
-  // Route to appropriate dashboard based on role and position
-  // Dentist or Assistant Dentist → Doctor interface
-  if (currentUser.role === 'doctor' || (currentUser.position === 'dentist' || currentUser.position === 'assistant_dentist')) {
+  // Route to appropriate dashboard based on accessLevel
+  // Super Admin or role doctor → Doctor interface
+  if (currentUser.accessLevel === 'Super Admin') {
     return (
       <>
         <DoctorDashboard
@@ -486,8 +494,101 @@ export default function App() {
     );
   }
 
-  // Assistant position or assistant role → Assistant interface
-  if (currentUser.role === 'assistant' || currentUser.position === 'assistant') {
+  // Admin or role assistant → Assistant interface
+  if (currentUser.accessLevel === 'Admin') {
+    return (
+      <>
+        <AssistantDashboard
+          currentUser={currentUser}
+          onLogout={handleLogout}
+          patients={patients}
+          setPatients={setPatients}
+          appointments={appointments}
+          setAppointments={setAppointmentsWithNormalization}
+          inventory={inventory}
+          setInventory={setInventory}
+          treatmentRecords={treatmentRecords}
+          setTreatmentRecords={setTreatmentRecords}
+          referrals={referrals}
+          setReferrals={setReferrals}
+          photos={photos}
+          setPhotos={setPhotos}
+          payments={payments}
+          setPayments={setPayments}
+          announcements={announcements}
+          setAnnouncements={setAnnouncements}
+          services={services}
+          setServices={setServices}
+          onDataChanged={async () => { await refreshAll(); }}
+        />
+        <Toaster 
+          position="top-center" 
+          richColors
+          toastOptions={{
+            style: {
+              background: '#ffffff',
+              color: '#0f172a',
+              border: '2px solid #14b8a6',
+              borderRadius: '12px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              padding: '16px 24px',
+              fontSize: '14px',
+              fontWeight: '500',
+            },
+          }}
+        />
+      </>
+    );
+  }
+
+  // Default Accounts for doctor role → Doctor interface (fallback for backward compatibility)
+  if (currentUser.role === 'doctor') {
+    return (
+      <>
+        <DoctorDashboard
+          currentUser={currentUser}
+          onLogout={handleLogout}
+          patients={patients}
+          setPatients={setPatients}
+          appointments={appointments}
+          setAppointments={setAppointmentsWithNormalization}
+          inventory={inventory}
+          setInventory={setInventory}
+          treatmentRecords={treatmentRecords}
+          setTreatmentRecords={setTreatmentRecords}
+          referrals={referrals}
+          setReferrals={setReferrals}
+          photos={photos}
+          payments={payments}
+          setPayments={setPayments}
+          announcements={announcements}
+          setAnnouncements={setAnnouncements}
+          services={services}
+          setServices={setServices}
+          onDataChanged={async () => { await refreshAll(); }}
+        />
+        <Toaster 
+          position="top-center" 
+          richColors
+          toastOptions={{
+            style: {
+              background: '#ffffff',
+              color: '#0f172a',
+              border: '2px solid #14b8a6',
+              borderRadius: '12px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              padding: '16px 24px',
+              fontSize: '14px',
+              fontWeight: '500',
+            },
+          }}
+        />
+      </>
+    );
+  }
+
+  // Default Accounts for assistant role → Assistant interface (fallback for backward compatibility)
+  if (currentUser.role === 'assistant') {
     return (
       <>
         <AssistantDashboard

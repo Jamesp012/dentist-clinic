@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Appointment, Patient, TreatmentRecord } from '../App';
+import { Appointment, Patient, TreatmentRecord, Service } from '../App';
 import { Calendar, Plus, X, Filter, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { appointmentAPI } from '../api';
 import { PatientSearchInput } from './PatientSearchInput';
-import { convertToDBDate, convertToDisplayDate, formatDateInput, isValidDateFormat, formatToDD_MM_YYYY } from '../utils/dateHelpers';
+import { SearchableSelect } from './SearchableSelect';
+import { convertToDBDate, convertToDisplayDate, formatDateInput, isValidDateFormat, formatToDD_MM_YYYY, formatToWordedDate } from '../utils/dateHelpers';
 
 // Helper function to extract date string without timezone conversion
 const getDateString = (date: string | Date): string => {
@@ -27,6 +28,7 @@ type AppointmentSchedulerProps = {
   setTreatmentRecords?: (records: TreatmentRecord[]) => void;
   onOpenServiceForm?: (appointmentData: { patientId: string; patientName: string; appointmentType: string }) => void;
   onDataChanged?: () => Promise<void>;
+  services?: Service[];
 };
 
 const getPatientRecordStatus = (patientId: string, treatmentRecords?: TreatmentRecord[]): 'has-record' | 'no-record' => {
@@ -42,7 +44,7 @@ const formatTime = (time: string) => {
   return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
 };
 
-export function AppointmentScheduler({ appointments, setAppointments, patients, treatmentRecords, onOpenServiceForm, onDataChanged }: AppointmentSchedulerProps) {
+export function AppointmentScheduler({ appointments, setAppointments, patients, treatmentRecords, onOpenServiceForm, onDataChanged, services = [] }: AppointmentSchedulerProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState('');
   // Use local date to avoid timezone conversion issues
@@ -318,7 +320,7 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
               {(() => {
                 const dateObj = new Date(selectedDate + 'T00:00:00Z');
                 const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
-                const dateStr = formatToDD_MM_YYYY(selectedDate);
+                const dateStr = dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
                 return `${dayName} • ${dateStr}`;
               })()}
             </h2>
@@ -667,20 +669,16 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
 
               <div>
                 <label className="block text-sm mb-1 font-semibold">Service Type *</label>
-                <select
-                  name="type"
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select service...</option>
-                  <option value="Cleaning">Cleaning</option>
-                  <option value="Extraction">Extraction</option>
-                  <option value="Pasta">Pasta</option>
-                  <option value="Braces">Braces</option>
-                  <option value="Pustiso/Dentures">Pustiso/Dentures</option>
-                  <option value="Check-up">Check-up</option>
-                  <option value="Consultation">Consultation</option>
-                </select>
+                <SearchableSelect
+                  options={services && services.length > 0
+                    ? services.flatMap(s => s.description || [])
+                    : ['Dental consultation', 'Oral examination', 'Dental cleaning', 'Tooth extraction', 'Braces installation', 'Consultation']
+                  }
+                  value={formData.type}
+                  onChange={(value) => setFormData({...formData, type: value})}
+                  placeholder="Select service..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                />
               </div>
               <div>
                 <label className="block text-sm mb-1 font-semibold">Notes (Optional)</label>

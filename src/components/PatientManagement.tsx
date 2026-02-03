@@ -125,9 +125,9 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
   };
 
   return (
-    <div className="px-6 space-y-6">
+    <div className="px-6 space-y-6 flex flex-col flex-1">
       {/* Search */}
-      <div className="relative flex items-center justify-between gap-4">
+      <div className="relative flex items-center justify-between gap-4 sticky top-0 bg-slate-50 z-30 py-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
@@ -148,10 +148,10 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
       </div>
 
       {/* Patients Table */}
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="overflow-x-auto max-h-[60vh] overflow-y-auto scrollbar-hover">
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col flex-1">
+        <div className="overflow-x-auto overflow-y-scroll flex-1 scrollbar-thumb-blue-600 scrollbar-track-gray-100">
           <table className="w-full">
-            <thead className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white">
+            <thead className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white sticky top-0 z-10">
               <tr>
                 <th className="px-6 py-4 text-left">Name</th>
                 <th className="px-6 py-4 text-left">Age</th>
@@ -211,15 +211,14 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
 
       {/* Add Patient Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-2xl font-bold text-blue-900">Add New Patient</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-xl p-4 max-w-2xl w-full my-auto">
+            <div className="flex items-center justify-end mb-3">
               <button onClick={() => setShowAddModal(false)} className="text-gray-500 hover:text-gray-700">
                 <X className="w-6 h-6" />
               </button>
             </div>
-            <form onSubmit={handleAddPatient} className="space-y-4">
+            <form onSubmit={handleAddPatient} className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
                 <input

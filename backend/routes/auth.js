@@ -96,7 +96,7 @@ router.post('/login', async (req, res) => {
 
     // Generate token
     const token = jwt.sign(
-      { id: user.id, username: user.username, role: user.role, fullName: user.fullName, email: user.email, patientId },
+      { id: user.id, username: user.username, role: user.role, fullName: user.fullName, email: user.email, patientId, accessLevel: user.accessLevel },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
@@ -109,6 +109,7 @@ router.post('/login', async (req, res) => {
         role: user.role, 
         fullName: user.fullName, 
         email: user.email,
+        accessLevel: user.accessLevel,
         isFirstLogin: user.isFirstLogin,
         patientId
       } 

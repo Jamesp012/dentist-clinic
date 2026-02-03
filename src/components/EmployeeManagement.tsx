@@ -12,6 +12,7 @@ type Employee = {
   email: string;
   address: string;
   dateHired: string;
+  accessLevel?: 'Admin' | 'Super Admin' | 'Default Accounts';
   user_id?: number;
   username?: string;
   generatedCode?: string;
@@ -73,6 +74,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
         email: formData.get('email') as string,
         address: formData.get('address') as string,
         dateHired: convertToDBDate(formData.get('dateHired') as string),
+        accessLevel: formData.get('accessLevel') as string,
       };
 
       const response = await fetch('http://localhost:5000/api/employees', {
@@ -114,6 +116,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
         email: formData.get('email') as string,
         address: formData.get('address') as string,
         dateHired: convertToDBDate(formData.get('dateHired') as string),
+        accessLevel: formData.get('accessLevel') as string,
       };
 
       const response = await fetch(`http://localhost:5000/api/employees/${editingEmployee.id}`, {
@@ -231,6 +234,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
               <tr>
                 <th className="px-6 py-4 text-left">Name</th>
                 <th className="px-6 py-4 text-left">Position</th>
+                <th className="px-6 py-4 text-left">Access Level</th>
                 <th className="px-6 py-4 text-left">Email</th>
                 <th className="px-6 py-4 text-left">Phone</th>
                 <th className="px-6 py-4 text-left">Date Hired</th>
@@ -241,7 +245,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
             <tbody className="divide-y divide-gray-200">
               {filteredEmployees.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
                     {searchTerm ? 'No employees found matching your search' : 'No employees added yet'}
                   </td>
                 </tr>
@@ -250,6 +254,15 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                   <tr key={employee.id} className="hover:bg-purple-50 transition-colors">
                     <td className="px-6 py-4 font-medium text-gray-900">{employee.name}</td>
                     <td className="px-6 py-4 text-gray-700">{employee.position}</td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                        employee.accessLevel === 'Super Admin' ? 'bg-purple-100 text-purple-800' :
+                        employee.accessLevel === 'Admin' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {employee.accessLevel || 'Default Accounts'}
+                      </span>
+                    </td>
                     <td className="px-6 py-4 text-gray-700">{employee.email}</td>
                     <td className="px-6 py-4 text-gray-700">{employee.phone}</td>
                     <td className="px-6 py-4 text-gray-700">
@@ -394,6 +407,19 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Access Level *</label>
+                <select
+                  name="accessLevel"
+                  required
+                  defaultValue="Default Accounts"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="Default Accounts">Default Accounts</option>
+                  <option value="Admin">Admin</option>
+                  <option value="Super Admin">Super Admin</option>
+                </select>
+              </div>
               <div className="flex gap-3 pt-4">
                 <button
                   type="submit"
@@ -499,6 +525,19 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                   placeholder="DD/MM/YYYY"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Access Level *</label>
+                <select
+                  name="accessLevel"
+                  required
+                  defaultValue={editingEmployee.accessLevel || 'Default Accounts'}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="Admin">Admin</option>
+                  <option value="Super Admin">Super Admin</option>
+                  <option value="Default Accounts">Default Accounts</option>
+                </select>
               </div>
               <div className="flex gap-3 pt-4">
                 <button

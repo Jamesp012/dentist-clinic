@@ -1,15 +1,12 @@
 import { useState } from 'react';
-import { Plus, X, Check, Eye, Printer, Trash2, Download, FileText } from 'lucide-react';
+import { Plus, X, Check, Eye, Trash2, Download } from 'lucide-react';
 import { Referral, Patient } from '../App';
 import { toast } from 'sonner';
 import { referralAPI } from '../api';
 import { generateReferralPDF } from '../utils/referralPdfGenerator';
 import { PatientSearchInput } from './PatientSearchInput';
 import { motion, AnimatePresence } from 'motion/react';
-import redorLogo from '../assets/redor-logo.png';
-import clinicLogo from '../assets/jclinic-logo.png';
-import clinicMap from '../assets/clinic-map.jpg';
-import xrayClinic from '../assets/xray-clinic.jpg';
+import { redorLogo, clinicLogo, clinicMap, xrayClinic } from '../assets';
 
 
 type ReferralType = 'doctor' | 'xray' | null;
@@ -20,12 +17,10 @@ interface ReferralGenerationProps {
   patients: Patient[];
 }
 
-interface UnderlineInputProps {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  className?: string;
-}
+// Helper to get boolean value from selectedServices
+const getCheckboxValue = (value: string | boolean | undefined): boolean => {
+  return typeof value === 'boolean' ? value : (typeof value === 'string' && value === 'true');
+};
 
 const UnderlineInput = ({ label, value, onChange, className = '', disabled = false }: { label: string; value: string; onChange: (v: string) => void; className?: string; disabled?: boolean }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,10 +93,6 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
     setSelectedServices(prev => ({ ...prev, [id]: value || false }));
   };
 
-  const handleXrayInputChange = (id: string, value: string) => {
-    setSelectedXrayItems(prev => ({ ...prev, [id]: value || false }));
-  };
-
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -160,7 +151,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
       toast.success('Referral created successfully');
     } catch (error) {
       console.error('Failed to create referral error:', error);
-      const errorMessage = error?.message || 'Failed to create referral';
+      const errorMessage = (error as { message?: string })?.message || 'Failed to create referral';
       toast.error(errorMessage);
     }
   };
@@ -517,7 +508,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                   </div>
                   <div className="space-y-1">
                     <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" checked={selectedXrayItems['occlusal'] || false} onChange={() => toggleXrayItem('occlusal')} className="w-4 h-4" />
+                      <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['occlusal'])} onChange={() => toggleXrayItem('occlusal')} className="w-4 h-4" />
                       <span>Occlusal</span>
                       <input type="checkbox" className="w-3 h-3 ml-4" />
                       <span className="text-xs">Upper</span>
@@ -627,33 +618,33 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" checked={selectedXrayItems['panoramic'] || false} onChange={() => toggleXrayItem('panoramic')} className="w-4 h-4" />
+                      <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['panoramic'])} onChange={() => toggleXrayItem('panoramic')} className="w-4 h-4" />
                       <span>Panoramic</span>
                     </label>
                     <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" checked={selectedXrayItems['cephalometric'] || false} onChange={() => toggleXrayItem('cephalometric')} className="w-4 h-4" />
+                      <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['cephalometric'])} onChange={() => toggleXrayItem('cephalometric')} className="w-4 h-4" />
                       <span>Cephalometric</span>
                     </label>
                     <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" checked={selectedXrayItems['tmj'] || false} onChange={() => toggleXrayItem('tmj')} className="w-4 h-4" />
+                      <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['tmj'])} onChange={() => toggleXrayItem('tmj')} className="w-4 h-4" />
                       <span>TMJ/Transcranial</span>
                     </label>
                     <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" checked={selectedXrayItems['sinus'] || false} onChange={() => toggleXrayItem('sinus')} className="w-4 h-4" />
+                      <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['sinus'])} onChange={() => toggleXrayItem('sinus')} className="w-4 h-4" />
                       <span>Sinus</span>
                     </label>
                   </div>
                   <div className="space-y-2">
                     <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" checked={selectedXrayItems['handwrist'] || false} onChange={() => toggleXrayItem('handwrist')} className="w-4 h-4" />
+                      <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['handwrist'])} onChange={() => toggleXrayItem('handwrist')} className="w-4 h-4" />
                       <span>Handwrist/Carpal</span>
                     </label>
                     <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" checked={selectedXrayItems['smv'] || false} onChange={() => toggleXrayItem('smv')} className="w-4 h-4" />
+                      <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['smv'])} onChange={() => toggleXrayItem('smv')} className="w-4 h-4" />
                       <span>Submentovertex (SMV)</span>
                     </label>
                     <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" checked={selectedXrayItems['waters'] || false} onChange={() => toggleXrayItem('waters')} className="w-4 h-4" />
+                      <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['waters'])} onChange={() => toggleXrayItem('waters')} className="w-4 h-4" />
                       <span>Water's View</span>
                     </label>
                   </div>
@@ -666,19 +657,19 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                 
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={selectedXrayItems['photographs'] || false} onChange={() => toggleXrayItem('photographs')} className="w-4 h-4" />
+                    <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['photographs'])} onChange={() => toggleXrayItem('photographs')} className="w-4 h-4" />
                     <span>Extra and Intra-oral Photographs</span>
                   </label>
                   <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={selectedXrayItems['model-cast'] || false} onChange={() => toggleXrayItem('model-cast')} className="w-4 h-4" />
+                    <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['model-cast'])} onChange={() => toggleXrayItem('model-cast')} className="w-4 h-4" />
                     <span>Diagnostic Study Model Cast with duplicate casts</span>
                   </label>
                   <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={selectedXrayItems['ortho-records'] || false} onChange={() => toggleXrayItem('ortho-records')} className="w-4 h-4" />
+                    <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['ortho-records'])} onChange={() => toggleXrayItem('ortho-records')} className="w-4 h-4" />
                     <span>Complete Orthodontic Records (Pano, Ceph, Photos, Caph with free digital tracing)</span>
                   </label>
                   <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={selectedXrayItems['ceph-tracing'] || false} onChange={() => toggleXrayItem('ceph-tracing')} className="w-4 h-4" />
+                    <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['ceph-tracing'])} onChange={() => toggleXrayItem('ceph-tracing')} className="w-4 h-4" />
                     <span>Digitalized Ceph Tracing</span>
                   </label>
                 </div>
@@ -688,15 +679,15 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" checked={selectedXrayItems['bleeding-tray'] || false} onChange={() => toggleXrayItem('bleeding-tray')} className="w-4 h-4" />
+                      <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['bleeding-tray'])} onChange={() => toggleXrayItem('bleeding-tray')} className="w-4 h-4" />
                       <span>Bleeding Tray</span>
                     </label>
                     <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" checked={selectedXrayItems['post-ortho'] || false} onChange={() => toggleXrayItem('post-ortho')} className="w-4 h-4" />
+                      <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['post-ortho'])} onChange={() => toggleXrayItem('post-ortho')} className="w-4 h-4" />
                       <span>Post-Ortho Positioner</span>
                     </label>
                     <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" checked={selectedXrayItems['bleaching'] || false} onChange={() => toggleXrayItem('bleaching')} className="w-4 h-4" />
+                      <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['bleaching'])} onChange={() => toggleXrayItem('bleaching')} className="w-4 h-4" />
                       <span>Bleaching Machine for Rent</span>
                     </label>
                   </div>
@@ -707,23 +698,23 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                     
                     <div className="space-y-2">
                       <label className="flex items-center gap-2 text-sm">
-                        <input type="checkbox" checked={selectedXrayItems['patient-takeout'] || false} onChange={() => toggleXrayItem('patient-takeout')} className="w-4 h-4" />
+                        <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['patient-takeout'])} onChange={() => toggleXrayItem('patient-takeout')} className="w-4 h-4" />
                         <span>Taken Out by Patient</span>
                       </label>
                       <label className="flex items-center gap-2 text-sm">
-                        <input type="checkbox" checked={selectedXrayItems['jrs'] || false} onChange={() => toggleXrayItem('jrs')} className="w-4 h-4" />
+                        <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['jrs'])} onChange={() => toggleXrayItem('jrs')} className="w-4 h-4" />
                         <span>Sent via JRS to Dentist</span>
                       </label>
                       <label className="flex items-center gap-2 text-sm">
-                        <input type="checkbox" checked={selectedXrayItems['pickup'] || false} onChange={() => toggleXrayItem('pickup')} className="w-4 h-4" />
+                        <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['pickup'])} onChange={() => toggleXrayItem('pickup')} className="w-4 h-4" />
                         <span>Pick up by dentist</span>
                       </label>
                       <label className="flex items-center gap-2 text-sm">
-                        <input type="checkbox" checked={selectedXrayItems['delivery'] || false} onChange={() => toggleXrayItem('delivery')} className="w-4 h-4" />
+                        <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['delivery'])} onChange={() => toggleXrayItem('delivery')} className="w-4 h-4" />
                         <span>Delivered to dentist (Lucena area only)</span>
                       </label>
                       <label className="flex items-center gap-2 text-sm">
-                        <input type="checkbox" checked={selectedXrayItems['email'] || false} onChange={() => toggleXrayItem('email')} className="w-4 h-4" />
+                        <input type="checkbox" checked={getCheckboxValue(selectedXrayItems['email'])} onChange={() => toggleXrayItem('email')} className="w-4 h-4" />
                         <span>X-ray/s to be emailed</span>
                       </label>
                     </div>
@@ -1175,7 +1166,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                           { label: 'Sinus', id: 'sinus' }
                         ].map(({ label, id }) => (
                           <label key={id} className="flex items-center gap-2 text-sm">
-                            <input type="checkbox" checked={selectedReferral.selectedServices?.[id] || false} disabled className="w-4 h-4" />
+                            <input type="checkbox" checked={getCheckboxValue((selectedReferral as any).selectedServices?.[id])} disabled className="w-4 h-4" />
                             <span>{label}</span>
                           </label>
                         ))}
@@ -1187,7 +1178,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                           { label: "Water's View", id: 'waters' }
                         ].map(({ label, id }) => (
                           <label key={id} className="flex items-center gap-2 text-sm">
-                            <input type="checkbox" checked={selectedReferral.selectedServices?.[id] || false} disabled className="w-4 h-4" />
+                            <input type="checkbox" checked={getCheckboxValue((selectedReferral as any).selectedServices?.[id])} disabled className="w-4 h-4" />
                             <span>{label}</span>
                           </label>
                         ))}
@@ -1209,7 +1200,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                         { label: 'Bleaching Machine for Rent', id: 'bleaching' }
                       ].map(({ label, id }) => (
                         <label key={id} className="flex items-center gap-2 text-sm">
-                          <input type="checkbox" checked={selectedReferral.selectedServices?.[id] || false} disabled className="w-4 h-4" />
+                          <input type="checkbox" checked={getCheckboxValue((selectedReferral as any).selectedServices?.[id]) as boolean} disabled className="w-4 h-4" />
                           <span>{label}</span>
                         </label>
                       ))}
@@ -1228,7 +1219,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                         { label: "X-ray/s to be emailed", id: 'email' }
                       ].map(({ label, id }) => (
                         <label key={id} className="flex items-center gap-2 text-sm">
-                          <input type="checkbox" checked={selectedReferral.selectedServices?.[id] || false} disabled className="w-4 h-4" />
+                          <input type="checkbox" checked={getCheckboxValue((selectedReferral as any).selectedServices?.[id]) as boolean} disabled className="w-4 h-4" />
                           <span>{label}</span>
                         </label>
                       ))}

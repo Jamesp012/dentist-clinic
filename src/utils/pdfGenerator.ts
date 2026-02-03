@@ -324,85 +324,182 @@ export const generatePrescriptionPDF = (
       dosage: string;
       frequency: string;
       duration: string;
+      slot?: 'mefenamic1' | 'amoxicilin' | 'mefenamic2';
     }[];
     dentist: string;
     notes: string;
+    licenseNumber?: string;
+    ptrNumber?: string;
   }
 ) => {
   try {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
 
-    // Header
-    doc.setFontSize(24);
-    doc.setTextColor(0, 102, 204);
-    doc.text('PRESCRIPTION / RESETA', pageWidth / 2, 20, { align: 'center' });
-
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text('Dental Clinic Management System', pageWidth / 2, 28, { align: 'center' });
-    doc.text(`Date: ${new Date(prescription.date).toLocaleDateString()}`, pageWidth - 15, 35, { align: 'right' });
-
-    // Divider
-    doc.setDrawColor(0, 102, 204);
-    doc.setLineWidth(0.5);
-    doc.line(15, 40, pageWidth - 15, 40);
-
-    // Patient Info
-    doc.setFontSize(12);
-    doc.setTextColor(0);
+    // Header Section - Center Aligned
+    doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.text('PATIENT INFORMATION', 15, 50);
+    doc.setTextColor(0, 0, 0);
+    doc.text('JOSEPH E. MAAÑO, D.M.D', pageWidth / 2, 20, { align: 'center' });
     
-    doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
-    doc.text(`Name: ${patient.name}`, 15, 58);
-    doc.text(`Phone: ${patient.phone}`, 15, 63);
-    doc.text(`Email: ${patient.email}`, 15, 68);
-    doc.text(`Address: ${patient.address}`, 15, 73);
+    doc.setFont('helvetica', 'normal');
+    doc.text('GENERAL DENTISTRY / ORTHODONTICS', pageWidth / 2, 27, { align: 'center' });
+    doc.text('#29 Emilio Jacinto St. San Diego Zone 2', pageWidth / 2, 33, { align: 'center' });
+    doc.text('Tayabas City 4327', pageWidth / 2, 38, { align: 'center' });
+    
+    doc.setFontSize(9);
+    doc.text('Tel # (042)7171156     Cp # 09773651397', pageWidth / 2, 44, { align: 'center' });
 
-    // Medications
-    doc.setFontSize(12);
+    // Double line separator
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.5);
+    doc.line(15, 48, pageWidth - 15, 48);
+    doc.line(15, 50, pageWidth - 15, 50);
+
+    // Patient Information Section
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text('MEDICATIONS', 15, 85);
+    
+    // Calculate age
+    const calculateAge = (dob: string) => {
+      const birthDate = new Date(dob);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      return age;
+    };
+    
+    const age = patient.dateOfBirth ? calculateAge(patient.dateOfBirth) : '';
+    
+    // NAME, AGE, SEX line
+    let yPos = 60;
+    doc.text('NAME:', 15, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${patient.name}`, 35, yPos);
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text('AGE:', 130, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${age}`, 145, yPos);
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text('SEX:', 160, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${patient.sex || ''}`, 175, yPos);
+    
+    // Underline
+    doc.line(35, yPos + 1, 125, yPos + 1);
+    doc.line(145, yPos + 1, 155, yPos + 1);
+    doc.line(175, yPos + 1, pageWidth - 15, yPos + 1);
+    
+    // ADDRESS, DATE line
+    yPos += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.text('ADDRESS:', 15, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${patient.address || ''}`, 40, yPos);
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text('DATE:', 130, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${prescription.date}`, 145, yPos);
+    
+    // Underline
+    doc.line(40, yPos + 1, 125, yPos + 1);
+    doc.line(145, yPos + 1, pageWidth - 15, yPos + 1);
 
-    const tableData = prescription.medications.map((med, i) => [
-      i + 1,
-      med.name,
-      med.dosage,
-      med.frequency,
-      med.duration
-    ]);
+    // RX Symbol
+    yPos += 15;
+    doc.setFontSize(48);
+    doc.setFont('times', 'normal');
+    doc.text('℞', 15, yPos);
 
-    autoTable(doc, {
-      startY: 90,
-      head: [['#', 'Medication', 'Dosage', 'Frequency', 'Duration']],
-      body: tableData,
-      theme: 'striped',
-      headStyles: { fillColor: [0, 102, 204] }
+    // Medications Section
+    yPos += 10;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+
+    const meds = prescription.medications || [];
+    const used = new Set<number>();
+    const pickByName = (name: string) => {
+      const index = meds.findIndex((m, i) => !used.has(i) && m.name === name);
+      if (index >= 0) {
+        used.add(index);
+        return meds[index];
+      }
+      return undefined;
+    };
+    const pickBySlot = (slot: 'mefenamic1' | 'amoxicilin' | 'mefenamic2', name: string) => {
+      const bySlot = meds.find(m => m.slot === slot);
+      if (bySlot) return bySlot;
+      return pickByName(name);
+    };
+
+    const rows = [
+      { key: 'mefenamic1' as const, label: 'MEFENAMIC Acid', med: pickBySlot('mefenamic1', 'MEFENAMIC Acid') },
+      { key: 'amoxicilin' as const, label: 'AMOXICILIN', med: pickBySlot('amoxicilin', 'AMOXICILIN') },
+      { key: 'mefenamic2' as const, label: 'MEFENAMIC Acid', med: pickBySlot('mefenamic2', 'MEFENAMIC Acid') },
+    ];
+
+    rows.forEach((row) => {
+      const med = row.med;
+      const quantityMatch = med?.duration?.match(/Quantity:\s*(\d+)/);
+      const quantity = quantityMatch?.[1] || '';
+      const isSelected = Boolean(med && (med.dosage || quantity || med.frequency));
+
+      // Medicine name and dosage
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${isSelected ? '●' : '○'}  ${row.label}`, 25, yPos);
+      
+      const is500 = med?.dosage === '500mg';
+      const is250 = med?.dosage === '250mg';
+      doc.setFont('helvetica', 'normal');
+      doc.text(`${is500 ? '●' : '○'} 500mg`, 120, yPos);
+      doc.text(`${is250 ? '●' : '○'} 250mg`, 150, yPos);
+      
+      yPos += 6;
+      
+      // Quantity line
+      doc.text('#', 35, yPos);
+      doc.line(40, yPos + 1, 60, yPos + 1);
+      if (quantity) {
+        doc.text(`${quantity}`, 42, yPos);
+      }
+      
+      yPos += 5;
+      
+      // Sig line
+      doc.setFont('helvetica', 'italic');
+      doc.text('Sig. ', 35, yPos);
+      doc.setFont('helvetica', 'normal');
+      doc.line(45, yPos + 1, pageWidth - 20, yPos + 1);
+      if (med?.frequency) {
+        doc.text(med.frequency, 47, yPos);
+      }
+      
+      yPos += 10;
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY + 15;
-
-    // Instructions
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('INSTRUCTIONS / NOTES', 15, finalY);
-    
+    // Doctor Signature Section at bottom right
+    const signatureY = pageHeight - 40;
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    const splitNotes = doc.splitTextToSize(prescription.notes || 'Follow dosage instructions as prescribed.', pageWidth - 30);
-    doc.text(splitNotes, 15, finalY + 7);
-
-    // Footer / Signature
-    const footerY = doc.internal.pageSize.getHeight() - 40;
-    doc.setDrawColor(150);
-    doc.line(pageWidth - 80, footerY, pageWidth - 15, footerY);
     doc.setFont('helvetica', 'bold');
-    doc.text(`Dr. ${prescription.dentist}`, pageWidth - 47.5, footerY + 7, { align: 'center' });
+    doc.text('JOSEPH E. MAAÑO, D.M.D', pageWidth - 65, signatureY, { align: 'center' });
+    
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.text('Licensed Dentist', pageWidth - 47.5, footerY + 12, { align: 'center' });
+    doc.setFontSize(9);
+    doc.text('LIC NO.', pageWidth - 85, signatureY + 6);
+    doc.text(`${prescription.licenseNumber || ''}`, pageWidth - 55, signatureY + 6);
+    doc.line(pageWidth - 85, signatureY + 7, pageWidth - 45, signatureY + 7);
+    
+    doc.text('PTR.', pageWidth - 85, signatureY + 12);
+    doc.text(`${prescription.ptrNumber || ''}`, pageWidth - 55, signatureY + 12);
+    doc.line(pageWidth - 85, signatureY + 13, pageWidth - 45, signatureY + 13);
 
     doc.save(`Prescription-${patient.name.replace(/\s+/g, '-')}-${prescription.id}.pdf`);
     toast.success('Prescription PDF generated successfully');

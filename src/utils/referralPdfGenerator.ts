@@ -1,16 +1,12 @@
 import { jsPDF } from 'jspdf';
 import { Referral, Patient } from '../App';
 import { toast } from 'sonner';
-import clinicMap from '../assets/clinic-map.jpg';
-import redorLogo from '../assets/redor-logo.png';
-import xrayClinic from '../assets/xray-clinic.jpg';
-import clinicLogo from '../assets/jclinic-logo.png';
+import { clinicMap, redorLogo, xrayClinic, clinicLogo } from '../assets';
 
 export const generateReferralPDF = (referral: Referral, patient?: Patient) => {
   try {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
     let yPosition = 20;
 
     const isXrayReferral = referral.specialty === 'X-Ray Imaging' || referral.referredTo === 'X-Ray Facility';

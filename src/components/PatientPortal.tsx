@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { Patient, Appointment, TreatmentRecord, PhotoUpload, Announcement, Payment, Service } from '../App';
-import { Calendar, FileText, User as UserIcon, Clock, X, Edit, Save, XCircle, Info, CheckCircle, AlertCircle, Camera, Sparkles, Heart, Smile, Shield, Megaphone, Plus, CreditCard, Settings, Check, Eye, EyeOff, Menu, LogOut, History, RotateCcw, Trash2, Upload } from 'lucide-react';
+import { Calendar, FileText, User as UserIcon, Clock, X, Edit, Save, XCircle, Info, CheckCircle, AlertCircle, Camera, Sparkles, Heart, Smile, Shield, Megaphone, Plus, CreditCard, Settings, Check, Eye, EyeOff, Menu, LogOut, History, RotateCcw, Trash2, Upload, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import { handlePhoneInput, formatPhoneNumber } from '../utils/phoneValidation';
-import { convertToDBDate, convertToDisplayDate, formatDateInput, formatToDD_MM_YYYY } from '../utils/dateHelpers';
+import { convertToDBDate, convertToDisplayDate, formatDateInput, formatToDD_MM_YYYY, formatToWordedDate } from '../utils/dateHelpers';
 import { appointmentAPI } from '../api';
 import { Notifications } from './Notifications';
 import { PatientNotifications } from './PatientNotifications';
+import { SearchableSelect } from './SearchableSelect';
 
 // Helper function to extract date string without timezone conversion
 const getDateString = (date: string | Date): string => {
@@ -42,7 +43,7 @@ const API_BASE = 'http://localhost:5000/api';
 
 export function PatientPortal({ patient, appointments, setAppointments, treatmentRecords, onUpdatePatient, photos, setPhotos: _, announcements, payments, onLogout, onDataChanged, services = [], userRole }: PatientPortalProps) {
   const birthdatePickerRef = useRef<HTMLInputElement | null>(null);
-  const [activeTab, setActiveTab] = useState<'profile' | 'appointments' | 'records' | 'photos' | 'balance' | 'care-guide' | 'announcements'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'appointments' | 'records' | 'photos' | 'balance' | 'care-guide' | 'announcements' | 'forms'>('profile');
   const [announcementSubTab, setAnnouncementSubTab] = useState<'announcements' | 'services'>('announcements');
   const [isEditing, setIsEditing] = useState(false);
   const [editedPatient, setEditedPatient] = useState<Patient>(patient);
@@ -80,6 +81,11 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
   const [appointmentNotes, setAppointmentNotes] = useState('');
   const [isBookingAppointment, setIsBookingAppointment] = useState(false);
   const [selectedSchedulePeriod, setSelectedSchedulePeriod] = useState<'am' | 'pm' | null>(null);
+  
+  // Forms data state
+  const [referrals, setReferrals] = useState<any[]>([]);
+  const [prescriptions, setPrescriptions] = useState<any[]>([]);
+  const [isLoadingForms, setIsLoadingForms] = useState(false);
 
   const checkUsernameAvailability = async (username: string) => {
     if (username.trim().length < 3) {
@@ -222,6 +228,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
     { id: 'profile', label: 'My Profile', icon: UserIcon, color: 'from-teal-500 to-cyan-600' },
     { id: 'appointments', label: 'Appointments', icon: Calendar, color: 'from-teal-500 to-teal-600' },
     { id: 'records', label: 'Records', icon: FileText, color: 'from-cyan-500 to-cyan-600' },
+    { id: 'forms', label: 'Forms', icon: FileText, color: 'from-indigo-500 to-blue-600' },
     { id: 'photos', label: 'Photos', icon: Camera, color: 'from-teal-600 to-cyan-500' },
     { id: 'balance', label: 'Balance', icon: CreditCard, color: 'from-cyan-500 to-emerald-600' },
     { id: 'announcements', label: 'Announcements', icon: Megaphone, color: 'from-cyan-600 to-teal-500' },
@@ -422,6 +429,41 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
+
+  // Load patient forms (referrals and prescriptions)
+  useEffect(() => {
+    const loadPatientForms = async () => {
+      setIsLoadingForms(true);
+      try {
+        const token = localStorage.getItem('token');
+        const headers = {
+          'Authorization': `Bearer ${token}`
+        };
+
+        // Fetch referrals for this patient
+        const refResponse = await fetch(`${API_BASE}/referrals/patient/${patient.id}`, { headers });
+        if (refResponse.ok) {
+          const refData = await refResponse.json();
+          setReferrals(Array.isArray(refData) ? refData : []);
+        }
+
+        // Fetch prescriptions for this patient
+        const presResponse = await fetch(`${API_BASE}/prescriptions/patient/${patient.id}`, { headers });
+        if (presResponse.ok) {
+          const presData = await presResponse.json();
+          setPrescriptions(Array.isArray(presData) ? presData : []);
+        }
+      } catch (error) {
+        console.error('Failed to load patient forms:', error);
+      } finally {
+        setIsLoadingForms(false);
+      }
+    };
+
+    if (patient.id) {
+      loadPatientForms();
+    }
+  }, [patient.id]);
 
   const isScheduleClosed = (date: string, period: 'am' | 'pm') => {
     return closedSchedules.has(getScheduleKey(date, period));
@@ -632,6 +674,12 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
               <div>
                 <h2 className="text-3xl font-bold text-cyan-900">Records</h2>
                 <p className="text-gray-600 mt-1">View your dental treatment records</p>
+              </div>
+            )}
+            {activeTab === 'forms' && (
+              <div>
+                <h2 className="text-3xl font-bold text-blue-900">Forms</h2>
+                <p className="text-gray-600 mt-1">View your referrals, X-ray referrals, and prescriptions</p>
               </div>
             )}
             {activeTab === 'photos' && (
@@ -949,20 +997,16 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                     {/* Service Type */}
                     <div>
                       <label className="text-sm text-gray-600 mb-1 block font-semibold">Service Type</label>
-                      <select
+                      <SearchableSelect
+                        options={displayServices && displayServices.length > 0
+                          ? displayServices.flatMap(s => s.description || [])
+                          : ['Dental consultation', 'Oral examination', 'Dental cleaning', 'Tooth extraction', 'Braces installation', 'Consultation']
+                        }
                         value={appointmentType}
-                        onChange={(e) => setAppointmentType(e.target.value)}
+                        onChange={(value) => setAppointmentType(value)}
+                        placeholder="Select service..."
                         className="w-full px-3 py-2 border border-purple-300 rounded-lg"
-                      >
-                        <option value="">Select service...</option>
-                        <option value="Cleaning">Cleaning</option>
-                        <option value="Extraction">Extraction</option>
-                        <option value="Pasta">Pasta</option>
-                        <option value="Braces">Braces</option>
-                        <option value="Pustiso/Dentures">Pustiso/Dentures</option>
-                        <option value="Check-up">Check-up</option>
-                        <option value="Consultation">Consultation</option>
-                      </select>
+                      />
                     </div>
 
                     {/* Notes */}
@@ -1014,7 +1058,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                                 <p className="text-lg mb-1 font-semibold">{apt.type}</p>
                                 <div className="flex items-center gap-2 text-sm text-gray-600">
                                   <Calendar className="w-4 h-4" />
-                                  <span>{formatToDD_MM_YYYY(getDateString(apt.date))}</span>
+                                  <span>{formatToWordedDate(getDateString(apt.date))}</span>
                                   <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded font-semibold text-xs">
                                     Queue #{queueNumber} ({period})
                                   </span>
@@ -1087,7 +1131,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                               <p className="text-lg mb-1">{apt.type}</p>
                               <div className="flex items-center gap-2 text-sm text-gray-600">
                                 <Calendar className="w-4 h-4" />
-                                <span>{formatToDD_MM_YYYY(getDateString(apt.date))}</span>
+                                <span>{formatToWordedDate(getDateString(apt.date))}</span>
                                 <Clock className="w-4 h-4 ml-2" />
                                 <span>{formatTime(apt.time)}</span>
                               </div>
@@ -1141,6 +1185,217 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                   <div className="text-center py-12 text-gray-500">
                     <FileText className="w-12 h-12 mx-auto mb-3 text-gray-400" />
                     <p>No treatment records available</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Forms Tab */}
+            {activeTab === 'forms' && (
+              <div className="p-8 space-y-6">
+                <h2 className="text-xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
+                  Your Forms
+                </h2>
+
+                {isLoadingForms ? (
+                  <div className="text-center py-12">
+                    <div className="inline-block">
+                      <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                    </div>
+                    <p className="text-gray-600 mt-4">Loading your forms...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Doctor Referrals Section */}
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">
+                          Doctor Referrals
+                        </span>
+                      </h3>
+                      {referrals.filter(r => r.specialty !== 'X-Ray Imaging' && r.referredTo !== 'X-Ray Facility').length > 0 ? (
+                        <div className="space-y-3">
+                          {referrals
+                            .filter(r => r.specialty !== 'X-Ray Imaging' && r.referredTo !== 'X-Ray Facility')
+                            .sort((a, b) => new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime())
+                            .map(referral => (
+                              <div key={referral.id} className="p-4 border border-yellow-200 rounded-lg bg-gradient-to-r from-yellow-50 to-amber-50 hover:shadow-md transition-shadow">
+                                <div className="flex justify-between items-start mb-2">
+                                  <div className="flex-1">
+                                    <p className="font-semibold text-gray-800">Referred to: {referral.referredTo || referral.specialty}</p>
+                                    <p className="text-sm text-gray-600 mt-1">Specialty: {referral.specialty || 'General'}</p>
+                                    <p className="text-sm text-gray-600">Referred by: Dr. {referral.referringDentist}</p>
+                                    <p className="text-xs text-gray-500 mt-2">
+                                      Created: {new Date(referral.createdAt || referral.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                    </p>
+                                  </div>
+                                  <div className="flex gap-2 ml-4">
+                                    <button
+                                      onClick={() => {
+                                        const downloadLink = document.createElement('a');
+                                        downloadLink.href = `${API_BASE}/referrals/${referral.id}/pdf`;
+                                        downloadLink.download = `referral-${referral.id}.pdf`;
+                                        document.body.appendChild(downloadLink);
+                                        downloadLink.click();
+                                        document.body.removeChild(downloadLink);
+                                      }}
+                                      className="px-3 py-1.5 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700 transition-colors flex items-center gap-1"
+                                    >
+                                      <Download size={14} />
+                                      PDF
+                                    </button>
+                                  </div>
+                                </div>
+                                {referral.reason && (
+                                  <p className="text-sm text-gray-600 mt-2 pt-2 border-t border-yellow-200">
+                                    Reason: {referral.reason}
+                                  </p>
+                                )}
+                              </div>
+                            ))}
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 text-sm py-4">No doctor referrals available</p>
+                      )}
+                    </div>
+
+                    {/* X-Ray Referrals Section */}
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <span className="px-3 py-1 bg-cyan-100 text-cyan-700 rounded-full text-sm font-medium">
+                          X-Ray Referrals
+                        </span>
+                      </h3>
+                      {referrals.filter(r => r.specialty === 'X-Ray Imaging' || r.referredTo === 'X-Ray Facility').length > 0 ? (
+                        <div className="space-y-3">
+                          {referrals
+                            .filter(r => r.specialty === 'X-Ray Imaging' || r.referredTo === 'X-Ray Facility')
+                            .sort((a, b) => new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime())
+                            .map(referral => (
+                              <div key={referral.id} className="p-4 border border-cyan-200 rounded-lg bg-gradient-to-r from-cyan-50 to-blue-50 hover:shadow-md transition-shadow">
+                                <div className="flex justify-between items-start mb-2">
+                                  <div className="flex-1">
+                                    <p className="font-semibold text-gray-800">X-Ray Referral</p>
+                                    <p className="text-sm text-gray-600 mt-1">Facility: {referral.referredTo}</p>
+                                    <p className="text-sm text-gray-600">Referred by: Dr. {referral.referringDentist}</p>
+                                    <p className="text-xs text-gray-500 mt-2">
+                                      Created: {new Date(referral.createdAt || referral.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                    </p>
+                                  </div>
+                                  <div className="flex gap-2 ml-4">
+                                    <button
+                                      onClick={() => {
+                                        const downloadLink = document.createElement('a');
+                                        downloadLink.href = `${API_BASE}/referrals/${referral.id}/pdf`;
+                                        downloadLink.download = `xray-referral-${referral.id}.pdf`;
+                                        document.body.appendChild(downloadLink);
+                                        downloadLink.click();
+                                        document.body.removeChild(downloadLink);
+                                      }}
+                                      className="px-3 py-1.5 bg-cyan-600 text-white rounded text-sm hover:bg-cyan-700 transition-colors flex items-center gap-1"
+                                    >
+                                      <Download size={14} />
+                                      PDF
+                                    </button>
+                                  </div>
+                                </div>
+                                {referral.reason && (
+                                  <p className="text-sm text-gray-600 mt-2 pt-2 border-t border-cyan-200">
+                                    Reason: {referral.reason}
+                                  </p>
+                                )}
+                              </div>
+                            ))}
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 text-sm py-4">No X-ray referrals available</p>
+                      )}
+                    </div>
+
+                    {/* Prescriptions Section */}
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                          Prescriptions
+                        </span>
+                      </h3>
+                      {prescriptions.length > 0 ? (
+                        <div className="space-y-3">
+                          {prescriptions
+                            .sort((a, b) => new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime())
+                            .map(prescription => (
+                              <div key={prescription.id} className="p-4 border border-green-200 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 hover:shadow-md transition-shadow">
+                                <div className="flex justify-between items-start mb-2">
+                                  <div className="flex-1">
+                                    <p className="font-semibold text-gray-800">Prescription from Dr. {prescription.dentist}</p>
+                                    <p className="text-sm text-gray-600 mt-1">
+                                      {prescription.medications?.length || 0} medication(s) prescribed
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-2">
+                                      Created: {new Date(prescription.createdAt || prescription.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                    </p>
+                                  </div>
+                                  <div className="flex gap-2 ml-4">
+                                    <button
+                                      onClick={() => {
+                                        // View prescription details
+                                        const medList = prescription.medications?.map((m: any) => 
+                                          `${m.name} - ${m.dosage} ${m.frequency} for ${m.duration}`
+                                        ).join('\n') || '';
+                                        const details = `Medications:\n${medList}\n\nNotes: ${prescription.notes || 'None'}`;
+                                        toast.success(details);
+                                      }}
+                                      className="px-3 py-1.5 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors flex items-center gap-1"
+                                    >
+                                      <Eye size={14} />
+                                      View
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        const downloadLink = document.createElement('a');
+                                        downloadLink.href = `${API_BASE}/prescriptions/${prescription.id}/pdf`;
+                                        downloadLink.download = `prescription-${prescription.id}.pdf`;
+                                        document.body.appendChild(downloadLink);
+                                        downloadLink.click();
+                                        document.body.removeChild(downloadLink);
+                                      }}
+                                      className="px-3 py-1.5 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors flex items-center gap-1"
+                                    >
+                                      <Download size={14} />
+                                      PDF
+                                    </button>
+                                  </div>
+                                </div>
+                                {prescription.medications && prescription.medications.length > 0 && (
+                                  <div className="mt-3 pt-2 border-t border-green-200">
+                                    <p className="text-xs font-semibold text-gray-700 mb-2">Medications:</p>
+                                    <div className="space-y-1">
+                                      {prescription.medications.slice(0, 2).map((med: any, idx: number) => (
+                                        <p key={idx} className="text-xs text-gray-600">
+                                          • {med.name} - {med.dosage} {med.frequency}
+                                        </p>
+                                      ))}
+                                      {prescription.medications.length > 2 && (
+                                        <p className="text-xs text-gray-500">+ {prescription.medications.length - 2} more</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 text-sm py-4">No prescriptions available</p>
+                      )}
+                    </div>
+
+                    {/* Empty State */}
+                    {referrals.length === 0 && prescriptions.length === 0 && (
+                      <div className="text-center py-12 text-gray-500">
+                        <FileText className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                        <p>No forms available yet</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

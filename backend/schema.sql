@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
   phone VARCHAR(20),
   role ENUM('doctor', 'assistant', 'patient') NOT NULL,
   position ENUM('dentist', 'assistant_dentist', 'assistant') DEFAULT NULL,
+  accessLevel ENUM('Admin', 'Super Admin', 'Default Accounts') DEFAULT 'Default Accounts',
   isFirstLogin BOOLEAN DEFAULT TRUE,
   accountStatus ENUM('pending', 'active', 'inactive') DEFAULT 'active',
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP

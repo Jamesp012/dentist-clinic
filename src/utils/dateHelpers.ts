@@ -211,3 +211,43 @@ export function formatToMonthDayYear(date: Date | string | null | undefined): st
   return `${month}. ${day}, ${year}`;
 }
 
+/**
+ * Format a date to full worded format (e.g., "March 2, 2026")
+ * Accepts Date object, ISO string, or YYYY-MM-DD string
+ */
+export function formatToWordedDate(date: Date | string | null | undefined): string {
+  if (!date) return '';
+  
+  let dateObj: Date;
+  
+  if (typeof date === 'string') {
+    // Handle ISO format (YYYY-MM-DDTHH:mm:ss.sssZ)
+    if (date.includes('T')) {
+      dateObj = new Date(date);
+    } 
+    // Handle YYYY-MM-DD format
+    else if (date.includes('-')) {
+      const [year, month, day] = date.split('-');
+      dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    }
+    // Handle DD/MM/YYYY format
+    else if (date.includes('/')) {
+      const [day, month, year] = date.split('/');
+      dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    } else {
+      dateObj = new Date(date);
+    }
+  } else {
+    dateObj = date;
+  }
+
+  if (isNaN(dateObj.getTime())) return '';
+
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const month = monthNames[dateObj.getMonth()];
+  const day = dateObj.getDate();
+  const year = dateObj.getFullYear();
+
+  return `${month} ${day}, ${year}`;
+}
+
