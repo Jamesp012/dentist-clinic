@@ -150,8 +150,8 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
       {/* Patients Table */}
       <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col flex-1">
         <div className="overflow-x-auto overflow-y-scroll flex-1 scrollbar-thumb-blue-600 scrollbar-track-gray-100">
-          <table className="w-full border-collapse">
-            <thead className="sticky top-0 z-10 bg-gradient-to-r from-blue-600 to-cyan-600 text-white">
+          <table className="w-full">
+            <thead className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white sticky top-0 z-10">
               <tr>
                 <th className="px-6 py-4 text-left">Name</th>
                 <th className="px-6 py-4 text-left">Age</th>
