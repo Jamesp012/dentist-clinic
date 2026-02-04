@@ -137,24 +137,7 @@ export function PatientNotifications({ patient, appointments }: PatientNotificat
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
-      {/* Notification Bell Button */}
-      <motion.button
-        onClick={() => setShowPanel(!showPanel)}
-        className="relative p-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-full shadow-lg hover:shadow-xl transition-shadow"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        <Bell className="w-6 h-6" />
-        {unreadCount > 0 && (
-          <motion.span
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center"
-          >
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </motion.span>
-        )}
-      </motion.button>
+      {/* Notification bell removed */}
 
       {/* Notifications Panel */}
       <AnimatePresence>

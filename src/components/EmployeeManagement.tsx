@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Plus, X, Edit, Trash2, Key, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { handlePhoneInput, formatPhoneNumber } from '../utils/phoneValidation';
-import { convertToDBDate, formatToDD_MM_YYYY } from '../utils/dateHelpers';
+import { convertToDBDate, formatToDD_MM_YYYY, formatDateInput } from '../utils/dateHelpers';
 
 type Employee = {
   id: number;
@@ -35,6 +35,31 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [copiedField, setCopiedField] = useState<'username' | 'password' | null>(null);
 
+  const getStoredUser = () => {
+    try {
+      const u = localStorage.getItem('user');
+      return u ? JSON.parse(u) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const currentUser = getStoredUser();
+  const canEditName = currentUser && currentUser.role === 'doctor';
+
+  const splitName = (fullName: string) => {
+    // Split on internal delimiter (newline) to preserve spaces in names
+    if (fullName.includes('\n')) {
+      const [first, last] = fullName.split('\n');
+      return { first: first || '', last: last || '' };
+    }
+    // Fallback for old format (space-separated)
+    const parts = (fullName || '').trim().split(/\s+/).filter(Boolean);
+    const first = parts.length > 0 ? parts[0] : '';
+    const last = parts.length > 1 ? parts.slice(1).join(' ') : '';
+    return { first, last };
+  };
+
   useEffect(() => {
     if (token) {
       fetchEmployees();
@@ -61,11 +86,22 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
     }
   };
 
-  const filteredEmployees = employees.filter(employee =>
-    employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.position.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredEmployees = employees.filter(employee => {
+    const { first, last } = splitName(employee.name);
+    const term = searchTerm.toLowerCase();
+    return (
+      first.toLowerCase().includes(term) ||
+      last.toLowerCase().includes(term) ||
+      employee.email.toLowerCase().includes(term) ||
+      employee.position.toLowerCase().includes(term)
+    );
+  });
+
+  const sortedEmployees = [...filteredEmployees].sort((a, b) => {
+    const aLast = splitName(a.name).last.toLowerCase();
+    const bLast = splitName(b.name).last.toLowerCase();
+    return aLast.localeCompare(bLast);
+  });
 
   const handleAddEmployee = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -73,8 +109,10 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
     setIsLoading(true);
     try {
       const formData = new FormData(form);
+      const first = (formData.get('first_name') as string) || '';
+      const last = (formData.get('last_name') as string) || '';
       const newEmployee = {
-        name: formData.get('name') as string,
+        name: `${first}\n${last}`,
         position: formData.get('position') as string,
         phone: formData.get('phone') as string,
         email: formData.get('email') as string,
@@ -121,8 +159,10 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
     setIsLoading(true);
     try {
       const formData = new FormData(e.currentTarget);
+      const first = (formData.get('first_name') as string) || '';
+      const last = (formData.get('last_name') as string) || '';
       const updatedEmployee = {
-        name: formData.get('name') as string,
+        name: `${first}\n${last}`,
         position: formData.get('position') as string,
         phone: formData.get('phone') as string,
         email: formData.get('email') as string,
@@ -253,7 +293,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
 
         {/* Employees List */}
         <div className="flex-1 flex flex-col min-h-0">
-          {filteredEmployees.length === 0 ? (
+          {sortedEmployees.length === 0 ? (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center py-16 px-6">
                 <div className="w-20 h-20 rounded-full bg-gradient-to-br from-teal-100 to-cyan-100 flex items-center justify-center mx-auto mb-4">
@@ -271,7 +311,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
             </div>
           ) : (
             <div className="space-y-4 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent">
-              {filteredEmployees.map((employee) => (
+              {sortedEmployees.map((employee) => (
                 <div
                   key={employee.id}
                   className="group relative bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6 hover:bg-white/90 transition-all duration-300 shadow-md hover:shadow-xl hover:shadow-teal-500/10 overflow-hidden"
@@ -282,7 +322,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                   <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-10 gap-6 items-center">
                     <div className="xl:col-span-2">
                       <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Name</p>
-                      <p className="text-lg font-bold text-slate-900">{employee.name}</p>
+                      <p className="text-lg font-bold text-slate-900">{`${splitName(employee.name).first} ${splitName(employee.name).last}`.trim()}</p>
                     </div>
 
                     <div className="xl:col-span-1">
@@ -390,14 +430,27 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
               </button>
             </div>
             <form onSubmit={handleAddEmployee} className="space-y-6">
-              <div>
-                <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Full Name *</label>
-                <input
-                  type="text"
-                  name="name"
-                  required
-                  className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">First Name *</label>
+                  <input
+                    type="text"
+                    name="first_name"
+                    required
+                    className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
+                    placeholder="Juan"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Last Name *</label>
+                  <input
+                    type="text"
+                    name="last_name"
+                    required
+                    className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
+                    placeholder="De La Cruz"
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Position *</label>
@@ -455,6 +508,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                   name="dateHired"
                   required
                   placeholder="DD/MM/YYYY"
+                  onInput={(e) => (e.target as HTMLInputElement).value = formatDateInput((e.target as HTMLInputElement).value)}
                   className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
                 />
               </div>
@@ -506,15 +560,31 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
               </button>
             </div>
             <form onSubmit={handleUpdateEmployee} className="space-y-6">
-              <div>
-                <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Full Name *</label>
-                <input
-                  type="text"
-                  name="name"
-                  required
-                  defaultValue={editingEmployee.name}
-                  className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">First Name *</label>
+                  <input
+                    type="text"
+                    name="first_name"
+                    required
+                    defaultValue={splitName(editingEmployee.name).first}
+                    disabled={!canEditName}
+                    className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
+                    placeholder="Juan"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Last Name *</label>
+                  <input
+                    type="text"
+                    name="last_name"
+                    required
+                    defaultValue={splitName(editingEmployee.name).last}
+                    disabled={!canEditName}
+                    className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
+                    placeholder="De La Cruz"
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Position *</label>
@@ -577,6 +647,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                   required
                   defaultValue={formatToDD_MM_YYYY(editingEmployee.dateHired)}
                   placeholder="DD/MM/YYYY"
+                  onInput={(e) => (e.target as HTMLInputElement).value = formatDateInput((e.target as HTMLInputElement).value)}
                   className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
                 />
               </div>
@@ -628,7 +699,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
               Are you sure you want to delete
             </p>
             <p className="text-center font-bold text-slate-900 mb-4">
-              {deletingEmployee.name}
+              {`${splitName(deletingEmployee.name).first} ${splitName(deletingEmployee.name).last}`.trim()}
             </p>
             <p className="text-center text-sm text-red-600 mb-8 leading-relaxed">
               This action cannot be undone.{deletingEmployee.user_id ? ' This will also delete their login account.' : ''}

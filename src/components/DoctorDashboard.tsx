@@ -225,13 +225,22 @@ export function DoctorDashboard({
   const [viewAllPhotos, setViewAllPhotos] = useState(false);
   const [patientSearchQuery, setPatientSearchQuery] = useState('');
   const [showPatientDropdown, setShowPatientDropdown] = useState(false);
+  
+  // Toast notification state
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  
+  // Show toast function
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
 
   const handlePhotoFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       // Validate file is an image
       if (!file.type.startsWith('image/')) {
-        alert('Please select an image file');
+        showToast('Please select an image file', 'error');
         return;
       }
       setPhotoFile(file);
@@ -246,7 +255,7 @@ export function DoctorDashboard({
 
   const handlePhotoUpload = async () => {
     if (!selectedPatientForPhoto || !photoUrl) {
-      alert('Please select a patient and provide a photo');
+      showToast('Please select a patient and provide a photo', 'error');
       return;
     }
 
@@ -273,7 +282,7 @@ export function DoctorDashboard({
 
       const newPhoto = await response.json();
       setPhotos([...photos, newPhoto]);
-      alert('Photo uploaded successfully!');
+      showToast('Photo uploaded successfully!', 'success');
       setSelectedPatientForPhoto('');
       setPhotoType('before');
       setPhotoNotes('');
@@ -285,7 +294,7 @@ export function DoctorDashboard({
       }
     } catch (error) {
       console.error('Photo upload error:', error);
-      alert('Failed to upload photo. Please try again.');
+      showToast('Failed to upload photo. Please try again.', 'error');
     } finally {
       setIsUploadingPhoto(false);
     }
@@ -295,7 +304,7 @@ export function DoctorDashboard({
     const file = e.target.files?.[0];
     if (file) {
       if (!file.type.startsWith('image/')) {
-        alert('Please select an image file');
+        showToast('Please select an image file', 'error');
         return;
       }
       setReplacePhotoFile(file);
@@ -309,7 +318,7 @@ export function DoctorDashboard({
 
   const handleReplacePhoto = async () => {
     if (!showReplacePhotoModal || !replacePhotoUrl) {
-      alert('Please select a new photo');
+      showToast('Please select a new photo', 'error');
       return;
     }
 
@@ -333,14 +342,14 @@ export function DoctorDashboard({
       setShowReplacePhotoModal(null);
       setReplacePhotoFile(null);
       setReplacePhotoUrl('');
-      alert('Photo replaced successfully');
+      showToast('Photo replaced successfully!', 'success');
 
       if (onDataChanged) {
         await onDataChanged();
       }
     } catch (error) {
       console.error('Error replacing photo:', error);
-      alert('Failed to replace photo');
+      showToast('Failed to replace photo. Please try again.', 'error');
     } finally {
       setIsReplacingPhoto(false);
     }
@@ -362,14 +371,14 @@ export function DoctorDashboard({
 
       setPhotos(photos.filter(p => p.id !== showDeletePhotoConfirm));
       setShowDeletePhotoConfirm(null);
-      alert('Photo deleted successfully');
+      showToast('Photo deleted successfully!', 'success');
 
       if (onDataChanged) {
         await onDataChanged();
       }
     } catch (error) {
       console.error('Error deleting photo:', error);
-      alert('Failed to delete photo');
+      showToast('Failed to delete photo. Please try again.', 'error');
     } finally {
       setIsDeletingPhoto(false);
     }
@@ -509,7 +518,7 @@ export function DoctorDashboard({
       </motion.div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto flex flex-col bg-gradient-to-br from-slate-50 via-slate-25 to-[#C4FFF9]/20">
+      <div className="flex-1 overflow-auto flex flex-col bg-gradient-to-br from-slate-50 via-slate-25 to-[#C4FFF9]/20 scrollbar-thin scrollbar-thumb-teal-500 scrollbar-track-slate-100 hover:scrollbar-thumb-teal-600">
         {/* Header with Notifications - Premium Design */}
         <motion.div 
           initial={{ y: -20, opacity: 0 }}
@@ -596,7 +605,7 @@ export function DoctorDashboard({
         </motion.div>
         
         {/* Main Content Area with Animation */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-teal-500 scrollbar-track-slate-100 hover:scrollbar-thumb-teal-600">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -640,7 +649,7 @@ export function DoctorDashboard({
                 />
               )}
               {activeTab === 'photos' && (
-                <div className="p-6 space-y-6">
+                <div className="p-6 space-y-6 max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-teal-500 scrollbar-track-slate-100 hover:scrollbar-thumb-teal-600">
                   {/* Upload Form */}
                   <div className="bg-white rounded-xl shadow-lg p-8 space-y-6">
                     {/* Header */}
@@ -680,7 +689,7 @@ export function DoctorDashboard({
                           
                           {/* Dropdown */}
                           {showPatientDropdown && (
-                            <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-slate-200 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+                            <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-slate-200 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-teal-500 scrollbar-track-slate-100">
                               {patients
                                 .filter(p => p.name.toLowerCase().includes(patientSearchQuery.toLowerCase()))
                                 .map(p => (
@@ -778,7 +787,7 @@ export function DoctorDashboard({
                       className="w-full px-6 py-3 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:from-slate-400 disabled:to-slate-300 text-white rounded-lg transition-all duration-200 font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl disabled:shadow-none"
                     >
                       <Upload className="w-5 h-5" />
-                      {isUploadingPhoto ? 'Uploading...' : 'Upload Photo'}
+                      {isUploadingPhoto ? 'Uploading...' : 'Save'}
                     </button>
                   </div>
 
@@ -805,7 +814,7 @@ export function DoctorDashboard({
                           </button>
                         </div>
                       </div>
-                      <div className="space-y-3 max-h-96 overflow-y-auto">
+                      <div className="space-y-3 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-teal-500 scrollbar-track-slate-100 hover:scrollbar-thumb-teal-600">
                         {(viewAllPhotos 
                           ? photos.reverse().filter(photo => {
                               const patient = patients.find(p => String(p.id) === String(photo.patientId));
@@ -928,38 +937,81 @@ export function DoctorDashboard({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
             onClick={() => setSelectedPhotoForView(null)}
           >
             <motion.div
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.8 }}
-              className="relative bg-white rounded-xl overflow-hidden flex flex-col"
-              style={{ width: '90vw', height: '90vh', maxWidth: '1000px', maxHeight: '700px' }}
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col w-full max-w-5xl"
+              style={{ maxHeight: '90vh' }}
               onClick={(e) => e.stopPropagation()}
             >
-              <button
-                onClick={() => setSelectedPhotoForView(null)}
-                className="absolute top-4 right-4 w-10 h-10 bg-red-600 text-white rounded-full flex items-center justify-center hover:bg-red-700 z-10"
-              >
-                <X className="w-6 h-6" />
-              </button>
-
-              <div className="flex-1 flex items-center justify-center bg-gray-50 overflow-hidden">
-                <img
-                  src={selectedPhotoForView.url}
-                  alt={selectedPhotoForView.type}
-                  className="w-full h-full object-contain"
-                  style={{ imageRendering: 'crisp-edges' }}
-                />
+              {/* Header */}
+              <div className="bg-gradient-to-r from-teal-600 to-cyan-600 px-6 py-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-4 flex-1">
+                    <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+                      <Camera className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-white font-bold text-xl mb-3">
+                        {patients.find(p => String(p.id) === String(selectedPhotoForView.patientId))?.name || 'Patient Photo'}
+                      </h3>
+                      <div className="flex flex-wrap items-center gap-4 text-sm">
+                        <div className="flex items-center gap-2 text-teal-50">
+                          <div className="w-5 h-5 rounded bg-white/20 flex items-center justify-center">
+                            <FileText className="w-3 h-3" />
+                          </div>
+                          <span className="font-medium capitalize">{selectedPhotoForView.type} Photo</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-teal-50">
+                          <div className="w-5 h-5 rounded bg-white/20 flex items-center justify-center">
+                            <Calendar className="w-3 h-3" />
+                          </div>
+                          <span className="font-medium">{formatToDD_MM_YYYY(selectedPhotoForView.date)}</span>
+                        </div>
+                      </div>
+                      {selectedPhotoForView.notes && (
+                        <div className="mt-3 pt-3 border-t border-white/20">
+                          <p className="text-teal-50 text-sm leading-relaxed">
+                            <span className="font-semibold">Notes:</span> {selectedPhotoForView.notes}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedPhotoForView(null)}
+                    className="w-9 h-9 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white flex items-center justify-center transition-all hover:rotate-90 duration-300 flex-shrink-0"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
-              <div className="p-6 bg-white border-t border-gray-200">
-                <p className="font-semibold text-lg capitalize mb-2">{selectedPhotoForView.type} Photo</p>
-                <p className="text-sm text-gray-600 mb-2">Date: {formatToDD_MM_YYYY(selectedPhotoForView.date)}</p>
-                {selectedPhotoForView.notes && (
-                  <p className="text-sm text-gray-700">Notes: {selectedPhotoForView.notes}</p>
-                )}
+
+              {/* Image Container */}
+              <div className="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 p-4 flex items-center justify-center overflow-hidden" style={{ minHeight: '600px' }}>
+                <div className="relative w-full h-full flex items-center justify-center">
+                  <img
+                    src={selectedPhotoForView.url}
+                    alt={selectedPhotoForView.type}
+                    className="rounded-xl shadow-2xl"
+                    style={{ 
+                      width: '100%',
+                      height: '100%',
+                      maxHeight: '85vh',
+                      objectFit: 'contain',
+                      imageRendering: 'crisp-edges'
+                    }}
+                  />
+                  {/* Image Badge */}
+                  <div className="absolute top-3 left-3 px-3 py-1.5 bg-black/50 backdrop-blur-md text-white text-xs font-semibold rounded-full capitalize">
+                    {selectedPhotoForView.type}
+                  </div>
+                </div>
               </div>
             </motion.div>
           </motion.div>
@@ -973,56 +1025,92 @@ export function DoctorDashboard({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
             onClick={() => setShowReplacePhotoModal(null)}
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-xl p-6 max-w-md w-full"
+              className="bg-white rounded-2xl shadow-2xl overflow-hidden max-w-lg w-full"
             >
-              <h3 className="text-xl font-bold text-slate-900 mb-4">Replace Photo</h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select New Photo
+              {/* Header */}
+              <div className="bg-gradient-to-r from-amber-600 to-orange-600 px-6 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                    <RotateCcw className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-white font-bold text-lg">Replace Photo</h3>
+                    <p className="text-amber-100 text-xs">Upload a new version of this photo</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowReplacePhotoModal(null)}
+                  className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white flex items-center justify-center transition-all"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="p-6 space-y-5">
+                {/* File Upload Area */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-slate-700">
+                    Select New Photo <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleReplacePhotoFile}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
-                  />
+                  <div className="relative border-2 border-dashed border-slate-300 rounded-xl p-6 bg-gradient-to-br from-slate-50 to-slate-100 hover:border-amber-400 hover:from-amber-50 hover:to-amber-100 transition-all cursor-pointer group">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleReplacePhotoFile}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                    <div className="flex flex-col items-center justify-center text-center">
+                      <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mb-2 group-hover:bg-amber-200 transition-colors">
+                        <Camera className="w-6 h-6 text-amber-600" />
+                      </div>
+                      <p className="text-slate-900 font-semibold text-sm">Click to upload or drag and drop</p>
+                      <p className="text-slate-500 text-xs mt-1">PNG, JPG, GIF up to 10MB</p>
+                    </div>
+                  </div>
                   {replacePhotoFile && (
-                    <div className="text-sm text-gray-600 mt-2">
-                      ✓ {replacePhotoFile.name}
+                    <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                      <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                      <span className="text-sm font-medium text-emerald-900 truncate">{replacePhotoFile.name}</span>
                     </div>
                   )}
                 </div>
 
+                {/* Preview */}
                 {replacePhotoUrl && (
-                  <div className="mt-3 relative w-full h-40 rounded-lg border border-gray-200 overflow-hidden bg-gray-50">
-                    <img src={replacePhotoUrl} alt="New Preview" className="w-full h-full object-cover" />
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-slate-700">Preview</label>
+                    <div className="relative w-full h-52 rounded-xl border-2 border-slate-200 overflow-hidden bg-slate-100 shadow-md">
+                      <img src={replacePhotoUrl} alt="New Preview" className="w-full h-full object-contain" />
+                    </div>
                   </div>
                 )}
               </div>
 
-              <div className="flex gap-3 mt-6">
+              {/* Footer Actions */}
+              <div className="bg-slate-50 border-t border-slate-200 px-6 py-4 flex gap-3">
                 <button
                   onClick={() => setShowReplacePhotoModal(null)}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2.5 border-2 border-slate-300 text-slate-700 rounded-lg hover:bg-slate-100 transition-all font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleReplacePhoto}
                   disabled={isReplacingPhoto || !replacePhotoUrl}
-                  className="flex-1 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 disabled:from-slate-400 disabled:to-slate-300 text-white rounded-lg transition-all font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl disabled:shadow-none"
                 >
-                  {isReplacingPhoto ? 'Replacing...' : 'Replace'}
+                  <RotateCcw className="w-4 h-4" />
+                  {isReplacingPhoto ? 'Replacing...' : 'Replace Photo'}
                 </button>
               </div>
             </motion.div>
@@ -1289,6 +1377,44 @@ export function DoctorDashboard({
                 </button>
               </div>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-6 right-6 z-[100] max-w-md"
+          >
+            <div className={`rounded-xl shadow-2xl p-4 pr-12 flex items-center gap-3 backdrop-blur-sm ${
+              toast.type === 'success' 
+                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white' 
+                : 'bg-gradient-to-r from-rose-500 to-red-500 text-white'
+            }`}>
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                toast.type === 'success' ? 'bg-white/20' : 'bg-white/20'
+              }`}>
+                {toast.type === 'success' ? (
+                  <Check className="w-6 h-6" />
+                ) : (
+                  <AlertCircle className="w-6 h-6" />
+                )}
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-base">{toast.type === 'success' ? 'Success!' : 'Error'}</p>
+                <p className="text-sm opacity-95">{toast.message}</p>
+              </div>
+              <button
+                onClick={() => setToast(null)}
+                className="absolute top-3 right-3 hover:bg-white/20 rounded-lg p-1 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

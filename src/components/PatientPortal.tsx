@@ -568,6 +568,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
         animate={{ x: 0, opacity: 1 }}
         className={`${sidebarOpen ? 'w-72' : 'w-20'} bg-[#e2fcfb] text-gray-800 transition-all duration-300 flex flex-col shadow-2xl relative overflow-hidden scrollbar-light`}
       >
+        {/* Decorative gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-transparent to-cyan-500/5 pointer-events-none"></div>
         
         <div className={`px-6 py-6 flex items-center justify-start gap-3 border-b border-teal-300 relative z-10 ${sidebarOpen ? 'min-h-[104px]' : 'min-h-[100px]'}`}>
@@ -632,9 +633,11 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                   <Icon className="w-5 h-5" />
                 </div>
                 {sidebarOpen && (
-                  <span className={`text-sm font-medium transition-colors duration-300 ${activeTab === item.id ? 'text-gray-900' : 'text-gray-700'}`}>
-                    {item.label}
-                  </span>
+                  <div className="flex items-center justify-between flex-1 min-w-0">
+                    <span className={`text-sm font-medium transition-colors duration-300 ${activeTab === item.id ? 'text-gray-900' : 'text-gray-700'}`}>
+                      {item.label}
+                    </span>
+                  </div>
                 )}
               </motion.button>
             );
@@ -664,14 +667,13 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
       </motion.div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto flex flex-col bg-gradient-to-br from-slate-50 via-slate-25 to-[#C4FFF9]/20">
+      <div className="flex-1 overflow-auto flex flex-col bg-gradient-to-br from-slate-50 via-white to-slate-50/50">
         {/* Header */}
         <motion.div 
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className={`sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-white/40 px-8 py-6 ${sidebarOpen ? 'min-h-[104px]' : 'min-h-[100px]'} flex justify-between items-center shadow-sm relative`}
+          className={`sticky top-0 z-40 bg-white border-b border-slate-100 px-8 py-6 ${sidebarOpen ? 'min-h-[104px]' : 'min-h-[100px]'} flex justify-between items-center shadow-sm`}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-[#9CEAEF]/30 via-transparent to-[#68D8D6]/20 pointer-events-none"></div>
           <div className="relative z-10 flex-1">
             {activeTab === 'profile' && (
               <div>
