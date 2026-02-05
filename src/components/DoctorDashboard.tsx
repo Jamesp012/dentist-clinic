@@ -8,6 +8,7 @@ import { InventoryManagement } from './InventoryManagementEnhanced';
 import { DentalCharting } from './DentalCharting';
 import { BracesCharting } from './BracesCharting';
 import { ReferralGeneration } from './ReferralGeneration';
+import { ReferralManagement } from './ReferralManagement';
 import { ServicesForms } from './ServicesForms';
 import { FinancialReport } from './FinancialReport';
 import { AnnouncementsManagement } from './AnnouncementsManagement';
@@ -891,11 +892,30 @@ export function DoctorDashboard({
                 />
               )}
               {activeTab === 'referrals' && (
-                <ReferralGeneration
-                  referrals={referrals}
-                  setReferrals={setReferrals}
-                  patients={patients}
-                />
+                <div className="p-6 space-y-6 max-h-full overflow-y-auto">
+                  {/* Referral Management Tab Component - View Incoming/Outgoing */}
+                  <div className="bg-white rounded-xl shadow-md p-6">
+                    <h3 className="text-2xl font-bold text-slate-900 mb-4">All Referrals</h3>
+                    <ReferralManagement
+                      referrals={referrals}
+                      patients={patients}
+                      currentUserName={currentUser.fullName}
+                    />
+                  </div>
+
+                  {/* Divider */}
+                  <div className="h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent"></div>
+
+                  {/* Referral Generation Component - Create New Referrals */}
+                  <div className="bg-white rounded-xl shadow-md p-6">
+                    <h3 className="text-2xl font-bold text-slate-900 mb-4">Create New Referral</h3>
+                    <ReferralGeneration
+                      referrals={referrals}
+                      setReferrals={setReferrals}
+                      patients={patients}
+                    />
+                  </div>
+                </div>
               )}
               {activeTab === 'services' && (
                 <ServicesForms

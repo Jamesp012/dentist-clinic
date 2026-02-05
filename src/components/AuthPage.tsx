@@ -6,7 +6,7 @@ import { authAPI, setAuthToken } from '../api';
 import { PasswordInput } from './PasswordInput';
 import { handlePhoneInput, formatPhoneNumber } from '../utils/phoneValidation';
 import { PatientRecordClaiming } from './PatientRecordClaiming';
-import { convertToDBDate, convertToDisplayDate, formatDateInput, formatToDD_MM_YYYY } from '../utils/dateHelpers';
+import { convertToDisplayDate, formatDateInput } from '../utils/dateHelpers';
 
 export type UserRole = 'doctor' | 'assistant' | 'patient';
 
@@ -40,6 +40,9 @@ export type SignupData = {
   username: string;
   password: string;
   role: UserRole;
+  // Referral workflow fields (for patients)
+  patientType?: 'direct' | 'referred';
+  hasExistingRecord?: boolean;
 };
 
 export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
@@ -68,7 +71,9 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
     sex: 'Male',
     username: '',
     password: '',
-    role: 'patient'
+    role: 'patient',
+    patientType: undefined,
+    hasExistingRecord: undefined
   });
 
   // Check if user is logged in and needs password change
@@ -192,6 +197,17 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
       return;
     }
 
+    // Check referral workflow fields
+    if (!signupData.patientType) {
+      setError('Please select how you are scheduling your consultation');
+      return;
+    }
+
+    if (signupData.hasExistingRecord === undefined) {
+      setError('Please indicate if you have a prior record with us');
+      return;
+    }
+
     // Check if passwords match
     if (signupData.password !== signupConfirmPassword) {
       setError('Passwords do not match');
@@ -259,7 +275,7 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
     }
   };
 
-  const updateSignupField = (field: keyof SignupData, value: string) => {
+  const updateSignupField = (field: keyof SignupData, value: any) => {
     setSignupData({ ...signupData, [field]: value });
   };
 
@@ -666,6 +682,74 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
                     className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all resize-none"
                   />
                 </div>
+              </div>
+
+              {/* Referral Workflow Selection */}
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <label className="block text-sm font-medium mb-3 text-slate-700">How are you scheduling your consultation? *</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => updateSignupField('patientType', 'direct')}
+                    className={`p-3 rounded-lg transition-all text-sm font-medium border-2 ${
+                      signupData.patientType === 'direct'
+                        ? 'border-blue-500 bg-blue-100 text-blue-900'
+                        : 'border-slate-300 bg-white text-slate-700 hover:border-blue-400'
+                    }`}
+                  >
+                    Direct Consultation
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateSignupField('patientType', 'referred')}
+                    className={`p-3 rounded-lg transition-all text-sm font-medium border-2 ${
+                      signupData.patientType === 'referred'
+                        ? 'border-blue-500 bg-blue-100 text-blue-900'
+                        : 'border-slate-300 bg-white text-slate-700 hover:border-blue-400'
+                    }`}
+                  >
+                    Referred by a Doctor
+                  </button>
+                </div>
+                <p className="text-xs text-slate-600 mt-2">
+                  {signupData.patientType === 'direct' && 'You have scheduled a direct appointment with Doc Maaño.'}
+                  {signupData.patientType === 'referred' && 'Another doctor referred you to Doc Maaño for consultation.'}
+                  {!signupData.patientType && 'Please select how you are scheduling your consultation.'}
+                </p>
+              </div>
+
+              {/* Existing Record Selection */}
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                <label className="block text-sm font-medium mb-3 text-slate-700">Do you have an existing record with us? *</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => updateSignupField('hasExistingRecord', true)}
+                    className={`p-3 rounded-lg transition-all text-sm font-medium border-2 ${
+                      signupData.hasExistingRecord === true
+                        ? 'border-amber-500 bg-amber-100 text-amber-900'
+                        : 'border-slate-300 bg-white text-slate-700 hover:border-amber-400'
+                    }`}
+                  >
+                    Yes, I have a record
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateSignupField('hasExistingRecord', false)}
+                    className={`p-3 rounded-lg transition-all text-sm font-medium border-2 ${
+                      signupData.hasExistingRecord === false
+                        ? 'border-amber-500 bg-amber-100 text-amber-900'
+                        : 'border-slate-300 bg-white text-slate-700 hover:border-amber-400'
+                    }`}
+                  >
+                    No prior record
+                  </button>
+                </div>
+                <p className="text-xs text-slate-600 mt-2">
+                  {signupData.hasExistingRecord === true && 'We will help you locate your existing patient record.'}
+                  {signupData.hasExistingRecord === false && 'A new patient record will be created for you.'}
+                  {signupData.hasExistingRecord === undefined && 'Please indicate if you have a prior record with us.'}
+                </p>
               </div>
 
               <div className="border-t border-slate-200 pt-4">

@@ -253,15 +253,7 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-cyan-50/40 flex flex-col flex-1">
       <div className="p-8 space-y-8 flex flex-col flex-1">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="space-y-2">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 via-cyan-800 to-teal-700 bg-clip-text text-transparent">
-              Appointments
-            </h1>
-            <p className="text-slate-600 font-medium text-sm tracking-wide">
-              Queue management and schedule overview
-            </p>
-          </div>
+        <div className="flex flex-wrap items-center justify-end gap-4">
           <button
             onClick={() => setShowAddModal(true)}
             className="relative group bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-6 py-3.5 rounded-xl hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-teal-500/20 flex items-center gap-2.5 whitespace-nowrap font-semibold text-sm tracking-wide transform hover:scale-105 active:scale-95"

@@ -24,6 +24,16 @@ export type Patient = {
   nextAppointment?: string;
   totalBalance?: number;
   profilePhoto?: string;
+  // Referral workflow fields
+  patientType?: 'direct' | 'referred';
+  hasExistingRecord?: boolean;
+  referralFiles?: {
+    id: string;
+    fileName: string;
+    fileType: string; // 'image' | 'pdf' | 'document'
+    uploadedDate: string;
+    url: string;
+  }[];
 };
 
 export type Appointment = {
@@ -103,6 +113,15 @@ export type Referral = {
   createdByRole?: 'patient' | 'staff';
   xrayDiagramSelections?: Record<string, 'black' | 'red'>;
   xrayNotes?: string;
+  // Referral workflow fields
+  referralType?: 'incoming' | 'outgoing'; // incoming: from other doctors to Doc Maaño, outgoing: from Doc Maaño to others
+  uploadedFiles?: {
+    id: string;
+    fileName: string;
+    fileType: string;
+    uploadedDate: string;
+    url: string;
+  }[];
 };
 
 export type PhotoUpload = {

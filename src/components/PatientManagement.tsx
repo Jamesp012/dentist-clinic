@@ -169,16 +169,6 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50/40 flex flex-col flex-1">
       <div className="p-8 space-y-8 flex flex-col flex-1">
-        {/* Header Section */}
-        <div className="space-y-3">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 via-blue-800 to-teal-700 bg-clip-text text-transparent">
-            Patient Management
-          </h1>
-          <p className="text-slate-600 font-medium text-sm tracking-wide">
-            Manage and organize your patient database
-          </p>
-        </div>
-
         {/* Search & Add Button */}
         <div className="relative flex items-center justify-between gap-4 sticky top-0 bg-gradient-to-b from-white/80 via-white/60 to-transparent backdrop-blur-lg z-30 -mx-8 px-8 py-4 mb-2">
           <div className="relative flex-1 group">
@@ -304,9 +294,8 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h3 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-teal-700 bg-clip-text text-transparent">
-                  Add New Patient
+                  Patient Information
                 </h3>
-                <p className="text-slate-600 text-sm mt-1">Enter patient information to create a new record</p>
               </div>
               <button 
                 onClick={() => setShowAddModal(false)} 

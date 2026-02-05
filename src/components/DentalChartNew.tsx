@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ToothData, Surface, Condition } from '../Tooth';
+import { ToothData, Surface, Condition } from './Tooth';
 import { RealisticTooth } from './dental/RealisticTooth';
 import { ToothDetailsSidebar } from './dental/ToothDetailsSidebar';
 import { cn } from '../lib/utils';

@@ -166,54 +166,54 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
   };
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
+    <div className="p-6 md:p-8 bg-gradient-to-br from-slate-50 via-white to-blue-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        {/* Header with Tabs */}
-        <div className="mb-8">
-          {/* View Type Tabs */}
-          <div className="flex gap-2 bg-white p-2 rounded-lg shadow-sm mb-6">
+        {/* Header Section */}
+        <div className="mb-10">
+          {/* Premium Tab Navigation */}
+          <div className="flex gap-2 p-1 bg-white rounded-2xl shadow-lg border border-gray-100 w-full">
             <button
               onClick={() => setViewType('summary')}
-              className={`flex-1 px-4 py-2 rounded-lg transition-colors ${
+              className={`flex-1 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
                 viewType === 'summary'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-200'
+                  : 'text-gray-600 hover:text-emerald-600 hover:bg-emerald-50'
               }`}
             >
-              <PieChart className="w-5 h-5 inline-block mr-2" />
+              <PieChart className="w-4 h-4" />
               Summary
             </button>
             <button
               onClick={() => setViewType('details')}
-              className={`flex-1 px-4 py-2 rounded-lg transition-colors ${
+              className={`flex-1 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
                 viewType === 'details'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-200'
+                  : 'text-gray-600 hover:text-emerald-600 hover:bg-emerald-50'
               }`}
             >
-              <BarChart3 className="w-5 h-5 inline-block mr-2" />
+              <BarChart3 className="w-4 h-4" />
               Details
             </button>
             <button
               onClick={() => setViewType('patients')}
-              className={`flex-1 px-4 py-2 rounded-lg transition-colors ${
+              className={`flex-1 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
                 viewType === 'patients'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-200'
+                  : 'text-gray-600 hover:text-emerald-600 hover:bg-emerald-50'
               }`}
             >
-              <FileText className="w-5 h-5 inline-block mr-2" />
+              <FileText className="w-4 h-4" />
               Patient Balances
             </button>
             <button
               onClick={() => setViewType('payments')}
-              className={`flex-1 px-4 py-2 rounded-lg transition-colors ${
+              className={`flex-1 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
                 viewType === 'payments'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-200'
+                  : 'text-gray-600 hover:text-emerald-600 hover:bg-emerald-50'
               }`}
             >
-              <Plus className="w-5 h-5 inline-block mr-2" />
+              <Plus className="w-4 h-4" />
               Record Payment
             </button>
           </div>
@@ -221,104 +221,123 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
 
         {/* Summary View */}
         {viewType === 'summary' && (
-          <div className="space-y-6">
-            {/* Key Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="space-y-8">
+            {/* Key Metrics - Premium Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Total Revenue Card */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white p-6 rounded-xl shadow-lg border-l-4 border-green-500"
+                className="group relative bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden"
               >
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <PesoSign className="w-6 h-6 text-green-600" />
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative p-6 sm:p-8">
+                  <div className="flex items-start justify-between mb-6">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-emerald-100 to-emerald-50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                      <PesoSign className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-600" />
+                    </div>
+                    <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 rounded-full">
+                      <TrendingUp className="w-4 h-4 text-emerald-600" />
+                      <span className="text-xs font-semibold text-emerald-600">+12%</span>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Total Revenue</p>
-                    <p className="text-2xl">₱{totalRevenue.toLocaleString('en-US')}</p>
-                  </div>
+                  <p className="text-gray-600 text-sm font-medium mb-2 uppercase tracking-wider">Total Revenue</p>
+                  <p className="text-3xl sm:text-4xl font-bold text-gray-900 mb-1">₱{totalRevenue.toLocaleString('en-US')}</p>
+                  <p className="text-sm text-gray-500">All time paid amount</p>
                 </div>
-                <div className="flex items-center gap-1 text-sm text-green-600 mt-2">
-                  <TrendingUp className="w-4 h-4" />
-                  <span>All time (Paid)</span>
-                </div>
+                <div className="h-1 bg-gradient-to-r from-emerald-400 to-teal-400" />
               </motion.div>
 
+              {/* Total Billed Card */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-white p-6 rounded-xl shadow-lg border-l-4 border-blue-500"
+                className="group relative bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden"
               >
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <PesoSign className="w-6 h-6 text-blue-600" />
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative p-6 sm:p-8">
+                  <div className="flex items-start justify-between mb-6">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-100 to-blue-50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                      <PesoSign className="w-7 h-7 sm:w-8 sm:h-8 text-blue-600" />
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-blue-600">{((totalRevenue / totalBilled) * 100).toFixed(1)}%</p>
+                      <p className="text-xs text-gray-500">collection rate</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Total Billed</p>
-                    <p className="text-2xl">₱{totalBilled.toLocaleString('en-US')}</p>
-                  </div>
+                  <p className="text-gray-600 text-sm font-medium mb-2 uppercase tracking-wider">Total Billed</p>
+                  <p className="text-3xl sm:text-4xl font-bold text-gray-900 mb-1">₱{totalBilled.toLocaleString('en-US')}</p>
+                  <p className="text-sm text-gray-500">Total charged amount</p>
                 </div>
-                <p className="text-sm text-gray-600 mt-2">
-                  {((totalRevenue / totalBilled) * 100).toFixed(1)}% collection rate
-                </p>
+                <div className="h-1 bg-gradient-to-r from-blue-400 to-cyan-400" />
               </motion.div>
 
+              {/* Outstanding Balance Card */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-white p-6 rounded-xl shadow-lg border-l-4 border-red-500"
+                className="group relative bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden"
               >
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                    <TrendingDown className="w-6 h-6 text-red-600" />
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative p-6 sm:p-8">
+                  <div className="flex items-start justify-between mb-6">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-amber-100 to-amber-50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                      <TrendingDown className="w-7 h-7 sm:w-8 sm:h-8 text-amber-600" />
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-amber-600">{patientBalances.filter(pb => pb.balance > 0).length}</p>
+                      <p className="text-xs text-gray-500">pending</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Outstanding Balance</p>
-                    <p className="text-2xl text-red-600">₱{totalOutstanding.toLocaleString('en-US')}</p>
-                  </div>
+                  <p className="text-gray-600 text-sm font-medium mb-2 uppercase tracking-wider">Outstanding Balance</p>
+                  <p className="text-3xl sm:text-4xl font-bold text-amber-600 mb-1">₱{totalOutstanding.toLocaleString('en-US')}</p>
+                  <p className="text-sm text-gray-500">Awaiting payment</p>
                 </div>
-                <p className="text-sm text-gray-600 mt-2">
-                  {patientBalances.filter(pb => pb.balance > 0).length} patients with balance
-                </p>
+                <div className="h-1 bg-gradient-to-r from-amber-400 to-orange-400" />
               </motion.div>
 
+              {/* Monthly Revenue Card */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="bg-white p-6 rounded-xl shadow-lg border-l-4 border-purple-500"
+                className="group relative bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden"
               >
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <Calendar className="w-6 h-6 text-purple-600" />
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative p-6 sm:p-8">
+                  <div className="flex items-start justify-between mb-6">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-100 to-purple-50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                      <Calendar className="w-7 h-7 sm:w-8 sm:h-8 text-purple-600" />
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-purple-600">{monthlyTransactions}</p>
+                      <p className="text-xs text-gray-500">transactions</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Monthly Revenue</p>
-                    <p className="text-2xl">₱{monthlyRevenue.toLocaleString('en-US')}</p>
-                  </div>
+                  <p className="text-gray-600 text-sm font-medium mb-2 uppercase tracking-wider">Monthly Revenue</p>
+                  <p className="text-3xl sm:text-4xl font-bold text-gray-900 mb-1">₱{monthlyRevenue.toLocaleString('en-US')}</p>
+                  <p className="text-sm text-gray-500">This month only</p>
                 </div>
-                <p className="text-sm text-gray-600 mt-2">
-                  {monthlyTransactions} transactions this month
-                </p>
+                <div className="h-1 bg-gradient-to-r from-purple-400 to-pink-400" />
               </motion.div>
             </div>
 
-            {/* Month Selector and Action Buttons */}
-            <div className="flex justify-between items-end gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Month for Report
+            {/* Controls Section */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 bg-white rounded-2xl p-6 sm:p-8 shadow-md border border-gray-100">
+              <div className="w-full sm:w-auto">
+                <label className="block text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">
+                  📅 Select Month for Report
                 </label>
                 <input
                   type="month"
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg"
+                  className="px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:outline-none transition-colors w-full sm:w-auto"
                 />
               </div>
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <button
                   onClick={() => generateFinancialPDF(
                     { totalRevenue, totalBilled },
@@ -326,213 +345,322 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                     totalOutstanding,
                     treatmentBreakdown
                   )}
-                  className="px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors flex items-center gap-2"
+                  className="px-6 py-3 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
                 >
                   <Printer className="w-5 h-5" />
-                  Print PDF Report
+                  <span className="hidden sm:inline">Print PDF</span>
+                  <span className="sm:hidden">PDF</span>
                 </button>
                 <button
                   onClick={downloadReport}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
                 >
                   <Download className="w-5 h-5" />
-                  Export JSON
+                  <span className="hidden sm:inline">Export JSON</span>
+                  <span className="sm:hidden">JSON</span>
                 </button>
               </div>
             </div>
 
-            {/* Treatment Breakdown */}
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <h2 className="text-xl mb-4">Treatment Revenue Breakdown</h2>
-              <div className="space-y-3 max-h-[60vh] scrollbar-hover">
+            {/* Treatment Breakdown - Premium Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-2xl shadow-md p-6 sm:p-8 border border-gray-100"
+            >
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-12 h-12 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-xl flex items-center justify-center">
+                  <BarChart3 className="w-6 h-6 text-emerald-600" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Treatment Revenue Breakdown</h2>
+                  <p className="text-sm text-gray-500">Revenue by service type</p>
+                </div>
+              </div>
+              <div className="space-y-4 max-h-[70vh] overflow-y-auto scrollbar-hover">
                 {Object.entries(treatmentBreakdown)
                   .sort(([, a], [, b]) => b.revenue - a.revenue)
-                  .map(([treatment, data]) => {
+                  .map(([treatment, data], index) => {
                     const percentage = totalBilled > 0 ? (data.revenue / totalBilled) * 100 : 0;
                     return (
-                      <div key={treatment} className="p-4 bg-gray-50 rounded-lg">
-                        <div className="flex justify-between items-center mb-2">
+                      <motion.div
+                        key={treatment}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="group p-5 bg-gradient-to-r from-slate-50 to-blue-50 rounded-xl hover:from-emerald-50 hover:to-teal-50 transition-all duration-300 border border-gray-100 hover:border-emerald-200 cursor-default"
+                      >
+                        <div className="flex items-start justify-between mb-4">
                           <div>
-                            <p className="font-medium">{treatment}</p>
-                            <p className="text-sm text-gray-600">{data.count} procedures</p>
+                            <p className="font-bold text-gray-900 text-lg">{treatment}</p>
+                            <p className="text-sm text-gray-600 mt-1">{data.count} procedure{data.count !== 1 ? 's' : ''} • {percentage.toFixed(1)}% of total</p>
                           </div>
                           <div className="text-right">
-                            <p className="font-medium">₱{data.revenue.toLocaleString('en-US')}</p>
-                            <p className="text-sm text-gray-600">{percentage.toFixed(1)}%</p>
+                            <p className="font-bold text-emerald-600 text-xl">₱{data.revenue.toLocaleString('en-US')}</p>
+                            <p className="text-xs text-gray-500 mt-1">Total revenue</p>
                           </div>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div
-                            className="bg-blue-600 h-2 rounded-full transition-all"
-                            style={{ width: `${percentage}%` }}
+                        <div className="relative h-3 bg-gray-200 rounded-full overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${percentage}%` }}
+                            transition={{ duration: 0.8, ease: 'easeOut' }}
+                            className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
                           />
                         </div>
-                      </div>
+                      </motion.div>
                     );
                   })}
               </div>
-            </div>
+            </motion.div>
           </div>
         )}
 
         {/* Details View */}
         {viewType === 'details' && (
           <div className="space-y-6">
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <h2 className="text-xl mb-4">Transaction History</h2>
-              <div className="space-y-2 max-h-[60vh] scrollbar-hover">
-                {treatmentRecords
-                  .slice()
-                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                  .map(record => {
-                    const patient = patients.find(p => String(p.id) === String(record.patientId));
-                    return (
-                      <div key={record.id} className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="font-medium">{patient?.name || 'Unknown Patient'}</p>
-                            <p className="text-sm text-gray-600">{record.treatment}</p>
-                            {record.tooth && (
-                              <p className="text-sm text-gray-500">Tooth: {record.tooth}</p>
-                            )}
-                            <p className="text-sm text-gray-500">Dr. {record.dentist}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm text-gray-600 mb-1">
-                              {formatToDD_MM_YYYY(record.date)}
-                            </p>
-                            <p className="text-lg font-semibold">₱{record.cost.toLocaleString('en-US')}</p>
-                            <button
-                              onClick={() => patient && generateReceipt(patient, record, payments)}
-                              className="mt-2 px-3 py-1 bg-teal-600 text-white text-xs rounded-lg hover:bg-teal-700 transition-colors flex items-center gap-2 ml-auto"
-                            >
-                              <Printer className="w-3.5 h-3.5" />
-                              Receipt
-                            </button>
-                          </div>
-                        </div>
-                        {record.notes && (
-                          <p className="text-sm text-gray-600 mt-2 pt-2 border-t border-gray-200">
-                            {record.notes}
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
-                {treatmentRecords.length === 0 && (
-                  <div className="text-center py-12 text-gray-500">
-                    <FileText className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                    <p>No transaction records available</p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-2xl shadow-md p-6 sm:p-8 border border-gray-100"
+            >
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-12 h-12 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-xl flex items-center justify-center">
+                  <BarChart3 className="w-6 h-6 text-emerald-600" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Transaction History</h2>
+                  <p className="text-sm text-gray-500">Complete record of all procedures</p>
+                </div>
+              </div>
+              <div className="space-y-3 max-h-[70vh] overflow-y-auto scrollbar-hover">
+                {treatmentRecords.length === 0 ? (
+                  <div className="text-center py-16 text-gray-500">
+                    <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                    <p className="text-lg font-medium">No transaction records available</p>
                   </div>
+                ) : (
+                  treatmentRecords
+                    .slice()
+                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                    .map((record, index) => {
+                      const patient = patients.find(p => String(p.id) === String(record.patientId));
+                      return (
+                        <motion.div
+                          key={record.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          className="group p-5 bg-gradient-to-r from-slate-50 to-blue-50 rounded-xl hover:from-emerald-50 hover:to-teal-50 transition-all duration-300 border border-gray-100 hover:border-emerald-200"
+                        >
+                          <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <div className="w-10 h-10 bg-gradient-to-br from-emerald-200 to-teal-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                                  <FileText className="w-5 h-5 text-emerald-700" />
+                                </div>
+                                <div>
+                                  <p className="font-bold text-gray-900">{patient?.name || 'Unknown Patient'}</p>
+                                  <p className="text-sm text-gray-600">{record.treatment}</p>
+                                </div>
+                              </div>
+                              <div className="ml-13 space-y-1 text-sm text-gray-600">
+                                {record.tooth && (
+                                  <p>🦷 Tooth: <span className="font-medium text-gray-900">{record.tooth}</span></p>
+                                )}
+                                <p>👨‍⚕️ Dr. {record.dentist}</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs text-gray-500 font-medium mb-2 uppercase">📅 {formatToDD_MM_YYYY(record.date)}</p>
+                              <p className="text-3xl font-bold text-emerald-600">₱{record.cost.toLocaleString('en-US')}</p>
+                              <button
+                                onClick={() => patient && generateReceipt(patient, record, payments)}
+                                className="mt-3 px-4 py-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white text-xs rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 ml-auto shadow-md hover:shadow-lg"
+                              >
+                                <Printer className="w-4 h-4" />
+                                Receipt
+                              </button>
+                            </div>
+                          </div>
+                          {record.notes && (
+                            <div className="p-3 bg-white rounded-lg border-l-4 border-amber-400">
+                              <p className="text-sm text-gray-700"><span className="font-semibold">Note:</span> {record.notes}</p>
+                            </div>
+                          )}
+                        </motion.div>
+                      );
+                    })
                 )}
               </div>
-            </div>
+            </motion.div>
           </div>
         )}
 
         {/* Patient Balances View */}
         {viewType === 'patients' && (
           <div className="space-y-6">
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <h2 className="text-xl mb-4">Patient Account Balances</h2>
-              <div className="space-y-2 max-h-[60vh] scrollbar-hover">
-                {patientBalances
-                  .filter(pb => pb.totalBilled > 0)
-                  .sort((a, b) => b.balance - a.balance)
-                  .map(pb => (
-                    <div key={pb.patientId} className="p-4 bg-gray-50 rounded-lg">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <p className="font-medium">{pb.patientName}</p>
-                          <p className="text-sm text-gray-600">Patient ID: {pb.patientId}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className={`text-lg font-medium ${pb.balance > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                            Balance: ₱{pb.balance.toLocaleString('en-US')}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-3 gap-4 text-sm mb-3">
-                        <div className="p-3 bg-blue-50 rounded-lg">
-                          <p className="text-gray-600 mb-1">Total Billed</p>
-                          <p className="font-medium">₱{pb.totalBilled.toLocaleString('en-US')}</p>
-                        </div>
-                        <div className="p-3 bg-green-50 rounded-lg">
-                          <p className="text-gray-600 mb-1">Total Paid</p>
-                          <p className="font-medium text-green-600">₱{pb.totalPaid.toLocaleString('en-US')}</p>
-                        </div>
-                        <div className="p-3 bg-gray-100 rounded-lg">
-                          <p className="text-gray-600 mb-1">Payment Rate</p>
-                          <p className="font-medium">{((pb.totalPaid / pb.totalBilled) * 100).toFixed(1)}%</p>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        {pb.balance > 0 && (
-                          <button
-                            onClick={() => {
-                              setSelectedPatientId(pb.patientId);
-                              setSelectedTreatmentId('');
-                              setPaymentAmount('');
-                              setShowPaymentForm(true);
-                              setViewType('payments');
-                            }}
-                            className="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-medium transition-colors"
-                          >
-                            Update Balance
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                {patientBalances.filter(pb => pb.totalBilled > 0).length === 0 && (
-                  <div className="text-center py-12 text-gray-500">
-                    <FileText className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                    <p>No patient billing records available</p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-2xl shadow-md p-6 sm:p-8 border border-gray-100"
+            >
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-12 h-12 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-xl flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-emerald-600" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Patient Account Balances</h2>
+                  <p className="text-sm text-gray-500">Overview of all patient accounts</p>
+                </div>
+              </div>
+              <div className="space-y-4 max-h-[70vh] overflow-y-auto scrollbar-hover">
+                {patientBalances.filter(pb => pb.totalBilled > 0).length === 0 ? (
+                  <div className="text-center py-16 text-gray-500">
+                    <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                    <p className="text-lg font-medium">No patient billing records available</p>
                   </div>
+                ) : (
+                  patientBalances
+                    .filter(pb => pb.totalBilled > 0)
+                    .sort((a, b) => b.balance - a.balance)
+                    .map((pb, index) => {
+                      const balanceStatus = pb.balance > 0 ? 'overdue' : 'paid';
+                      return (
+                        <motion.div
+                          key={pb.patientId}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          className="group relative bg-white rounded-xl p-5 sm:p-6 border-2 border-gray-100 hover:border-emerald-200 transition-all duration-300 overflow-hidden"
+                        >
+                          <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-full -mr-12 -mt-12 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                          <div className="relative">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
+                              <div>
+                                <p className="font-bold text-gray-900 text-lg">{pb.patientName}</p>
+                                <div className="flex items-center gap-2 mt-2">
+                                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">ID:</span>
+                                  <span className="text-sm font-mono text-gray-600">{pb.patientId}</span>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className={`text-sm font-bold uppercase tracking-wider px-3 py-1 rounded-full inline-block ${
+                                  balanceStatus === 'paid'
+                                    ? 'bg-green-100 text-green-700'
+                                    : 'bg-amber-100 text-amber-700'
+                                }`}>
+                                  {balanceStatus === 'paid' ? '✓ Paid Up' : '⚠ Pending'}
+                                </div>
+                                <p className={`text-3xl font-bold mt-2 ${pb.balance > 0 ? 'text-amber-600' : 'text-green-600'}`}>
+                                  ₱{Math.abs(pb.balance).toLocaleString('en-US')}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">{pb.balance > 0 ? 'Awaiting' : 'Settled'}</p>
+                              </div>
+                            </div>
+                            
+                            {/* Balance Breakdown Grid */}
+                            <div className="grid grid-cols-2 gap-3 mb-5">
+                              <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-100">
+                                <p className="text-xs text-gray-600 mb-2 uppercase font-semibold tracking-wider">Billed</p>
+                                <p className="text-xl font-bold text-blue-700">₱{pb.totalBilled.toLocaleString('en-US')}</p>
+                              </div>
+                              <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-100">
+                                <p className="text-xs text-gray-600 mb-2 uppercase font-semibold tracking-wider">Paid</p>
+                                <p className="text-xl font-bold text-green-700">₱{pb.totalPaid.toLocaleString('en-US')}</p>
+                              </div>
+                            </div>
+
+                            {/* Progress Bar */}
+                            <div className="mb-5">
+                              <div className="flex justify-between items-center mb-2">
+                                <span className="text-xs font-semibold text-gray-600">Collection Progress</span>
+                                <span className="text-xs font-bold text-emerald-600">{((pb.totalPaid / pb.totalBilled) * 100).toFixed(1)}%</span>
+                              </div>
+                              <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${(pb.totalPaid / pb.totalBilled) * 100}%` }}
+                                  transition={{ duration: 0.8, ease: 'easeOut' }}
+                                  className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Action Button */}
+                            {pb.balance > 0 && (
+                              <motion.button
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => {
+                                  setSelectedPatientId(pb.patientId);
+                                  setSelectedTreatmentId('');
+                                  setPaymentAmount('');
+                                  setShowPaymentForm(true);
+                                  setViewType('payments');
+                                }}
+                                className="w-full px-4 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-lg font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
+                              >
+                                💳 Record Payment
+                              </motion.button>
+                            )}
+                          </div>
+                        </motion.div>
+                      );
+                    })
                 )}
               </div>
-            </div>
+            </motion.div>
           </div>
         )}
 
         {/* Payments View */}
         {viewType === 'payments' && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {/* Record Payment Form */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white p-8 rounded-xl shadow-lg"
+              className="bg-white rounded-2xl shadow-md p-6 sm:p-8 border border-gray-100"
             >
-              <div className="flex items-center gap-3 mb-6">
-                <Plus className="w-6 h-6 text-emerald-600" />
-                <h2 className="text-2xl font-bold">Record Patient Payment</h2>
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-12 h-12 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-xl flex items-center justify-center">
+                  <Plus className="w-6 h-6 text-emerald-600" />
+                </div>
+                <div>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Record Patient Payment</h2>
+                  <p className="text-sm text-gray-500 mt-1">Update patient account with payment</p>
+                </div>
               </div>
 
               <form onSubmit={handleRecordPayment} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Patient Selection */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Search Patient</label>
+                    <label className="block text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">
+                      👤 Search Patient
+                    </label>
                     <PatientSearchInput
                       patients={patients}
                       selectedPatientId={selectedPatientId}
                       onSelectPatient={(id) => {
                         setSelectedPatientId(id);
-                        setSelectedTreatmentId('');  // Reset procedure selection when patient changes
+                        setSelectedTreatmentId('');
                       }}
-                      placeholder="Search patient..."
+                      placeholder="Search patient name or ID..."
                       required
                     />
                   </div>
 
-                  {/* Procedure Selection - Show procedures with remaining balance */}
+                  {/* Procedure Selection */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Procedure with Remaining Balance</label>
+                    <label className="block text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">
+                      🦷 Procedure with Remaining Balance
+                    </label>
                     <select
                       value={selectedTreatmentId}
                       onChange={(e) => setSelectedTreatmentId(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:outline-none transition-colors"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:outline-none transition-all duration-300"
                       disabled={!selectedPatientId}
                     >
                       <option value="">-- Select a procedure --</option>
@@ -550,60 +678,76 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                   {selectedTreatmentId && (() => {
                     const selected = treatmentRecords.find(t => t.id === selectedTreatmentId);
                     return selected ? (
-                      <div className="p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
-                        <p className="text-sm text-gray-600">Remaining Balance</p>
-                        <p className="text-2xl font-bold text-blue-600">₱{(selected.remainingBalance !== undefined ? Number(selected.remainingBalance) : Number(selected.cost || 0)).toLocaleString()}</p>
-                      </div>
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="md:col-span-2 p-6 bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-xl"
+                      >
+                        <p className="text-sm text-gray-600 uppercase font-bold tracking-wider mb-2">💰 Remaining Balance</p>
+                        <p className="text-4xl font-bold text-blue-600">₱{(selected.remainingBalance !== undefined ? Number(selected.remainingBalance) : Number(selected.cost || 0)).toLocaleString()}</p>
+                        <p className="text-sm text-gray-600 mt-2">Total procedure cost: ₱{Number(selected.cost).toLocaleString()}</p>
+                      </motion.div>
                     ) : null;
                   })()}
 
                   {/* Payment Amount */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Payment Amount (₱)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={paymentAmount}
-                      onChange={(e) => setPaymentAmount(e.target.value)}
-                      placeholder="Enter amount"
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:outline-none transition-colors"
-                    />
+                    <label className="block text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">
+                      💵 Payment Amount
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-3.5 text-2xl text-gray-400">₱</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={paymentAmount}
+                        onChange={(e) => setPaymentAmount(e.target.value)}
+                        placeholder="0.00"
+                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:outline-none transition-all duration-300 text-lg"
+                      />
+                    </div>
                   </div>
 
                   {/* Payment Method */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+                    <label className="block text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">
+                      💳 Payment Method
+                    </label>
                     <select
                       value={paymentMethod}
                       onChange={(e) => setPaymentMethod(e.target.value as any)}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:outline-none transition-colors"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:outline-none transition-all duration-300"
                     >
-                      <option value="cash">Cash</option>
-                      <option value="card">Credit/Debit Card</option>
-                      <option value="check">Check</option>
-                      <option value="bank_transfer">Bank Transfer</option>
+                      <option value="cash">💵 Cash</option>
+                      <option value="card">💳 Credit/Debit Card</option>
+                      <option value="check">📄 Check</option>
+                      <option value="bank_transfer">🏦 Bank Transfer</option>
                     </select>
                   </div>
 
                   {/* Notes */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Notes (Optional)</label>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">
+                      📝 Notes (Optional)
+                    </label>
                     <input
                       type="text"
                       value={paymentNotes}
                       onChange={(e) => setPaymentNotes(e.target.value)}
-                      placeholder="Add any notes"
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:outline-none transition-colors"
+                      placeholder="Add any payment notes or reference..."
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:outline-none transition-all duration-300"
                     />
                   </div>
                 </div>
 
-                <button
+                <motion.button
                   type="submit"
-                  className="w-full px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-lg font-semibold transition-all duration-300"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full px-6 py-4 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 text-white rounded-xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-2xl uppercase tracking-wider"
                 >
-                  Record Payment
-                </button>
+                  ✓ Record Payment
+                </motion.button>
               </form>
             </motion.div>
 
@@ -612,33 +756,61 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white p-6 rounded-xl shadow-lg"
+                className="bg-white rounded-2xl shadow-md p-6 sm:p-8 border border-gray-100"
               >
-                <h2 className="text-xl font-bold mb-6">Recent Payments</h2>
-                <div className="space-y-3">
-                  {payments.slice(-10).reverse().map(payment => {
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="w-12 h-12 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-xl flex items-center justify-center">
+                    <FileText className="w-6 h-6 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Recent Payments</h2>
+                    <p className="text-sm text-gray-500 mt-1">Last 10 payment transactions</p>
+                  </div>
+                </div>
+                <div className="space-y-3 max-h-[50vh] overflow-y-auto scrollbar-hover">
+                  {payments.slice(-10).reverse().map((payment, index) => {
                     const patient = patients.find(p => String(p.id) === String(payment.patientId));
                     return (
-                      <div key={payment.id} className="p-4 bg-gray-50 rounded-lg border-l-4 border-emerald-500">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="font-medium">{patient?.name || 'Unknown Patient'}</p>
-                            <p className="text-sm text-gray-600">
-                              {formatToDD_MM_YYYY(payment.paymentDate)} • {payment.paymentMethod.replace('_', ' ')}
-                            </p>
-                            {payment.notes && <p className="text-sm text-gray-700 mt-1">Note: {payment.notes}</p>}
-                            <p className="text-xs text-gray-500 mt-1">Recorded by: {payment.recordedBy}</p>
+                      <motion.div
+                        key={payment.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="group p-5 bg-gradient-to-r from-slate-50 to-emerald-50 rounded-xl border-l-4 border-emerald-500 hover:from-emerald-50 hover:to-teal-50 transition-all duration-300 border border-emerald-100 hover:border-emerald-300"
+                      >
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-3">
+                              <div className="w-10 h-10 bg-gradient-to-br from-emerald-200 to-teal-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <Plus className="w-5 h-5 text-emerald-700" />
+                              </div>
+                              <div>
+                                <p className="font-bold text-gray-900">{patient?.name || 'Unknown Patient'}</p>
+                                <p className="text-sm text-gray-600 mt-1">
+                                  📅 {formatToDD_MM_YYYY(payment.paymentDate)} • 
+                                  <span className="ml-1 font-medium">{payment.paymentMethod.replace(/_/g, ' ').toUpperCase()}</span>
+                                </p>
+                              </div>
+                            </div>
+                            {payment.notes && (
+                              <p className="text-sm text-gray-700 px-13">📝 {payment.notes}</p>
+                            )}
+                            <p className="text-xs text-gray-500 mt-2 px-13">Recorded by: {payment.recordedBy}</p>
                           </div>
-                          <div className="text-right">
-                            <p className="text-lg font-semibold text-emerald-600">
+                          <div className="text-right flex-shrink-0">
+                            <p className="text-3xl font-bold text-emerald-600 mb-2">
                               +₱{payment.amount.toLocaleString('en-US')}
                             </p>
-                            <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded inline-block mt-1 capitalize">
-                              {payment.status}
+                            <span className={`text-xs font-bold px-3 py-1.5 rounded-full inline-block uppercase tracking-wider ${
+                              payment.status === 'paid'
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-gray-100 text-gray-700'
+                            }`}>
+                              {payment.status === 'paid' ? '✓ Paid' : 'Pending'}
                             </span>
                           </div>
                         </div>
-                      </div>
+                      </motion.div>
                     );
                   })}
                 </div>

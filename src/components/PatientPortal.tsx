@@ -88,6 +88,12 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
   const [referrals, setReferrals] = useState<any[]>([]);
   const [prescriptions, setPrescriptions] = useState<any[]>([]);
   const [isLoadingForms, setIsLoadingForms] = useState(false);
+  
+  // Referral file upload state
+  const [referralFiles, setReferralFiles] = useState<any[]>(patient.referralFiles || []);
+  const [showReferralUploadModal, setShowReferralUploadModal] = useState(false);
+  const [isUploadingReferral, setIsUploadingReferral] = useState(false);
+  const [referralUploadFiles, setReferralUploadFiles] = useState<File[]>([]);
 
   const checkUsernameAvailability = async (username: string) => {
     if (username.trim().length < 3) {
@@ -195,6 +201,94 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
     }, 500);
     
     setUsernameCheckTimeout(timeout);
+  };
+
+  // Referral file upload handlers
+  const handleReferralFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const validFiles = Array.from(files).filter(file => {
+        const isValidType = file.type.startsWith('image/') || file.type === 'application/pdf' || file.type.includes('document') || file.type.includes('word') || file.type.includes('sheet');
+        if (!isValidType) {
+          toast.error(`File ${file.name} is not supported. Please upload image or PDF files only.`);
+          return false;
+        }
+        return true;
+      });
+      setReferralUploadFiles(prev => [...prev, ...validFiles]);
+    }
+  };
+
+  const handleReferralFileUpload = async () => {
+    if (referralUploadFiles.length === 0) {
+      toast.error('Please select at least one file to upload');
+      return;
+    }
+
+    setIsUploadingReferral(true);
+    try {
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Authorization': `Bearer ${token}`
+      };
+
+      for (const file of referralUploadFiles) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('patientId', String(patient.id));
+        formData.append('fileType', file.type.startsWith('image/') ? 'image' : 'pdf');
+
+        const response = await fetch(`${API_BASE}/referrals/upload`, {
+          method: 'POST',
+          headers,
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to upload ${file.name}`);
+        }
+
+        const uploadedFile = await response.json();
+        setReferralFiles(prev => [...prev, uploadedFile]);
+      }
+
+      toast.success('Referral file(s) uploaded successfully!');
+      setReferralUploadFiles([]);
+      setShowReferralUploadModal(false);
+      
+      // Update patient with referral files
+      if (onUpdatePatient) {
+        onUpdatePatient({
+          ...patient,
+          referralFiles
+        });
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to upload referral file');
+    } finally {
+      setIsUploadingReferral(false);
+    }
+  };
+
+  const handleRemoveReferralFile = async (fileId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/referrals/file/${fileId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete file');
+      }
+
+      setReferralFiles(prev => prev.filter(f => f.id !== fileId));
+      toast.success('File deleted successfully');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to delete file');
+    }
   };
 
   // Helper function to get queue number and list
@@ -1385,8 +1479,124 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                       )}
                     </div>
 
+                    {/* Referral Upload Section - Only for Referred Patients */}
+                    {patient.patientType === 'referred' && (
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                          <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                            Upload Referral Document
+                          </span>
+                        </h3>
+                        <div className="p-6 border-2 border-dashed border-purple-300 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50">
+                          <div className="text-center mb-4">
+                            <Upload className="w-12 h-12 mx-auto mb-2 text-purple-500" />
+                            <h4 className="text-sm font-semibold text-gray-800 mb-1">Upload your referral document</h4>
+                            <p className="text-xs text-gray-600 mb-3">Upload the referral from the doctor/dentist who referred you to Doc Maaño</p>
+                          </div>
+
+                          {referralFiles.length > 0 && (
+                            <div className="mb-4 space-y-2">
+                              <p className="text-sm font-semibold text-gray-700">Uploaded Files:</p>
+                              {referralFiles.map(file => (
+                                <div key={file.id} className="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
+                                  <div className="flex items-center gap-2 flex-1">
+                                    {file.fileType === 'image' ? (
+                                      <Camera className="w-4 h-4 text-blue-500" />
+                                    ) : (
+                                      <FileText className="w-4 h-4 text-red-500" />
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm text-gray-800 truncate">{file.fileName}</p>
+                                      <p className="text-xs text-gray-500">
+                                        Uploaded: {new Date(file.uploadedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <button
+                                    onClick={() => handleRemoveReferralFile(file.id)}
+                                    className="ml-2 p-2 hover:bg-red-50 rounded text-red-600 transition-colors"
+                                    title="Delete file"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="flex gap-2 justify-center">
+                            <button
+                              onClick={() => setShowReferralUploadModal(!showReferralUploadModal)}
+                              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 text-sm font-medium"
+                            >
+                              <Plus className="w-4 h-4" />
+                              {showReferralUploadModal ? 'Cancel' : 'Select Files'}
+                            </button>
+                          </div>
+
+                          {showReferralUploadModal && (
+                            <div className="mt-4 space-y-3">
+                              <div className="border-2 border-gray-200 rounded-lg p-4 text-center cursor-pointer hover:border-purple-400 hover:bg-white transition-colors">
+                                <input
+                                  type="file"
+                                  id="referral-file-input"
+                                  multiple
+                                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                                  onChange={handleReferralFileSelect}
+                                  className="hidden"
+                                />
+                                <label htmlFor="referral-file-input" className="cursor-pointer block">
+                                  <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                                  <p className="text-sm text-gray-600 font-medium">Click to select or drag files</p>
+                                  <p className="text-xs text-gray-500">PNG, JPG, PDF, DOC, DOCX up to 10MB</p>
+                                </label>
+                              </div>
+
+                              {referralUploadFiles.length > 0 && (
+                                <>
+                                  <div className="space-y-2">
+                                    <p className="text-sm font-semibold text-gray-700">Files to upload:</p>
+                                    {referralUploadFiles.map((file, idx) => (
+                                      <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-200">
+                                        <span className="text-sm text-gray-700">{file.name}</span>
+                                        <button
+                                          type="button"
+                                          onClick={() => setReferralUploadFiles(prev => prev.filter((_, i) => i !== idx))}
+                                          className="text-red-600 hover:text-red-800 transition-colors"
+                                        >
+                                          <X className="w-4 h-4" />
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
+
+                                  <button
+                                    onClick={handleReferralFileUpload}
+                                    disabled={isUploadingReferral}
+                                    className="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 transition-colors flex items-center justify-center gap-2 font-medium text-sm"
+                                  >
+                                    {isUploadingReferral ? (
+                                      <>
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                        Uploading...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Check className="w-4 h-4" />
+                                        Upload {referralUploadFiles.length} File{referralUploadFiles.length !== 1 ? 's' : ''}
+                                      </>
+                                    )}
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Empty State */}
-                    {referrals.length === 0 && prescriptions.length === 0 && (
+                    {referrals.length === 0 && prescriptions.length === 0 && patient.patientType !== 'referred' && (
                       <div className="text-center py-12 text-gray-500">
                         <FileText className="w-12 h-12 mx-auto mb-3 text-gray-400" />
                         <p>No forms available yet</p>

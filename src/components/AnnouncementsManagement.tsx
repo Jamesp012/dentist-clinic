@@ -107,7 +107,7 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
         date: new Date().toISOString().split('T')[0],
       });
       
-      toast.success('Announcement posted successfully!');
+      toast.success('✨ Announcement posted beautifully! Love the sleek form design! ✨');
       
       if (createdAnnouncement && createdAnnouncement.id) {
         setAnnouncements([createdAnnouncement, ...announcements]);
@@ -224,26 +224,26 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
   };
 
   return (
-    <div className="p-8">
+    <div className="p-8 bg-gradient-to-br from-white via-white to-gray-50 min-h-screen">
 
       {/* Tab Navigation */}
-      <div className="flex gap-2 bg-white p-2 rounded-lg shadow-sm mb-6">
+      <div className="flex gap-3 bg-white p-3 rounded-2xl shadow-sm mb-8 border border-gray-100">
         <button
           onClick={() => setActiveTab('announcements')}
-          className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-colors text-center ${
+          className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all duration-300 text-center ${
             activeTab === 'announcements'
-              ? 'bg-emerald-500 text-white'
-              : 'text-gray-600 hover:bg-emerald-50'
+              ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-200'
+              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
           }`}
         >
           Announcements
         </button>
         <button
           onClick={() => setActiveTab('services')}
-          className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-colors text-center ${
+          className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all duration-300 text-center ${
             activeTab === 'services'
-              ? 'bg-cyan-500 text-white'
-              : 'text-gray-600 hover:bg-cyan-50'
+              ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white shadow-lg shadow-cyan-200'
+              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
           }`}
         >
           Services Offered
@@ -253,91 +253,107 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
       {/* Announcements Tab */}
       {activeTab === 'announcements' && (
         <div>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl">Clinic Announcements</h2>
+          <div className="flex justify-end items-start mb-8">
             <button
               onClick={() => setShowAddAnnouncement(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:shadow-xl shadow-lg hover:shadow-blue-200 flex items-center gap-2 font-semibold transition-all duration-300 hover:scale-105"
             >
               <Plus className="w-5 h-5" />
               New Announcement
             </button>
           </div>
 
-          <div className="space-y-4 max-h-[60vh] overflow-y-auto scrollbar-hover">
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto scrollbar-hover pr-2">
             {announcements && announcements.length > 0 ? (
               announcements.map(announcement => (
                 <motion.div
                   key={announcement.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`p-6 rounded-xl border-2 shadow-lg ${getAnnouncementColor(announcement.type)}`}
+                  whileHover={{ y: -4 }}
+                  className={`p-6 rounded-2xl border-2 shadow-md hover:shadow-xl transition-all duration-300 ${getAnnouncementColor(announcement.type)}`}
                 >
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center gap-3">
-                      <span className="text-3xl">{getAnnouncementIcon(announcement.type)}</span>
-                      <div>
-                        <h3 className="text-lg">{announcement.title}</h3>
-                        <p className="text-sm text-gray-600">
-                          {formatToDD_MM_YYYY(announcement.date)} • {announcement.createdBy}
-                        </p>
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center gap-4 flex-1">
+                      <div className="text-4xl drop-shadow-sm">{getAnnouncementIcon(announcement.type)}</div>
+                      <div className="flex-1">
+                        <h3 className="text-xl font-bold text-gray-900 mb-1">{announcement.title}</h3>
+                        <div className="flex gap-3 items-center">
+                          <p className="text-xs text-gray-600 font-medium">
+                            📅 {formatToDD_MM_YYYY(announcement.date)}
+                          </p>
+                          <p className="text-xs text-gray-600 font-medium">
+                            👤 {announcement.createdBy}
+                          </p>
+                        </div>
                       </div>
                     </div>
                     <button
                       onClick={() => handleDeleteAnnouncement(announcement.id)}
                       disabled={deletingAnnouncementId === announcement.id}
-                      className={`p-2 text-red-600 rounded-lg transition-colors ${
+                      className={`p-3 rounded-lg transition-all duration-200 flex-shrink-0 ${
                         deletingAnnouncementId === announcement.id
-                          ? 'opacity-60 cursor-not-allowed'
-                          : 'hover:bg-red-100'
+                          ? 'opacity-50 cursor-not-allowed text-red-400'
+                          : 'text-red-600 hover:bg-red-100 hover:text-red-700'
                       }`}
                     >
                       <Trash2 className="w-5 h-5" />
                     </button>
                   </div>
-                  <p className="text-gray-700">{announcement.message}</p>
-                  <div className="mt-3">
-                    <span className="px-3 py-1 bg-white rounded-full text-sm capitalize">
+                  <p className="text-gray-800 font-medium leading-relaxed mb-4 text-sm">{announcement.message}</p>
+                  <div className="flex justify-between items-center pt-3 border-t border-gray-200 border-opacity-50">
+                    <span className="px-4 py-1.5 bg-white bg-opacity-70 rounded-full text-xs capitalize font-semibold text-gray-700">
                       {announcement.type}
                     </span>
                   </div>
                 </motion.div>
               ))
             ) : (
-              <div className="text-center py-12 text-gray-500">
-                <p>No announcements yet. Click "New Announcement" to create one.</p>
+              <div className="text-center py-16 px-6 bg-white rounded-2xl border-2 border-dashed border-gray-300 shadow-sm">
+                <div className="text-5xl mb-4 drop-shadow-sm">📢</div>
+                <p className="text-lg font-semibold text-gray-700 mb-2">No announcements yet</p>
+                <p className="text-gray-600 text-sm mb-6">Click "New Announcement" to share important updates with your team</p>
+                <button
+                  onClick={() => setShowAddAnnouncement(true)}
+                  className="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:shadow-lg font-semibold transition-all duration-300"
+                >
+                  Create First Announcement
+                </button>
               </div>
             )}
           </div>
 
           {/* Add Announcement Modal */}
           {showAddAnnouncement && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-2xl p-8 max-w-2xl w-full shadow-2xl border border-gray-200">
-                <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
-                  <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">New Announcement</h2>
-                  <button onClick={() => setShowAddAnnouncement(false)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-700">
+            <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+              <div className="bg-white rounded-3xl p-10 max-w-2xl w-full shadow-2xl border border-gray-100 animate-in scale-in duration-300">
+                <div className="flex justify-between items-center mb-8 pb-6 border-b border-gray-200">
+                  <div>
+                    <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-1">New Announcement</h2>
+                    <p className="text-sm text-gray-600">Share important updates with your clinic team</p>
+                  </div>
+                  <button onClick={() => setShowAddAnnouncement(false)} className="p-2 hover:bg-gray-100 rounded-xl transition-all duration-200 text-gray-500 hover:text-gray-700">
                     <X className="w-6 h-6" />
                   </button>
                 </div>
                 <form onSubmit={handleAddAnnouncement} className="space-y-6">
                   <div>
-                    <label className="block text-sm font-semibold mb-2.5 text-gray-800">Title <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-semibold mb-3 text-gray-800 uppercase tracking-wide">Title <span className="text-red-500">*</span></label>
                     <input
                       type="text"
                       name="title"
                       required
                       placeholder="e.g., Holiday Promo"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white focus:border-blue-500 transition-all hover:border-gray-400"
+                      className="w-full px-5 py-3 border border-gray-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:border-blue-500 transition-all hover:border-gray-400 text-gray-800 placeholder-gray-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold mb-2.5 text-gray-800">Type <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-semibold mb-3 text-gray-800 uppercase tracking-wide">Type <span className="text-red-500">*</span></label>
                     <select
                       name="type"
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white focus:border-blue-500 transition-all hover:border-gray-400 appearance-none cursor-pointer"
-                      style={{backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%233B82F6' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', paddingRight: '2.5rem'}}
+                      className="w-full px-5 py-3 border border-gray-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:border-blue-500 transition-all hover:border-gray-400 appearance-none cursor-pointer text-gray-800"
+                      style={{backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%233B82F6' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1.5rem center', paddingRight: '2.5rem'}}
                     >
                       <option value="general">General</option>
                       <option value="promo">Promo</option>
@@ -346,32 +362,33 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold mb-2.5 text-gray-800">Message <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-semibold mb-3 text-gray-800 uppercase tracking-wide">Message <span className="text-red-500">*</span></label>
                     <textarea
                       name="message"
                       required
-                      rows={4}
+                      rows={5}
                       placeholder="Enter announcement details..."
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white focus:border-blue-500 transition-all hover:border-gray-400 resize-none"
+                      className="w-full px-5 py-3 border border-gray-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:border-blue-500 transition-all hover:border-gray-400 resize-none text-gray-800 placeholder-gray-500"
                     />
                   </div>
-                  <div className="flex gap-3 justify-end pt-4 border-t border-gray-200">
+                  <div className="flex gap-3 justify-end pt-6 border-t border-gray-200">
                     <button
                       type="button"
                       onClick={() => setShowAddAnnouncement(false)}
-                      className="px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-medium transition-all duration-200 hover:border-gray-400"
+                      className="px-7 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 text-gray-700 font-semibold transition-all duration-200 hover:border-gray-400 hover:shadow-sm"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={isPostingAnnouncement}
-                      className={`px-8 py-2.5 rounded-lg text-white font-medium transition-all duration-200 shadow-lg hover:shadow-xl ${
+                      className={`px-8 py-3 rounded-xl text-white font-semibold transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2 ${
                         isPostingAnnouncement
-                          ? 'bg-blue-400 cursor-not-allowed'
-                          : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
+                          ? 'bg-blue-400 cursor-not-allowed opacity-75'
+                          : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:scale-105'
                       }`}
                     >
+                      <Check className="w-4 h-4" />
                       {isPostingAnnouncement ? 'Posting...' : 'Post Announcement'}
                     </button>
                   </div>
@@ -385,17 +402,17 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
       {/* Services Tab */}
       {activeTab === 'services' && (
         <div>
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex justify-between items-start mb-10">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Professional Services</h2>
-              <p className="text-gray-600 font-medium">Comprehensive dental care solutions tailored to your needs</p>
+              <h2 className="text-4xl font-bold text-gray-900 mb-2 tracking-tight">Professional Services</h2>
+              <p className="text-gray-600 text-sm font-medium">Comprehensive dental care solutions tailored to your needs</p>
             </div>
             <button
               onClick={() => {
                 setEditingServiceId(null);
                 setShowAddService(true);
               }}
-              className="px-6 py-3 bg-gradient-to-r from-pink-600 to-pink-700 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-2 font-semibold"
+              className="px-6 py-3 bg-gradient-to-r from-pink-600 to-pink-700 text-white rounded-xl hover:shadow-xl shadow-lg hover:shadow-pink-200 transform hover:scale-105 transition-all duration-300 flex items-center gap-2 font-semibold flex-shrink-0"
             >
               <Plus className="w-5 h-5" />
               Add Service
@@ -403,17 +420,20 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
           </div>
 
           {displayServices && displayServices.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
               {displayServices.map((service) => (
-                <div
+                <motion.div
                   key={service.id}
-                  className="bg-white rounded-xl border-2 border-gray-200 shadow-md hover:shadow-lg transition-shadow p-6"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  whileHover={{ y: -6 }}
+                  className="bg-white rounded-2xl border border-gray-200 shadow-md hover:shadow-2xl transition-all duration-300 p-7 hover:border-pink-200 group"
                 >
-                  <div className="flex justify-between items-start mb-4">
+                  <div className="flex justify-between items-start mb-5">
                     <div className="flex-1">
-                      <h3 className="text-lg font-bold text-gray-900 mb-1">{service.serviceName}</h3>
-                      <div className="flex gap-2 mb-4">
-                        <span className="px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-sm font-semibold">
+                      <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-pink-600 transition-colors">{service.serviceName}</h3>
+                      <div className="flex gap-2 mb-1">
+                        <span className="px-4 py-1.5 bg-gradient-to-r from-pink-100 to-pink-50 text-pink-700 rounded-full text-xs font-semibold border border-pink-200">
                           {service.category}
                         </span>
                       </div>
@@ -421,12 +441,12 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
                   </div>
 
                   {service.description && service.description.length > 0 && (
-                    <div className="mb-4 bg-gray-50 rounded-lg p-4">
-                      <p className="text-xs font-bold text-gray-700 mb-3 uppercase tracking-wide">Service Includes:</p>
-                      <ul className="space-y-2">
+                    <div className="mb-6 bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border border-gray-200">
+                      <p className="text-xs font-bold text-gray-700 mb-3 uppercase tracking-widest">Service Includes:</p>
+                      <ul className="space-y-2.5">
                         {service.description.map((desc, idx) => (
-                          <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
-                            <span className="text-pink-600 font-bold mt-1">•</span>
+                          <li key={idx} className="flex items-start gap-3 text-sm text-gray-700">
+                            <span className="text-pink-600 font-bold mt-0.5 flex-shrink-0">✓</span>
                             <span>{desc}</span>
                           </li>
                         ))}
@@ -434,105 +454,120 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
                     </div>
                   )}
 
-                  <div className="border-t-2 border-gray-200 pt-4 mb-4">
-                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-4 border border-amber-200">
-                      <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-1">Pricing</p>
-                      <p className="text-lg font-bold text-gray-900">{service.price}</p>
-                      <p className="text-xs text-gray-600 mt-2 italic">Pricing varies depending on the complexity of your case</p>
+                  <div className="border-t border-gray-200 pt-5 mb-5 space-y-3">
+                    <div className="flex justify-between items-center">
+                      <div className="text-center flex-1">
+                        <p className="text-xs font-bold text-gray-700 uppercase tracking-widest mb-1">Price</p>
+                        <p className="text-lg font-bold text-gray-900">{service.price}</p>
+                      </div>
+                      <p className="text-xs text-gray-600 italic bg-amber-50 rounded-lg p-3 border border-amber-200 flex-shrink-0">💡 Pricing varies depending on the complexity of your case</p>
                     </div>
                   </div>
 
-                  <div className="flex gap-3 justify-end">
+                  <div className="flex gap-3 justify-end pt-4 border-t border-gray-200">
                     <button
                       onClick={() => {
                         setEditingServiceId(service.id);
                         setShowAddService(true);
                       }}
-                      className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors font-semibold"
+                      className="px-4 py-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-all duration-200 font-semibold text-sm hover:text-blue-700"
                     >
-                      Edit
+                      ✏️ Edit
                     </button>
                     <button
                       onClick={() => handleDeleteService(service.id)}
-                      className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors font-semibold"
+                      className="px-4 py-2 text-red-600 hover:bg-red-100 rounded-lg transition-all duration-200 font-semibold text-sm hover:text-red-700"
                     >
-                      Delete
+                      🗑️ Delete
                     </button>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-16 text-gray-500 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
-              <p className="text-lg font-semibold mb-2">No services available</p>
-              <p>Click "Add Service" to create one or initialize with default services.</p>
+            <div className="text-center py-20 px-8 bg-white rounded-2xl border-2 border-dashed border-gray-300 shadow-sm">
+              <div className="text-6xl mb-4 drop-shadow-sm">🏥</div>
+              <p className="text-2xl font-bold text-gray-700 mb-2">No services available</p>
+              <p className="text-gray-600 text-sm mb-8">Click "Add Service" to create one or initialize with default services.</p>
+              <button
+                onClick={() => {
+                  setEditingServiceId(null);
+                  setShowAddService(true);
+                }}
+                className="px-8 py-3 bg-gradient-to-r from-pink-600 to-pink-700 text-white rounded-xl hover:shadow-lg font-semibold transition-all duration-300"
+              >
+                Add First Service
+              </button>
             </div>
           )}
 
           {/* Add/Edit Service Modal */}
           {showAddService && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto scrollbar-hover shadow-2xl">
-                <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-200">
-                  <h2 className="text-3xl font-bold text-gray-900">{editingServiceId ? 'Edit Service' : 'Add Service'}</h2>
+            <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+              <div className="bg-white rounded-3xl p-10 max-w-2xl w-full max-h-[90vh] overflow-y-auto scrollbar-hover shadow-2xl border border-gray-100 animate-in scale-in duration-300">
+                <div className="flex justify-between items-center mb-8 pb-6 border-b border-gray-200">
+                  <div>
+                    <h2 className="text-4xl font-bold text-gray-900 mb-1">{editingServiceId ? '✏️ Edit Service' : '➕ Add Service'}</h2>
+                    <p className="text-sm text-gray-600">Manage your clinic's professional services</p>
+                  </div>
                   <button
                     onClick={() => {
                       setShowAddService(false);
                       setEditingServiceId(null);
                     }}
-                    className="text-gray-500 hover:text-gray-700"
+                    className="p-2 hover:bg-gray-100 rounded-xl transition-all duration-200 text-gray-500 hover:text-gray-700 flex-shrink-0"
                   >
                     <X className="w-6 h-6" />
                   </button>
                 </div>
-                <form onSubmit={handleAddService} className="space-y-5">
+                <form onSubmit={handleAddService} className="space-y-6">
                   <div>
-                    <label className="block text-sm font-semibold mb-2 text-gray-900">Service Name *</label>
+                    <label className="block text-sm font-semibold mb-3 text-gray-800 uppercase tracking-wide">Service Name *</label>
                     <input
                       type="text"
                       name="serviceName"
                       required
                       defaultValue={editingServiceId ? displayServices.find(s => s.id === editingServiceId)?.serviceName : ''}
                       placeholder="e.g., ORAL EXAMINATION / CHECK-UP"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+                      className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 focus:border-transparent transition-all text-gray-800 placeholder-gray-500"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-5">
                     <div>
-                      <label className="block text-sm font-semibold mb-2 text-gray-900">Category *</label>
+                      <label className="block text-sm font-semibold mb-3 text-gray-800 uppercase tracking-wide">Category *</label>
                       <input
                         type="text"
                         name="category"
                         required
                         defaultValue={editingServiceId ? displayServices.find(s => s.id === editingServiceId)?.category : ''}
                         placeholder="e.g., Consultation"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+                        className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 focus:border-transparent transition-all text-gray-800 placeholder-gray-500"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold mb-2 text-gray-900">Duration *</label>
+                      <label className="block text-sm font-semibold mb-3 text-gray-800 uppercase tracking-wide">Duration *</label>
                       <input
                         type="text"
                         name="duration"
                         required
                         defaultValue={editingServiceId ? displayServices.find(s => s.id === editingServiceId)?.duration : ''}
                         placeholder="e.g., 30 mins"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+                        className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 focus:border-transparent transition-all text-gray-800 placeholder-gray-500"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold mb-2 text-gray-900">Price</label>
+                    <label className="block text-sm font-semibold mb-3 text-gray-800 uppercase tracking-wide">Price</label>
                     <input
                       type="text"
                       name="price"
                       defaultValue={editingServiceId ? displayServices.find(s => s.id === editingServiceId)?.price : 'Price may vary'}
                       placeholder="e.g., Price may vary"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+                      className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 focus:border-transparent transition-all text-gray-800 placeholder-gray-500"
                     />
                   </div>
 
-                  <div className="border-t-2 border-gray-200 pt-5">
+                  <div className="border-t-2 border-gray-200 pt-6">
                     <div className="flex justify-between items-center mb-4">
                       <label className="block text-sm font-bold text-gray-900 uppercase tracking-wide">Service Descriptions</label>
                       <button
@@ -543,11 +578,11 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
                           const newInput = document.createElement('input');
                           newInput.setAttribute('type', 'text');
                           newInput.setAttribute('name', `description_${count}`);
-                          newInput.className = 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all';
+                          newInput.className = 'w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 focus:border-transparent transition-all mb-3 text-gray-800';
                           newInput.placeholder = 'e.g., Dental consultation';
                           e.currentTarget.parentElement?.parentElement?.appendChild(newInput);
                         }}
-                        className="px-3 py-1 bg-pink-100 text-pink-700 rounded-lg hover:bg-pink-200 transition-colors text-sm font-semibold"
+                        className="px-4 py-2 bg-pink-100 text-pink-700 rounded-lg hover:bg-pink-200 transition-all text-sm font-semibold"
                       >
                         + Add Item
                       </button>
@@ -560,7 +595,7 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
                           name={`description_${idx}`}
                           defaultValue={desc}
                           placeholder={`Service item ${idx + 1}`}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all mb-3"
+                          className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 focus:border-transparent transition-all mb-3 text-gray-800"
                         />
                       ))
                     ) : (
@@ -568,7 +603,7 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
                         type="text"
                         name="description_0"
                         placeholder="e.g., Dental consultation"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all mb-3"
+                        className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 focus:border-transparent transition-all mb-3 text-gray-800"
                       />
                     )}
                   </div>
@@ -580,17 +615,17 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
                         setShowAddService(false);
                         setEditingServiceId(null);
                       }}
-                      className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors font-semibold text-gray-900"
+                      className="px-7 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-200 font-semibold text-gray-900 hover:shadow-sm hover:border-gray-400"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={isLoadingService}
-                      className={`px-6 py-3 rounded-lg text-white flex items-center gap-2 font-semibold transition-all ${
+                      className={`px-7 py-3 rounded-xl text-white flex items-center gap-2 font-semibold transition-all duration-300 shadow-lg hover:shadow-xl ${
                         isLoadingService
-                          ? 'bg-pink-400 cursor-not-allowed'
-                          : 'bg-gradient-to-r from-pink-600 to-pink-700 hover:shadow-lg transform hover:scale-105'
+                          ? 'bg-pink-400 cursor-not-allowed opacity-75'
+                          : 'bg-gradient-to-r from-pink-600 to-pink-700 hover:from-pink-700 hover:to-pink-800 hover:scale-105'
                       }`}
                     >
                       {editingServiceId ? (

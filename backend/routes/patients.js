@@ -35,10 +35,10 @@ router.get('/:id', authMiddleware, async (req, res) => {
 // Create patient
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { name, dateOfBirth, phone, email, address, sex, medicalHistory, allergies, profilePhoto } = req.body;
+    const { name, dateOfBirth, phone, email, address, sex, medicalHistory, allergies, profilePhoto, patientType, hasExistingRecord } = req.body;
     const [result] = await pool.query(
-      'INSERT INTO patients (name, dateOfBirth, phone, email, address, sex, medicalHistory, allergies, profilePhoto) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [name, dateOfBirth, phone, email, address, sex, medicalHistory || '', allergies || '', profilePhoto || null]
+      'INSERT INTO patients (name, dateOfBirth, phone, email, address, sex, medicalHistory, allergies, profilePhoto, patientType, hasExistingRecord) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [name, dateOfBirth, phone, email, address, sex, medicalHistory || '', allergies || '', profilePhoto || null, patientType || 'direct', hasExistingRecord || false]
     );
     res.status(201).json({ id: result.insertId, ...req.body });
   } catch (error) {
@@ -49,7 +49,7 @@ router.post('/', authMiddleware, async (req, res) => {
 // Update patient
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
-    const { name, dateOfBirth, phone, email, address, sex, medicalHistory, allergies, profilePhoto } = req.body;
+    const { name, dateOfBirth, phone, email, address, sex, medicalHistory, allergies, profilePhoto, patientType, hasExistingRecord } = req.body;
     
     console.log('=== UPDATE PATIENT ===');
     console.log('Patient ID:', req.params.id);
@@ -59,8 +59,8 @@ router.put('/:id', authMiddleware, async (req, res) => {
     console.log('ProfilePhoto starts with:', profilePhoto ? profilePhoto.substring(0, 50) : 'N/A');
     
     const result = await pool.query(
-      'UPDATE patients SET name=?, dateOfBirth=?, phone=?, email=?, address=?, sex=?, medicalHistory=?, allergies=?, profilePhoto=? WHERE id=?',
-      [name, dateOfBirth, phone, email, address, sex, medicalHistory, allergies, profilePhoto || null, req.params.id]
+      'UPDATE patients SET name=?, dateOfBirth=?, phone=?, email=?, address=?, sex=?, medicalHistory=?, allergies=?, profilePhoto=?, patientType=?, hasExistingRecord=? WHERE id=?',
+      [name, dateOfBirth, phone, email, address, sex, medicalHistory, allergies, profilePhoto || null, patientType || 'direct', hasExistingRecord || false, req.params.id]
     );
     
     console.log('Update result - Rows affected:', result[0].affectedRows);

@@ -157,7 +157,8 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
         selectedServices: referralType === 'doctor' ? selectedServices : selectedXrayItems,
         date: formData.date,
         urgency: formData.urgency,
-        createdByRole: 'staff'
+        createdByRole: 'staff',
+        referralType: 'outgoing' // Mark as outgoing referral (created by doctor)
       };
 
       // Include X-ray diagram data if it's an X-ray referral

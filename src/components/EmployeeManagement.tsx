@@ -12,6 +12,8 @@ type Employee = {
   email: string;
   address: string;
   dateHired: string;
+  dateOfBirth?: string;
+  sex?: 'Male' | 'Female';
   accessLevel?: 'Admin' | 'Super Admin' | 'Default Accounts';
   user_id?: number;
   username?: string;
@@ -49,15 +51,42 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
 
   const splitName = (fullName: string) => {
     // Split on internal delimiter (newline) to preserve spaces in names
-    if (fullName.includes('\n')) {
-      const [first, last] = fullName.split('\n');
-      return { first: first || '', last: last || '' };
+    // Format: first\nmiddle\nlast (or first\nlast for backward compatibility)
+    const parts = (fullName || '').split('\n').map(p => p || '');
+    
+    if (parts.length >= 3) {
+      // New format: first\nmiddle\nlast
+      return { first: parts[0], middle: parts[1], last: parts[2] };
+    } else if (parts.length === 2) {
+      // Old format: first\nlast (no middle name)
+      return { first: parts[0], middle: '', last: parts[1] };
+    } else {
+      // Fallback for space-separated format
+      const spaceParts = (fullName || '').trim().split(/\s+/).filter(Boolean);
+      const first = spaceParts.length > 0 ? spaceParts[0] : '';
+      const last = spaceParts.length > 1 ? spaceParts.slice(1).join(' ') : '';
+      return { first, middle: '', last };
     }
-    // Fallback for old format (space-separated)
-    const parts = (fullName || '').trim().split(/\s+/).filter(Boolean);
-    const first = parts.length > 0 ? parts[0] : '';
-    const last = parts.length > 1 ? parts.slice(1).join(' ') : '';
-    return { first, last };
+  };
+
+  const formatEmployeeName = (fullName: string): string => {
+    // Extract first, middle, and last name components
+    const { first, middle, last } = splitName(fullName);
+    
+    // Format: LASTNAME, Firstname Secondname M.I.
+    // Where M.I. is only the first letter of the middle name
+    const lastNameUpper = last.trim().toUpperCase();
+    const firstName = first.trim();
+    const middleInitial = middle.trim() ? middle.trim().charAt(0).toUpperCase() + '.' : '';
+    
+    // Build the formatted name
+    const parts = [firstName];
+    if (middleInitial) {
+      parts.push(middleInitial);
+    }
+    const displayName = parts.join(' ');
+    
+    return `${lastNameUpper}, ${displayName}`;
   };
 
   useEffect(() => {
@@ -98,9 +127,20 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
   });
 
   const sortedEmployees = [...filteredEmployees].sort((a, b) => {
-    const aLast = splitName(a.name).last.toLowerCase();
-    const bLast = splitName(b.name).last.toLowerCase();
-    return aLast.localeCompare(bLast);
+    const aParts = splitName(a.name);
+    const bParts = splitName(b.name);
+    
+    // Sort by last name first
+    const lastNameCompare = aParts.last.toLowerCase().localeCompare(bParts.last.toLowerCase());
+    if (lastNameCompare !== 0) return lastNameCompare;
+    
+    // If last names are equal, sort by first name
+    const firstNameCompare = aParts.first.toLowerCase().localeCompare(bParts.first.toLowerCase());
+    if (firstNameCompare !== 0) return firstNameCompare;
+    
+    // If first names are equal, sort by middle name
+    const middleNameCompare = aParts.middle.toLowerCase().localeCompare(bParts.middle.toLowerCase());
+    return middleNameCompare;
   });
 
   const handleAddEmployee = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -110,14 +150,17 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
     try {
       const formData = new FormData(form);
       const first = (formData.get('first_name') as string) || '';
+      const middle = (formData.get('middle_name') as string) || '';
       const last = (formData.get('last_name') as string) || '';
       const newEmployee = {
-        name: `${first}\n${last}`,
+        name: `${first}\n${middle}\n${last}`,
         position: formData.get('position') as string,
         phone: formData.get('phone') as string,
         email: formData.get('email') as string,
         address: formData.get('address') as string,
         dateHired: convertToDBDate(formData.get('dateHired') as string),
+        dateOfBirth: convertToDBDate(formData.get('dateOfBirth') as string),
+        sex: formData.get('sex') as 'Male' | 'Female',
         accessLevel: formData.get('accessLevel') as string,
       };
 
@@ -160,14 +203,17 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
     try {
       const formData = new FormData(e.currentTarget);
       const first = (formData.get('first_name') as string) || '';
+      const middle = (formData.get('middle_name') as string) || '';
       const last = (formData.get('last_name') as string) || '';
       const updatedEmployee = {
-        name: `${first}\n${last}`,
+        name: `${first}\n${middle}\n${last}`,
         position: formData.get('position') as string,
         phone: formData.get('phone') as string,
         email: formData.get('email') as string,
         address: formData.get('address') as string,
         dateHired: convertToDBDate(formData.get('dateHired') as string),
+        dateOfBirth: convertToDBDate(formData.get('dateOfBirth') as string),
+        sex: formData.get('sex') as 'Male' | 'Female',
         accessLevel: formData.get('accessLevel') as string,
       };
 
@@ -258,16 +304,6 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-cyan-50/40 flex flex-col flex-1">
       <div className="p-8 space-y-8 flex flex-col flex-1">
-        {/* Header Section */}
-        <div className="space-y-3">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 via-cyan-800 to-teal-700 bg-clip-text text-transparent">
-            Employee Management
-          </h1>
-          <p className="text-slate-600 font-medium text-sm tracking-wide">
-            Manage clinic staff, permissions, and access credentials
-          </p>
-        </div>
-
         {/* Search & Add Button */}
         <div className="relative flex items-center justify-between gap-4 sticky top-0 bg-gradient-to-b from-white/80 via-white/60 to-transparent backdrop-blur-lg z-30 -mx-8 px-8 py-4 mb-2">
           <div className="relative flex-1 group">
@@ -322,7 +358,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                   <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-10 gap-6 items-center">
                     <div className="xl:col-span-2">
                       <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Name</p>
-                      <p className="text-lg font-bold text-slate-900">{`${splitName(employee.name).first} ${splitName(employee.name).last}`.trim()}</p>
+                      <p className="text-lg font-bold text-slate-900">{formatEmployeeName(employee.name)}</p>
                     </div>
 
                     <div className="xl:col-span-1">
@@ -430,7 +466,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
               </button>
             </div>
             <form onSubmit={handleAddEmployee} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">First Name *</label>
                   <input
@@ -438,7 +474,16 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                     name="first_name"
                     required
                     className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
-                    placeholder="Juan"
+                    placeholder="Juan Miguel"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Middle Name</label>
+                  <input
+                    type="text"
+                    name="middle_name"
+                    className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
+                    placeholder="Santos"
                   />
                 </div>
                 <div>
@@ -464,6 +509,29 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                   <option value="assistant_dentist">Assistant Dentist</option>
                   <option value="assistant">Assistant</option>
                 </select>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Date of Birth</label>
+                  <input
+                    type="text"
+                    name="dateOfBirth"
+                    placeholder="DD/MM/YYYY"
+                    onInput={(e) => (e.target as HTMLInputElement).value = formatDateInput((e.target as HTMLInputElement).value)}
+                    className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Sex</label>
+                  <select
+                    name="sex"
+                    className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 shadow-sm hover:shadow-md cursor-pointer"
+                  >
+                    <option value="">Select sex</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                  </select>
+                </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -560,7 +628,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
               </button>
             </div>
             <form onSubmit={handleUpdateEmployee} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">First Name *</label>
                   <input
@@ -570,7 +638,18 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                     defaultValue={splitName(editingEmployee.name).first}
                     disabled={!canEditName}
                     className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
-                    placeholder="Juan"
+                    placeholder="Juan Miguel"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Middle Name</label>
+                  <input
+                    type="text"
+                    name="middle_name"
+                    defaultValue={splitName(editingEmployee.name).middle}
+                    disabled={!canEditName}
+                    className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
+                    placeholder="Santos"
                   />
                 </div>
                 <div>
@@ -599,6 +678,33 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                   <option value="assistant_dentist">Assistant Dentist</option>
                   <option value="assistant">Assistant</option>
                 </select>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Date of Birth</label>
+                  <input
+                    type="text"
+                    name="dateOfBirth"
+                    placeholder="DD/MM/YYYY"
+                    defaultValue={editingEmployee.dateOfBirth ? formatToDD_MM_YYYY(editingEmployee.dateOfBirth) : ''}
+                    disabled={!canEditName}
+                    onInput={(e) => (e.target as HTMLInputElement).value = formatDateInput((e.target as HTMLInputElement).value)}
+                    className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Sex</label>
+                  <select
+                    name="sex"
+                    defaultValue={editingEmployee.sex || ''}
+                    disabled={!canEditName}
+                    className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 shadow-sm hover:shadow-md cursor-pointer"
+                  >
+                    <option value="">Select sex</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                  </select>
+                </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
