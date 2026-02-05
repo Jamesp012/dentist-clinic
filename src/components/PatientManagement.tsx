@@ -35,33 +35,78 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
 
   const splitName = (fullName: string) => {
     // Split on internal delimiter (newline) to preserve spaces in names
+    // Format: first\nmiddle\nlast or first\nlast (for backward compatibility)
     if (fullName.includes('\n')) {
-      const [first, last] = fullName.split('\n');
-      return { first: first || '', last: last || '' };
+      const parts = fullName.split('\n');
+      if (parts.length === 3) {
+        // New format: first\nmiddle\nlast
+        return { first: parts[0] || '', middle: parts[1] || '', last: parts[2] || '' };
+      } else {
+        // Old format: first\nlast
+        return { first: parts[0] || '', middle: '', last: parts[1] || '' };
+      }
     }
-    // Fallback for old format (space-separated)
+    // Fallback for space-separated format
     const parts = (fullName || '').trim().split(/\s+/).filter(Boolean);
     const first = parts.length > 0 ? parts[0] : '';
     const last = parts.length > 1 ? parts.slice(1).join(' ') : '';
-    return { first, last };
+    return { first, middle: '', last };
+  };
+
+  // Format patient name as: LASTNAME, Firstname Middlename M.I.
+  const formatPatientName = (fullName: string): string => {
+    const { first, middle, last } = splitName(fullName);
+    const lastNameUpper = last.trim().toUpperCase();
+    const firstName = first.trim();
+    const middleInitial = middle.trim() ? middle.trim().charAt(0).toUpperCase() + '.' : '';
+    
+    // Build the formatted name
+    const parts = [firstName];
+    if (middleInitial) {
+      parts.push(middleInitial);
+    }
+    const displayName = parts.join(' ');
+    
+    return `${lastNameUpper}, ${displayName}`;
+  };
+
+  // Display name for sidebar (first and last only)
+  const getDisplayName = (fullName: string): string => {
+    const { first, last } = splitName(fullName);
+    return `${first} ${last}`.trim();
   };
 
   const filteredPatients = patients.filter(patient => {
     const { first, last } = splitName(patient.name);
     const term = searchTerm.toLowerCase();
+    const formattedName = formatPatientName(patient.name).toLowerCase();
+    
     return (
       first.toLowerCase().includes(term) ||
       last.toLowerCase().includes(term) ||
+      formattedName.includes(term) ||
       patient.email.toLowerCase().includes(term) ||
       patient.phone.includes(searchTerm)
     );
   });
 
-  // Sort by last name ascending
+  // Sort by last name, then by first name
   const sortedPatients = [...filteredPatients].sort((a, b) => {
-    const aLast = splitName(a.name).last.toLowerCase();
-    const bLast = splitName(b.name).last.toLowerCase();
-    return aLast.localeCompare(bLast);
+    const aName = splitName(a.name);
+    const bName = splitName(b.name);
+    const aLast = aName.last.toLowerCase();
+    const bLast = bName.last.toLowerCase();
+    
+    // First sort by last name
+    const lastNameCompare = aLast.localeCompare(bLast);
+    if (lastNameCompare !== 0) {
+      return lastNameCompare;
+    }
+    
+    // If last names are the same, sort by first name
+    const aFirst = aName.first.toLowerCase();
+    const bFirst = bName.first.toLowerCase();
+    return aFirst.localeCompare(bFirst);
   });
 
   const calculateAge = (dob: string) => {
@@ -82,9 +127,10 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
     try {
       const formData = new FormData(form);
       const first = (formData.get('first_name') as string) || '';
+      const middle = (formData.get('middle_name') as string) || '';
       const last = (formData.get('last_name') as string) || '';
       const newPatient = {
-        name: `${first}\n${last}`,
+        name: `${first}\n${middle}\n${last}`,
         dateOfBirth: convertToDBDate(formData.get('dateOfBirth') as string),
         sex: formData.get('sex') as 'Male' | 'Female',
         phone: formData.get('phone') as string,
@@ -118,10 +164,11 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
     try {
       const formData = new FormData(e.currentTarget);
       const first = (formData.get('first_name') as string) || '';
+      const middle = (formData.get('middle_name') as string) || '';
       const last = (formData.get('last_name') as string) || '';
       const updatedPatient = {
         ...editingPatient,
-        name: `${first}\n${last}`,
+        name: `${first}\n${middle}\n${last}`,
         dateOfBirth: convertToDBDate(formData.get('dateOfBirth') as string),
         sex: formData.get('sex') as 'Male' | 'Female',
         phone: formData.get('phone') as string,
@@ -225,7 +272,7 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
                     {/* Name Column */}
                     <div className="md:col-span-1">
                       <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Name</p>
-                      <p className="text-lg font-bold text-slate-900">{`${splitName(patient.name).first} ${splitName(patient.name).last}`.trim()}</p>
+                      <p className="text-lg font-bold text-slate-900">{formatPatientName(patient.name)}</p>
                     </div>
 
                     {/* Age Column */}
@@ -305,7 +352,7 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
               </button>
             </div>
             <form onSubmit={handleAddPatient} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">First Name *</label>
                   <input
@@ -314,6 +361,15 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
                     required
                     className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
                     placeholder="Juan"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Middle Name</label>
+                  <input
+                    type="text"
+                    name="middle_name"
+                    className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
+                    placeholder="Enrique"
                   />
                 </div>
                 <div>
@@ -449,7 +505,7 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
               </button>
             </div>
             <form onSubmit={handleUpdatePatient} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">First Name *</label>
                   <input
@@ -460,6 +516,17 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
                     disabled={!canEditName}
                     className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
                     placeholder="Juan"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 tracking-wide uppercase">Middle Name</label>
+                  <input
+                    type="text"
+                    name="middle_name"
+                    defaultValue={splitName(editingPatient.name).middle}
+                    disabled={!canEditName}
+                    className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm hover:shadow-md"
+                    placeholder="Enrique"
                   />
                 </div>
                 <div>
@@ -595,7 +662,7 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
               Are you sure you want to delete
             </p>
             <p className="text-center font-bold text-slate-900 mb-6">
-              {`${splitName(deletingPatient.name).first} ${splitName(deletingPatient.name).last}`.trim()}
+              {formatPatientName(deletingPatient.name)}
             </p>
             <p className="text-center text-sm text-red-600 mb-8 leading-relaxed">
               This action cannot be undone. All patient records and associated data will be permanently deleted.
@@ -643,7 +710,7 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
               {/* Name Card */}
               <div className="group bg-gradient-to-br from-emerald-50/80 to-teal-50/80 backdrop-blur-sm p-6 rounded-2xl border border-teal-200/40 hover:border-teal-300/60 transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-teal-500/10">
                 <label className="text-xs font-bold text-teal-700 uppercase tracking-widest mb-2 block">Full Name</label>
-                <p className="text-2xl font-bold text-slate-900">{`${splitName(viewingPatient.name).first} ${splitName(viewingPatient.name).last}`.trim()}</p>
+                <p className="text-2xl font-bold text-slate-900">{formatPatientName(viewingPatient.name)}</p>
               </div>
               
               {/* Age Card */}

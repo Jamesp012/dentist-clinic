@@ -43,6 +43,17 @@ type PatientPortalProps = {
 
 const API_BASE = 'http://localhost:5000/api';
 
+// Helper function to display user name (first and last only, no middle name)
+const getDisplayName = (fullName: string | undefined): string => {
+  if (!fullName) return '';
+  // Split by whitespace and take first and last names
+  const nameParts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (nameParts.length === 0) return '';
+  if (nameParts.length === 1) return nameParts[0];
+  // Return first and last name only
+  return `${nameParts[0]} ${nameParts[nameParts.length - 1]}`;
+};
+
 export function PatientPortal({ patient, appointments, setAppointments, treatmentRecords, onUpdatePatient, photos, setPhotos: _, announcements, payments, onLogout, onDataChanged, services = [], userRole }: PatientPortalProps) {
   const birthdatePickerRef = useRef<HTMLInputElement | null>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'appointments' | 'records' | 'photos' | 'balance' | 'care-guide' | 'announcements' | 'forms'>('profile');
@@ -680,7 +691,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
               onClick={() => setShowSettings(true)}
             >
               <div className="min-w-0">
-                <h1 className="text-lg font-semibold text-gray-800 whitespace-nowrap overflow-hidden text-ellipsis">{patient.name}</h1>
+                <h1 className="text-lg font-semibold text-gray-800 whitespace-nowrap overflow-hidden text-ellipsis">{getDisplayName(patient.name)}</h1>
                 <p className="text-xs text-gray-600 flex items-center gap-1 mt-1">
                   Patient
                   <Settings className="w-3 h-3" />
@@ -841,198 +852,262 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
               className="h-full"
             >
               {activeTab === 'profile' && (
-                <div className="p-8 space-y-6">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-bold text-slate-900 tracking-tight">
-                      Personal Information
-                    </h3>
-                  {!isEditing ? (
-                    <button
-                      onClick={() => setIsEditing(true)}
-                      className="px-4 py-2 bg-gradient-to-r from-[#07BEB8] to-[#3DCCC7] text-white rounded-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 font-medium"
-                    >
-                      <Edit className="w-4 h-4" />
-                      Edit Profile
-                    </button>
-                  ) : (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleSaveProfile}
-                        className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 font-medium"
-                      >
-                        <Save className="w-4 h-4" />
-                        Save
-                      </button>
-                      <button
-                        onClick={handleCancelEdit}
-                        className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2"
-                      >
-                        <XCircle className="w-4 h-4" />
-                        Cancel
-                      </button>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
-                    <p className="text-sm text-gray-600 mb-1">Full Name</p>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editedPatient.name}
-                        onChange={(e) => setEditedPatient({...editedPatient, name: e.target.value})}
-                        className="w-full px-3 py-2 border border-purple-300 rounded-lg"
-                      />
-                    ) : (
-                      <p className="font-medium">{patient.name}</p>
-                    )}
-                  </div>
-                  <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
-                    <p className="text-sm text-gray-600 mb-1">Age</p>
-                    <p className="font-medium">{isEditing ? calculateAge(editedPatient.dateOfBirth) : calculateAge(patient.dateOfBirth)} years old</p>
-                  </div>
-                  <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
-                    <p className="text-sm text-gray-600 mb-1">Sex</p>
-                    {isEditing ? (
-                      <select
-                        value={editedPatient.sex}
-                        onChange={(e) => setEditedPatient({ ...editedPatient, sex: e.target.value as 'Male' | 'Female' })}
-                        className="w-full px-3 py-2 border border-purple-300 rounded-lg bg-white"
-                      >
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                      </select>
-                    ) : (
-                      <p className="font-medium">{patient.sex}</p>
-                    )}
-                  </div>
-                  <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
-                    <p className="text-sm text-gray-600 mb-1">Date of Birth</p>
-                    {isEditing ? (
-                      <div className="relative">
-                        <input
-                          type="text"
-                          value={convertToDisplayDate(editedPatient.dateOfBirth)}
-                          onChange={(e) => setEditedPatient({ ...editedPatient, dateOfBirth: formatDateInput(e.target.value) })}
-                          placeholder="DD/MM/YYYY"
-                          className="w-full px-3 pr-10 py-2 border border-purple-300 rounded-lg"
-                        />
+                <div className="h-full overflow-y-auto" style={{
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: '#07BEB8 #f0f4f8'
+                }}>
+                  <style>{`
+                    [data-profile-scroll]::-webkit-scrollbar {
+                      width: 8px;
+                    }
+                    [data-profile-scroll]::-webkit-scrollbar-track {
+                      background: #f0f4f8;
+                      border-radius: 10px;
+                    }
+                    [data-profile-scroll]::-webkit-scrollbar-thumb {
+                      background: linear-gradient(to bottom, #07BEB8, #3DCCC7);
+                      border-radius: 10px;
+                      border: 2px solid #f0f4f8;
+                    }
+                    [data-profile-scroll]::-webkit-scrollbar-thumb:hover {
+                      background: linear-gradient(to bottom, #059b94, #2ba5a0);
+                    }
+                  `}</style>
+                  <div className="p-8 space-y-8" data-profile-scroll>
+                    {/* Edit Button - Top Right */}
+                    <div className="flex justify-end">
+                      {!isEditing ? (
                         <button
-                          type="button"
-                          onClick={() => {
-                            birthdatePickerRef.current?.focus();
-                            if (birthdatePickerRef.current?.showPicker) {
-                              birthdatePickerRef.current.showPicker();
-                            } else {
-                              birthdatePickerRef.current?.click();
-                            }
-                          }}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                          aria-label="Open calendar"
+                          onClick={() => setIsEditing(true)}
+                          className="px-6 py-3 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 font-semibold text-sm"
                         >
-                          <Calendar className="w-4 h-4" />
+                          <Edit className="w-4 h-4" />
+                          Edit Profile
                         </button>
-                        <input
-                          ref={birthdatePickerRef}
-                          type="date"
-                          className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 opacity-0 cursor-pointer"
-                          onChange={(e) => setEditedPatient({ ...editedPatient, dateOfBirth: convertToDisplayDate(e.target.value) })}
-                        />
+                      ) : (
+                        <div className="flex gap-3">
+                          <button
+                            onClick={handleSaveProfile}
+                            className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 font-semibold text-sm"
+                          >
+                            <Save className="w-4 h-4" />
+                            Save Changes
+                          </button>
+                          <button
+                            onClick={handleCancelEdit}
+                            className="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl hover:bg-slate-300 transition-colors flex items-center gap-2 font-semibold text-sm"
+                          >
+                            <XCircle className="w-4 h-4" />
+                            Cancel
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Personal Details Section */}
+                  <div className="space-y-4">
+                    <div className="pb-3 border-b-2 border-slate-200">
+                      <h4 className="text-lg font-bold text-slate-900">Personal Details</h4>
+                    </div>
+                    
+                    {/* Grid Layout for Personal Information */}
+                    <div className="grid grid-cols-2 gap-6">
+                      {/* Full Name Card */}
+                      <div className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                        <div className="absolute inset-0 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Full Name</label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editedPatient.name}
+                            onChange={(e) => setEditedPatient({...editedPatient, name: e.target.value})}
+                            className="w-full px-4 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                          />
+                        ) : (
+                          <p className="text-lg font-semibold text-slate-900">{patient.name}</p>
+                        )}
                       </div>
-                    ) : (
-                      <p className="font-medium">{(() => {
-                        const dateStr = patient.dateOfBirth.includes('T') ? patient.dateOfBirth.split('T')[0] : patient.dateOfBirth;
-                        const [year, month, day] = dateStr.split('-');
-                        return `${month}/${day}/${year}`;
-                      })()}</p>
-                    )}
-                  </div>
-                  <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
-                    <p className="text-sm text-gray-600 mb-1">Phone</p>
-                    {isEditing ? (
-                      <input
-                        type="tel"
-                        value={editedPatient.phone}
-                        onChange={(e) => handlePhoneInput(e.target.value, (formatted) => setEditedPatient({...editedPatient, phone: formatted}))}
-                        onBlur={(e) => {
-                          const formatted = formatPhoneNumber(e.target.value);
-                          if (formatted !== e.target.value) {
-                            setEditedPatient({...editedPatient, phone: formatted});
-                          }
-                        }}
-                        placeholder="+63 912 345 6789"
-                        className="w-full px-3 py-2 border border-purple-300 rounded-lg"
-                      />
-                    ) : (
-                      <p className="font-medium">{patient.phone}</p>
-                    )}
-                  </div>
-                  <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
-                    <p className="text-sm text-gray-600 mb-1">Email</p>
-                    {isEditing ? (
-                      <input
-                        type="email"
-                        value={editedPatient.email}
-                        onChange={(e) => setEditedPatient({...editedPatient, email: e.target.value})}
-                        className="w-full px-3 py-2 border border-purple-300 rounded-lg"
-                      />
-                    ) : (
-                      <p className="font-medium">{patient.email}</p>
-                    )}
-                  </div>
-                  <div className="col-span-2 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
-                    <p className="text-sm text-gray-600 mb-1">Address</p>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editedPatient.address}
-                        onChange={(e) => setEditedPatient({...editedPatient, address: e.target.value})}
-                        className="w-full px-3 py-2 border border-purple-300 rounded-lg"
-                      />
-                    ) : (
-                      <p className="font-medium">{patient.address}</p>
-                    )}
-                  </div>
-                </div>
 
-                <div>
-                  <h2 className="text-xl mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    Medical Information
-                  </h2>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
-                      <p className="text-sm text-gray-600 mb-1">Medical History</p>
-                      {isEditing ? (
-                        <textarea
-                          value={editedPatient.medicalHistory}
-                          onChange={(e) => setEditedPatient({...editedPatient, medicalHistory: e.target.value})}
-                          className="w-full px-3 py-2 border border-purple-300 rounded-lg"
-                          rows={3}
-                        />
-                      ) : (
-                        <p className="font-medium">{patient.medicalHistory || 'None'}</p>
-                      )}
-                    </div>
-                    <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
-                      <p className="text-sm text-gray-600 mb-1">Allergies</p>
-                      {isEditing ? (
-                        <textarea
-                          value={editedPatient.allergies}
-                          onChange={(e) => setEditedPatient({...editedPatient, allergies: e.target.value})}
-                          className="w-full px-3 py-2 border border-purple-300 rounded-lg"
-                          rows={3}
-                        />
-                      ) : (
-                        <p className={`font-medium ${patient.allergies !== 'None' ? 'text-red-600' : ''}`}>
-                          {patient.allergies || 'None'}
-                        </p>
-                      )}
+                      {/* Age Card */}
+                      <div className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Age</label>
+                        <p className="text-lg font-semibold text-slate-900">{isEditing ? calculateAge(editedPatient.dateOfBirth) : calculateAge(patient.dateOfBirth)} years old</p>
+                      </div>
+
+                      {/* Sex Card */}
+                      <div className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                        <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Sex</label>
+                        {isEditing ? (
+                          <select
+                            value={editedPatient.sex}
+                            onChange={(e) => setEditedPatient({ ...editedPatient, sex: e.target.value as 'Male' | 'Female' })}
+                            className="w-full px-4 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                          >
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                          </select>
+                        ) : (
+                          <p className="text-lg font-semibold text-slate-900">{patient.sex}</p>
+                        )}
+                      </div>
+
+                      {/* Date of Birth Card */}
+                      <div className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                        <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Date of Birth</label>
+                        {isEditing ? (
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={convertToDisplayDate(editedPatient.dateOfBirth)}
+                              onChange={(e) => setEditedPatient({ ...editedPatient, dateOfBirth: formatDateInput(e.target.value) })}
+                              placeholder="DD/MM/YYYY"
+                              className="w-full px-4 py-3 pr-10 border border-slate-300 rounded-lg bg-white text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                birthdatePickerRef.current?.focus();
+                                if (birthdatePickerRef.current?.showPicker) {
+                                  birthdatePickerRef.current.showPicker();
+                                } else {
+                                  birthdatePickerRef.current?.click();
+                                }
+                              }}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-teal-600 transition-colors"
+                              aria-label="Open calendar"
+                            >
+                              <Calendar className="w-4 h-4" />
+                            </button>
+                            <input
+                              ref={birthdatePickerRef}
+                              type="date"
+                              className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 opacity-0 cursor-pointer"
+                              onChange={(e) => setEditedPatient({ ...editedPatient, dateOfBirth: convertToDisplayDate(e.target.value) })}
+                            />
+                          </div>
+                        ) : (
+                          <p className="text-lg font-semibold text-slate-900">{(() => {
+                            const dateStr = patient.dateOfBirth.includes('T') ? patient.dateOfBirth.split('T')[0] : patient.dateOfBirth;
+                            const [year, month, day] = dateStr.split('-');
+                            return `${month}/${day}/${year}`;
+                          })()}</p>
+                        )}
+                      </div>
                     </div>
                   </div>
+
+                  {/* Contact Information Section */}
+                  <div className="space-y-4">
+                    <div className="pb-3 border-b-2 border-slate-200">
+                      <h4 className="text-lg font-bold text-slate-900">Contact Information</h4>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                      {/* Phone Card */}
+                      <div className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                        <div className="absolute inset-0 bg-gradient-to-br from-cyan-50 to-sky-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Phone Number</label>
+                        {isEditing ? (
+                          <input
+                            type="tel"
+                            value={editedPatient.phone}
+                            onChange={(e) => handlePhoneInput(e.target.value, (formatted) => setEditedPatient({...editedPatient, phone: formatted}))}
+                            onBlur={(e) => {
+                              const formatted = formatPhoneNumber(e.target.value);
+                              if (formatted !== e.target.value) {
+                                setEditedPatient({...editedPatient, phone: formatted});
+                              }
+                            }}
+                            placeholder="+63 912 345 6789"
+                            className="w-full px-4 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                          />
+                        ) : (
+                          <p className="text-lg font-semibold text-slate-900">{patient.phone}</p>
+                        )}
+                      </div>
+
+                      {/* Email Card */}
+                      <div className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                        <div className="absolute inset-0 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Email Address</label>
+                        {isEditing ? (
+                          <input
+                            type="email"
+                            value={editedPatient.email}
+                            onChange={(e) => setEditedPatient({...editedPatient, email: e.target.value})}
+                            className="w-full px-4 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                          />
+                        ) : (
+                          <p className="text-lg font-semibold text-slate-900">{patient.email}</p>
+                        )}
+                      </div>
+
+                      {/* Address Card - Full Width */}
+                      <div className="col-span-2 group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                        <div className="absolute inset-0 bg-gradient-to-br from-rose-50 to-red-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Address</label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editedPatient.address}
+                            onChange={(e) => setEditedPatient({...editedPatient, address: e.target.value})}
+                            className="w-full px-4 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                          />
+                        ) : (
+                          <p className="text-lg font-semibold text-slate-900">{patient.address}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Medical Information Section */}
+                  <div className="space-y-4">
+                    <div className="pb-3 border-b-2 border-slate-200">
+                      <h4 className="text-lg font-bold text-slate-900">Medical Information</h4>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-6">
+                      {/* Medical History Card */}
+                      <div className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                        <div className="absolute inset-0 bg-gradient-to-br from-teal-50 to-emerald-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block">Medical History</label>
+                        {isEditing ? (
+                          <textarea
+                            value={editedPatient.medicalHistory}
+                            onChange={(e) => setEditedPatient({...editedPatient, medicalHistory: e.target.value})}
+                            className="w-full px-4 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all resize-none"
+                            rows={3}
+                          />
+                        ) : (
+                          <p className="text-base font-medium text-slate-700 leading-relaxed">{patient.medicalHistory || 'No medical history recorded'}</p>
+                        )}
+                      </div>
+
+                      {/* Allergies Card */}
+                      <div className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                        <div className="absolute inset-0 bg-gradient-to-br from-red-50 to-rose-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block">Allergies</label>
+                        {isEditing ? (
+                          <textarea
+                            value={editedPatient.allergies}
+                            onChange={(e) => setEditedPatient({...editedPatient, allergies: e.target.value})}
+                            className="w-full px-4 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all resize-none"
+                            rows={3}
+                          />
+                        ) : (
+                          <p className={`text-base font-medium leading-relaxed ${patient.allergies && patient.allergies !== 'None' ? 'text-red-700' : 'text-slate-700'}`}>
+                            {patient.allergies && patient.allergies !== 'None' ? patient.allergies : 'No allergies recorded'}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {/* Appointments Tab */}
             {activeTab === 'appointments' && (
@@ -1261,44 +1336,119 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
 
             {/* Treatment Records Tab */}
             {activeTab === 'records' && (
-              <div className="p-8 space-y-4">
-                <h2 className="text-xl mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Treatment History
-                </h2>
+              <>
+                <style>{`
+                  .records-scroll-container::-webkit-scrollbar {
+                    width: 10px;
+                  }
+                  
+                  .records-scroll-container::-webkit-scrollbar-track {
+                    background: rgba(226, 232, 240, 0.3);
+                    border-radius: 10px;
+                  }
+                  
+                  .records-scroll-container::-webkit-scrollbar-thumb {
+                    background: #14b8a6;
+                    border-radius: 10px;
+                    border: 2px solid rgba(240, 249, 255, 0.4);
+                  }
+                  
+                  .records-scroll-container::-webkit-scrollbar-thumb:hover {
+                    background: #0d9488;
+                  }
+                `}</style>
+                <div 
+                  className="records-scroll-container p-8 bg-white/95 h-[calc(100vh-200px)] w-full overflow-y-auto"
+                  style={{
+                    scrollBehavior: 'smooth',
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: '#14b8a6 rgba(226, 232, 240, 0.3)',
+                  }}
+                >
                 {patientRecords.length > 0 ? (
-                  <div className="space-y-3">
-                    {patientRecords.map(record => (
-                      <div key={record.id} className="p-4 border border-purple-200 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <p className="text-lg mb-1">{record.treatment}</p>
-                            {record.tooth && (
-                              <p className="text-sm text-gray-600">Tooth: {record.tooth}</p>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {patientRecords.map((record, idx) => (
+                      <motion.div
+                        key={record.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: idx * 0.05 }}
+                        className="group h-full"
+                      >
+                        <div className="relative h-full rounded-2xl bg-white border border-slate-100 shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col">
+                          {/* Gradient accent top border */}
+                          <div className="h-1 w-full bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400" />
+                          
+                          {/* Card Content */}
+                          <div className="p-7 flex flex-col gap-5 flex-1">
+                            {/* Header: Title, Date, and Status Badge */}
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-bold text-slate-900 text-lg leading-snug mb-2">{record.treatment}</h3>
+                                <p className="text-sm text-slate-500 font-medium">{formatToDD_MM_YYYY(record.date)}</p>
+                              </div>
+                              <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 border border-emerald-200 flex-shrink-0 whitespace-nowrap">
+                                <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
+                                Fully Paid
+                              </span>
+                            </div>
+
+                            {/* Details Section */}
+                            <div className="space-y-3">
+                              {/* Dentist / Specialist */}
+                              <div className="flex justify-between items-center p-3 rounded-lg bg-slate-50 border border-slate-100">
+                                <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Dentist / Specialist</span>
+                                <span className="text-sm font-semibold text-slate-900">Dr. {record.dentist}</span>
+                              </div>
+                              
+                              {/* Tooth info if available */}
+                              {record.tooth && (
+                                <div className="flex justify-between items-center p-3 rounded-lg bg-blue-50 border border-blue-100">
+                                  <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Tooth Number</span>
+                                  <span className="text-sm font-semibold text-blue-900">#{record.tooth}</span>
+                                </div>
+                              )}
+                              
+                              {/* Cost */}
+                              <div className="flex justify-between items-center p-3 rounded-lg bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-100">
+                                <span className="text-xs font-semibold text-cyan-600 uppercase tracking-wide">Treatment Cost</span>
+                                <span className="text-lg font-extrabold text-transparent bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text">₱{record.cost.toFixed(2)}</span>
+                              </div>
+                            </div>
+
+                            {/* Notes */}
+                            {record.notes && (
+                              <div className="mt-1 p-4 rounded-lg bg-slate-50 border border-slate-100">
+                                <p className="text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">Treatment Notes</p>
+                                <p className="text-sm text-slate-700 leading-relaxed">{record.notes}</p>
+                              </div>
                             )}
-                            <p className="text-sm text-gray-500">Dr. {record.dentist}</p>
                           </div>
-                          <div className="text-right">
-                            <p className="text-sm text-gray-600 mb-1">
-                              {formatToDD_MM_YYYY(record.date)}
-                            </p>
-                            <p className="text-lg">₱{record.cost.toFixed(2)}</p>
-                          </div>
+
+                          {/* Hover effect overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-br from-cyan-50/0 via-blue-50/0 to-purple-50/0 group-hover:from-cyan-50/30 group-hover:via-blue-50/20 group-hover:to-purple-50/30 transition-all duration-300 pointer-events-none rounded-2xl" />
                         </div>
-                        {record.notes && (
-                          <p className="text-sm text-gray-600 mt-2 pt-2 border-t border-gray-200">
-                            {record.notes}
-                          </p>
-                        )}
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-12 text-gray-500">
-                    <FileText className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                    <p>No treatment records available</p>
-                  </div>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.4 }}
+                    className="flex items-center justify-center min-h-[calc(100vh-300px)]"
+                  >
+                    <div className="text-center">
+                      <div className="w-16 h-16 rounded-xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                        <FileText className="w-8 h-8 text-slate-400" />
+                      </div>
+                      <p className="text-xl font-bold text-slate-900 mb-1">No Treatment Records</p>
+                      <p className="text-slate-500">Your dental records will appear here as treatments are completed.</p>
+                    </div>
+                  </motion.div>
                 )}
-              </div>
+                </div>
+              </>
             )}
 
             {/* Forms Tab */}

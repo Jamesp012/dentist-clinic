@@ -73,6 +73,44 @@ type AssistantDashboardProps = {
 
 const API_BASE = 'http://localhost:5000/api';
 
+// Helper function to split patient names
+const splitPatientName = (fullName: string) => {
+  // Split on internal delimiter (newline) to preserve spaces in names
+  // Format: first\nmiddle\nlast or first\nlast (for backward compatibility)
+  if (fullName.includes('\n')) {
+    const parts = fullName.split('\n');
+    if (parts.length === 3) {
+      // New format: first\nmiddle\nlast
+      return { first: parts[0] || '', middle: parts[1] || '', last: parts[2] || '' };
+    } else {
+      // Old format: first\nlast
+      return { first: parts[0] || '', middle: '', last: parts[1] || '' };
+    }
+  }
+  // Fallback for space-separated format
+  const parts = (fullName || '').trim().split(/\s+/).filter(Boolean);
+  const first = parts.length > 0 ? parts[0] : '';
+  const last = parts.length > 1 ? parts.slice(1).join(' ') : '';
+  return { first, middle: '', last };
+};
+
+// Display name for user (first and last only, no middle name)
+const getUserDisplayName = (fullName: string | undefined): string => {
+  if (!fullName) return '';
+  // Split by whitespace and take first and last names
+  const nameParts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (nameParts.length === 0) return '';
+  if (nameParts.length === 1) return nameParts[0];
+  // Return first and last name only
+  return `${nameParts[0]} ${nameParts[nameParts.length - 1]}`;
+};
+
+// Display name for sidebar/dropdowns (first and last only, no middle name)
+const getDisplayName = (fullName: string): string => {
+  const { first, last } = splitPatientName(fullName);
+  return `${first} ${last}`.trim();
+};
+
 export function AssistantDashboard({
   currentUser,
   onLogout,
@@ -503,7 +541,7 @@ export function AssistantDashboard({
             >
               <div className="min-w-0">
                 <h1 className="text-lg font-semibold text-gray-800 whitespace-nowrap overflow-hidden text-ellipsis">
-                  {currentUser.fullName || currentUser.username || 'Assistant'}
+                  {getUserDisplayName(currentUser.fullName) || currentUser.username || 'Assistant'}
                 </h1>
                 <p className="text-xs text-gray-600 flex items-center gap-1 mt-1">
                   Staff Access
@@ -1046,7 +1084,7 @@ export function AssistantDashboard({
                     </div>
                     <div className="flex-1">
                       <h3 className="text-white font-bold text-xl mb-3">
-                        {patients.find(p => String(p.id) === String(selectedPhotoForView.patientId))?.name || 'Patient Photo'}
+                        {patients.find(p => String(p.id) === String(selectedPhotoForView.patientId)) ? getDisplayName(patients.find(p => String(p.id) === String(selectedPhotoForView.patientId))!.name) : 'Patient Photo'}
                       </h3>
                       <div className="flex flex-wrap items-center gap-4 text-sm">
                         <div className="flex items-center gap-2 text-teal-50">

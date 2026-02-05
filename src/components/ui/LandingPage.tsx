@@ -100,7 +100,6 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
       role: 'patient' as const
     });
     setConfirmPassword('');
-    setError('');
     
     // Close claiming flow and switch to login mode
     setShowClaimingFlow(false);
@@ -345,9 +344,9 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                 </div>
               ) : (
                 // Auth Form
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-                {/* Fixed Header */}
-                <div className="px-8 pt-8 pb-6 border-b border-slate-200">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+                {/* Fixed Header with Tabs */}
+                <div className="px-8 pt-8 pb-6 border-b border-slate-200 flex-shrink-0">
                   <div className="text-center">
                     <motion.div
                       initial={{ scale: 0 }}
@@ -401,7 +400,7 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                 </div>
 
                 {/* Scrollable Form Content */}
-                <div className="px-8 py-6 custom-scrollbar" style={{
+                <div className="px-8 py-6 overflow-y-auto flex-grow custom-scrollbar" style={{
                   scrollbarWidth: 'thin',
                   scrollbarColor: '#14b8a6 transparent'
                 }}>
