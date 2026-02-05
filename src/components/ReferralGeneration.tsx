@@ -6,7 +6,9 @@ import { referralAPI } from '../api';
 import { generateReferralPDF } from '../utils/referralPdfGenerator';
 import { PatientSearchInput } from './PatientSearchInput';
 import { motion, AnimatePresence } from 'motion/react';
-import { redorLogo, clinicLogo, clinicMap, xrayClinic } from '../assets';
+import { redorLogo, clinicLogo, xrayClinic } from '../assets';
+
+const clinicMap = '/clinic-map.jpg';
 
 
 type ReferralType = 'doctor' | 'xray' | null;
@@ -316,7 +318,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                 <X className="w-6 h-6" />
               </button>
             </div>
-            <form className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto" onSubmit={e => { e.preventDefault(); handleCreateReferral(); }}>
+            <form className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent" onSubmit={e => { e.preventDefault(); handleCreateReferral(); }}>
               <div className="mb-6">
                 <label className="block text-sm font-bold mb-2">Search Patient</label>
                 <PatientSearchInput
@@ -451,7 +453,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
               </button>
             </div>
 
-            <div className="p-8 max-h-[calc(100vh-100px)] overflow-y-auto space-y-4">
+            <div className="p-8 max-h-[calc(100vh-100px)] overflow-y-auto space-y-4 scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent">
               {/* REDOR Header */}
               <div className="flex justify-between items-start border-b-2 pb-4">
                 <div>
@@ -904,7 +906,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
             </div>
 
             {/* Form Content */}
-            <div className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto">
+            <div className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent">
               {!isSelectedXrayReferral ? (
                 <div className="space-y-6">
                   <div className="space-y-4 mb-6">

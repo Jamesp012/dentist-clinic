@@ -2,10 +2,9 @@ import React, { useState } from 'react';
 import { Patient, Referral, Payment, TreatmentRecord } from '../App';
 import { referralAPI } from '../api';
 import { generateReferralPDF } from '../utils/referralPdfGenerator';
-// Note: Asset imports removed - images should be placed in public folder
-// and referenced via relative paths (e.g., '/clinic-map.jpg')
+import { clinicLogo } from '../assets';
+
 const clinicMap = '/clinic-map.jpg';
-const clinicLogo = '/jclinic-logo.png';
 import {
   FileText,
   X,
@@ -489,7 +488,7 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
               </div>
 
               {/* Form Content */}
-              <div className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto">
+              <div className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent">
                 {!isSelectedXrayReferral ? (
                   <div className="space-y-6">
                     <div className="space-y-4 mb-6">

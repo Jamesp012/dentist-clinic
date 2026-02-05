@@ -192,7 +192,7 @@ Generated on: ${new Date().toLocaleString()}
         </div>
 
         {/* Form Content */}
-        <div className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto">
+        <div className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent">
           <div className="space-y-6">
             {/* Patient Information */}
             <div className="space-y-4 pb-6 border-b border-slate-200">

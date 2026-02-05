@@ -2056,7 +2056,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
               className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
             >
               {/* Header */}
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white">
+              <div className="bg-gradient-to-r from-[rgb(45,200,194)] to-[rgb(45,200,194)] p-6 text-white">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
@@ -2064,7 +2064,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                     </div>
                     <div>
                       <h2 className="text-xl font-bold">Account Settings</h2>
-                      <p className="text-sm text-blue-100">Manage your profile</p>
+                      <p className="text-sm text-white">Manage your profile</p>
                     </div>
                   </div>
                   <button
@@ -2087,7 +2087,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                     type="text"
                     value={newFullName}
                     onChange={(e) => setNewFullName(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[rgb(45,200,194)] focus:border-transparent transition-all"
                     placeholder="Enter your full name"
                   />
                 </div>
@@ -2102,14 +2102,14 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                       type="text"
                       value={newUsername}
                       onChange={(e) => handleUsernameChange(e.target.value)}
-                      className={`w-full px-4 py-2.5 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                      className={`w-full px-4 py-2.5 pr-10 border rounded-lg focus:ring-2 focus:ring-[rgb(45,200,194)] focus:border-transparent transition-all ${
                         usernameAvailable === false ? 'border-red-500' : usernameAvailable === true ? 'border-green-500' : 'border-gray-300'
                       }`}
                       placeholder="Enter your username"
                     />
                     {checkingUsername && (
                       <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                        <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                        <div className="w-5 h-5 border-2 border-[rgb(45,200,194)] border-t-transparent rounded-full animate-spin"></div>
                       </div>
                     )}
                     {!checkingUsername && usernameAvailable === true && newUsername.length > 0 && (
@@ -2244,7 +2244,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                     handleSaveSettings();
                   }}
                   disabled={checkingUsername || (newUsername.length > 0 && usernameAvailable === false)}
-                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2.5 bg-[rgb(8,182,204)] hover:bg-[#0a97b0] text-white rounded-lg transition-all font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Check className="w-4 h-4" />
                   Save Changes

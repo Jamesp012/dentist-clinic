@@ -231,82 +231,381 @@ button, a, input, select, textarea {
   transition: all 0.2s ease-in-out;
 }
 
-/* Hide scrollbars but keep functionality */
-::-webkit-scrollbar {
-  width: 0px;
-  height: 0px;
-  display: none;
-}
+/* ==============================================================================
+   GLOBAL SCROLLBAR STYLING - Comprehensive Coverage
+   ============================================================================== */
 
-::-webkit-scrollbar-track {
-  display: none;
-}
-
-::-webkit-scrollbar-thumb {
-  display: none;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  display: none;
-}
-
-/* Hide scrollbars for Firefox */
+/* Disable automatic scrollbar hiding across all elements */
 * {
-  scrollbar-width: none;
-}
-
-/* Hide scrollbars for IE and Edge */
-* {
-  -ms-overflow-style: none;
-}
-
-/* Opt-in visible scrollbars */
-.scrollbar-visible {
-  scrollbar-width: auto;
-  -ms-overflow-style: auto;
-}
-
-.scrollbar-visible::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-  display: block;
-}
-
-.scrollbar-visible::-webkit-scrollbar-track {
-  background: var(--dental-neutral-100);
-}
-
-.scrollbar-visible::-webkit-scrollbar-thumb {
-  background: var(--dental-neutral-300);
-  border-radius: 5px;
-}
-
-.scrollbar-visible::-webkit-scrollbar-thumb:hover {
-  background: var(--dental-neutral-400);
-}
-/* Teal scrollbar for sidebar */
-.scrollbar-teal {
+  /* Firefox: Always show scrollbar, never auto-hide */
   scrollbar-width: thin;
-  scrollbar-color: rgba(20, 184, 166, 0.5) transparent;
+  scrollbar-color: var(--dental-neutral-300) var(--dental-neutral-100);
+  
+  /* Ensure scrollbars remain visible on overflow */
+  overflow: auto;
 }
 
-.scrollbar-teal::-webkit-scrollbar {
+html, body {
+  /* Disable auto-hiding for main viewport */
+  scrollbar-width: thin;
+  scrollbar-color: var(--dental-neutral-300) var(--dental-neutral-100);
+}
+
+/* WebKit browsers (Chrome, Safari, Edge) - Global scrollbar styling */
+::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
-.scrollbar-teal::-webkit-scrollbar-track {
-  background: transparent;
+::-webkit-scrollbar-track {
+  background: var(--dental-neutral-100);
+  border-radius: 4px;
 }
 
-.scrollbar-teal::-webkit-scrollbar-thumb {
-  background: rgba(20, 184, 166, 0.5);
+::-webkit-scrollbar-thumb {
+  background: var(--dental-neutral-300);
   border-radius: 4px;
   border: 2px solid transparent;
   background-clip: content-box;
+  transition: background-color 0.3s ease;
+  /* Prevent auto-hiding */
+  opacity: 1;
 }
 
-.scrollbar-teal::-webkit-scrollbar-thumb:hover {
-  background: rgba(20, 184, 166, 0.7);
+::-webkit-scrollbar-thumb:hover {
+  background: var(--dental-neutral-400);
   background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--dental-neutral-500);
+  background-clip: content-box;
+}
+
+/* ==============================================================================
+   DIALOG, MODAL & POPUP SCROLLBAR STYLING
+   ============================================================================== */
+
+/* Dialog Content - always show scrollbar */
+[data-slot="dialog-content"],
+[role="dialog"],
+.dialog,
+.modal {
+  scrollbar-width: thin;
+  scrollbar-color: var(--dental-neutral-300) var(--dental-neutral-100) !important;
+  overflow-y: auto !important;
+}
+
+[data-slot="dialog-content"]::-webkit-scrollbar,
+[role="dialog"]::-webkit-scrollbar,
+.dialog::-webkit-scrollbar,
+.modal::-webkit-scrollbar {
+  width: 8px;
+}
+
+[data-slot="dialog-content"]::-webkit-scrollbar-track,
+[role="dialog"]::-webkit-scrollbar-track,
+.dialog::-webkit-scrollbar-track,
+.modal::-webkit-scrollbar-track {
+  background: var(--dental-neutral-100);
+  border-radius: 4px;
+}
+
+[data-slot="dialog-content"]::-webkit-scrollbar-thumb,
+[role="dialog"]::-webkit-scrollbar-thumb,
+.dialog::-webkit-scrollbar-thumb,
+.modal::-webkit-scrollbar-thumb {
+  background: var(--dental-neutral-300);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  transition: background-color 0.3s ease;
+}
+
+[data-slot="dialog-content"]::-webkit-scrollbar-thumb:hover,
+[role="dialog"]::-webkit-scrollbar-thumb:hover,
+.dialog::-webkit-scrollbar-thumb:hover,
+.modal::-webkit-scrollbar-thumb:hover {
+  background: var(--dental-neutral-400);
+  background-clip: content-box;
+}
+
+/* Sheet Content - always show scrollbar */
+[data-slot="sheet-content"],
+.sheet,
+.drawer {
+  scrollbar-width: thin;
+  scrollbar-color: var(--dental-neutral-300) var(--dental-neutral-100) !important;
+  overflow-y: auto !important;
+}
+
+[data-slot="sheet-content"]::-webkit-scrollbar,
+.sheet::-webkit-scrollbar,
+.drawer::-webkit-scrollbar {
+  width: 8px;
+}
+
+[data-slot="sheet-content"]::-webkit-scrollbar-track,
+.sheet::-webkit-scrollbar-track,
+.drawer::-webkit-scrollbar-track {
+  background: var(--dental-neutral-100);
+  border-radius: 4px;
+}
+
+[data-slot="sheet-content"]::-webkit-scrollbar-thumb,
+.sheet::-webkit-scrollbar-thumb,
+.drawer::-webkit-scrollbar-thumb {
+  background: var(--dental-neutral-300);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  transition: background-color 0.3s ease;
+}
+
+[data-slot="sheet-content"]::-webkit-scrollbar-thumb:hover,
+.sheet::-webkit-scrollbar-thumb:hover,
+.drawer::-webkit-scrollbar-thumb:hover {
+  background: var(--dental-neutral-400);
+  background-clip: content-box;
+}
+
+/* Scroll Area Component - always visible scrollbar */
+[data-slot="scroll-area"],
+[data-slot="scroll-area-viewport"] {
+  scrollbar-width: thin;
+  scrollbar-color: var(--dental-neutral-300) var(--dental-neutral-100) !important;
+}
+
+[data-slot="scroll-area"]::-webkit-scrollbar,
+[data-slot="scroll-area-viewport"]::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+[data-slot="scroll-area"]::-webkit-scrollbar-track,
+[data-slot="scroll-area-viewport"]::-webkit-scrollbar-track {
+  background: var(--dental-neutral-100);
+  border-radius: 4px;
+}
+
+[data-slot="scroll-area"]::-webkit-scrollbar-thumb,
+[data-slot="scroll-area-viewport"]::-webkit-scrollbar-thumb {
+  background: var(--dental-neutral-300);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  transition: background-color 0.3s ease;
+}
+
+[data-slot="scroll-area"]::-webkit-scrollbar-thumb:hover,
+[data-slot="scroll-area-viewport"]::-webkit-scrollbar-thumb:hover {
+  background: var(--dental-neutral-400);
+  background-clip: content-box;
+}
+
+/* Tables, Cards, Sections with overflow */
+.card,
+[data-slot="card"],
+.table-container,
+table,
+.section,
+[data-slot="section"],
+main,
+aside,
+nav {
+  scrollbar-width: thin;
+  scrollbar-color: var(--dental-neutral-300) var(--dental-neutral-100);
+}
+
+.card::-webkit-scrollbar,
+[data-slot="card"]::-webkit-scrollbar,
+.table-container::-webkit-scrollbar,
+table::-webkit-scrollbar,
+.section::-webkit-scrollbar,
+[data-slot="section"]::-webkit-scrollbar,
+main::-webkit-scrollbar,
+aside::-webkit-scrollbar,
+nav::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.card::-webkit-scrollbar-track,
+[data-slot="card"]::-webkit-scrollbar-track,
+.table-container::-webkit-scrollbar-track,
+table::-webkit-scrollbar-track,
+.section::-webkit-scrollbar-track,
+[data-slot="section"]::-webkit-scrollbar-track,
+main::-webkit-scrollbar-track,
+aside::-webkit-scrollbar-track,
+nav::-webkit-scrollbar-track {
+  background: var(--dental-neutral-100);
+  border-radius: 4px;
+}
+
+.card::-webkit-scrollbar-thumb,
+[data-slot="card"]::-webkit-scrollbar-thumb,
+.table-container::-webkit-scrollbar-thumb,
+table::-webkit-scrollbar-thumb,
+.section::-webkit-scrollbar-thumb,
+[data-slot="section"]::-webkit-scrollbar-thumb,
+main::-webkit-scrollbar-thumb,
+aside::-webkit-scrollbar-thumb,
+nav::-webkit-scrollbar-thumb {
+  background: var(--dental-neutral-300);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  transition: background-color 0.3s ease;
+}
+
+.card::-webkit-scrollbar-thumb:hover,
+[data-slot="card"]::-webkit-scrollbar-thumb:hover,
+.table-container::-webkit-scrollbar-thumb:hover,
+table::-webkit-scrollbar-thumb:hover,
+.section::-webkit-scrollbar-thumb:hover,
+[data-slot="section"]::-webkit-scrollbar-thumb:hover,
+main::-webkit-scrollbar-thumb:hover,
+aside::-webkit-scrollbar-thumb:hover,
+nav::-webkit-scrollbar-thumb:hover {
+  background: var(--dental-neutral-400);
+  background-clip: content-box;
+}
+
+/* ==============================================================================
+   DARK MODE SCROLLBAR STYLING
+   ============================================================================== */
+
+.dark {
+  scrollbar-color: var(--dental-neutral-600) var(--dental-neutral-800);
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: var(--dental-neutral-800);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: var(--dental-neutral-600);
+  border: 2px solid transparent;
+  background-clip: content-box;
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: var(--dental-neutral-500);
+  background-clip: content-box;
+}
+
+.dark ::-webkit-scrollbar-thumb:active {
+  background: var(--dental-neutral-400);
+  background-clip: content-box;
+}
+
+/* Dark mode for specific elements */
+.dark [data-slot="dialog-content"],
+.dark [role="dialog"],
+.dark .dialog,
+.dark .modal,
+.dark [data-slot="sheet-content"],
+.dark .sheet,
+.dark .drawer,
+.dark [data-slot="scroll-area"],
+.dark [data-slot="scroll-area-viewport"],
+.dark .card,
+.dark [data-slot="card"],
+.dark .table-container,
+.dark table,
+.dark .section,
+.dark [data-slot="section"],
+.dark main,
+.dark aside,
+.dark nav {
+  scrollbar-color: var(--dental-neutral-600) var(--dental-neutral-800);
+}
+
+.dark [data-slot="dialog-content"]::-webkit-scrollbar-track,
+.dark [role="dialog"]::-webkit-scrollbar-track,
+.dark .dialog::-webkit-scrollbar-track,
+.dark .modal::-webkit-scrollbar-track,
+.dark [data-slot="sheet-content"]::-webkit-scrollbar-track,
+.dark .sheet::-webkit-scrollbar-track,
+.dark .drawer::-webkit-scrollbar-track,
+.dark [data-slot="scroll-area"]::-webkit-scrollbar-track,
+.dark [data-slot="scroll-area-viewport"]::-webkit-scrollbar-track,
+.dark .card::-webkit-scrollbar-track,
+.dark [data-slot="card"]::-webkit-scrollbar-track,
+.dark .table-container::-webkit-scrollbar-track,
+.dark table::-webkit-scrollbar-track,
+.dark .section::-webkit-scrollbar-track,
+.dark [data-slot="section"]::-webkit-scrollbar-track,
+.dark main::-webkit-scrollbar-track,
+.dark aside::-webkit-scrollbar-track,
+.dark nav::-webkit-scrollbar-track {
+  background: var(--dental-neutral-800);
+}
+
+.dark [data-slot="dialog-content"]::-webkit-scrollbar-thumb,
+.dark [role="dialog"]::-webkit-scrollbar-thumb,
+.dark .dialog::-webkit-scrollbar-thumb,
+.dark .modal::-webkit-scrollbar-thumb,
+.dark [data-slot="sheet-content"]::-webkit-scrollbar-thumb,
+.dark .sheet::-webkit-scrollbar-thumb,
+.dark .drawer::-webkit-scrollbar-thumb,
+.dark [data-slot="scroll-area"]::-webkit-scrollbar-thumb,
+.dark [data-slot="scroll-area-viewport"]::-webkit-scrollbar-thumb,
+.dark .card::-webkit-scrollbar-thumb,
+.dark [data-slot="card"]::-webkit-scrollbar-thumb,
+.dark .table-container::-webkit-scrollbar-thumb,
+.dark table::-webkit-scrollbar-thumb,
+.dark .section::-webkit-scrollbar-thumb,
+.dark [data-slot="section"]::-webkit-scrollbar-thumb,
+.dark main::-webkit-scrollbar-thumb,
+.dark aside::-webkit-scrollbar-thumb,
+.dark nav::-webkit-scrollbar-thumb {
+  background: var(--dental-neutral-600);
+}
+
+.dark [data-slot="dialog-content"]::-webkit-scrollbar-thumb:hover,
+.dark [role="dialog"]::-webkit-scrollbar-thumb:hover,
+.dark .dialog::-webkit-scrollbar-thumb:hover,
+.dark .modal::-webkit-scrollbar-thumb:hover,
+.dark [data-slot="sheet-content"]::-webkit-scrollbar-thumb:hover,
+.dark .sheet::-webkit-scrollbar-thumb:hover,
+.dark .drawer::-webkit-scrollbar-thumb:hover,
+.dark [data-slot="scroll-area"]::-webkit-scrollbar-thumb:hover,
+.dark [data-slot="scroll-area-viewport"]::-webkit-scrollbar-thumb:hover,
+.dark .card::-webkit-scrollbar-thumb:hover,
+.dark [data-slot="card"]::-webkit-scrollbar-thumb:hover,
+.dark .table-container::-webkit-scrollbar-thumb:hover,
+.dark table::-webkit-scrollbar-thumb:hover,
+.dark .section::-webkit-scrollbar-thumb:hover,
+.dark [data-slot="section"]::-webkit-scrollbar-thumb:hover,
+.dark main::-webkit-scrollbar-thumb:hover,
+.dark aside::-webkit-scrollbar-thumb:hover,
+.dark nav::-webkit-scrollbar-thumb:hover {
+  background: var(--dental-neutral-500);
+}
+
+/* ==============================================================================
+   PREVENT AUTO-HIDING & ENSURE VISIBILITY
+   ============================================================================== */
+
+/* Ensure scrollbars remain visible and don't auto-hide on overlay elements */
+[data-state="open"],
+.open,
+[aria-modal="true"],
+[role="dialog"],
+.visible {
+  scrollbar-width: thin !important;
+  overflow-y: auto !important;
+}
+
+/* Fallback for browsers that may auto-hide scrollbars */
+@supports not (scrollbar-width: thin) {
+  /* For older browsers without scrollbar-width support */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    display: block !important;
+  }
 }
