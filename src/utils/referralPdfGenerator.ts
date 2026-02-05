@@ -230,17 +230,6 @@ export const generateReferralPDF = (referral: Referral, patient?: Patient) => {
       doc.setFont('helvetica', 'normal');
       doc.text('0938-171-7695', 40, yPosition);
 
-      // Right column - Map image
-      try {
-        const mapWidth = 65;
-        const mapHeight = 40;
-        const mapX = pageWidth / 2 + 5;
-        const mapY = clinicInfoStartY;
-        doc.addImage(clinicMap, 'JPEG', mapX, mapY, mapWidth, mapHeight);
-      } catch (error) {
-        console.error('Failed to add map image to PDF:', error);
-      }
-
       yPosition += 50;
 
       // Yellow line before thank you message
@@ -420,16 +409,23 @@ export const generateReferralPDF = (referral: Referral, patient?: Patient) => {
       const leftLetters = ['E', 'D', 'C', 'B', 'A'];
       const rightLetters = ['A', 'B', 'C', 'D', 'E'];
       
+      // Create a mapping of tooth/letter IDs to their PDF coordinates for drawing encircles
+      const toothCoordinates: Record<string, { x: number; y: number }> = {};
+      
       // Upper left teeth (8-1)
       let startX = diagramCenterX - (leftTeeth.length * toothSpacing);
       leftTeeth.forEach((tooth, i) => {
-        doc.text(tooth, startX + (i * toothSpacing), diagramStartY);
+        const x = startX + (i * toothSpacing);
+        toothCoordinates[`ut-${tooth}`] = { x, y: diagramStartY };
+        doc.text(tooth, x, diagramStartY);
       });
       
       // Upper right teeth (1-8)
       startX = diagramCenterX + 2;
       rightTeeth.forEach((tooth, i) => {
-        doc.text(tooth, startX + (i * toothSpacing), diagramStartY);
+        const x = startX + (i * toothSpacing);
+        toothCoordinates[`ut-r-${tooth}`] = { x, y: diagramStartY };
+        doc.text(tooth, x, diagramStartY);
       });
 
       yPosition += 4;
@@ -437,12 +433,16 @@ export const generateReferralPDF = (referral: Referral, patient?: Patient) => {
       // Upper letters (left E-A, right A-E)
       startX = diagramCenterX - (leftLetters.length * toothSpacing);
       leftLetters.forEach((letter, i) => {
-        doc.text(letter, startX + (i * toothSpacing), yPosition);
+        const x = startX + (i * toothSpacing);
+        toothCoordinates[`ul-${letter}`] = { x, y: yPosition };
+        doc.text(letter, x, yPosition);
       });
       
       startX = diagramCenterX + 2;
       rightLetters.forEach((letter, i) => {
-        doc.text(letter, startX + (i * toothSpacing), yPosition);
+        const x = startX + (i * toothSpacing);
+        toothCoordinates[`ul-r-${letter}`] = { x, y: yPosition };
+        doc.text(letter, x, yPosition);
       });
 
       // R and L labels with lines
@@ -459,12 +459,16 @@ export const generateReferralPDF = (referral: Referral, patient?: Patient) => {
       doc.setFont('helvetica', 'normal');
       startX = diagramCenterX - (leftLetters.length * toothSpacing);
       leftLetters.forEach((letter, i) => {
-        doc.text(letter, startX + (i * toothSpacing), yPosition);
+        const x = startX + (i * toothSpacing);
+        toothCoordinates[`ll-${letter}`] = { x, y: yPosition };
+        doc.text(letter, x, yPosition);
       });
       
       startX = diagramCenterX + 2;
       rightLetters.forEach((letter, i) => {
-        doc.text(letter, startX + (i * toothSpacing), yPosition);
+        const x = startX + (i * toothSpacing);
+        toothCoordinates[`ll-r-${letter}`] = { x, y: yPosition };
+        doc.text(letter, x, yPosition);
       });
 
       yPosition += 4;
@@ -472,15 +476,76 @@ export const generateReferralPDF = (referral: Referral, patient?: Patient) => {
       // Lower teeth (left 8-1, right 1-8)
       startX = diagramCenterX - (leftTeeth.length * toothSpacing);
       leftTeeth.forEach((tooth, i) => {
-        doc.text(tooth, startX + (i * toothSpacing), yPosition);
+        const x = startX + (i * toothSpacing);
+        toothCoordinates[`lt-${tooth}`] = { x, y: yPosition };
+        doc.text(tooth, x, yPosition);
       });
       
       startX = diagramCenterX + 2;
       rightTeeth.forEach((tooth, i) => {
-        doc.text(tooth, startX + (i * toothSpacing), yPosition);
+        const x = startX + (i * toothSpacing);
+        toothCoordinates[`lt-r-${tooth}`] = { x, y: yPosition };
+        doc.text(tooth, x, yPosition);
       });
 
+      // Draw encircles for selected teeth
+      if (referral.xrayDiagramSelections && Object.keys(referral.xrayDiagramSelections).length > 0) {
+        doc.setLineWidth(0.8);
+        Object.entries(referral.xrayDiagramSelections).forEach(([toothId, color]) => {
+          const coords = toothCoordinates[toothId];
+          if (coords) {
+            // Set circle color based on selection color
+            if (color === 'red') {
+              doc.setDrawColor(220, 53, 69); // Red
+            } else {
+              doc.setDrawColor(0, 0, 0); // Black
+            }
+            // Draw circle around the tooth (radius 1.8mm to fit around text)
+            doc.circle(coords.x, coords.y - 0.5, 1.8, 'S');
+          }
+        });
+      }
+
       yPosition += 10;
+
+      // X-Ray Diagram Selections (if any)
+      if (referral.xrayDiagramSelections && Object.keys(referral.xrayDiagramSelections).length > 0) {
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.text("Diagram Selections:", 15, yPosition);
+        yPosition += 5;
+        
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        let selectionsText = '';
+        Object.entries(referral.xrayDiagramSelections).forEach(([id, color]) => {
+          const label = id.replace(/^(ut|ul|lt|ll|r)-/, '').toUpperCase();
+          selectionsText += `${label} (${color}) `;
+        });
+        const splitText = doc.splitTextToSize(selectionsText, pageWidth - 30);
+        splitText.forEach((line: string) => {
+          doc.text(line, 20, yPosition);
+          yPosition += 4;
+        });
+        yPosition += 2;
+      }
+
+      // X-Ray Notes (if any)
+      if (referral.xrayNotes && referral.xrayNotes.trim()) {
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.text("Notes:", 15, yPosition);
+        yPosition += 5;
+        
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        const notesLines = doc.splitTextToSize(referral.xrayNotes, pageWidth - 30);
+        notesLines.forEach((line: string) => {
+          doc.text(line, 20, yPosition);
+          yPosition += 4;
+        });
+        yPosition += 2;
+      }
 
       // II DIGITAL FORMAT
       doc.setFontSize(10);

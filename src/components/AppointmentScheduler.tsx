@@ -665,8 +665,9 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                         const rawDate = (document.querySelector('input[name="date"]') as HTMLInputElement)?.value || convertToDisplayDate(selectedDate);
                         const date = convertToDBDate(rawDate);
                         return getBookingCountForPeriod(date, 'am');
-                      })()}</p>
-                      <p className="text-xs text-slate-600">in queue</p>
+                      })()}
+                      <span className="text-xs font-normal text-slate-600"> patients</span></p>
+                      <p className="text-xs text-slate-600">in line</p>
                     </div>
                   </label>
 
@@ -686,8 +687,9 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                         const rawDate = (document.querySelector('input[name="date"]') as HTMLInputElement)?.value || convertToDisplayDate(selectedDate);
                         const date = convertToDBDate(rawDate);
                         return getBookingCountForPeriod(date, 'pm');
-                      })()}</p>
-                      <p className="text-xs text-slate-600">in queue</p>
+                      })()}
+                      <span className="text-xs font-normal text-slate-600"> patients</span></p>
+                      <p className="text-xs text-slate-600">in line</p>
                     </div>
                   </label>
                 </div>
@@ -736,10 +738,6 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                 </button>
               </div>
             </form>
-            <p className="text-xs text-slate-600 mt-3 text-center">
-              <Info className="w-3.5 h-3.5 inline-block mr-1" />
-              Join the queue for your preferred time period. The clinic will serve patients on a first-come, first-served basis.
-            </p>
           </div>
         </div>
       )}

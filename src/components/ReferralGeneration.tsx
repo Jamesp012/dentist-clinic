@@ -57,6 +57,9 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [referralToDelete, setReferralToDelete] = useState<string | number | null>(null);
+  const [xrayDiagramSelections, setXrayDiagramSelections] = useState<Record<string, 'black' | 'red'>>({});
+  const [xrayColorMode, setXrayColorMode] = useState<'black' | 'red'>('black');
+  const [xrayNotes, setXrayNotes] = useState('');
   const [formData, setFormData] = useState({
     patientName: '',
     patientId: '',
@@ -101,6 +104,18 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleXrayDiagramClick = (elementId: string) => {
+    setXrayDiagramSelections(prev => {
+      if (prev[elementId] === xrayColorMode) {
+        // Toggle off if clicking the same color
+        const { [elementId]: _, ...rest } = prev;
+        return rest;
+      }
+      // Set or update with current color mode
+      return { ...prev, [elementId]: xrayColorMode };
+    });
+  };
+
   const handlePatientSelect = (patientId: string) => {
     const patient = patients.find(p => String(p.id) === patientId);
     if (patient) {
@@ -130,7 +145,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
     }
 
     try {
-      const newReferral = {
+      const newReferral: any = {
         patientId: formData.patientId,
         patientName: formData.patientName,
         referringDentist: formData.referredBy,
@@ -144,6 +159,12 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
         urgency: formData.urgency,
         createdByRole: 'staff'
       };
+
+      // Include X-ray diagram data if it's an X-ray referral
+      if (referralType === 'xray') {
+        newReferral.xrayDiagramSelections = xrayDiagramSelections;
+        newReferral.xrayNotes = xrayNotes;
+      }
 
       console.log('Creating referral with data:', newReferral);
       const response = await referralAPI.create(newReferral);
@@ -179,6 +200,9 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
     });
     setSelectedServices({});
     setSelectedXrayItems({});
+    setXrayDiagramSelections({});
+    setXrayColorMode('black');
+    setXrayNotes('');
   };
 
   const formatToDD_MM_YYYY = (dateString: string) => {
@@ -552,94 +576,220 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                   </div>
                 </div>
 
-                {/* Tooth Diagram */}
-                <div className="p-6 bg-white rounded">
-                  <div className="flex justify-center items-center">
-                    <div className="relative">
-                      {/* Upper teeth */}
-                      <div className="flex text-2xl font-mono mb-2">
-                        <span className="inline-block w-10 text-center">8</span>
-                        <span className="inline-block w-10 text-center">7</span>
-                        <span className="inline-block w-10 text-center">6</span>
-                        <span className="inline-block w-10 text-center">5</span>
-                        <span className="inline-block w-10 text-center">4</span>
-                        <span className="inline-block w-10 text-center">3</span>
-                        <span className="inline-block w-10 text-center">2</span>
-                        <span className="inline-block w-10 text-center">1</span>
-                        <span className="inline-block w-10 text-center"></span>
-                        <span className="inline-block w-10 text-center">1</span>
-                        <span className="inline-block w-10 text-center">2</span>
-                        <span className="inline-block w-10 text-center">3</span>
-                        <span className="inline-block w-10 text-center">4</span>
-                        <span className="inline-block w-10 text-center">5</span>
-                        <span className="inline-block w-10 text-center">6</span>
-                        <span className="inline-block w-10 text-center">7</span>
-                        <span className="inline-block w-10 text-center">8</span>
+                {/* Tooth Diagram - Interactive */}
+                <div className="p-6 bg-white rounded border-2 border-slate-200">
+                  {/* Color Selector */}
+                  <div className="mb-4 flex items-start gap-6">
+                    {/* Diagram */}
+                    <div className="flex-1">
+                      <div className="flex justify-center items-center">
+                        <div className="relative">
+                          {/* Upper teeth */}
+                          <div className="flex text-2xl font-mono mb-2 gap-0.5">
+                            {['8', '7', '6', '5', '4', '3', '2', '1'].map(num => (
+                              <button
+                                key={`ut-${num}`}
+                                type="button"
+                                onClick={() => handleXrayDiagramClick(`ut-${num}`)}
+                                className={`w-10 h-10 flex items-center justify-center transition-all cursor-pointer text-center font-bold ${
+                                  xrayDiagramSelections[`ut-${num}`] === 'black'
+                                    ? 'border-2 border-black rounded-full'
+                                    : xrayDiagramSelections[`ut-${num}`] === 'red'
+                                    ? 'border-2 border-red-600 rounded-full'
+                                    : 'hover:border-2 hover:border-gray-300 hover:rounded-full'
+                                }`}
+                              >
+                                {num}
+                              </button>
+                            ))}
+                            <span className="w-2" />
+                            {['1', '2', '3', '4', '5', '6', '7', '8'].map(num => (
+                              <button
+                                key={`ut-r-${num}`}
+                                type="button"
+                                onClick={() => handleXrayDiagramClick(`ut-r-${num}`)}
+                                className={`w-10 h-10 flex items-center justify-center transition-all cursor-pointer text-center font-bold ${
+                                  xrayDiagramSelections[`ut-r-${num}`] === 'black'
+                                    ? 'border-2 border-black rounded-full'
+                                    : xrayDiagramSelections[`ut-r-${num}`] === 'red'
+                                    ? 'border-2 border-red-600 rounded-full'
+                                    : 'hover:border-2 hover:border-gray-300 hover:rounded-full'
+                                }`}
+                              >
+                                {num}
+                              </button>
+                            ))}
+                          </div>
+                          {/* Upper letters */}
+                          <div className="flex text-lg font-mono mb-2 gap-0.5">
+                            <div className="w-32" />
+                            {['E', 'D', 'C', 'B', 'A'].map(letter => (
+                              <button
+                                key={`ul-${letter}`}
+                                type="button"
+                                onClick={() => handleXrayDiagramClick(`ul-${letter}`)}
+                                className={`w-10 h-10 flex items-center justify-center transition-all cursor-pointer text-center font-bold ${
+                                  xrayDiagramSelections[`ul-${letter}`] === 'black'
+                                    ? 'border-2 border-black rounded-full'
+                                    : xrayDiagramSelections[`ul-${letter}`] === 'red'
+                                    ? 'border-2 border-red-600 rounded-full'
+                                    : 'hover:border-2 hover:border-gray-300 hover:rounded-full'
+                                }`}
+                              >
+                                {letter}
+                              </button>
+                            ))}
+                            <span className="w-2" />
+                            {['A', 'B', 'C', 'D', 'E'].map(letter => (
+                              <button
+                                key={`ul-r-${letter}`}
+                                type="button"
+                                onClick={() => handleXrayDiagramClick(`ul-r-${letter}`)}
+                                className={`w-10 h-10 flex items-center justify-center transition-all cursor-pointer text-center font-bold ${
+                                  xrayDiagramSelections[`ul-r-${letter}`] === 'black'
+                                    ? 'border-2 border-black rounded-full'
+                                    : xrayDiagramSelections[`ul-r-${letter}`] === 'red'
+                                    ? 'border-2 border-red-600 rounded-full'
+                                    : 'hover:border-2 hover:border-gray-300 hover:rounded-full'
+                                }`}
+                              >
+                                {letter}
+                              </button>
+                            ))}
+                          </div>
+                          {/* Cross - R and L with lines */}
+                          <div className="flex items-center text-xl font-bold my-2 relative">
+                            <span className="mr-2">R</span>
+                            <div className="flex-1 border-t-2 border-gray-500"></div>
+                            <span className="ml-2">L</span>
+                            <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 w-0.5 bg-gray-500 h-40 -translate-y-20"></div>
+                          </div>
+                          {/* Lower letters */}
+                          <div className="flex text-lg font-mono mb-2 gap-0.5">
+                            <div className="w-32" />
+                            {['E', 'D', 'C', 'B', 'A'].map(letter => (
+                              <button
+                                key={`ll-${letter}`}
+                                type="button"
+                                onClick={() => handleXrayDiagramClick(`ll-${letter}`)}
+                                className={`w-10 h-10 flex items-center justify-center transition-all cursor-pointer text-center font-bold ${
+                                  xrayDiagramSelections[`ll-${letter}`] === 'black'
+                                    ? 'border-2 border-black rounded-full'
+                                    : xrayDiagramSelections[`ll-${letter}`] === 'red'
+                                    ? 'border-2 border-red-600 rounded-full'
+                                    : 'hover:border-2 hover:border-gray-300 hover:rounded-full'
+                                }`}
+                              >
+                                {letter}
+                              </button>
+                            ))}
+                            <span className="w-2" />
+                            {['A', 'B', 'C', 'D', 'E'].map(letter => (
+                              <button
+                                key={`ll-r-${letter}`}
+                                type="button"
+                                onClick={() => handleXrayDiagramClick(`ll-r-${letter}`)}
+                                className={`w-10 h-10 flex items-center justify-center transition-all cursor-pointer text-center font-bold ${
+                                  xrayDiagramSelections[`ll-r-${letter}`] === 'black'
+                                    ? 'border-2 border-black rounded-full'
+                                    : xrayDiagramSelections[`ll-r-${letter}`] === 'red'
+                                    ? 'border-2 border-red-600 rounded-full'
+                                    : 'hover:border-2 hover:border-gray-300 hover:rounded-full'
+                                }`}
+                              >
+                                {letter}
+                              </button>
+                            ))}
+                          </div>
+                          {/* Lower teeth */}
+                          <div className="flex text-2xl font-mono gap-0.5">
+                            {['8', '7', '6', '5', '4', '3', '2', '1'].map(num => (
+                              <button
+                                key={`lt-${num}`}
+                                type="button"
+                                onClick={() => handleXrayDiagramClick(`lt-${num}`)}
+                                className={`w-10 h-10 flex items-center justify-center transition-all cursor-pointer text-center font-bold ${
+                                  xrayDiagramSelections[`lt-${num}`] === 'black'
+                                    ? 'border-2 border-black rounded-full'
+                                    : xrayDiagramSelections[`lt-${num}`] === 'red'
+                                    ? 'border-2 border-red-600 rounded-full'
+                                    : 'hover:border-2 hover:border-gray-300 hover:rounded-full'
+                                }`}
+                              >
+                                {num}
+                              </button>
+                            ))}
+                            <span className="w-2" />
+                            {['1', '2', '3', '4', '5', '6', '7', '8'].map(num => (
+                              <button
+                                key={`lt-r-${num}`}
+                                type="button"
+                                onClick={() => handleXrayDiagramClick(`lt-r-${num}`)}
+                                className={`w-10 h-10 flex items-center justify-center transition-all cursor-pointer text-center font-bold ${
+                                  xrayDiagramSelections[`lt-r-${num}`] === 'black'
+                                    ? 'border-2 border-black rounded-full'
+                                    : xrayDiagramSelections[`lt-r-${num}`] === 'red'
+                                    ? 'border-2 border-red-600 rounded-full'
+                                    : 'hover:border-2 hover:border-gray-300 hover:rounded-full'
+                                }`}
+                              >
+                                {num}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       </div>
-                      {/* Upper letters */}
-                      <div className="flex text-lg font-mono mb-2">
-                        <span className="inline-block w-10 text-center"></span>
-                        <span className="inline-block w-10 text-center"></span>
-                        <span className="inline-block w-10 text-center"></span>
-                        <span className="inline-block w-10 text-center">E</span>
-                        <span className="inline-block w-10 text-center">D</span>
-                        <span className="inline-block w-10 text-center">C</span>
-                        <span className="inline-block w-10 text-center">B</span>
-                        <span className="inline-block w-10 text-center">A</span>
-                        <span className="inline-block w-10 text-center"></span>
-                        <span className="inline-block w-10 text-center">A</span>
-                        <span className="inline-block w-10 text-center">B</span>
-                        <span className="inline-block w-10 text-center">C</span>
-                        <span className="inline-block w-10 text-center">D</span>
-                        <span className="inline-block w-10 text-center">E</span>
-                      </div>
-                      {/* Cross - R and L with lines */}
-                      <div className="flex items-center text-xl font-bold my-2 relative">
-                        <span className="mr-2">R</span>
-                        <div className="flex-1 border-t-2 border-gray-500"></div>
-                        <span className="ml-2">L</span>
-                        {/* Vertical line positioned absolutely to cross through */}
-                        <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 w-0.5 bg-gray-500 h-40 -translate-y-20"></div>
-                      </div>
-                      {/* Lower letters */}
-                      <div className="flex text-lg font-mono mb-2">
-                        <span className="inline-block w-10 text-center"></span>
-                        <span className="inline-block w-10 text-center"></span>
-                        <span className="inline-block w-10 text-center"></span>
-                        <span className="inline-block w-10 text-center">E</span>
-                        <span className="inline-block w-10 text-center">D</span>
-                        <span className="inline-block w-10 text-center">C</span>
-                        <span className="inline-block w-10 text-center">B</span>
-                        <span className="inline-block w-10 text-center">A</span>
-                        <span className="inline-block w-10 text-center"></span>
-                        <span className="inline-block w-10 text-center">A</span>
-                        <span className="inline-block w-10 text-center">B</span>
-                        <span className="inline-block w-10 text-center">C</span>
-                        <span className="inline-block w-10 text-center">D</span>
-                        <span className="inline-block w-10 text-center">E</span>
-                      </div>
-                      {/* Lower teeth */}
-                      <div className="flex text-2xl font-mono">
-                        <span className="inline-block w-10 text-center">8</span>
-                        <span className="inline-block w-10 text-center">7</span>
-                        <span className="inline-block w-10 text-center">6</span>
-                        <span className="inline-block w-10 text-center">5</span>
-                        <span className="inline-block w-10 text-center">4</span>
-                        <span className="inline-block w-10 text-center">3</span>
-                        <span className="inline-block w-10 text-center">2</span>
-                        <span className="inline-block w-10 text-center">1</span>
-                        <span className="inline-block w-10 text-center"></span>
-                        <span className="inline-block w-10 text-center">1</span>
-                        <span className="inline-block w-10 text-center">2</span>
-                        <span className="inline-block w-10 text-center">3</span>
-                        <span className="inline-block w-10 text-center">4</span>
-                        <span className="inline-block w-10 text-center">5</span>
-                        <span className="inline-block w-10 text-center">6</span>
-                        <span className="inline-block w-10 text-center">7</span>
-                        <span className="inline-block w-10 text-center">8</span>
+                    </div>
+
+                    {/* Color Selector and Legend */}
+                    <div className="flex flex-col items-center gap-4 pt-8">
+                      <div className="text-sm font-bold text-center">Color</div>
+                      <button
+                        type="button"
+                        onClick={() => setXrayColorMode('black')}
+                        className={`w-8 h-8 rounded-full border-4 transition-all ${
+                          xrayColorMode === 'black'
+                            ? 'border-black shadow-lg scale-125'
+                            : 'border-gray-300'
+                        } bg-black`}
+                        title="Permanent"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setXrayColorMode('red')}
+                        className={`w-8 h-8 rounded-full border-4 transition-all ${
+                          xrayColorMode === 'red'
+                            ? 'border-red-600 shadow-lg scale-125'
+                            : 'border-red-200'
+                        } bg-red-600`}
+                        title="Temporary"
+                      />
+                      
+                      {/* Legend */}
+                      <div className="mt-6 pt-4 border-t-2 border-gray-300 text-xs text-center">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-3 h-3 bg-black rounded-full" />
+                          <span>Permanent</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-red-600 rounded-full" />
+                          <span>Temporary</span>
+                        </div>
                       </div>
                     </div>
                   </div>
+                </div>
+
+                {/* Notes Field */}
+                <div className="mt-4">
+                  <label className="block text-sm font-bold mb-2">Notes (Optional)</label>
+                  <textarea
+                    value={xrayNotes}
+                    onChange={(e) => setXrayNotes(e.target.value)}
+                    placeholder="Enter any notes related to this X-ray referral..."
+                    className="w-full border-2 border-slate-300 rounded p-3 text-sm focus:outline-none focus:border-blue-500 resize-none"
+                    rows={3}
+                  />
                 </div>
               </div>
 
@@ -1213,6 +1363,35 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                       </div>
                     </div>
                   </div>
+
+                  {/* X-Ray Diagram Display */}
+                  {selectedReferral.xrayDiagramSelections && Object.keys(selectedReferral.xrayDiagramSelections).length > 0 && (
+                    <div className="p-4 bg-blue-50 rounded border-2 border-blue-200 mt-4">
+                      <h4 className="font-bold text-sm mb-3">X-Ray Diagram Selections:</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {Object.entries(selectedReferral.xrayDiagramSelections).map(([id, color]) => (
+                          <span
+                            key={id}
+                            className={`px-3 py-1 rounded text-xs font-bold ${
+                              color === 'black'
+                                ? 'bg-gray-300 text-black border-2 border-black'
+                                : 'bg-red-200 text-red-900 border-2 border-red-600'
+                            }`}
+                          >
+                            {id.replace(/^(ut|ul|lt|ll|r)-/, '').toUpperCase()} ({color})
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* X-Ray Notes Display */}
+                  {selectedReferral.xrayNotes && (
+                    <div className="p-4 bg-amber-50 rounded border-2 border-amber-200 mt-4">
+                      <h4 className="font-bold text-sm mb-2">Notes:</h4>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedReferral.xrayNotes}</p>
+                    </div>
+                  )}
 
                   {/* II DIGITAL FORMAT */}
                   <div className="space-y-3 pt-4">

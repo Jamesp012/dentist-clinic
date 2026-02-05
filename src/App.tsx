@@ -101,6 +101,8 @@ export type Referral = {
   date: string;
   urgency: 'routine' | 'urgent' | 'emergency';
   createdByRole?: 'patient' | 'staff';
+  xrayDiagramSelections?: Record<string, 'black' | 'red'>;
+  xrayNotes?: string;
 };
 
 export type PhotoUpload = {

@@ -1077,7 +1077,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                                   <Calendar className="w-4 h-4" />
                                   <span>{formatToWordedDate(getDateString(apt.date))}</span>
                                   <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded font-semibold text-xs">
-                                    Queue #{queueNumber} ({period})
+                                    You are in a queue…
                                   </span>
                                 </div>
                               </div>
