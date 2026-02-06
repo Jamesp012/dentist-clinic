@@ -723,7 +723,7 @@ Generated on: ${new Date().toLocaleString()}
           </div>
 
           {/* Form Content */}
-          <div className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent scrollbar-hover">
+          <div className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent scrollbar-visible">
             {/* Clinic Header */}
             <div className="text-center mb-8 border-b border-slate-300 pb-4">
               <h2 className="text-2xl font-bold tracking-widest text-slate-900">{clinic.doctorName}</h2>

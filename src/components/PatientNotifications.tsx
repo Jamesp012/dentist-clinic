@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Patient, Appointment } from '../App';
-import { Bell, X, Check, AlertCircle, Calendar, Trash2 } from 'lucide-react';
+import { Bell, X, Check, AlertCircle, Calendar, Trash2, Megaphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { notificationAPI } from '../api';
 import { formatToMonthDayYear } from '../utils/dateHelpers';
@@ -10,7 +10,7 @@ type PatientNotificationItem = {
   id: string | number;
   patientId: string | number;
   appointmentId?: string | number;
-  type: 'appointment_created' | 'appointment_updated' | 'appointment_cancelled' | 'reminder';
+  type: 'appointment_created' | 'appointment_updated' | 'appointment_cancelled' | 'reminder' | 'announcement_posted';
   title: string;
   message: string;
   isRead: boolean;
@@ -20,10 +20,11 @@ type PatientNotificationItem = {
 
 type PatientNotificationsProps = {
   patient: Patient;
-  appointments: Appointment[];
+  appointments?: Appointment[];
+  onNavigate?: (tab: string) => void;
 };
 
-export function PatientNotifications({ patient, appointments }: PatientNotificationsProps) {
+export function PatientNotifications({ patient, appointments, onNavigate }: PatientNotificationsProps) {
   const [notifications, setNotifications] = useState<PatientNotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showPanel, setShowPanel] = useState(false);
@@ -96,6 +97,18 @@ export function PatientNotifications({ patient, appointments }: PatientNotificat
     }
   };
 
+  const handleNotificationClick = (notification: PatientNotificationItem) => {
+    // If it's an announcement notification, navigate to the announcements tab
+    if (notification.type === 'announcement_posted' && onNavigate) {
+      onNavigate('announcements');
+      setShowPanel(false);
+    }
+    // Mark as read if not already
+    if (!notification.isRead) {
+      handleMarkAsRead(notification.id);
+    }
+  };
+
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'appointment_created':
@@ -106,6 +119,8 @@ export function PatientNotifications({ patient, appointments }: PatientNotificat
         return <Calendar className="w-5 h-5 text-orange-600" />;
       case 'reminder':
         return <Bell className="w-5 h-5 text-yellow-600" />;
+      case 'announcement_posted':
+        return <Megaphone className="w-5 h-5 text-purple-600" />;
       default:
         return <Bell className="w-5 h-5 text-gray-600" />;
     }
@@ -121,6 +136,8 @@ export function PatientNotifications({ patient, appointments }: PatientNotificat
         return 'bg-orange-50 border-l-4 border-orange-500';
       case 'reminder':
         return 'bg-yellow-50 border-l-4 border-yellow-500';
+      case 'announcement_posted':
+        return 'bg-purple-50 border-l-4 border-purple-500';
       default:
         return 'bg-gray-50 border-l-4 border-gray-500';
     }
@@ -137,7 +154,27 @@ export function PatientNotifications({ patient, appointments }: PatientNotificat
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
-      {/* Notification bell removed */}
+      {/* Notification bell button */}
+      <motion.button
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => setShowPanel(!showPanel)}
+        className="relative w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-2xl transition-all duration-300 flex items-center justify-center"
+        title="Notifications"
+      >
+        <Bell className="w-6 h-6" />
+        {unreadCount > 0 && (
+          <motion.span
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium"
+          >
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </motion.span>
+        )}
+      </motion.button>
 
       {/* Notifications Panel */}
       <AnimatePresence>
@@ -194,8 +231,11 @@ export function PatientNotifications({ patient, appointments }: PatientNotificat
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 20 }}
+                        onClick={() => handleNotificationClick(notification)}
                         className={`p-4 transition-colors ${
-                          !notification.isRead ? 'bg-blue-50' : 'hover:bg-gray-50'
+                          notification.type === 'announcement_posted' ? 'cursor-pointer hover:bg-purple-50' : 'hover:bg-gray-50'
+                        } ${
+                          !notification.isRead ? 'bg-blue-50' : ''
                         } ${getNotificationColor(notification.type)}`}
                       >
                         <div className="flex gap-3">

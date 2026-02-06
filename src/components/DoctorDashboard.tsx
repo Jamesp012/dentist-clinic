@@ -45,6 +45,44 @@ type DoctorDashboardProps = {
 
 const API_BASE = 'http://localhost:5000/api';
 
+// Display name for user (first and last only, no middle name)
+const getUserDisplayName = (fullName: string | undefined): string => {
+  if (!fullName) return '';
+  // Split by whitespace and take first and last names
+  const nameParts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (nameParts.length === 0) return '';
+  if (nameParts.length === 1) return nameParts[0];
+  // Return first and last name only
+  return `${nameParts[0]} ${nameParts[nameParts.length - 1]}`;
+};
+
+// Helper function to split patient names
+const splitPatientName = (fullName: string) => {
+  // Split on internal delimiter (newline) to preserve spaces in names
+  // Format: first\nmiddle\nlast or first\nlast (for backward compatibility)
+  if (fullName.includes('\n')) {
+    const parts = fullName.split('\n');
+    if (parts.length === 3) {
+      // New format: first\nmiddle\nlast
+      return { first: parts[0] || '', middle: parts[1] || '', last: parts[2] || '' };
+    } else {
+      // Old format: first\nlast
+      return { first: parts[0] || '', middle: '', last: parts[1] || '' };
+    }
+  }
+  // Fallback for space-separated format
+  const parts = (fullName || '').trim().split(/\s+/).filter(Boolean);
+  const first = parts.length > 0 ? parts[0] : '';
+  const last = parts.length > 1 ? parts.slice(1).join(' ') : '';
+  return { first, middle: '', last };
+};
+
+// Display name for sidebar/dropdowns (first and last only, no middle name)
+const getDisplayName = (fullName: string): string => {
+  const { first, last } = splitPatientName(fullName);
+  return `${first} ${last}`.trim();
+};
+
 export function DoctorDashboard({
   currentUser,
   onLogout,
@@ -210,7 +248,7 @@ export function DoctorDashboard({
 
   // Photo upload state
   const [selectedPatientForPhoto, setSelectedPatientForPhoto] = useState<string>('');
-  const [photoType, setPhotoType] = useState<'before' | 'after' | 'xray'>('before');
+  const [photoType, setPhotoType] = useState<string>('before');
   const [photoNotes, setPhotoNotes] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -255,8 +293,8 @@ export function DoctorDashboard({
   };
 
   const handlePhotoUpload = async () => {
-    if (!selectedPatientForPhoto || !photoUrl) {
-      showToast('Please select a patient and provide a photo', 'error');
+    if (!selectedPatientForPhoto || !photoUrl || !photoType) {
+      showToast('Please select a patient, provide a photo, and select a photo type', 'error');
       return;
     }
 
@@ -278,7 +316,8 @@ export function DoctorDashboard({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to upload photo');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to upload photo: ${response.statusText}`);
       }
 
       const newPhoto = await response.json();
@@ -295,7 +334,8 @@ export function DoctorDashboard({
       }
     } catch (error) {
       console.error('Photo upload error:', error);
-      showToast('Failed to upload photo. Please try again.', 'error');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to upload photo. Please try again.';
+      showToast(errorMessage, 'error');
     } finally {
       setIsUploadingPhoto(false);
     }
@@ -390,7 +430,7 @@ export function DoctorDashboard({
     { id: 'patients', label: 'Patients', icon: Users, color: 'from-teal-500 to-teal-600' },
     { id: 'employees', label: 'Employees', icon: UserCog, color: 'from-cyan-600 to-teal-500' },
     { id: 'appointments', label: 'Appointments', icon: Calendar, color: 'from-teal-600 to-cyan-600' },
-    { id: 'photos', label: 'Patient Photos', icon: Camera, color: 'from-violet-500 to-purple-600' },
+    { id: 'photos', label: 'Patient Photos', icon: Camera, color: 'from-teal-500 to-emerald-600' },
     { id: 'charting', label: 'Dental Charting', icon: ClipboardList, color: 'from-cyan-500 to-teal-500' },
     { id: 'braces', label: 'Braces Charting', icon: Sparkles, color: 'from-teal-500 to-emerald-600' },
     { id: 'referrals', label: 'Referrals', icon: FileText, color: 'from-cyan-500 to-emerald-600' },
@@ -426,7 +466,7 @@ export function DoctorDashboard({
             >
               <div className="min-w-0">
                 <h1 className="text-lg font-semibold text-gray-800 whitespace-nowrap overflow-hidden text-ellipsis">
-                  {currentUser.fullName || currentUser.username || 'Doctor'}
+                  {getUserDisplayName(currentUser.fullName) || currentUser.username || 'Doctor'}
                 </h1>
                 <p className="text-xs text-gray-600 flex items-center gap-1 mt-1">
                   Doctor
@@ -689,7 +729,7 @@ export function DoctorDashboard({
                           )}
                           
                           {/* Dropdown */}
-                          {showPatientDropdown && (
+                          {showPatientDropdown && patientSearchQuery.trim() && (
                             <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-slate-200 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-teal-500 scrollbar-track-slate-100">
                               {patients
                                 .filter(p => p.name.toLowerCase().includes(patientSearchQuery.toLowerCase()))
@@ -698,12 +738,12 @@ export function DoctorDashboard({
                                     key={p.id}
                                     onClick={() => {
                                       setSelectedPatientForPhoto(String(p.id));
-                                      setPatientSearchQuery(p.name);
+                                      setPatientSearchQuery(getDisplayName(p.name));
                                       setShowPatientDropdown(false);
                                     }}
                                     className="w-full text-left px-4 py-3 hover:bg-teal-50 transition-colors border-b border-slate-100 last:border-b-0 font-medium text-slate-700"
                                   >
-                                    {p.name}
+                                    {getDisplayName(p.name)}
                                   </button>
                                 ))}
                               {patients.filter(p => p.name.toLowerCase().includes(patientSearchQuery.toLowerCase())).length === 0 && (
@@ -721,9 +761,10 @@ export function DoctorDashboard({
                         </label>
                         <select
                           value={photoType}
-                          onChange={(e) => setPhotoType(e.target.value as 'before' | 'after' | 'xray')}
-                          className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all font-medium text-slate-700 hover:border-slate-300"
+                          onChange={(e) => setPhotoType(e.target.value)}
+                          className="w-full px-4 py-3 border-2 border-teal-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all font-medium text-slate-700 bg-white hover:border-teal-400 cursor-pointer"
                         >
+                          <option value="">Select photo type...</option>
                           <option value="before">Before Treatment</option>
                           <option value="after">After Treatment</option>
                           <option value="xray">X-Ray</option>
@@ -820,10 +861,22 @@ export function DoctorDashboard({
                           ? photos.reverse().filter(photo => {
                               const patient = patients.find(p => String(p.id) === String(photo.patientId));
                               return patient?.name.toLowerCase().includes(photoSearchQuery.toLowerCase());
+                            }).sort((a, b) => {
+                              const patientA = patients.find(p => String(p.id) === String(a.patientId));
+                              const patientB = patients.find(p => String(p.id) === String(b.patientId));
+                              const lastNameA = patientA?.name?.split(' ').pop()?.toLowerCase() || '';
+                              const lastNameB = patientB?.name?.split(' ').pop()?.toLowerCase() || '';
+                              return lastNameA.localeCompare(lastNameB);
                             })
                           : photos.slice(-10).reverse().filter(photo => {
                               const patient = patients.find(p => String(p.id) === String(photo.patientId));
                               return patient?.name.toLowerCase().includes(photoSearchQuery.toLowerCase());
+                            }).sort((a, b) => {
+                              const patientA = patients.find(p => String(p.id) === String(a.patientId));
+                              const patientB = patients.find(p => String(p.id) === String(b.patientId));
+                              const lastNameA = patientA?.name?.split(' ').pop()?.toLowerCase() || '';
+                              const lastNameB = patientB?.name?.split(' ').pop()?.toLowerCase() || '';
+                              return lastNameA.localeCompare(lastNameB);
                             })
                         ).map(photo => {
                           const patient = patients.find(p => String(p.id) === String(photo.patientId));
@@ -892,27 +945,22 @@ export function DoctorDashboard({
                 />
               )}
               {activeTab === 'referrals' && (
-                <div className="p-6 space-y-6 max-h-full overflow-y-auto">
+                <div className="p-6 space-y-6 max-h-full overflow-y-scroll scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent">
                   {/* Referral Management Tab Component - View Incoming/Outgoing */}
-                  <div className="bg-white rounded-xl shadow-md p-6">
-                    <h3 className="text-2xl font-bold text-slate-900 mb-4">All Referrals</h3>
+                  <div className="bg-white rounded-xl shadow-md p-6 space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-2xl font-bold text-slate-900">All Referrals</h3>
+                      <ReferralGeneration
+                        referrals={referrals}
+                        setReferrals={setReferrals}
+                        patients={patients}
+                      />
+                    </div>
                     <ReferralManagement
-                      referrals={referrals}
-                      patients={patients}
-                      currentUserName={currentUser.fullName}
-                    />
-                  </div>
-
-                  {/* Divider */}
-                  <div className="h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent"></div>
-
-                  {/* Referral Generation Component - Create New Referrals */}
-                  <div className="bg-white rounded-xl shadow-md p-6">
-                    <h3 className="text-2xl font-bold text-slate-900 mb-4">Create New Referral</h3>
-                    <ReferralGeneration
                       referrals={referrals}
                       setReferrals={setReferrals}
                       patients={patients}
+                      currentUserName={currentUser.fullName}
                     />
                   </div>
                 </div>
@@ -935,6 +983,7 @@ export function DoctorDashboard({
                   setTreatmentRecords={setTreatmentRecords}
                   payments={payments}
                   setPayments={setPayments}
+                  onDataChanged={onDataChanged}
                 />
               )}
               {activeTab === 'announcements' && (
@@ -965,55 +1014,51 @@ export function DoctorDashboard({
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="relative bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col w-full max-w-5xl"
-              style={{ maxHeight: '90vh' }}
+              className="relative bg-white rounded-xl overflow-hidden flex flex-col shadow-2xl"
+              style={{ width: '90vw', height: '90vh', maxWidth: '1200px', maxHeight: '800px' }}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="bg-gradient-to-r from-teal-600 to-cyan-600 px-6 py-5">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-4 flex-1">
-                    <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
-                      <Camera className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-white font-bold text-xl mb-3">
-                        {patients.find(p => String(p.id) === String(selectedPhotoForView.patientId))?.name || 'Patient Photo'}
-                      </h3>
-                      <div className="flex flex-wrap items-center gap-4 text-sm">
-                        <div className="flex items-center gap-2 text-teal-50">
-                          <div className="w-5 h-5 rounded bg-white/20 flex items-center justify-center">
-                            <FileText className="w-3 h-3" />
-                          </div>
-                          <span className="font-medium capitalize">{selectedPhotoForView.type} Photo</span>
+              <div className="bg-gradient-to-r from-teal-700 via-cyan-600 to-cyan-500 p-6 flex items-center justify-between">
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+                    <Camera className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-white font-bold text-xl">Treatment Photo</h3>
+                    <div className="flex flex-wrap items-center gap-4 text-sm mt-2">
+                      <div className="flex items-center gap-2 text-cyan-100">
+                        <div className="w-5 h-5 rounded bg-white/25 flex items-center justify-center">
+                          <FileText className="w-3 h-3" />
                         </div>
-                        <div className="flex items-center gap-2 text-teal-50">
-                          <div className="w-5 h-5 rounded bg-white/20 flex items-center justify-center">
-                            <Calendar className="w-3 h-3" />
-                          </div>
-                          <span className="font-medium">{formatToDD_MM_YYYY(selectedPhotoForView.date)}</span>
-                        </div>
+                        <span className="font-medium capitalize">{selectedPhotoForView.type} Photo</span>
                       </div>
-                      {selectedPhotoForView.notes && (
-                        <div className="mt-3 pt-3 border-t border-white/20">
-                          <p className="text-teal-50 text-sm leading-relaxed">
-                            <span className="font-semibold">Notes:</span> {selectedPhotoForView.notes}
-                          </p>
+                      <div className="flex items-center gap-2 text-slate-200">
+                        <div className="w-5 h-5 rounded bg-white/20 flex items-center justify-center">
+                          <Calendar className="w-3 h-3" />
                         </div>
-                      )}
+                        <span className="font-medium">{formatToDD_MM_YYYY(selectedPhotoForView.date)}</span>
+                      </div>
+                    </div>
+                    {selectedPhotoForView.notes && (
+                      <div className="mt-3 pt-3 border-t border-white/30">
+                        <p className="text-cyan-100 text-sm leading-relaxed">
+                          <span className="font-semibold">Notes:</span> {selectedPhotoForView.notes}
+                        </p>
+                      </div>
+                    )}
                     </div>
                   </div>
-                  <button
-                    onClick={() => setSelectedPhotoForView(null)}
-                    className="w-9 h-9 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white flex items-center justify-center transition-all hover:rotate-90 duration-300 flex-shrink-0"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
+                <button
+                  onClick={() => setSelectedPhotoForView(null)}
+                  className="w-9 h-9 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white flex items-center justify-center transition-all hover:rotate-90 duration-300 flex-shrink-0"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
 
               {/* Image Container */}
-              <div className="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 p-4 flex items-center justify-center overflow-hidden" style={{ minHeight: '600px' }}>
+              <div className="flex-1 bg-gradient-to-br from-white via-cyan-50/30 to-teal-50/20 p-4 flex items-center justify-center overflow-hidden" style={{ minHeight: '600px' }}>
                 <div className="relative w-full h-full flex items-center justify-center">
                   <img
                     src={selectedPhotoForView.url}
@@ -1028,7 +1073,7 @@ export function DoctorDashboard({
                     }}
                   />
                   {/* Image Badge */}
-                  <div className="absolute top-3 left-3 px-3 py-1.5 bg-black/50 backdrop-blur-md text-white text-xs font-semibold rounded-full capitalize">
+                  <div className="absolute top-3 left-3 px-4 py-2 bg-gradient-to-r from-teal-500 to-cyan-500 backdrop-blur-md text-white text-xs font-bold rounded-full capitalize shadow-lg">
                     {selectedPhotoForView.type}
                   </div>
                 </div>

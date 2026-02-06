@@ -110,30 +110,36 @@ export const generateReceipt = (
       doc.text('No payment records found for this service.', 15, finalY + 10);
     }
 
-    // Final Totals
+    // Final Totals - with page height safety check
     const lastTable2 = (doc as any).lastAutoTable;
-    const summaryY = paymentHistory.length > 0 ? (lastTable2 ? lastTable2.finalY + 10 : finalY + 20) : finalY + 20;
+    const pageHeight = doc.internal.pageSize.getHeight();
+    let summaryY = paymentHistory.length > 0 ? (lastTable2 ? lastTable2.finalY + 10 : finalY + 20) : finalY + 20;
+    
+    // If summary is too close to bottom, move it up or add new page
+    if (summaryY > pageHeight - 40) {
+      summaryY = Math.max(finalY + 10, pageHeight - 50);
+    }
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text('Total Cost:', pageWidth - 60, summaryY);
+    doc.text('Total Cost:', 15, summaryY);
     doc.text(`PHP ${Number(record.cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, pageWidth - 15, summaryY, { align: 'right' });
 
     doc.setFont('helvetica', 'bold');
-    doc.text('Total Paid:', pageWidth - 60, summaryY + 7);
+    doc.text('Total Paid:', 15, summaryY + 7);
     doc.text(`PHP ${Number(record.amountPaid || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, pageWidth - 15, summaryY + 7, { align: 'right' });
 
     const balance = Number(record.remainingBalance || 0);
     doc.setTextColor(balance <= 0 ? [0, 128, 0] : [200, 0, 0]);
-    doc.text('Remaining Balance:', pageWidth - 60, summaryY + 14);
+    doc.text('Remaining Balance:', 15, summaryY + 14);
     doc.text(`PHP ${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, pageWidth - 15, summaryY + 14, { align: 'right' });
 
-    // Footer
+    // Footer - position at safe location
     doc.setFontSize(10);
     doc.setTextColor(150);
     doc.setFont('helvetica', 'italic');
-    doc.text('Thank you for choosing our Dental Clinic!', pageWidth / 2, doc.internal.pageSize.getHeight() - 20, { align: 'center' });
-    doc.text('This is a computer-generated receipt.', pageWidth / 2, doc.internal.pageSize.getHeight() - 15, { align: 'center' });
+    doc.text('Thank you for choosing our Dental Clinic!', pageWidth / 2, pageHeight - 20, { align: 'center' });
+    doc.text('This is a computer-generated receipt.', pageWidth / 2, pageHeight - 15, { align: 'center' });
 
     // Save the PDF
     const fileName = `Receipt-${(patient.name || 'Patient').replace(/[^\w-]/g, '-')}-${record.id || '0'}.pdf`;
@@ -588,13 +594,18 @@ export const generateDetailedReceiptPDF = (
       headStyles: { fillColor: [20, 184, 166] }
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY + 15;
+    const lastTable = (doc as any).lastAutoTable;
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const finalY = lastTable && lastTable.finalY ? lastTable.finalY + 15 : 165;
 
     // Payment Section
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text('PAYMENT SUMMARY', 15, finalY);
-    doc.line(15, finalY + 2, 100, finalY + 2);
+    
+    // Check if we need to adjust for page height
+    const paymentY = Math.min(finalY, pageHeight - 80);
+    doc.text('PAYMENT SUMMARY', 15, paymentY);
+    doc.line(15, paymentY + 2, 100, paymentY + 2);
 
     const summaryData = [
       ['Total Amount', `PHP ${Number(record.cost).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
@@ -603,15 +614,15 @@ export const generateDetailedReceiptPDF = (
     ];
 
     autoTable(doc, {
-      startY: finalY + 8,
+      startY: paymentY + 8,
       body: summaryData,
       theme: 'plain',
       styles: { fontSize: 10 },
       columnStyles: { 0: { fontStyle: 'bold', width: 100 }, 1: { halign: 'right' } }
     });
 
-    // Footer
-    const footerY = doc.internal.pageSize.getHeight() - 30;
+    // Footer - position at safe location
+    const footerY = pageHeight - 30;
     doc.setFontSize(10);
     doc.setTextColor(150);
     doc.setFont('helvetica', 'italic');

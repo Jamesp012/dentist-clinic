@@ -6,6 +6,7 @@ import { PesoSign } from './icons/PesoSign';
 import { generateReceipt, generatePatientHistoryPDF, generateFinancialPDF } from '../utils/pdfGenerator';
 import { PatientSearchInput } from './PatientSearchInput';
 import { formatToDD_MM_YYYY } from '../utils/dateHelpers';
+import { treatmentRecordAPI, paymentAPI } from '../api';
 
 type FinancialReportProps = {
   patients: Patient[];
@@ -14,6 +15,7 @@ type FinancialReportProps = {
   payments: Payment[];
   setPayments: (payments: Payment[]) => void;
   currentUser?: any;
+  onDataChanged?: () => Promise<void>;
 };
 
 type PatientBalance = {
@@ -24,7 +26,7 @@ type PatientBalance = {
   balance: number;
 };
 
-export function FinancialReport({ patients, treatmentRecords, setTreatmentRecords, payments, setPayments, currentUser }: FinancialReportProps) {
+export function FinancialReport({ patients, treatmentRecords, setTreatmentRecords, payments, setPayments, currentUser, onDataChanged }: FinancialReportProps) {
   const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7));
   const [viewType, setViewType] = useState<'summary' | 'details' | 'patients' | 'payments'>('summary');
   const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -57,6 +59,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
 
   // Calculate monthly revenue using amountPaid (matches Dashboard)
   const monthlyRecords = treatmentRecords.filter(record => {
+    if (!record.date) return false;  // Skip records with null/undefined date
     const recordMonth = record.date.slice(0, 7);
     return recordMonth === selectedMonth;
   });
@@ -106,7 +109,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
     linkElement.click();
   };
 
-  const handleRecordPayment = (e: React.FormEvent) => {
+  const handleRecordPayment = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!selectedPatientId || !selectedTreatmentId || !paymentAmount) {
@@ -114,9 +117,10 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
       return;
     }
 
-    const treatment = treatmentRecords.find(t => t.id === selectedTreatmentId);
+    // Fix: Convert IDs to strings for proper comparison
+    const treatment = treatmentRecords.find(t => String(t.id) === String(selectedTreatmentId) && String(t.patientId) === String(selectedPatientId));
     if (!treatment) {
-      alert('Treatment record not found');
+      alert('Treatment record not found for this patient');
       return;
     }
 
@@ -126,50 +130,108 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
       return;
     }
 
-    // Update the treatment record with the new payment
-    const newAmountPaid = (treatment.amountPaid || 0) + paidAmount;
-    const updatedTreatment = {
-      ...treatment,
-      amountPaid: newAmountPaid,
-      remainingBalance: treatment.cost - newAmountPaid,
-    };
+    // Validate payment amount doesn't exceed remaining balance
+    const remainingBalance = treatment.remainingBalance !== undefined ? Number(treatment.remainingBalance) : (Number(treatment.cost || 0) - Number(treatment.amountPaid || 0));
+    if (paidAmount > remainingBalance) {
+      alert(`Payment amount cannot exceed remaining balance of ₱${remainingBalance.toLocaleString()}`);
+      return;
+    }
 
-    // Create new payment record
-    const newPayment: Payment = {
-      id: Date.now().toString(),
-      patientId: String(selectedPatientId),
-      treatmentRecordId: selectedTreatmentId,
-      amount: paidAmount,
-      paymentDate: new Date().toISOString(),
-      paymentMethod,
-      status: 'paid',
-      notes: paymentNotes,
-      recordedBy: currentUser?.name || 'Unknown User'
-    };
+    try {
+      // Update the treatment record with the new payment
+      const newAmountPaid = Number(treatment.amountPaid || 0) + paidAmount;
+      const updatedTreatment = {
+        ...treatment,
+        amountPaid: newAmountPaid,
+        remainingBalance: Math.max(0, Number(treatment.cost || 0) - newAmountPaid),
+      };
 
-    // Update both payments and treatment records
-    setPayments([...payments, newPayment]);
-    
-    // Update treatment records
-    const updatedRecords = treatmentRecords.map(r => r.id === selectedTreatmentId ? updatedTreatment : r);
-    setTreatmentRecords(updatedRecords);
-    
-    alert('Payment recorded successfully!');
-    
-    // Reset form
-    setSelectedPatientId('');
-    setSelectedTreatmentId('');
-    setPaymentAmount('');
-    setPaymentMethod('cash');
-    setPaymentNotes('');
-    setShowPaymentForm(false);
+      // STEP 1: Save treatment record update to database FIRST
+      const treatmentUpdateResult = await treatmentRecordAPI.update(String(treatment.id), {
+        amountPaid: newAmountPaid,
+        remainingBalance: Math.max(0, Number(treatment.cost || 0) - newAmountPaid),
+      }).catch(err => {
+        console.error('Treatment update error:', err);
+        return null;
+      });
+
+      if (!treatmentUpdateResult) {
+        alert('Failed to update treatment record. Please try again.');
+        return;
+      }
+
+      // STEP 2: Save payment record to database
+      const paymentResult = await paymentAPI.create({
+        patientId: String(selectedPatientId),
+        treatmentRecordId: String(selectedTreatmentId),
+        amount: paidAmount,
+        paymentDate: new Date().toISOString(),
+        paymentMethod: paymentMethod,
+        status: 'paid',
+        notes: paymentNotes,
+        recordedBy: currentUser?.name || 'Unknown User'
+      }).catch(err => {
+        console.error('Payment create error:', err);
+        return null;
+      });
+
+      if (!paymentResult) {
+        alert('Failed to save payment. Please try again.');
+        return;
+      }
+
+      // STEP 3: Create new payment record for local state
+      const newPayment: Payment = {
+        id: paymentResult.id || Date.now().toString(),
+        patientId: String(selectedPatientId),
+        treatmentRecordId: String(selectedTreatmentId),
+        amount: paidAmount,
+        paymentDate: new Date().toISOString(),
+        paymentMethod: paymentMethod,
+        status: 'paid',
+        notes: paymentNotes,
+        recordedBy: currentUser?.name || 'Unknown User'
+      };
+
+      // STEP 4: Update local state ONLY after database save succeeds
+      // Update treatment records first (this is the single source of truth for balance calculations)
+      const updatedRecords = treatmentRecords.map(r => 
+        String(r.id) === String(selectedTreatmentId) && String(r.patientId) === String(selectedPatientId)
+          ? updatedTreatment
+          : r
+      );
+      setTreatmentRecords(updatedRecords);
+      
+      // Add to payments array for history display
+      setPayments([...payments, newPayment]);
+      
+      alert('Payment recorded successfully!');
+      
+      // STEP 5: Refresh from server to ensure data consistency
+      // This re-fetches treatmentRecords, payments, and all other data
+      if (onDataChanged) {
+        await onDataChanged();
+      }
+      
+      // Reset form and navigate to Patient Balances view to show updated balance
+      setSelectedPatientId('');
+      setSelectedTreatmentId('');
+      setPaymentAmount('');
+      setPaymentNotes('');
+      setPaymentMethod('cash');
+      setShowPaymentForm(false);
+      setViewType('patients'); // Auto-navigate to Patient Balances view
+    } catch (error: any) {
+      console.error('Error recording payment:', error);
+      alert('An error occurred while recording the payment. Please try again.');
+    }
   };
 
   return (
     <div className="p-6 md:p-8 bg-gradient-to-br from-slate-50 via-white to-blue-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
-        <div className="mb-10">
+        <div className="mb-4">
           {/* Premium Tab Navigation */}
           <div className="flex gap-2 p-1 bg-white rounded-2xl shadow-lg border border-gray-100 w-full">
             <button
@@ -241,8 +303,8 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                       <span className="text-xs font-semibold text-emerald-600">+12%</span>
                     </div>
                   </div>
-                  <p className="text-gray-600 text-sm font-medium mb-2 uppercase tracking-wider">Total Revenue</p>
-                  <p className="text-3xl sm:text-4xl font-bold text-gray-900 mb-1">₱{totalRevenue.toLocaleString('en-US')}</p>
+                  <p className="text-emerald-600 text-sm font-medium mb-2 uppercase tracking-wider">Total Revenue</p>
+                  <p className="text-3xl sm:text-4xl font-bold text-emerald-600 mb-1">₱{totalRevenue.toLocaleString('en-US')}</p>
                   <p className="text-sm text-gray-500">All time paid amount</p>
                 </div>
                 <div className="h-1 bg-gradient-to-r from-emerald-400 to-teal-400" />
@@ -255,22 +317,22 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                 transition={{ delay: 0.1 }}
                 className="group relative bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-br from-teal-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="relative p-6 sm:p-8">
                   <div className="flex items-start justify-between mb-6">
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-100 to-blue-50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <PesoSign className="w-7 h-7 sm:w-8 sm:h-8 text-blue-600" />
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-teal-100 to-teal-50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                      <PesoSign className="w-7 h-7 sm:w-8 sm:h-8 text-teal-600" />
                     </div>
                     <div className="text-right">
-                      <p className="text-lg font-bold text-blue-600">{((totalRevenue / totalBilled) * 100).toFixed(1)}%</p>
+                      <p className="text-lg font-bold text-teal-600">{totalBilled > 0 ? ((totalRevenue / totalBilled) * 100).toFixed(1) : '0'}%</p>
                       <p className="text-xs text-gray-500">collection rate</p>
                     </div>
                   </div>
-                  <p className="text-gray-600 text-sm font-medium mb-2 uppercase tracking-wider">Total Billed</p>
-                  <p className="text-3xl sm:text-4xl font-bold text-gray-900 mb-1">₱{totalBilled.toLocaleString('en-US')}</p>
+                  <p className="text-teal-600 text-sm font-medium mb-2 uppercase tracking-wider">Total Billed</p>
+                  <p className="text-3xl sm:text-4xl font-bold text-teal-600 mb-1">₱{totalBilled.toLocaleString('en-US')}</p>
                   <p className="text-sm text-gray-500">Total charged amount</p>
                 </div>
-                <div className="h-1 bg-gradient-to-r from-blue-400 to-cyan-400" />
+                <div className="h-1 bg-gradient-to-r from-teal-400 to-emerald-400" />
               </motion.div>
 
               {/* Outstanding Balance Card */}
@@ -280,22 +342,22 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                 transition={{ delay: 0.2 }}
                 className="group relative bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-amber-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-br from-cyan-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="relative p-6 sm:p-8">
                   <div className="flex items-start justify-between mb-6">
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-amber-100 to-amber-50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <TrendingDown className="w-7 h-7 sm:w-8 sm:h-8 text-amber-600" />
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-cyan-100 to-cyan-50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                      <TrendingDown className="w-7 h-7 sm:w-8 sm:h-8 text-cyan-600" />
                     </div>
                     <div className="text-right">
-                      <p className="text-lg font-bold text-amber-600">{patientBalances.filter(pb => pb.balance > 0).length}</p>
+                      <p className="text-lg font-bold text-cyan-600">{patientBalances.filter(pb => pb.balance > 0).length}</p>
                       <p className="text-xs text-gray-500">pending</p>
                     </div>
                   </div>
-                  <p className="text-gray-600 text-sm font-medium mb-2 uppercase tracking-wider">Outstanding Balance</p>
-                  <p className="text-3xl sm:text-4xl font-bold text-amber-600 mb-1">₱{totalOutstanding.toLocaleString('en-US')}</p>
+                  <p className="text-cyan-600 text-sm font-medium mb-2 uppercase tracking-wider">Outstanding Balance</p>
+                  <p className="text-3xl sm:text-4xl font-bold text-cyan-600 mb-1">₱{totalOutstanding.toLocaleString('en-US')}</p>
                   <p className="text-sm text-gray-500">Awaiting payment</p>
                 </div>
-                <div className="h-1 bg-gradient-to-r from-amber-400 to-orange-400" />
+                <div className="h-1 bg-gradient-to-r from-cyan-400 to-teal-400" />
               </motion.div>
 
               {/* Monthly Revenue Card */}
@@ -305,22 +367,22 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                 transition={{ delay: 0.3 }}
                 className="group relative bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="relative p-6 sm:p-8">
                   <div className="flex items-start justify-between mb-6">
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-100 to-purple-50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <Calendar className="w-7 h-7 sm:w-8 sm:h-8 text-purple-600" />
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-emerald-100 to-emerald-50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                      <Calendar className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-600" />
                     </div>
                     <div className="text-right">
-                      <p className="text-lg font-bold text-purple-600">{monthlyTransactions}</p>
+                      <p className="text-lg font-bold text-emerald-600">{monthlyTransactions}</p>
                       <p className="text-xs text-gray-500">transactions</p>
                     </div>
                   </div>
-                  <p className="text-gray-600 text-sm font-medium mb-2 uppercase tracking-wider">Monthly Revenue</p>
-                  <p className="text-3xl sm:text-4xl font-bold text-gray-900 mb-1">₱{monthlyRevenue.toLocaleString('en-US')}</p>
+                  <p className="text-emerald-600 text-sm font-medium mb-2 uppercase tracking-wider">Monthly Revenue</p>
+                  <p className="text-3xl sm:text-4xl font-bold text-emerald-600 mb-1">₱{monthlyRevenue.toLocaleString('en-US')}</p>
                   <p className="text-sm text-gray-500">This month only</p>
                 </div>
-                <div className="h-1 bg-gradient-to-r from-purple-400 to-pink-400" />
+                <div className="h-1 bg-gradient-to-r from-emerald-400 to-teal-400" />
               </motion.div>
             </div>
 
@@ -351,14 +413,6 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                   <span className="hidden sm:inline">Print PDF</span>
                   <span className="sm:hidden">PDF</span>
                 </button>
-                <button
-                  onClick={downloadReport}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
-                >
-                  <Download className="w-5 h-5" />
-                  <span className="hidden sm:inline">Export JSON</span>
-                  <span className="sm:hidden">JSON</span>
-                </button>
               </div>
             </div>
 
@@ -377,7 +431,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                   <p className="text-sm text-gray-500">Revenue by service type</p>
                 </div>
               </div>
-              <div className="space-y-4 max-h-[70vh] overflow-y-auto scrollbar-hover">
+              <div className="space-y-4 max-h-[70vh] overflow-y-auto scrollbar-thin">
                 {Object.entries(treatmentBreakdown)
                   .sort(([, a], [, b]) => b.revenue - a.revenue)
                   .map(([treatment, data], index) => {
@@ -422,7 +476,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl shadow-md p-6 sm:p-8 border border-gray-100"
+              className="bg-white rounded-2xl shadow-md p-4 sm:p-6 border border-gray-100"
             >
               <div className="flex items-center gap-3 mb-8">
                 <div className="w-12 h-12 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-xl flex items-center justify-center">
@@ -433,7 +487,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                   <p className="text-sm text-gray-500">Complete record of all procedures</p>
                 </div>
               </div>
-              <div className="space-y-3 max-h-[70vh] overflow-y-auto scrollbar-hover">
+              <div className="space-y-3 max-h-[70vh] overflow-y-auto scrollbar-thin">
                 {treatmentRecords.length === 0 ? (
                   <div className="text-center py-16 text-gray-500">
                     <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
@@ -441,6 +495,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                   </div>
                 ) : (
                   treatmentRecords
+                    .filter(record => record.date)
                     .slice()
                     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                     .map((record, index) => {
@@ -451,7 +506,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: index * 0.05 }}
-                          className="group p-5 bg-gradient-to-r from-slate-50 to-blue-50 rounded-xl hover:from-emerald-50 hover:to-teal-50 transition-all duration-300 border border-gray-100 hover:border-emerald-200"
+                          className="group px-3 py-2 bg-gradient-to-r from-slate-50 to-blue-50 rounded-xl hover:from-emerald-50 hover:to-teal-50 transition-all duration-300 border border-gray-100 hover:border-emerald-200"
                         >
                           <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4">
                             <div className="flex-1">
@@ -464,7 +519,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                                   <p className="text-sm text-gray-600">{record.treatment}</p>
                                 </div>
                               </div>
-                              <div className="ml-13 space-y-1 text-sm text-gray-600">
+                              <div className="ml-12 space-y-1 text-sm text-gray-600">
                                 {record.tooth && (
                                   <p>🦷 Tooth: <span className="font-medium text-gray-900">{record.tooth}</span></p>
                                 )}
@@ -514,15 +569,15 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                   <p className="text-sm text-gray-500">Overview of all patient accounts</p>
                 </div>
               </div>
-              <div className="space-y-4 max-h-[70vh] overflow-y-auto scrollbar-hover">
-                {patientBalances.filter(pb => pb.totalBilled > 0).length === 0 ? (
+              <div className="space-y-4 max-h-[70vh] overflow-y-auto scrollbar-thin">
+                {patientBalances.filter(pb => pb.balance > 0).length === 0 ? (
                   <div className="text-center py-16 text-gray-500">
                     <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                    <p className="text-lg font-medium">No patient billing records available</p>
+                    <p className="text-lg font-medium">No outstanding patient balances</p>
                   </div>
                 ) : (
                   patientBalances
-                    .filter(pb => pb.totalBilled > 0)
+                    .filter(pb => pb.balance > 0)
                     .sort((a, b) => b.balance - a.balance)
                     .map((pb, index) => {
                       const balanceStatus = pb.balance > 0 ? 'overdue' : 'paid';
@@ -575,12 +630,12 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                             <div className="mb-5">
                               <div className="flex justify-between items-center mb-2">
                                 <span className="text-xs font-semibold text-gray-600">Collection Progress</span>
-                                <span className="text-xs font-bold text-emerald-600">{((pb.totalPaid / pb.totalBilled) * 100).toFixed(1)}%</span>
+                                <span className="text-xs font-bold text-emerald-600">{pb.totalBilled > 0 ? ((pb.totalPaid / pb.totalBilled) * 100).toFixed(1) : '0'}%</span>
                               </div>
                               <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
                                 <motion.div
                                   initial={{ width: 0 }}
-                                  animate={{ width: `${(pb.totalPaid / pb.totalBilled) * 100}%` }}
+                                  animate={{ width: `${pb.totalBilled > 0 ? (pb.totalPaid / pb.totalBilled) * 100 : 0}%` }}
                                   transition={{ duration: 0.8, ease: 'easeOut' }}
                                   className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
                                 />
@@ -596,8 +651,11 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                                   setSelectedPatientId(pb.patientId);
                                   setSelectedTreatmentId('');
                                   setPaymentAmount('');
+                                  setPaymentNotes('');
                                   setShowPaymentForm(true);
                                   setViewType('payments');
+                                  // Scroll to top to see the form
+                                  window.scrollTo({ top: 0, behavior: 'smooth' });
                                 }}
                                 className="w-full px-4 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-lg font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
                               >
@@ -665,7 +723,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                     >
                       <option value="">-- Select a procedure --</option>
                       {selectedPatientId && treatmentRecords
-                        .filter(t => String(t.patientId) === selectedPatientId && (t.remainingBalance !== undefined ? Number(t.remainingBalance) > 0 : Number(t.cost || 0) > 0))
+                        .filter(t => String(t.patientId) === String(selectedPatientId) && (t.remainingBalance !== undefined ? Number(t.remainingBalance) > 0 : Number(t.cost || 0) > 0))
                         .map(treatment => (
                           <option key={treatment.id} value={treatment.id}>
                             {treatment.treatment} - Balance: ₱{(treatment.remainingBalance !== undefined ? Number(treatment.remainingBalance) : Number(treatment.cost || 0)).toLocaleString()}
@@ -676,7 +734,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
 
                   {/* Remaining Balance Display */}
                   {selectedTreatmentId && (() => {
-                    const selected = treatmentRecords.find(t => t.id === selectedTreatmentId);
+                    const selected = treatmentRecords.find(t => String(t.id) === String(selectedTreatmentId));
                     return selected ? (
                       <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
@@ -690,6 +748,23 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                     ) : null;
                   })()}
 
+                  {/* Payment Method */}
+                  <div>
+                    <label className="block text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">
+                      💳 Payment Method
+                    </label>
+                    <select
+                      value={paymentMethod}
+                      onChange={(e) => setPaymentMethod(e.target.value as any)}
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:outline-none transition-all duration-300"
+                    >
+                      <option value="cash">💵 Cash</option>
+                      <option value="card">💳 Card</option>
+                      <option value="check">📝 Check</option>
+                      <option value="bank_transfer">🏦 Bank Transfer</option>
+                    </select>
+                  </div>
+
                   {/* Payment Amount */}
                   <div>
                     <label className="block text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">
@@ -702,27 +777,11 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                         step="0.01"
                         value={paymentAmount}
                         onChange={(e) => setPaymentAmount(e.target.value)}
+                        onWheel={(e) => e.currentTarget.blur()}
                         placeholder="0.00"
-                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:outline-none transition-all duration-300 text-lg"
+                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:outline-none transition-all duration-300 text-lg no-spinners"
                       />
                     </div>
-                  </div>
-
-                  {/* Payment Method */}
-                  <div>
-                    <label className="block text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">
-                      💳 Payment Method
-                    </label>
-                    <select
-                      value={paymentMethod}
-                      onChange={(e) => setPaymentMethod(e.target.value as any)}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:outline-none transition-all duration-300"
-                    >
-                      <option value="cash">💵 Cash</option>
-                      <option value="card">💳 Credit/Debit Card</option>
-                      <option value="check">📄 Check</option>
-                      <option value="bank_transfer">🏦 Bank Transfer</option>
-                    </select>
                   </div>
 
                   {/* Notes */}
@@ -767,7 +826,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                     <p className="text-sm text-gray-500 mt-1">Last 10 payment transactions</p>
                   </div>
                 </div>
-                <div className="space-y-3 max-h-[50vh] overflow-y-auto scrollbar-hover">
+                <div className="space-y-3 max-h-[50vh] overflow-y-auto scrollbar-thin">
                   {payments.slice(-10).reverse().map((payment, index) => {
                     const patient = patients.find(p => String(p.id) === String(payment.patientId));
                     return (

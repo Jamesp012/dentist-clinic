@@ -79,7 +79,7 @@ export interface PatientNotification {
   id: string | number;
   patientId: string | number;
   appointmentId?: string | number;
-  type: 'appointment_created' | 'appointment_updated' | 'appointment_cancelled' | 'reminder';
+  type: 'appointment_created' | 'appointment_updated' | 'appointment_cancelled' | 'reminder' | 'announcement_posted';
   title: string;
   message: string;
   isRead: boolean;

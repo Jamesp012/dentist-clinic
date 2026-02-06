@@ -238,7 +238,7 @@ CREATE TABLE IF NOT EXISTS patient_notifications (
   id INT PRIMARY KEY AUTO_INCREMENT,
   patientId INT NOT NULL,
   appointmentId INT,
-  type ENUM('appointment_created', 'appointment_updated', 'appointment_cancelled', 'reminder') DEFAULT 'appointment_created',
+  type ENUM('appointment_created', 'appointment_updated', 'appointment_cancelled', 'reminder', 'announcement_posted') DEFAULT 'appointment_created',
   title VARCHAR(200) CHARACTER SET utf8mb4,
   message TEXT CHARACTER SET utf8mb4,
   isRead BOOLEAN DEFAULT FALSE,

@@ -78,3 +78,15 @@
   scrollbar-width: thin;
   scrollbar-color: rgba(20, 184, 166, 0.6) rgba(241, 245, 249, 0.5);
 }
+
+/* Hide number input spinners */
+.no-spinners::-webkit-outer-spin-button,
+.no-spinners::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.no-spinners[type="number"] {
+  -moz-appearance: textfield;
+}
+

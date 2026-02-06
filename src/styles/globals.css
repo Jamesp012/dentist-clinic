@@ -164,7 +164,21 @@ button, a, input, select, textarea {
   transition: all 0.2s ease-in-out;
 }
 
-/* Hide scrollbars but keep functionality */
+/* ============================================
+   PREMIUM SCROLLBAR SYSTEM - DESIGN INTEGRATED
+   ============================================
+   
+   Scrollbars complement the dental professional design.
+   Uses teal/cyan gradients matching the system palette.
+   Only appears on scrollable elements - no visual clutter.
+*/
+
+/* Default: Hide all scrollbars (except on opt-in elements) */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
 ::-webkit-scrollbar {
   width: 0px;
   height: 0px;
@@ -179,112 +193,279 @@ button, a, input, select, textarea {
   display: none;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  display: none;
-}
+/* ============================================
+   SCROLLBAR VISIBLE - Premium Teal Gradient
+   ============================================
+   Use: Primary content areas
+   Style: Teal-to-cyan gradient, prominent but refined */
 
-/* Hide scrollbars for Firefox */
-* {
-  scrollbar-width: none;
-}
-
-/* Hide scrollbars for IE and Edge */
-* {
-  -ms-overflow-style: none;
-}
-
-/* Opt-in visible scrollbars */
 .scrollbar-visible {
-  scrollbar-width: auto;
-  -ms-overflow-style: auto;
+  scrollbar-width: thin !important;
+  -ms-overflow-style: auto !important;
+  overflow-y: auto !important;
+}
+
+.scrollbar-visible {
+  scrollbar-color: var(--dental-primary-light) transparent;
 }
 
 .scrollbar-visible::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-  display: block;
+  width: 9px;
+  height: 9px;
+  display: block !important;
 }
 
 .scrollbar-visible::-webkit-scrollbar-track {
-  background: var(--dental-neutral-100);
+  background: transparent;
+  margin: 4px 0;
 }
 
 .scrollbar-visible::-webkit-scrollbar-thumb {
-  background: var(--dental-neutral-300);
+  background: linear-gradient(to bottom, var(--dental-primary-light), var(--dental-primary));
   border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  transition: all 0.25s ease;
+  box-shadow: inset 0 0 6px rgba(91, 154, 139, 0.1);
 }
 
 .scrollbar-visible::-webkit-scrollbar-thumb:hover {
-  background: var(--dental-neutral-400);
+  background: linear-gradient(to bottom, var(--dental-primary), var(--dental-primary-dark));
+  box-shadow: inset 0 0 8px rgba(61, 122, 108, 0.2);
 }
 
-/* Sidebar hover-to-reveal scrollbars */
-.sidebar-scroll {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+.scrollbar-visible::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(to bottom, var(--dental-primary-dark), var(--dental-primary-dark));
+  box-shadow: inset 0 0 10px rgba(61, 122, 108, 0.3);
 }
 
-.sidebar-scroll::-webkit-scrollbar {
-  width: 0px;
-  height: 0px;
-  display: none;
+/* Dark theme support */
+.dark .scrollbar-visible {
+  scrollbar-color: var(--dental-primary-light) transparent;
 }
 
-.sidebar-scroll:hover {
-  scrollbar-width: thin;
-  -ms-overflow-style: auto;
+.dark .scrollbar-visible::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, var(--dental-primary-light), var(--dental-primary));
+  box-shadow: inset 0 0 6px rgba(127, 184, 168, 0.15);
 }
 
-.sidebar-scroll:hover::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-  display: block;
+.dark .scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, var(--dental-primary), var(--dental-primary-light));
+  box-shadow: inset 0 0 8px rgba(127, 184, 168, 0.25);
 }
 
-.sidebar-scroll:hover::-webkit-scrollbar-track {
-  background: var(--sidebar-accent);
+/* ============================================
+   SCROLLBAR ACCENT - Vibrant Teal Accent
+   ============================================
+   Use: Lists, records, feeds
+   Style: Solid teal with smooth transitions */
+
+.scrollbar-accent {
+  scrollbar-width: thin !important;
+  -ms-overflow-style: auto !important;
+  overflow-y: auto !important;
 }
 
-.sidebar-scroll:hover::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--sidebar-primary) 70%, var(--sidebar-accent) 30%);
-  border-radius: 6px;
+.scrollbar-accent {
+  scrollbar-color: #3DCCC7 transparent;
 }
 
-.sidebar-scroll:hover::-webkit-scrollbar-thumb:hover {
-  background: var(--sidebar-primary);
+.scrollbar-accent::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+  display: block !important;
 }
-/* Hover-to-reveal scrollbars with overlay (doesn't affect content size) */
+
+.scrollbar-accent::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 4px 0;
+}
+
+.scrollbar-accent::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #3DCCC7 0%, #07BEB8 100%);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  transition: all 0.25s ease;
+  box-shadow: 0 0 8px rgba(7, 190, 184, 0.15);
+}
+
+.scrollbar-accent::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #2BA39D 0%, #059b94 100%);
+  box-shadow: 0 0 12px rgba(5, 155, 148, 0.25);
+}
+
+.scrollbar-accent::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg, #1a7a71 0%, #047a75 100%);
+  box-shadow: 0 0 16px rgba(4, 122, 117, 0.3);
+}
+
+.dark .scrollbar-accent {
+  scrollbar-color: #3DCCC7 transparent;
+}
+
+.dark .scrollbar-accent::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #3DCCC7 0%, #07BEB8 100%);
+  box-shadow: 0 0 10px rgba(61, 204, 199, 0.2);
+}
+
+.dark .scrollbar-accent::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #2BA39D 0%, #059b94 100%);
+  box-shadow: 0 0 14px rgba(43, 163, 157, 0.35);
+}
+
+/* ============================================
+   SCROLLBAR HOVER - Elegant Fade-In
+   ============================================
+   Use: Sidebars, secondary areas
+   Style: Subtle teal, appears on hover */
+
 .scrollbar-hover {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  overflow-y: auto;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  overflow-y: auto !important;
 }
 
 .scrollbar-hover::-webkit-scrollbar {
   width: 8px;
-  background: transparent;
+  height: 8px;
+  display: block !important;
 }
 
 .scrollbar-hover::-webkit-scrollbar-track {
   background: transparent;
+  margin: 4px 0;
 }
 
 .scrollbar-hover::-webkit-scrollbar-thumb {
-  background: transparent;
+  background: rgba(127, 184, 168, 0.15);
   border-radius: 4px;
-  transition: background 0.2s ease;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  transition: all 0.3s ease;
 }
 
 .scrollbar-hover:hover::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
+  background: linear-gradient(to bottom, rgba(127, 184, 168, 0.5), rgba(91, 154, 139, 0.45));
 }
 
 .scrollbar-hover:hover::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.4);
+  background: linear-gradient(to bottom, var(--dental-primary-light), var(--dental-primary));
+  box-shadow: 0 0 8px rgba(127, 184, 168, 0.3);
 }
 
 /* Firefox */
+.scrollbar-hover {
+  scrollbar-color: transparent transparent;
+}
+
 .scrollbar-hover:hover {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  scrollbar-color: rgba(127, 184, 168, 0.4) transparent;
+}
+
+.dark .scrollbar-hover:hover {
+  scrollbar-color: rgba(127, 184, 168, 0.5) transparent;
+}
+
+.dark .scrollbar-hover:hover::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, rgba(127, 184, 168, 0.6), rgba(123, 185, 176, 0.5));
+  box-shadow: 0 0 10px rgba(127, 184, 168, 0.35);
+}
+
+/* ============================================
+   SCROLLBAR LIGHT - Refined Sidebar Style
+   ============================================
+   Use: Sidebar, navigation trees
+   Style: Elegant, minimal, professional */
+
+.scrollbar-light {
+  scrollbar-width: thin !important;
+  -ms-overflow-style: auto !important;
+  overflow-y: auto !important;
+}
+
+.scrollbar-light {
+  scrollbar-color: rgba(91, 154, 139, 0.3) transparent;
+}
+
+.scrollbar-light::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+  display: block !important;
+}
+
+.scrollbar-light::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 4px 0;
+}
+
+.scrollbar-light::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, rgba(127, 184, 168, 0.35), rgba(91, 154, 139, 0.3));
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  transition: all 0.25s ease;
+}
+
+.scrollbar-light::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, rgba(127, 184, 168, 0.55), rgba(91, 154, 139, 0.5));
+  box-shadow: inset 0 0 4px rgba(91, 154, 139, 0.2);
+}
+
+.scrollbar-light::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(to bottom, var(--dental-primary-light), var(--dental-primary));
+  box-shadow: inset 0 0 6px rgba(91, 154, 139, 0.3);
+}
+
+.dark .scrollbar-light {
+  scrollbar-color: rgba(127, 184, 168, 0.35) transparent;
+}
+
+.dark .scrollbar-light::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, rgba(127, 184, 168, 0.4), rgba(91, 154, 139, 0.35));
+}
+
+.dark .scrollbar-light::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, rgba(127, 184, 168, 0.6), rgba(91, 154, 139, 0.55));
+  box-shadow: inset 0 0 5px rgba(127, 184, 168, 0.25);
+}
+
+/* ============================================
+   SECTION SCROLLS - Premium Integrated
+   ============================================
+   Use: Specific scrollable sections
+   Style: Matches visible style for consistency */
+
+[data-section-scroll] {
+  scrollbar-width: thin !important;
+  -ms-overflow-style: auto !important;
+  overflow-y: auto !important;
+}
+
+[data-section-scroll] {
+  scrollbar-color: var(--dental-primary-light) transparent;
+}
+
+[data-section-scroll]::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+  display: block !important;
+}
+
+[data-section-scroll]::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-section-scroll]::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, var(--dental-primary-light), var(--dental-primary));
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  transition: all 0.25s ease;
+  box-shadow: inset 0 0 6px rgba(91, 154, 139, 0.1);
+}
+
+[data-section-scroll]::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, var(--dental-primary), var(--dental-primary-dark));
+  box-shadow: inset 0 0 8px rgba(61, 122, 108, 0.2);
 }

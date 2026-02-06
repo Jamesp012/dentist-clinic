@@ -343,42 +343,28 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 flex flex-col flex-1">
       <div className="p-10 space-y-10 flex flex-col flex-1 max-w-[1600px] mx-auto w-full">
         {/* Premium Header Section */}
-        <div className="relative">
+        <div className="relative flex items-center justify-end">
           <div className="absolute -top-4 -left-4 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl"></div>
           <div className="absolute -bottom-4 -right-4 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"></div>
           
-          <div className="relative bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-slate-200/60 p-8 hover:shadow-2xl transition-all duration-500">
-            <div className="flex items-center justify-between">
-              <div className="space-y-3">
-                <h1 className="text-5xl font-extrabold bg-gradient-to-r from-teal-600 via-cyan-600 to-blue-600 bg-clip-text text-transparent tracking-tight">
-                  Service Records & Prescriptions
-                </h1>
-                <p className="text-slate-600 font-medium text-base tracking-wide flex items-center gap-2">
-                  <span className="w-1 h-1 bg-cyan-500 rounded-full"></span>
-                  Create treatment records, prescriptions, and manage patient services
-                </p>
-              </div>
-              
-              {/* Action Buttons - Right Side */}
-              <div className="flex gap-4">
-                <button
-                  onClick={() => setActiveForm('service')}
-                  className="group relative px-8 py-4 bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white rounded-2xl hover:shadow-2xl hover:shadow-cyan-500/30 hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-3 font-bold overflow-hidden"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <Plus className="w-6 h-6 relative z-10" />
-                  <span className="relative z-10">New Receipt</span>
-                </button>
-                <button
-                  onClick={() => setActiveForm('prescription')}
-                  className="group relative px-8 py-4 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white rounded-2xl hover:shadow-2xl hover:shadow-emerald-500/30 hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-3 font-bold overflow-hidden"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <FileText className="w-6 h-6 relative z-10" />
-                  <span className="relative z-10">Create Prescription</span>
-                </button>
-              </div>
-            </div>
+          {/* Action Buttons - Right Side */}
+          <div className="flex gap-4">
+            <button
+              onClick={() => setActiveForm('service')}
+              className="group relative px-8 py-4 bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white rounded-2xl hover:shadow-2xl hover:shadow-cyan-500/30 hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-3 font-bold overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <Plus className="w-6 h-6 relative z-10" />
+              <span className="relative z-10">New Receipt</span>
+            </button>
+            <button
+              onClick={() => setActiveForm('prescription')}
+              className="group relative px-8 py-4 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white rounded-2xl hover:shadow-2xl hover:shadow-emerald-500/30 hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-3 font-bold overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <FileText className="w-6 h-6 relative z-10" />
+              <span className="relative z-10">Create Prescription</span>
+            </button>
           </div>
         </div>
 
@@ -398,7 +384,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
               </span>
             </div>
             
-            <div className="space-y-4 max-h-[500px] overflow-y-auto scrollbar-hover pr-2">
+            <div className="space-y-4 max-h-[500px] overflow-y-auto scrollbar-thin pr-2">
               {treatmentRecords.slice(-5).reverse().map((record) => {
                 const patient = patients.find(p => String(p.id) === String(record.patientId));
                 return (
@@ -490,7 +476,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
               </span>
             </div>
             
-            <div className="space-y-4 max-h-[500px] overflow-y-auto scrollbar-hover pr-2">
+            <div className="space-y-4 max-h-[500px] overflow-y-auto scrollbar-thin pr-2">
               {prescriptions.slice(-5).reverse().map((prescription) => (
                 <div key={prescription.id} className="group/item relative p-6 border-2 border-slate-100 rounded-2xl hover:border-emerald-300/60 transition-all duration-300 bg-gradient-to-br from-white via-slate-50/30 to-emerald-50/20 hover:shadow-xl hover:scale-[1.01]">
                   <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-teal-500/5 rounded-2xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-300"></div>
@@ -549,7 +535,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
       {/* Add Receipt Modal - Premium Design */}
       {activeForm === 'service' && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="relative bg-white/98 backdrop-blur-2xl rounded-3xl p-10 max-w-3xl w-full max-h-[90vh] overflow-y-auto scrollbar-hover shadow-2xl border border-slate-200/60">
+          <div className="relative bg-white backdrop-blur-2xl rounded-3xl p-10 max-w-3xl w-full max-h-[90vh] overflow-y-auto overflow-x-hidden scrollbar-thin shadow-2xl border border-slate-200/60">
             <div className="absolute -top-20 -right-20 w-60 h-60 bg-cyan-500/20 rounded-full blur-3xl"></div>
             <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-teal-500/20 rounded-full blur-3xl"></div>
             
@@ -594,7 +580,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                     className={`w-full px-5 py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-cyan-400/30 focus:border-cyan-400 transition-all text-base font-medium placeholder:text-slate-400 ${isFromAppointment ? 'bg-slate-100/70 cursor-not-allowed' : ''}`}
                   />
                   {patientSearch && showReceiptSuggestions && !isFromAppointment && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white/98 backdrop-blur-xl border-2 border-slate-200 rounded-2xl shadow-2xl z-10 max-h-64 overflow-y-auto scrollbar-hover">
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white/98 backdrop-blur-xl border-2 border-slate-200 rounded-2xl shadow-2xl z-10 max-h-64 overflow-y-auto scrollbar-thin">
                       {patients.filter(p => p.name.toLowerCase().includes(patientSearch.toLowerCase())).map(patient => (
                         <div
                           key={patient.id}
@@ -683,7 +669,8 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                   required
                   step="1"
                   placeholder="0"
-                  className="w-full px-5 py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-cyan-400/30 focus:border-cyan-400 transition-all text-base font-medium placeholder:text-slate-400"
+                  onWheel={(e) => e.currentTarget.blur()}
+                  className="w-full px-5 py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-cyan-400/30 focus:border-cyan-400 transition-all text-base font-medium placeholder:text-slate-400 no-spinners"
                 />
               </div>
 
@@ -736,7 +723,8 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                     const parsed = parseFloat(value) || 0;
                     setAmountPaid(parsed);
                   }}
-                  className="w-full px-5 py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all text-base font-medium placeholder:text-slate-400"
+                  onWheel={(e) => e.currentTarget.blur()}
+                  className="w-full px-5 py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all text-base font-medium placeholder:text-slate-400 no-spinners"
                 />
                 <p className="text-sm text-slate-500 mt-3 font-medium flex items-center gap-2">
                   <span className="text-emerald-500">ℹ️</span>
@@ -838,7 +826,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
       {/* Create Prescription Modal - Premium Design */}
       {activeForm === 'prescription' && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="relative bg-white/98 backdrop-blur-2xl rounded-3xl p-10 max-w-4xl w-full max-h-[90vh] overflow-y-auto scrollbar-hover shadow-2xl border border-slate-200/60">
+          <div className="relative bg-white backdrop-blur-2xl rounded-3xl p-10 max-w-4xl w-full max-h-[90vh] overflow-y-auto overflow-x-hidden scrollbar-thin shadow-2xl border border-slate-200/60">
             <div className="absolute -top-20 -right-20 w-60 h-60 bg-emerald-500/20 rounded-full blur-3xl"></div>
             <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-teal-500/20 rounded-full blur-3xl"></div>
             
@@ -869,7 +857,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                     className="w-full px-5 py-4 bg-white backdrop-blur-sm border-2 border-emerald-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all text-base font-medium placeholder:text-slate-400"
                   />
                   {prescriptionPatientSearch && showPrescriptionSuggestions && (
-                    <div className="absolute z-10 w-full bg-white/98 backdrop-blur-xl border-2 border-emerald-200 rounded-2xl mt-2 max-h-56 overflow-y-auto shadow-2xl">
+                    <div className="absolute z-10 w-full bg-white/98 backdrop-blur-xl border-2 border-emerald-200 rounded-2xl mt-2 max-h-56 overflow-y-auto scrollbar-thin shadow-2xl">
                       {patients
                         .filter(p => p.name.toLowerCase().includes(prescriptionPatientSearch.toLowerCase()))
                         .map(patient => (
@@ -1161,7 +1149,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
       {/* View Prescription Modal */}
       {viewingPrescription && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto scrollbar-hover shadow-2xl">
+          <div className="bg-white rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto overflow-x-hidden scrollbar-thin shadow-2xl">
             <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-300">
               <h2 className="text-3xl font-bold text-gray-900">Prescription</h2>
               <button onClick={() => setViewingPrescription(null)} className="text-gray-500 hover:text-gray-700">
@@ -1312,7 +1300,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
       {/* View Receipt Modal */}
       {viewingReceipt && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto scrollbar-hover shadow-2xl">
+          <div className="bg-white rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto overflow-x-hidden scrollbar-thin shadow-2xl">
             <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-300">
               <h2 className="text-3xl font-bold text-gray-900">Official Receipt</h2>
               <button onClick={() => setViewingReceipt(null)} className="text-gray-500 hover:text-gray-700">

@@ -55,7 +55,7 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
     return `${year}-${month}-${day}`;
   });
   const [selectedDateInput, setSelectedDateInput] = useState(() => convertToDisplayDate(selectedDate));
-  const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
+  const [viewMode, setViewMode] = useState<'day' | 'thisWeek' | 'viewAll'>('day');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [closedSchedules, setClosedSchedules] = useState<Set<string>>(new Set(
     JSON.parse(localStorage.getItem('closedSchedules') || '[]')
@@ -214,10 +214,6 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
 
   const filteredAppointments = appointments.filter(apt => {
     if (filterStatus !== 'all' && apt.status !== filterStatus) return false;
-    // When filtering by non-scheduled statuses, show all appointments regardless of date
-    if (filterStatus !== 'all' && filterStatus !== 'scheduled') {
-      return true;
-    }
 
     const appointmentDate = getDateString(apt.date);
     const targetDate = selectedDate; // selectedDate is already in YYYY-MM-DD format
@@ -225,23 +221,31 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
     if (viewMode === 'day') {
       return appointmentDate === targetDate;
     }
-    // For week view, show appointments within 7 days from selected date
-    // Parse dates as local dates to avoid timezone issues
-    const [apYear, apMonth, apDay] = appointmentDate.split('-').map(Number);
-    const aptDate = new Date(apYear, apMonth - 1, apDay);
-    const [tYear, tMonth, tDay] = targetDate.split('-').map(Number);
-    const startDate = new Date(tYear, tMonth - 1, tDay);
-    const endDate = new Date(tYear, tMonth - 1, tDay);
-    endDate.setDate(endDate.getDate() + 6);
-    return aptDate >= startDate && aptDate <= endDate;
+
+    if (viewMode === 'thisWeek') {
+      // Show appointments within 7 days from selected date
+      // Parse dates as local dates to avoid timezone issues
+      const [apYear, apMonth, apDay] = appointmentDate.split('-').map(Number);
+      const aptDate = new Date(apYear, apMonth - 1, apDay);
+      const [tYear, tMonth, tDay] = targetDate.split('-').map(Number);
+      const startDate = new Date(tYear, tMonth - 1, tDay);
+      const endDate = new Date(tYear, tMonth - 1, tDay);
+      endDate.setDate(endDate.getDate() + 6);
+      return aptDate >= startDate && aptDate <= endDate;
+    }
+
+    // viewMode === 'viewAll' - show all appointments regardless of date
+    return true;
   });
 
   const sortedAppointments = filteredAppointments.sort((a, b) => {
     const dateA = getDateString(a.date);
     const dateB = getDateString(b.date);
-    const dateCompare = dateA.localeCompare(dateB);
+    // Sort descending (most recent first)
+    const dateCompare = dateB.localeCompare(dateA);
     if (dateCompare !== 0) return dateCompare;
-    return a.time.localeCompare(b.time);
+    // Also sort time in reverse for same date
+    return b.time.localeCompare(a.time);
   });
 
   const statusColors = {
@@ -252,21 +256,11 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-cyan-50/40 flex flex-col flex-1">
-      <div className="p-8 space-y-8 flex flex-col flex-1">
-        <div className="flex flex-wrap items-center justify-end gap-4">
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="relative group bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-6 py-3.5 rounded-xl hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-teal-500/20 flex items-center gap-2.5 whitespace-nowrap font-semibold text-sm tracking-wide transform hover:scale-105 active:scale-95"
-          >
-            <Plus className="w-5 h-5" />
-            <span>New Appointment</span>
-            <div className="absolute inset-0 rounded-xl bg-white/0 group-hover:bg-white/10 transition-colors duration-300"></div>
-          </button>
-        </div>
+      <div className="p-4 space-y-4 flex flex-col flex-1">
 
         {/* Controls */}
-        <div className="relative bg-white/70 backdrop-blur-md p-5 rounded-2xl shadow-md border border-slate-200/60">
-          <div className="flex flex-wrap gap-4 items-center">
+        <div className="relative bg-white/70 backdrop-blur-md py-3 px-5 rounded-2xl shadow-md border border-slate-200/60 overflow-x-auto">
+          <div className="flex gap-3 items-center whitespace-nowrap">
             <div className="flex items-center gap-2">
               <Calendar className="w-5 h-5 text-slate-500" />
               <input
@@ -280,7 +274,7 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                   }
                 }}
                 placeholder="DD/MM/YYYY"
-                className="px-3.5 py-2.5 bg-white border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm"
+                className="w-32 px-2.5 py-2 bg-white border border-slate-200/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm"
               />
             </div>
 
@@ -296,14 +290,24 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                 Day View
               </button>
               <button
-                onClick={() => setViewMode('week')}
+                onClick={() => setViewMode('thisWeek')}
                 className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 ${
-                  viewMode === 'week'
+                  viewMode === 'thisWeek'
                     ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
-                Week View
+                This Week
+              </button>
+              <button
+                onClick={() => setViewMode('viewAll')}
+                className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 ${
+                  viewMode === 'viewAll'
+                    ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                View All
               </button>
             </div>
 
@@ -321,8 +325,15 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
               </select>
             </div>
 
-            <div className="ml-auto text-sm font-semibold text-slate-600">
-              {filteredAppointments.length} appointment{filteredAppointments.length !== 1 ? 's' : ''}
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="relative group bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-6 py-2.5 rounded-xl hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-teal-500/20 flex items-center gap-2 whitespace-nowrap font-semibold text-sm tracking-wide transform hover:scale-105 active:scale-95"
+              >
+                <Plus className="w-5 h-5" />
+                <span>New Appointment</span>
+                <div className="absolute inset-0 rounded-xl bg-white/0 group-hover:bg-white/10 transition-colors duration-300"></div>
+              </button>
             </div>
           </div>
         </div>
@@ -525,8 +536,13 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
       )}
 
       {/* Week View - List */}
-      {viewMode === 'week' && (
+      {(viewMode === 'thisWeek' || viewMode === 'viewAll') && (
         <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/60 overflow-hidden">
+          <div className="p-6 bg-gradient-to-r from-teal-50 via-cyan-50 to-sky-50 border-b border-slate-200/60">
+            <h2 className="text-2xl font-bold text-slate-900">
+              {viewMode === 'thisWeek' ? 'This Week' : 'All Appointments'} • {sortedAppointments.length} {sortedAppointments.length === 1 ? 'appointment' : 'appointments'}
+            </h2>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-slate-50/80 border-b border-slate-200/60">
