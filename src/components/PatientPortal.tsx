@@ -388,7 +388,11 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
     { id: 'service_6', serviceName: 'PROSTHODONTICS', category: 'Prosthetics', description: ['Complete dentures', 'Partial dentures'], duration: 'Multiple sessions', price: 'Price may vary' }
   ] as Service[];
 
-  const displayServices = services && services.length > 0 ? services : defaultServices;
+  const serviceOverrides = services || [];
+  const displayServices = [
+    ...defaultServices.map(defaultService => serviceOverrides.find(s => s.id === defaultService.id) || defaultService),
+    ...serviceOverrides.filter(service => !defaultServices.some(defaultService => defaultService.id === service.id))
+  ];
 
   const totalSpent = patientRecords.reduce((sum, record) => sum + Number(record.cost || 0), 0);
   const totalPaid = patientRecords.reduce((sum, record) => sum + Number(record.amountPaid || 0), 0);
@@ -1437,136 +1441,225 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
 
             {/* Forms Tab */}
             {activeTab === 'forms' && (
-              <div className="p-8 space-y-6 overflow-y-auto scrollbar-visible" style={{ maxHeight: 'calc(100vh - 200px)' }}>
-                <h2 className="text-xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
-                  Your Forms
-                </h2>
-
+              <div className="p-8 space-y-8 overflow-y-auto scrollbar-visible" style={{ maxHeight: 'calc(100vh - 200px)' }}>
                 {isLoadingForms ? (
-                  <div className="text-center py-12">
-                    <div className="inline-block">
-                      <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                  <div className="col-span-full flex items-center justify-center py-16">
+                    <div className="text-center">
+                      <div className="inline-flex items-center justify-center mb-4">
+                        <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                      </div>
+                      <p className="text-slate-600 font-medium">Loading your forms...</p>
                     </div>
-                    <p className="text-gray-600 mt-4">Loading your forms...</p>
                   </div>
                 ) : (
-                  <div className="space-y-6">
+                  <div className="space-y-8">
                     {/* Doctor Referrals Section */}
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                        <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">
-                          Doctor Referrals
-                        </span>
-                      </h3>
-                      {referrals.filter(r => r.specialty !== 'X-Ray Imaging' && r.referredTo !== 'X-Ray Facility').length > 0 ? (
-                        <div className="space-y-3">
+                    {referrals.filter(r => r.specialty !== 'X-Ray Imaging' && r.referredTo !== 'X-Ray Facility').length > 0 && (
+                      <div>
+                        <div className="mb-5 flex items-center gap-3">
+                          <div className="h-8 w-1 bg-gradient-to-b from-amber-400 to-amber-600 rounded-full"></div>
+                          <h3 className="text-xl font-bold text-slate-900">Doctor Referrals</h3>
+                          <span className="ml-auto px-3 py-1 bg-amber-50 text-amber-700 text-xs font-semibold rounded-full border border-amber-200">
+                            {referrals.filter(r => r.specialty !== 'X-Ray Imaging' && r.referredTo !== 'X-Ray Facility').length}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 gap-4">
                           {referrals
                             .filter(r => r.specialty !== 'X-Ray Imaging' && r.referredTo !== 'X-Ray Facility')
                             .sort((a, b) => new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime())
                             .map(referral => (
-                              <div key={referral.id} className="p-4 border border-yellow-200 rounded-lg bg-gradient-to-r from-yellow-50 to-amber-50 hover:shadow-md transition-shadow">
-                                <div className="flex justify-between items-start mb-2">
+                              <div
+                                key={referral.id}
+                                className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                              >
+                                {/* Glassmorphism accent */}
+                                <div className="absolute -right-12 -top-12 w-32 h-32 bg-amber-100 rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+                                <div className="absolute inset-0 bg-gradient-to-br from-amber-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                
+                                <div className="relative flex justify-between items-start gap-4">
                                   <div className="flex-1">
-                                    <p className="font-semibold text-gray-800">Referred to: {referral.referredTo || referral.specialty}</p>
-                                    <p className="text-sm text-gray-600 mt-1">Specialty: {referral.specialty || 'General'}</p>
-                                    <p className="text-sm text-gray-600">Referred by: Dr. {referral.referringDentist}</p>
-                                    <p className="text-xs text-gray-500 mt-2">
-                                      Created: {new Date(referral.createdAt || referral.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                                    </p>
+                                    <div className="flex items-start gap-3 mb-3">
+                                      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-amber-100 to-amber-50 border border-amber-200 rounded-xl flex items-center justify-center">
+                                        <FileText className="w-5 h-5 text-amber-600" />
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <h4 className="font-bold text-slate-900 text-base">Referred to: {referral.referredTo || referral.specialty}</h4>
+                                        <p className="text-sm font-medium text-slate-500 mt-0.5">Dr. {referral.referringDentist}</p>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="space-y-2 mt-4">
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-sm text-slate-600 font-medium">Specialty:</span>
+                                        <span className="text-sm font-semibold text-slate-900">{referral.specialty || 'General'}</span>
+                                      </div>
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-sm text-slate-600 font-medium">Date:</span>
+                                        <span className="text-sm font-semibold text-slate-900">
+                                          {new Date(referral.createdAt || referral.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {referral.reason && (
+                                      <div className="mt-4 pt-4 border-t border-slate-100">
+                                        <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">Reason</p>
+                                        <p className="text-sm text-slate-700 leading-relaxed">{referral.reason}</p>
+                                      </div>
+                                    )}
                                   </div>
-                                  <div className="flex gap-2 ml-4">
-                                    <button
-                                      onClick={() => generateReferralPDF(referral, patient)}
-                                      className="px-3 py-1.5 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700 transition-colors flex items-center gap-1"
-                                    >
-                                      <Download size={14} />
-                                      PDF
-                                    </button>
-                                  </div>
+                                  
+                                  <button
+                                    onClick={() => generateReferralPDF(referral, patient)}
+                                    className="flex-shrink-0 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 text-sm"
+                                  >
+                                    <Download size={16} />
+                                    <span>PDF</span>
+                                  </button>
                                 </div>
-                                {referral.reason && (
-                                  <p className="text-sm text-gray-600 mt-2 pt-2 border-t border-yellow-200">
-                                    Reason: {referral.reason}
-                                  </p>
-                                )}
                               </div>
                             ))}
                         </div>
-                      ) : (
-                        <p className="text-gray-500 text-sm py-4">No doctor referrals available</p>
-                      )}
-                    </div>
+                      </div>
+                    )}
 
                     {/* X-Ray Referrals Section */}
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                        <span className="px-3 py-1 bg-cyan-100 text-cyan-700 rounded-full text-sm font-medium">
-                          X-Ray Referrals
-                        </span>
-                      </h3>
-                      {referrals.filter(r => r.specialty === 'X-Ray Imaging' || r.referredTo === 'X-Ray Facility').length > 0 ? (
-                        <div className="space-y-3">
+                    {referrals.filter(r => r.specialty === 'X-Ray Imaging' || r.referredTo === 'X-Ray Facility').length > 0 && (
+                      <div>
+                        <div className="mb-5 flex items-center gap-3">
+                          <div className="h-8 w-1 bg-gradient-to-b from-cyan-400 to-cyan-600 rounded-full"></div>
+                          <h3 className="text-xl font-bold text-slate-900">X-Ray Referrals</h3>
+                          <span className="ml-auto px-3 py-1 bg-cyan-50 text-cyan-700 text-xs font-semibold rounded-full border border-cyan-200">
+                            {referrals.filter(r => r.specialty === 'X-Ray Imaging' || r.referredTo === 'X-Ray Facility').length}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 gap-4">
                           {referrals
                             .filter(r => r.specialty === 'X-Ray Imaging' || r.referredTo === 'X-Ray Facility')
                             .sort((a, b) => new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime())
                             .map(referral => (
-                              <div key={referral.id} className="p-4 border border-cyan-200 rounded-lg bg-gradient-to-r from-cyan-50 to-blue-50 hover:shadow-md transition-shadow">
-                                <div className="flex justify-between items-start mb-2">
+                              <div
+                                key={referral.id}
+                                className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                              >
+                                {/* Glassmorphism accent */}
+                                <div className="absolute -right-12 -top-12 w-32 h-32 bg-cyan-100 rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+                                <div className="absolute inset-0 bg-gradient-to-br from-cyan-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                
+                                <div className="relative flex justify-between items-start gap-4">
                                   <div className="flex-1">
-                                    <p className="font-semibold text-gray-800">X-Ray Referral</p>
-                                    <p className="text-sm text-gray-600 mt-1">Facility: {referral.referredTo}</p>
-                                    <p className="text-sm text-gray-600">Referred by: Dr. {referral.referringDentist}</p>
-                                    <p className="text-xs text-gray-500 mt-2">
-                                      Created: {new Date(referral.createdAt || referral.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                                    </p>
+                                    <div className="flex items-start gap-3 mb-3">
+                                      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-cyan-100 to-cyan-50 border border-cyan-200 rounded-xl flex items-center justify-center">
+                                        <FileText className="w-5 h-5 text-cyan-600" />
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <h4 className="font-bold text-slate-900 text-base">X-Ray Referral</h4>
+                                        <p className="text-sm font-medium text-slate-500 mt-0.5">Dr. {referral.referringDentist}</p>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="space-y-2 mt-4">
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-sm text-slate-600 font-medium">Facility:</span>
+                                        <span className="text-sm font-semibold text-slate-900">{referral.referredTo}</span>
+                                      </div>
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-sm text-slate-600 font-medium">Date:</span>
+                                        <span className="text-sm font-semibold text-slate-900">
+                                          {new Date(referral.createdAt || referral.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {referral.reason && (
+                                      <div className="mt-4 pt-4 border-t border-slate-100">
+                                        <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">Reason</p>
+                                        <p className="text-sm text-slate-700 leading-relaxed">{referral.reason}</p>
+                                      </div>
+                                    )}
                                   </div>
-                                  <div className="flex gap-2 ml-4">
-                                    <button
-                                      onClick={() => generateReferralPDF(referral, patient)}
-                                      className="px-3 py-1.5 bg-cyan-600 text-white rounded text-sm hover:bg-cyan-700 transition-colors flex items-center gap-1"
-                                    >
-                                      <Download size={14} />
-                                      PDF
-                                    </button>
-                                  </div>
+                                  
+                                  <button
+                                    onClick={() => generateReferralPDF(referral, patient)}
+                                    className="flex-shrink-0 px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white font-semibold rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 text-sm"
+                                  >
+                                    <Download size={16} />
+                                    <span>PDF</span>
+                                  </button>
                                 </div>
-                                {referral.reason && (
-                                  <p className="text-sm text-gray-600 mt-2 pt-2 border-t border-cyan-200">
-                                    Reason: {referral.reason}
-                                  </p>
-                                )}
                               </div>
                             ))}
                         </div>
-                      ) : (
-                        <p className="text-gray-500 text-sm py-4">No X-ray referrals available</p>
-                      )}
-                    </div>
+                      </div>
+                    )}
 
                     {/* Prescriptions Section */}
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                        <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                          Prescriptions
-                        </span>
-                      </h3>
-                      {prescriptions.length > 0 ? (
-                        <div className="space-y-3">
+                    {prescriptions.length > 0 && (
+                      <div>
+                        <div className="mb-5 flex items-center gap-3">
+                          <div className="h-8 w-1 bg-gradient-to-b from-emerald-400 to-emerald-600 rounded-full"></div>
+                          <h3 className="text-xl font-bold text-slate-900">Prescriptions</h3>
+                          <span className="ml-auto px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full border border-emerald-200">
+                            {prescriptions.length}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 gap-4">
                           {prescriptions
                             .sort((a, b) => new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime())
                             .map(prescription => (
-                              <div key={prescription.id} className="p-4 border border-green-200 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 hover:shadow-md transition-shadow">
-                                <div className="flex justify-between items-start mb-2">
+                              <div
+                                key={prescription.id}
+                                className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                              >
+                                {/* Glassmorphism accent */}
+                                <div className="absolute -right-12 -top-12 w-32 h-32 bg-emerald-100 rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+                                <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                
+                                <div className="relative flex justify-between items-start gap-4">
                                   <div className="flex-1">
-                                    <p className="font-semibold text-gray-800">Prescription from Dr. {prescription.dentist}</p>
-                                    <p className="text-sm text-gray-600 mt-1">
-                                      {prescription.medications?.length || 0} medication(s) prescribed
-                                    </p>
-                                    <p className="text-xs text-gray-500 mt-2">
-                                      Created: {new Date(prescription.createdAt || prescription.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                                    </p>
+                                    <div className="flex items-start gap-3 mb-3">
+                                      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-emerald-100 to-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-center">
+                                        <FileText className="w-5 h-5 text-emerald-600" />
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <h4 className="font-bold text-slate-900 text-base">Dr. {prescription.dentist}</h4>
+                                        <p className="text-sm font-medium text-slate-500 mt-0.5">
+                                          {prescription.medications?.length || 0} medication{prescription.medications?.length !== 1 ? 's' : ''} prescribed
+                                        </p>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="space-y-2 mt-4">
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-sm text-slate-600 font-medium">Date:</span>
+                                        <span className="text-sm font-semibold text-slate-900">
+                                          {new Date(prescription.createdAt || prescription.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {prescription.medications && prescription.medications.length > 0 && (
+                                      <div className="mt-4 pt-4 border-t border-slate-100">
+                                        <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-3">Medications</p>
+                                        <div className="space-y-2">
+                                          {prescription.medications.slice(0, 3).map((med: any, idx: number) => (
+                                            <div key={idx} className="flex items-start gap-2 p-2 bg-slate-50 rounded-lg border border-slate-100">
+                                              <span className="text-emerald-600 font-bold flex-shrink-0">•</span>
+                                              <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-semibold text-slate-900">{med.name}</p>
+                                                <p className="text-xs text-slate-600">{med.dosage} • {med.frequency} {med.duration && `• ${med.duration}`}</p>
+                                              </div>
+                                            </div>
+                                          ))}
+                                          {prescription.medications.length > 3 && (
+                                            <p className="text-xs font-semibold text-slate-500 pt-1">+ {prescription.medications.length - 3} more medication{prescription.medications.length - 3 !== 1 ? 's' : ''}</p>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
-                                  <div className="flex gap-2 ml-4">
+                                  
+                                  <div className="flex-shrink-0 flex gap-2">
                                     <button
                                       onClick={() => {
                                         // View prescription details
@@ -1576,101 +1669,100 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                                         const details = `Medications:\n${medList}\n\nNotes: ${prescription.notes || 'None'}`;
                                         toast.success(details);
                                       }}
-                                      className="px-3 py-1.5 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors flex items-center gap-1"
+                                      className="px-4 py-2.5 bg-slate-100 text-slate-700 font-semibold rounded-xl hover:bg-slate-200 hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 text-sm"
                                     >
-                                      <Eye size={14} />
-                                      View
+                                      <Eye size={16} />
+                                      <span>View</span>
                                     </button>
                                     <button
                                       onClick={() => generatePrescriptionPDF(patient, prescription)}
-                                      className="px-3 py-1.5 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors flex items-center gap-1"
+                                      className="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 text-sm"
                                     >
-                                      <Download size={14} />
-                                      PDF
+                                      <Download size={16} />
+                                      <span>PDF</span>
                                     </button>
                                   </div>
                                 </div>
-                                {prescription.medications && prescription.medications.length > 0 && (
-                                  <div className="mt-3 pt-2 border-t border-green-200">
-                                    <p className="text-xs font-semibold text-gray-700 mb-2">Medications:</p>
-                                    <div className="space-y-1">
-                                      {prescription.medications.slice(0, 2).map((med: any, idx: number) => (
-                                        <p key={idx} className="text-xs text-gray-600">
-                                          • {med.name} - {med.dosage} {med.frequency}
-                                        </p>
-                                      ))}
-                                      {prescription.medications.length > 2 && (
-                                        <p className="text-xs text-gray-500">+ {prescription.medications.length - 2} more</p>
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
                               </div>
                             ))}
                         </div>
-                      ) : (
-                        <p className="text-gray-500 text-sm py-4">No prescriptions available</p>
-                      )}
-                    </div>
+                      </div>
+                    )}
 
                     {/* Referral Upload Section - Only for Referred Patients */}
                     {patient.patientType === 'referred' && (
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                          <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
-                            Upload Referral Document
-                          </span>
-                        </h3>
-                        <div className="p-6 border-2 border-dashed border-purple-300 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50">
-                          <div className="text-center mb-4">
-                            <Upload className="w-12 h-12 mx-auto mb-2 text-purple-500" />
-                            <h4 className="text-sm font-semibold text-gray-800 mb-1">Upload your referral document</h4>
-                            <p className="text-xs text-gray-600 mb-3">Upload the referral from the doctor/dentist who referred you to Doc Maaño</p>
+                        <div className="mb-5 flex items-center gap-3">
+                          <div className="h-8 w-1 bg-gradient-to-b from-violet-400 to-violet-600 rounded-full"></div>
+                          <h3 className="text-xl font-bold text-slate-900">Upload Referral Document</h3>
+                        </div>
+                        
+                        <div className="relative bg-white border-2 border-dashed border-slate-300 rounded-2xl p-8 hover:border-violet-400 transition-colors overflow-hidden group">
+                          {/* Subtle background accent */}
+                          <div className="absolute inset-0 bg-gradient-to-br from-violet-50 via-white to-slate-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                          
+                          <div className="relative text-center mb-6">
+                            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-violet-100 to-violet-50 border border-violet-200 rounded-2xl mb-4">
+                              <Upload className="w-8 h-8 text-violet-600" />
+                            </div>
+                            <h4 className="text-lg font-bold text-slate-900 mb-2">Upload Your Referral Document</h4>
+                            <p className="text-sm text-slate-600 font-medium">Share the referral from your referring doctor</p>
                           </div>
 
                           {referralFiles.length > 0 && (
-                            <div className="mb-4 space-y-2">
-                              <p className="text-sm font-semibold text-gray-700">Uploaded Files:</p>
-                              {referralFiles.map(file => (
-                                <div key={file.id} className="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
-                                  <div className="flex items-center gap-2 flex-1">
-                                    {file.fileType === 'image' ? (
-                                      <Camera className="w-4 h-4 text-blue-500" />
-                                    ) : (
-                                      <FileText className="w-4 h-4 text-red-500" />
-                                    )}
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-sm text-gray-800 truncate">{file.fileName}</p>
-                                      <p className="text-xs text-gray-500">
-                                        Uploaded: {new Date(file.uploadedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <button
-                                    onClick={() => handleRemoveReferralFile(file.id)}
-                                    className="ml-2 p-2 hover:bg-red-50 rounded text-red-600 transition-colors"
-                                    title="Delete file"
+                            <div className="mb-6 space-y-2">
+                              <p className="text-sm font-bold text-slate-900 uppercase tracking-wide">Uploaded Files</p>
+                              <div className="space-y-2 max-h-40 overflow-y-auto">
+                                {referralFiles.map(file => (
+                                  <div
+                                    key={file.id}
+                                    className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 transition-colors group/file"
                                   >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              ))}
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                      <div className="flex-shrink-0">
+                                        {file.fileType === 'image' ? (
+                                          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center border border-blue-200">
+                                            <Camera className="w-4 h-4 text-blue-600" />
+                                          </div>
+                                        ) : (
+                                          <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center border border-red-200">
+                                            <FileText className="w-4 h-4 text-red-600" />
+                                          </div>
+                                        )}
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-semibold text-slate-900 truncate">{file.fileName}</p>
+                                        <p className="text-xs text-slate-500">
+                                          {new Date(file.uploadedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <button
+                                      onClick={() => handleRemoveReferralFile(file.id)}
+                                      className="ml-2 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover/file:opacity-100"
+                                      title="Delete file"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           )}
 
-                          <div className="flex gap-2 justify-center">
+                          <div className="flex gap-3 justify-center relative">
                             <button
                               onClick={() => setShowReferralUploadModal(!showReferralUploadModal)}
-                              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 text-sm font-medium"
+                              className="px-6 py-3 bg-gradient-to-r from-violet-500 to-violet-600 text-white font-semibold rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2"
                             >
-                              <Plus className="w-4 h-4" />
+                              <Plus className="w-5 h-5" />
                               {showReferralUploadModal ? 'Cancel' : 'Select Files'}
                             </button>
                           </div>
 
                           {showReferralUploadModal && (
-                            <div className="mt-4 space-y-3">
-                              <div className="border-2 border-gray-200 rounded-lg p-4 text-center cursor-pointer hover:border-purple-400 hover:bg-white transition-colors">
+                            <div className="mt-6 space-y-4 relative pt-6 border-t border-slate-200">
+                              <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center cursor-pointer hover:border-violet-400 hover:bg-violet-50 transition-all group/upload">
                                 <input
                                   type="file"
                                   id="referral-file-input"
@@ -1680,44 +1772,49 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                                   className="hidden"
                                 />
                                 <label htmlFor="referral-file-input" className="cursor-pointer block">
-                                  <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                                  <p className="text-sm text-gray-600 font-medium">Click to select or drag files</p>
-                                  <p className="text-xs text-gray-500">PNG, JPG, PDF, DOC, DOCX up to 10MB</p>
+                                  <Upload className="w-8 h-8 mx-auto mb-3 text-slate-400 group-hover/upload:text-violet-500 transition-colors" />
+                                  <p className="text-sm font-bold text-slate-900 group-hover/upload:text-violet-900 transition-colors">Click or drag files here</p>
+                                  <p className="text-xs text-slate-600 mt-1">PNG, JPG, PDF, DOC, DOCX up to 10MB</p>
                                 </label>
                               </div>
 
                               {referralUploadFiles.length > 0 && (
                                 <>
                                   <div className="space-y-2">
-                                    <p className="text-sm font-semibold text-gray-700">Files to upload:</p>
-                                    {referralUploadFiles.map((file, idx) => (
-                                      <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-200">
-                                        <span className="text-sm text-gray-700">{file.name}</span>
-                                        <button
-                                          type="button"
-                                          onClick={() => setReferralUploadFiles(prev => prev.filter((_, i) => i !== idx))}
-                                          className="text-red-600 hover:text-red-800 transition-colors"
+                                    <p className="text-sm font-bold text-slate-900 uppercase tracking-wide">Files Ready to Upload</p>
+                                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                                      {referralUploadFiles.map((file, idx) => (
+                                        <div
+                                          key={idx}
+                                          className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors group/item"
                                         >
-                                          <X className="w-4 h-4" />
-                                        </button>
-                                      </div>
-                                    ))}
+                                          <span className="text-sm font-medium text-slate-700 truncate">{file.name}</span>
+                                          <button
+                                            type="button"
+                                            onClick={() => setReferralUploadFiles(prev => prev.filter((_, i) => i !== idx))}
+                                            className="ml-2 p-1 text-red-600 hover:bg-red-50 rounded transition-colors opacity-0 group-hover/item:opacity-100"
+                                          >
+                                            <X className="w-4 h-4" />
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
 
                                   <button
                                     onClick={handleReferralFileUpload}
                                     disabled={isUploadingReferral}
-                                    className="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 transition-colors flex items-center justify-center gap-2 font-medium text-sm"
+                                    className="w-full py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2 font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
                                   >
                                     {isUploadingReferral ? (
                                       <>
                                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                        Uploading...
+                                        <span>Uploading {referralUploadFiles.length} File{referralUploadFiles.length !== 1 ? 's' : ''}...</span>
                                       </>
                                     ) : (
                                       <>
-                                        <Check className="w-4 h-4" />
-                                        Upload {referralUploadFiles.length} File{referralUploadFiles.length !== 1 ? 's' : ''}
+                                        <Check className="w-5 h-5" />
+                                        <span>Upload {referralUploadFiles.length} File{referralUploadFiles.length !== 1 ? 's' : ''}</span>
                                       </>
                                     )}
                                   </button>
@@ -1731,9 +1828,12 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
 
                     {/* Empty State */}
                     {referrals.length === 0 && prescriptions.length === 0 && patient.patientType !== 'referred' && (
-                      <div className="text-center py-12 text-gray-500">
-                        <FileText className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                        <p>No forms available yet</p>
+                      <div className="col-span-full text-center py-16 px-6">
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-slate-100 rounded-2xl mb-4">
+                          <FileText className="w-8 h-8 text-slate-400" />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900 mb-2">No Forms Yet</h3>
+                        <p className="text-slate-600 font-medium">Your referrals and prescriptions will appear here</p>
                       </div>
                     )}
                   </div>
@@ -1802,97 +1902,202 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
 
             {/* Billing Balance Tab */}
             {activeTab === 'balance' && (
-              <div className="p-8 space-y-6 overflow-y-auto scrollbar-visible" style={{ maxHeight: 'calc(100vh - 200px)' }}>
-                <h2 className="text-xl mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Billing Summary
-                </h2>
-
-                {/* Balance Card */}
-                <div className="p-6 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl border-2 border-red-200 shadow-lg">
-                  <div className="flex justify-between items-center mb-4">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Current Balance</p>
-                      <p className="text-4xl text-red-600">₱{currentBalance.toLocaleString()}</p>
-                    </div>
-                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
-                      <CreditCard className="w-8 h-8 text-red-600" />
-                    </div>
-                  </div>
-                  <p className="text-sm text-gray-600">As of {formatToDD_MM_YYYY(new Date())}</p>
-                  {currentBalance > 0 && (
-                    <div className="mt-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg flex items-start gap-2">
-                      <AlertCircle className="w-5 h-5 text-yellow-700 flex-shrink-0 mt-0.5" />
-                      <p className="text-sm text-yellow-800">
-                        You have an outstanding balance. Please contact the clinic to arrange payment.
-                      </p>
-                    </div>
-                  )}
+              <div className="p-8 space-y-6 overflow-y-auto scrollbar-visible bg-gradient-to-b from-slate-50 to-slate-100/50" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+                {/* Premium Header */}
+                <div className="mb-8">
+                  <h2 className="text-4xl font-bold text-slate-900 tracking-tight mb-2">Billing & Payments</h2>
+                  <p className="text-slate-600 font-medium">Manage your account balance and payment history</p>
                 </div>
 
-                {/* Payment Breakdown */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-purple-200">
-                    <p className="text-sm text-gray-600 mb-1">Total Billed</p>
-                    <p className="text-2xl">₱{totalSpent.toLocaleString()}</p>
+                {/* Balance Card - Premium Style */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="group relative overflow-hidden rounded-2xl border border-white/40 shadow-xl hover:shadow-2xl transition-all duration-300 bg-white backdrop-blur-sm"
+                >
+                  {/* Gradient accent background */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-teal-50 via-white to-cyan-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  
+                  <div className="relative p-8">
+                    <div className="flex justify-between items-start mb-6">
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Current Balance</p>
+                        <p className={`text-5xl font-bold tracking-tight mb-1 ${currentBalance > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                          ₱{currentBalance.toLocaleString()}
+                        </p>
+                        <p className="text-sm text-slate-500">As of {formatToDD_MM_YYYY(new Date())}</p>
+                      </div>
+                      <div className="flex-shrink-0">
+                        <div className={`w-20 h-20 rounded-2xl flex items-center justify-center transition-all duration-300 ${
+                          currentBalance > 0 
+                            ? 'bg-gradient-to-br from-red-100 to-red-50 group-hover:from-red-200 group-hover:to-red-100' 
+                            : 'bg-gradient-to-br from-emerald-100 to-emerald-50 group-hover:from-emerald-200 group-hover:to-emerald-100'
+                        }`}>
+                          <CreditCard className={`w-10 h-10 transition-transform duration-300 group-hover:scale-110 ${
+                            currentBalance > 0 ? 'text-red-600' : 'text-emerald-600'
+                          }`} />
+                        </div>
+                      </div>
+                    </div>
+
+                    {currentBalance > 0 && (
+                      <div className="mt-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 rounded-xl flex items-start gap-3 backdrop-blur-sm hover:shadow-md transition-all duration-300">
+                        <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm text-amber-900 font-medium">
+                          You have an outstanding balance. Please contact the clinic to arrange payment.
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-                    <p className="text-sm text-gray-600 mb-1">Total Paid</p>
-                    <p className="text-2xl text-green-600">₱{totalPaid.toLocaleString()}</p>
-                  </div>
+                </motion.div>
+
+                {/* Payment Breakdown - Premium Cards */}
+                <div className="grid grid-cols-2 gap-6">
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}
+                    className="group relative rounded-2xl border border-white/40 p-6 shadow-lg hover:shadow-xl transition-all duration-300 bg-white overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-purple-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-100 to-purple-100 opacity-10 rounded-full -z-10 group-hover:opacity-20 transition-opacity duration-300"></div>
+                    
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Total Billed</p>
+                    <p className="text-3xl font-bold text-slate-900 mb-4">₱{totalSpent.toLocaleString()}</p>
+                    <div className="w-12 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+                  </motion.div>
+
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.2 }}
+                    className="group relative rounded-2xl border border-white/40 p-6 shadow-lg hover:shadow-xl transition-all duration-300 bg-white overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-white to-teal-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-100 to-teal-100 opacity-10 rounded-full -z-10 group-hover:opacity-20 transition-opacity duration-300"></div>
+                    
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Total Paid</p>
+                    <p className="text-3xl font-bold text-emerald-600 mb-4">₱{totalPaid.toLocaleString()}</p>
+                    <div className="w-12 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"></div>
+                  </motion.div>
                 </div>
 
-                {/* Payment History */}
-                <div>
-                  <h3 className="font-semibold mb-3 flex items-center gap-2">
-                    <History className="w-4 h-4 text-blue-600" />
-                    Recent Payments
-                  </h3>
-                  <div className="space-y-2">
+                {/* Payment History - Modern List */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.3 }}
+                  className="space-y-4"
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
+                      <History className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900">Recent Payments</h3>
+                  </div>
+
+                  <div className="space-y-3">
                     {payments
                       .filter(p => String(p.patientId) === String(patient.id))
                       .sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime())
                       .slice(0, 10)
                       .map(payment => (
-                        <div key={payment.id} className="p-4 bg-white rounded-lg border border-gray-100 flex justify-between items-center shadow-sm">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center">
-                              <CheckCircle className="w-5 h-5 text-green-600" />
+                        <motion.div 
+                          key={payment.id} 
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="group relative rounded-xl border border-slate-200/60 p-5 bg-white shadow-sm hover:shadow-lg hover:border-emerald-200 transition-all duration-300 overflow-hidden"
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-r from-emerald-50 to-teal-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                          
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 flex items-center justify-center group-hover:shadow-md transition-all duration-300">
+                                <CheckCircle className="w-6 h-6 text-emerald-600" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-semibold text-slate-900">Payment Received</p>
+                                <p className="text-sm text-slate-500 mt-1">{formatToDD_MM_YYYY(payment.paymentDate)}</p>
+                                {payment.notes && <p className="text-xs text-slate-400 mt-1.5 truncate">{payment.notes}</p>}
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-medium text-gray-900">Payment Received</p>
-                              <p className="text-xs text-gray-500">{formatToDD_MM_YYYY(payment.paymentDate)}</p>
-                              {payment.notes && <p className="text-xs text-gray-400 mt-0.5">{payment.notes}</p>}
-                            </div>
+                            <p className="text-xl font-bold text-emerald-600 flex-shrink-0 ml-4">₱{payment.amount}</p>
                           </div>
-                          <p className="text-lg font-bold text-green-600">₱{payment.amount}</p>
-                        </div>
+                        </motion.div>
                       ))}
                     {payments.filter(p => String(p.patientId) === String(patient.id)).length === 0 && (
-                      <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                        <p className="text-gray-500">No payment records found.</p>
+                      <div className="text-center py-12 bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl border border-dashed border-slate-300">
+                        <History className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                        <p className="text-slate-500 font-medium">No payment records found</p>
+                        <p className="text-sm text-slate-400 mt-1">Your successful payments will appear here</p>
                       </div>
                     )}
                   </div>
-                </div>
+                </motion.div>
 
-                {/* Treatment Charges */}
-                <div>
-                  <h3 className="font-semibold mb-3 flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-purple-600" />
-                    Treatment Charges
-                  </h3>
-                  <div className="space-y-2">
-                    {patientRecords.slice().reverse().map(record => (
-                      <div key={record.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200 flex justify-between items-center">
-                        <div>
-                          <p className="font-medium">{record.treatment}</p>
-                          <p className="text-sm text-gray-600">{formatToDD_MM_YYYY(record.date)}</p>
-                        </div>
-                        <p className="text-lg">₱{record.cost}</p>
-                      </div>
-                    ))}
+                {/* Treatment Charges - Premium Table Style */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.4 }}
+                  className="space-y-4"
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900">Treatment Charges</h3>
                   </div>
-                </div>
+
+                  <div className="rounded-2xl border border-slate-200/60 overflow-hidden bg-white shadow-lg hover:shadow-xl transition-all duration-300">
+                    {/* Table Header */}
+                    <div className="bg-gradient-to-r from-slate-50 to-slate-100/50 border-b border-slate-200/60 px-6 py-4 grid grid-cols-3 gap-4">
+                      <div>
+                        <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">Treatment</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">Date</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">Amount</p>
+                      </div>
+                    </div>
+
+                    {/* Table Body */}
+                    <div className="divide-y divide-slate-100">
+                      {patientRecords.slice().reverse().map((record, idx) => (
+                        <motion.div 
+                          key={record.id}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ duration: 0.2, delay: idx * 0.05 }}
+                          className="group relative px-6 py-5 grid grid-cols-3 gap-4 items-center hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-50/50 transition-all duration-200 border-l-4 border-l-transparent hover:border-l-purple-500"
+                        >
+                          <div className="min-w-0">
+                            <p className="font-semibold text-slate-900 truncate">{record.treatment}</p>
+                          </div>
+                          <div>
+                            <p className="text-slate-600 text-sm">{formatToDD_MM_YYYY(record.date)}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-lg font-bold text-slate-900 group-hover:text-purple-600 transition-colors duration-200">₱{record.cost}</p>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+
+                    {/* Empty State */}
+                    {patientRecords.length === 0 && (
+                      <div className="text-center py-12 px-6">
+                        <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                        <p className="text-slate-500 font-medium">No treatment charges found</p>
+                        <p className="text-sm text-slate-400 mt-1">Your treatment history will appear here</p>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
               </div>
             )}
 

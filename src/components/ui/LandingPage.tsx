@@ -23,6 +23,8 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
   const birthdatePickerRef = useRef<HTMLInputElement | null>(null);
   
   const [signupData, setSignupData] = useState({
+    firstName: '',
+    lastName: '',
     fullName: '',
     email: '',
     phone: '',
@@ -48,6 +50,14 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
     }
     // If already formatted or other format, return as is
     return value;
+  };
+
+  const updateNameFields = (field: 'firstName' | 'lastName', value: string) => {
+    const updated = { ...signupData, [field]: value };
+    const first = (updated.firstName || '').trim();
+    const last = (updated.lastName || '').trim();
+    updated.fullName = [first, last].filter(Boolean).join(' ');
+    setSignupData(updated);
   };
 
   const slides = [
@@ -89,6 +99,8 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
     
     // Reset signup data and fields
     setSignupData({
+      firstName: '',
+      lastName: '',
       fullName: '',
       email: '',
       phone: '',
@@ -124,6 +136,8 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
       
       // Clear all fields
       setSignupData({
+        firstName: '',
+        lastName: '',
         fullName: '',
         email: '',
         phone: '',
@@ -462,23 +476,47 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                   <form onSubmit={(e) => { 
                     e.preventDefault(); 
                     // Store signup data and show claiming flow
-                    setPendingSignupData(signupData);
+                    const first = (signupData.firstName || '').trim();
+                    const last = (signupData.lastName || '').trim();
+                    setPendingSignupData({
+                      ...signupData,
+                      fullName: `${first}\n\n${last}`.trim()
+                    });
                     setShowClaimingFlow(true);
                   }} className="space-y-4">
-                    <div>
-                      <label htmlFor="signup-fullname" className="block text-sm font-medium mb-2 text-slate-700">Full Name *</label>
-                      <div className="relative">
-                        <User className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
-                        <input
-                          id="signup-fullname"
-                          name="fullName"
-                          type="text"
-                          value={signupData.fullName}
-                          onChange={(e) => setSignupData({ ...signupData, fullName: e.target.value })}
-                          required
-                          placeholder="Enter your full name"
-                          className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-                        />
+                    <div className="space-y-4">
+                      <div>
+                        <label htmlFor="signup-firstname" className="block text-sm font-medium mb-2 text-slate-700">First Name *</label>
+                        <div className="relative">
+                          <User className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                          <input
+                            id="signup-firstname"
+                            name="firstName"
+                            type="text"
+                            value={signupData.firstName}
+                            onChange={(e) => updateNameFields('firstName', e.target.value)}
+                            required
+                            placeholder="Enter your first name"
+                            className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label htmlFor="signup-lastname" className="block text-sm font-medium mb-2 text-slate-700">Last Name *</label>
+                        <div className="relative">
+                          <User className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                          <input
+                            id="signup-lastname"
+                            name="lastName"
+                            type="text"
+                            value={signupData.lastName}
+                            onChange={(e) => updateNameFields('lastName', e.target.value)}
+                            required
+                            placeholder="Enter your last name"
+                            className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                          />
+                        </div>
                       </div>
                     </div>
 
@@ -552,6 +590,23 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                           type="date"
                           className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 opacity-0 cursor-pointer"
                           onChange={(e) => setSignupData({ ...signupData, dateOfBirth: convertToDisplayDate(e.target.value) })}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label htmlFor="signup-address" className="block text-sm font-medium mb-2 text-slate-700">Address *</label>
+                      <div className="relative">
+                        <MapPin className="w-5 h-5 absolute left-3.5 top-3.5 text-slate-400" />
+                        <textarea
+                          id="signup-address"
+                          name="address"
+                          value={signupData.address}
+                          onChange={(e) => setSignupData({ ...signupData, address: e.target.value })}
+                          placeholder="Enter your address"
+                          required
+                          rows={2}
+                          className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all resize-none"
                         />
                       </div>
                     </div>

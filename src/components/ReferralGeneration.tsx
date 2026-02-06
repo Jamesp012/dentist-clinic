@@ -13,6 +13,8 @@ const clinicMap = '/clinic-map.jpg';
 
 type ReferralType = 'doctor' | 'xray' | null;
 
+type ReferralFilter = 'all' | 'incoming' | 'outgoing';
+
 interface ReferralGenerationProps {
   referrals: Referral[];
   setReferrals: (referrals: Referral[]) => void;
@@ -50,6 +52,8 @@ const UnderlineInput = ({ label, value, onChange, className = '', disabled = fal
 
 export function ReferralGeneration({ referrals, setReferrals, patients }: ReferralGenerationProps) {
   const [referralType, setReferralType] = useState<ReferralType>(null);
+  const [referralFilter, setReferralFilter] = useState<ReferralFilter>('all');
+  const [allViewMode, setAllViewMode] = useState<'alphabetical' | 'recent'>('alphabetical');
   const [showTypeSelection, setShowTypeSelection] = useState(false);
   const [selectedServices, setSelectedServices] = useState<Record<string, string | boolean>>({});
   const [selectedXrayItems, setSelectedXrayItems] = useState<Record<string, string | boolean>>({});
@@ -259,6 +263,67 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
     ? selectedReferral.specialty === 'X-Ray Imaging' || selectedReferral.referredTo === 'X-Ray Facility'
     : false;
 
+  // Referral filtering helpers
+  const incomingReferrals = referrals.filter(
+    r => r.referralType === 'incoming' || (r.createdByRole === 'patient' && r.referredByContact)
+  );
+
+  const outgoingReferrals = referrals.filter(
+    r => r.referralType === 'outgoing' || r.createdByRole === 'staff'
+  );
+
+  const filteredReferrals =
+    referralFilter === 'incoming'
+      ? incomingReferrals
+      : referralFilter === 'outgoing'
+      ? outgoingReferrals
+      : referrals;
+
+  const getReferralPatientName = (referral: Referral) => {
+    const patient = patients.find(p => String(p.id) === String(referral.patientId));
+    return patient?.name || referral.patientName;
+  };
+
+  const getNameParts = (fullName: string | undefined | null) => {
+    if (!fullName) {
+      return { lastName: '', givenNames: '' };
+    }
+    const parts = fullName.trim().split(/\s+/);
+    if (parts.length === 1) {
+      return { lastName: parts[0], givenNames: '' };
+    }
+    const lastName = parts[parts.length - 1];
+    const givenNames = parts.slice(0, -1).join(' ');
+    return { lastName, givenNames };
+  };
+
+  const formatPatientName = (fullName: string | undefined | null) => {
+    const { lastName, givenNames } = getNameParts(fullName);
+    if (!lastName && !givenNames) return '';
+    if (!givenNames) return lastName;
+    return `${lastName}, ${givenNames}`;
+  };
+
+  const sortedReferrals = [...filteredReferrals].sort((a, b) => {
+    if (referralFilter === 'all' && allViewMode === 'alphabetical') {
+      const aParts = getNameParts(getReferralPatientName(a));
+      const bParts = getNameParts(getReferralPatientName(b));
+      const aLast = aParts.lastName.toLowerCase();
+      const bLast = bParts.lastName.toLowerCase();
+
+      if (aLast === bLast) {
+        const aGiven = aParts.givenNames.toLowerCase();
+        const bGiven = bParts.givenNames.toLowerCase();
+        return aGiven.localeCompare(bGiven);
+      }
+      return aLast.localeCompare(bLast);
+    }
+
+    const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+    if (dateDiff !== 0) return dateDiff;
+    return Number(b.id) - Number(a.id);
+  });
+
   const ServiceItem = ({ label, id, showInput, onInputChange }: { label: string; id: string; showInput?: boolean; onInputChange?: (id: string, value: string) => void }) => {
     const inputValue = typeof selectedServices[id] === 'string' ? selectedServices[id] : '';
     return (
@@ -296,7 +361,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
   };
 
   return (
-    <div className="p-8 min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="p-8 min-h-screen bg-white">
       {/* Type Selection Modal */}
       {showTypeSelection && referralType === null && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -925,7 +990,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
               <button
                 type="button"
                 onClick={handleCreateReferral}
-                className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="px-6 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700"
               >
                 Create X-Ray Referral
               </button>
@@ -934,41 +999,86 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
         </div>
       )}
 
-      {/* Main Content - List and Create Button */}
-      <div className="flex justify-end mb-6">
-        <button
-          type="button"
-          onClick={() => { setShowTypeSelection(true); setReferralType(null); }}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2 font-bold"
-        >
-          <Plus className="w-5 h-5" />
-          New Referral
-        </button>
+      <div className="max-w-5xl mx-auto">
+      {/* Main Content - Filters and Create Button */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              if (referralFilter !== 'all') {
+                setReferralFilter('all');
+                setAllViewMode('alphabetical');
+              } else {
+                setAllViewMode(prev => (prev === 'alphabetical' ? 'recent' : 'alphabetical'));
+              }
+            }}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+              referralFilter === 'all'
+                ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                : 'bg-white text-slate-800 border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            {referralFilter !== 'all'
+              ? 'All Referrals'
+              : allViewMode === 'alphabetical'
+              ? 'View Recent'
+              : 'All Referrals'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setReferralFilter('incoming')}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+              referralFilter === 'incoming'
+                ? 'bg-emerald-100 text-emerald-800 border-emerald-300 shadow-sm'
+                : 'bg-white text-slate-800 border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            Incoming Referrals
+          </button>
+          <button
+            type="button"
+            onClick={() => setReferralFilter('outgoing')}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+              referralFilter === 'outgoing'
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-300 shadow-sm'
+                : 'bg-white text-slate-800 border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            Outgoing Referrals
+          </button>
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => { setShowTypeSelection(true); setReferralType(null); }}
+            className="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 flex items-center gap-2 font-bold shadow-sm"
+          >
+            <Plus className="w-5 h-5" />
+            New Referral
+          </button>
+        </div>
       </div>
 
       {/* Referrals List */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {(referrals && referrals.length > 0) ? (
-          [...referrals]
-            .sort((a, b) => {
-              const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
-              if (dateDiff !== 0) return dateDiff;
-              return Number(b.id) - Number(a.id);
-            })
+        {(sortedReferrals && sortedReferrals.length > 0) ? (
+          sortedReferrals
             .map((referral) => (
               <div key={referral.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h3 className="text-lg font-bold mb-1">{referral.patientName}</h3>
+                <h3 className="text-lg font-bold mb-1">{formatPatientName(getReferralPatientName(referral))}</h3>
                 <p className="text-sm text-gray-600">{new Date(referral.date).toLocaleDateString()}</p>
               </div>
               <div>
                 {referral.specialty === 'X-Ray Imaging' || referral.referredTo === 'X-Ray Facility' ? (
-                  <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700 border border-blue-200">
+                  <span className="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 whitespace-nowrap">
                     X-Ray Referral
                   </span>
                 ) : (
-                  <span className="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700 border border-yellow-200">
+                  <span className="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 whitespace-nowrap">
                     Doctor Referral
                   </span>
                 )}
@@ -976,10 +1086,6 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
             </div>
 
             <div className="space-y-2 mb-4">
-              <div>
-                <p className="text-sm text-gray-600">Specialty</p>
-                <p className="font-semibold">{referral.specialty}</p>
-              </div>
               <div>
                 <p className="text-sm text-gray-600">Referred To</p>
                 <p className="font-semibold">{referral.referredTo}</p>
@@ -1005,7 +1111,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
               <button
                 type="button"
                 onClick={() => handleDownloadReferralPDF(referral)}
-                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-blue-300 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-emerald-300 bg-emerald-50 text-emerald-800 rounded-lg hover:bg-emerald-100 transition-colors text-sm font-medium"
               >
                 <Download size={16} />
                 PDF
@@ -1021,18 +1127,24 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
             </div>
           </div>
             ))
+          ) : referrals && referrals.length > 0 ? (
+          <div className="col-span-2 bg-white p-12 rounded-lg shadow-sm border border-gray-200 text-center">
+            <p className="text-gray-600 mb-2">No referrals found for this view.</p>
+            <p className="text-sm text-gray-500">Try switching to a different filter above.</p>
+          </div>
         ) : (
           <div className="col-span-2 bg-white p-12 rounded-lg shadow-sm border border-gray-200 text-center">
             <p className="text-gray-600 mb-4">No referrals created yet</p>
             <button
               type="button"
               onClick={() => { setShowTypeSelection(true); setReferralType(null); }}
-              className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="px-6 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 shadow-sm"
             >
               Create Your First Referral
             </button>
           </div>
         )}
+      </div>
       </div>
 
       {/* Referral Detail Modal */}

@@ -8,7 +8,7 @@ import { InventoryManagement } from './InventoryManagementEnhanced';
 import { DentalCharting } from './DentalCharting';
 import { BracesCharting } from './BracesCharting';
 import { ReferralGeneration } from './ReferralGeneration';
-import { ReferralManagement } from './ReferralManagement';
+// import { ReferralManagement } from './ReferralManagement';
 import { ServicesForms } from './ServicesForms';
 import { FinancialReport } from './FinancialReport';
 import { AnnouncementsManagement } from './AnnouncementsManagement';
@@ -948,19 +948,10 @@ export function DoctorDashboard({
                 <div className="p-6 space-y-6 max-h-full overflow-y-scroll scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent">
                   {/* Referral Management Tab Component - View Incoming/Outgoing */}
                   <div className="bg-white rounded-xl shadow-md p-6 space-y-4">
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-2xl font-bold text-slate-900">All Referrals</h3>
-                      <ReferralGeneration
-                        referrals={referrals}
-                        setReferrals={setReferrals}
-                        patients={patients}
-                      />
-                    </div>
-                    <ReferralManagement
+                    <ReferralGeneration
                       referrals={referrals}
                       setReferrals={setReferrals}
                       patients={patients}
-                      currentUserName={currentUser.fullName}
                     />
                   </div>
                 </div>

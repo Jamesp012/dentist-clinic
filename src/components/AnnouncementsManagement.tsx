@@ -84,8 +84,11 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
     }
   ];
 
-  // Initialize with default services if empty
-  const displayServices = services && services.length > 0 ? services : defaultServices;
+  const serviceOverrides = services || [];
+  const displayServices = [
+    ...defaultServices.map(defaultService => serviceOverrides.find(s => s.id === defaultService.id) || defaultService),
+    ...serviceOverrides.filter(service => !defaultServices.some(defaultService => defaultService.id === service.id))
+  ];
 
   // For editing operations, allow both real and default services to be edited
   const editableServices = displayServices;

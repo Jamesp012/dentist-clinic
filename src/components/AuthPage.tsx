@@ -31,6 +31,8 @@ type AuthPageProps = {
 };
 
 export type SignupData = {
+  firstName?: string;
+  lastName?: string;
   fullName: string;
   email: string;
   phone: string;
@@ -63,6 +65,8 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
   const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
 
   const [signupData, setSignupData] = useState<SignupData>({
+    firstName: '',
+    lastName: '',
     fullName: '',
     email: '',
     phone: '',
@@ -192,7 +196,7 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
     setError('');
 
     // Validation
-    if (!signupData.fullName || !signupData.email || !signupData.username || !signupData.password) {
+    if (!signupData.firstName || !signupData.lastName || !signupData.dateOfBirth || !signupData.address || !signupData.email || !signupData.username || !signupData.password) {
       setError('Please fill in all required fields');
       return;
     }
@@ -251,6 +255,8 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
           setIsLoginMode(true);
           // Clear signup form
           setSignupData({
+            firstName: '',
+            lastName: '',
             fullName: '',
             email: '',
             phone: '',
@@ -277,6 +283,15 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
 
   const updateSignupField = (field: keyof SignupData, value: any) => {
     setSignupData({ ...signupData, [field]: value });
+  };
+
+  const updateNameFields = (field: 'firstName' | 'lastName', value: string) => {
+    const updated = { ...signupData, [field]: value };
+    const first = (updated.firstName || '').trim();
+    const last = (updated.lastName || '').trim();
+    // Preserve multi-part first/last names using newline delimiters: first\nmiddle\nlast
+    updated.fullName = `${first}\n\n${last}`.trim();
+    setSignupData(updated);
   };
 
   // Show claiming flow for patient signup or login
@@ -571,18 +586,35 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
           ) : (
             // Signup Form
             <form onSubmit={handleSignup} className="space-y-4 overflow-y-auto flex-1 pr-2">
-              <div>
-                <label className="block text-sm font-medium mb-2 text-slate-700">Full Name *</label>
-                <div className="relative">
-                  <User className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="text"
-                    value={signupData.fullName}
-                    onChange={(e) => updateSignupField('fullName', e.target.value)}
-                    required
-                    placeholder="Enter your full name"
-                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-                  />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-slate-700">First Name *</label>
+                  <div className="relative">
+                    <User className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      value={signupData.firstName}
+                      onChange={(e) => updateNameFields('firstName', e.target.value)}
+                      required
+                      placeholder="Enter your first name"
+                      className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-slate-700">Last Name *</label>
+                  <div className="relative">
+                    <User className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      value={signupData.lastName}
+                      onChange={(e) => updateNameFields('lastName', e.target.value)}
+                      required
+                      placeholder="Enter your last name"
+                      className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -623,7 +655,7 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-slate-700">Date of Birth</label>
+                  <label className="block text-sm font-medium mb-2 text-slate-700">Date of Birth *</label>
                   <div className="relative">
                     <Calendar className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
                     <input
@@ -631,6 +663,7 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
                       value={signupData.dateOfBirth}
                       onChange={(e) => updateSignupField('dateOfBirth', formatDateInput(e.target.value))}
                       placeholder="DD/MM/YYYY"
+                      required
                       className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
                     />
                     <button
@@ -653,6 +686,7 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
                       type="date"
                       className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 opacity-0 cursor-pointer"
                       onChange={(e) => updateSignupField('dateOfBirth', convertToDisplayDate(e.target.value))}
+                      required
                     />
                   </div>
                 </div>
@@ -671,13 +705,14 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2 text-slate-700">Address</label>
+                <label className="block text-sm font-medium mb-2 text-slate-700">Address *</label>
                 <div className="relative">
                   <MapPin className="w-5 h-5 absolute left-3.5 top-3.5 text-slate-400" />
                   <textarea
                     value={signupData.address}
                     onChange={(e) => updateSignupField('address', e.target.value)}
                     placeholder="Enter your address"
+                    required
                     rows={2}
                     className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all resize-none"
                   />
