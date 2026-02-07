@@ -188,30 +188,7 @@ export function BracesCharting({ patients }: BracesChartingProps) {
     // reflect that changes are saved
     setBracketColors([...previewColors]);
     setHasUnsavedChanges(false);
-    // Also create a downloadable JSON file with current positions (percent values)
-    try {
-      const filePayload = {
-        patientId: selectedPatient.id,
-        savedAt: new Date().toISOString(),
-        upperPositions: upperPositions,
-        lowerPositions: lowerPositions,
-        bracketColors: previewColors,
-        bracketVisibility: bracketVisibility
-      };
-      const json = JSON.stringify(filePayload, null, 2);
-      const blob = new Blob([json], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const filename = `braces_positions_${selectedPatient.id}_${Date.now()}.json`;
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      console.error('Failed to generate download for braces positions:', e);
-    }
+    // Removed auto-download of JSON file on save
   };
 
   // Load data from localStorage on mount and apply fixed positions
