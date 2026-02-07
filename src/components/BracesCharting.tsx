@@ -148,12 +148,7 @@ export function BracesCharting({ patients }: BracesChartingProps) {
         const parsedData = JSON.parse(savedData);
         setBracesData(parsedData);
       }
-      const savedPositions = localStorage.getItem('ortho_bracket_positions');
-      if (savedPositions) {
-        const { upper, lower } = JSON.parse(savedPositions);
-        setUpperPositions(normalizePositions(upper, INITIAL_UPPER_POSITIONS));
-        setLowerPositions(normalizePositions(lower, INITIAL_LOWER_POSITIONS));
-      }
+      // bracket positions are fixed to the image defaults; do not load saved positions
     } catch (error) {
       console.error('Error loading saved braces data:', error);
     }
@@ -280,6 +275,9 @@ export function BracesCharting({ patients }: BracesChartingProps) {
       setPreviewColors(newPreview);
     }
   };
+
+
+  // Position updates removed — brackets remain at the fixed image-aligned coordinates.
 
 
 
