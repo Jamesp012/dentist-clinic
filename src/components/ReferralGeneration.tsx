@@ -361,37 +361,50 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
   };
 
   return (
-    <div className="p-8 min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 flex flex-col flex-1">
+      {/* Subtle background decoration */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-20 right-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"></div>
+      </div>
+
+      {/* Content with padding and relative positioning */}
+      <div className="relative z-10 p-10 space-y-10 flex flex-col flex-1 max-w-6xl mx-auto w-full">
       {/* Type Selection Modal */}
       {showTypeSelection && referralType === null && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-8 max-w-2xl w-full">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Select Referral Type</h2>
-              <button type="button" onClick={() => setShowTypeSelection(false)} className="text-gray-500 hover:text-gray-700">
-                <X className="w-6 h-6" />
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-10 max-w-2xl w-full shadow-2xl border border-slate-200/60">
+            <div className="flex justify-between items-start mb-8">
+              <div>
+                <h2 className="text-3xl font-bold text-slate-900">Select Referral Type</h2>
+                <p className="text-slate-600 text-lg mt-2">Choose the type of referral you want to create</p>
+              </div>
+              <button type="button" onClick={() => setShowTypeSelection(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors duration-200">
+                <X className="w-6 h-6 text-slate-400 hover:text-slate-600" />
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-6">
               <button
                 type="button"
                 onClick={() => setReferralType('doctor')}
-                className="p-6 border-2 border-yellow-400 rounded-lg hover:bg-yellow-50 transition-colors text-center"
+                className="group relative p-10 border-2 border-slate-200 rounded-2xl hover:border-cyan-400 hover:bg-cyan-50/40 transition-all duration-300 text-center shadow-md hover:shadow-xl hover:scale-105"
               >
-                <div className="text-3xl mb-2">👨‍⚕️</div>
-                <h3 className="font-bold text-lg mb-2">Doctor Referral</h3>
-                <p className="text-sm text-gray-600">Refer patient to a specialist dentist</p>
+                <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-teal-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="text-6xl mb-4 group-hover:scale-125 transition-transform duration-300 relative z-10">👨‍⚕️</div>
+                <h3 className="font-bold text-lg text-slate-900 mb-3 relative z-10">Doctor Referral</h3>
+                <p className="text-sm text-slate-600 relative z-10">Refer patient to a specialist dentist for consultation and treatment</p>
               </button>
 
               <button
                 type="button"
                 onClick={() => setReferralType('xray')}
-                className="p-6 border-2 border-blue-600 rounded-lg hover:bg-blue-50 transition-colors text-center"
+                className="group relative p-10 border-2 border-slate-200 rounded-2xl hover:border-violet-400 hover:bg-violet-50/40 transition-all duration-300 text-center shadow-md hover:shadow-xl hover:scale-105"
               >
-                <div className="text-3xl mb-2">🖼️</div>
-                <h3 className="font-bold text-lg mb-2">X-Ray Referral</h3>
-                <p className="text-sm text-gray-600">Request X-ray imaging services</p>
+                <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-purple-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="text-6xl mb-4 group-hover:scale-125 transition-transform duration-300 relative z-10">🖼️</div>
+                <h3 className="font-bold text-lg text-slate-900 mb-3 relative z-10">X-Ray Referral</h3>
+                <p className="text-sm text-slate-600 relative z-10">Request advanced X-ray imaging services from a diagnostic center</p>
               </button>
             </div>
           </div>
@@ -999,10 +1012,27 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
         </div>
       )}
 
-      <div className="max-w-5xl mx-auto">
-      {/* Main Content - Filters and Create Button */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
-        <div className="flex flex-wrap gap-2">
+      <div className="max-w-6xl mx-auto">
+        {/* Premium Header Section */}
+        <div className="relative flex items-center justify-between mb-10">
+          <div>
+            <h1 className="text-4xl font-bold text-slate-900 mb-2">Referrals Management</h1>
+            <p className="text-slate-600 text-lg">Create, manage, and track patient referrals with ease</p>
+          </div>
+          
+          <button
+            type="button"
+            onClick={() => { setShowTypeSelection(true); setReferralType(null); }}
+            className="group relative px-8 py-4 bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white rounded-2xl hover:shadow-2xl hover:shadow-cyan-500/30 hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-3 font-bold overflow-hidden whitespace-nowrap"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <Plus className="w-6 h-6 relative z-10" />
+            <span className="relative z-10">New Referral</span>
+          </button>
+        </div>
+
+        {/* Filter Pills with Premium Style */}
+        <div className="mb-10 flex flex-wrap gap-3">
           <button
             type="button"
             onClick={() => {
@@ -1013,163 +1043,220 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                 setAllViewMode(prev => (prev === 'alphabetical' ? 'recent' : 'alphabetical'));
               }
             }}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+            className={`px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 border-2 ${
               referralFilter === 'all'
-                ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                : 'bg-white text-slate-800 border-slate-200 hover:bg-slate-50'
+                ? 'bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white border-teal-500 shadow-lg'
+                : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:shadow-md'
             }`}
           >
             {referralFilter !== 'all'
               ? 'All Referrals'
               : allViewMode === 'alphabetical'
-              ? 'View Recent'
-              : 'All Referrals'}
+              ? 'Alphabetical Order'
+              : 'Recent First'}
           </button>
           <button
             type="button"
             onClick={() => setReferralFilter('incoming')}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+            className={`px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 border-2 ${
               referralFilter === 'incoming'
-                ? 'bg-emerald-100 text-emerald-800 border-emerald-300 shadow-sm'
-                : 'bg-white text-slate-800 border-slate-200 hover:bg-slate-50'
+                ? 'bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white border-emerald-500 shadow-lg'
+                : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:shadow-md'
             }`}
           >
-            Incoming Referrals
+            ↳ Incoming
           </button>
           <button
             type="button"
             onClick={() => setReferralFilter('outgoing')}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+            className={`px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 border-2 ${
               referralFilter === 'outgoing'
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-300 shadow-sm'
-                : 'bg-white text-slate-800 border-slate-200 hover:bg-slate-50'
+                ? 'bg-gradient-to-br from-violet-500 via-purple-500 to-blue-500 text-white border-violet-500 shadow-lg'
+                : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:shadow-md'
             }`}
           >
-            Outgoing Referrals
+            ↗ Outgoing
           </button>
         </div>
 
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={() => { setShowTypeSelection(true); setReferralType(null); }}
-            className="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 flex items-center gap-2 font-bold shadow-sm"
-          >
-            <Plus className="w-5 h-5" />
-            New Referral
-          </button>
+        {/* Referrals List - Premium Card Design */}
+        <div className="relative group">
+          <div className="absolute -inset-1 bg-gradient-to-r from-teal-500 via-cyan-500 to-blue-500 rounded-3xl opacity-20 group-hover:opacity-30 blur transition-all duration-500"></div>
+          <div className="relative bg-white/90 backdrop-blur-xl p-10 rounded-3xl shadow-xl border border-slate-200/60 hover:shadow-2xl transition-all duration-500">
+            <div className="flex items-center justify-between mb-10">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <Eye className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-3xl font-bold text-slate-900">All Referrals</h2>
+                  <p className="text-slate-500 mt-1">{sortedReferrals?.length || 0} total</p>
+                </div>
+              </div>
+              <span className="px-4 py-2 bg-teal-50 text-teal-700 rounded-xl text-sm font-bold">
+                {sortedReferrals?.length || 0} Records
+              </span>
+            </div>
+
+            {/* Referrals Grid */}
+            <div className="space-y-4 max-h-[600px] overflow-y-auto scrollbar-thin pr-3">
+              {(sortedReferrals && sortedReferrals.length > 0) ? (
+                sortedReferrals.map((referral) => (
+                  <div
+                    key={referral.id}
+                    className="group/item relative p-6 border-2 border-slate-100 rounded-2xl hover:border-cyan-300/60 transition-all duration-300 bg-gradient-to-br from-white via-slate-50/30 to-cyan-50/20 hover:shadow-xl hover:scale-[1.01]"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-teal-500/5 rounded-2xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-300"></div>
+
+                    <div className="relative flex justify-between items-start gap-6">
+                      <div className="flex-1 space-y-3">
+                        {/* Patient Info */}
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-xl flex items-center justify-center font-bold text-cyan-700 text-sm shadow-sm">
+                            {getReferralPatientName(referral)?.charAt(0)?.toUpperCase() || 'P'}
+                          </div>
+                          <div>
+                            <p className="text-lg font-bold text-slate-900">{formatPatientName(getReferralPatientName(referral))}</p>
+                            <p className="text-sm text-slate-500 mt-0.5">
+                              {new Date(referral.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </p>
+                          </div>
+                          <div className="ml-auto">
+                            {referral.specialty === 'X-Ray Imaging' || referral.referredTo === 'X-Ray Facility' ? (
+                              <span className="inline-flex items-center px-4 py-1.5 text-xs font-bold rounded-xl bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700 shadow-sm">
+                                🖼️ X-RAY
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-4 py-1.5 text-xs font-bold rounded-xl bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-700 shadow-sm">
+                                👨‍⚕️ DOCTOR
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Referral Details */}
+                        <div className="space-y-2 pl-1">
+                          <div className="flex items-start gap-3">
+                            <span className="w-1.5 h-1.5 bg-cyan-500 rounded-full mt-2 flex-shrink-0"></span>
+                            <div>
+                              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Referred To</p>
+                              <p className="text-base text-slate-900 font-bold">{referral.referredTo}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <span className="w-1.5 h-1.5 bg-teal-500 rounded-full mt-2 flex-shrink-0"></span>
+                            <div>
+                              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Reason</p>
+                              <p className="text-sm text-slate-700 line-clamp-2">{referral.reason || 'No reason provided'}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-2 flex-shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedReferral(referral);
+                            setShowDetailModal(true);
+                          }}
+                          className="group/btn px-5 py-3 bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white rounded-xl hover:shadow-xl hover:shadow-cyan-500/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 font-bold duration-300"
+                          title="View referral details"
+                        >
+                          <Eye className="w-4 h-4" />
+                          <span className="hidden sm:inline text-sm">View</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadReferralPDF(referral)}
+                          className="group/btn px-5 py-3 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white rounded-xl hover:shadow-xl hover:shadow-emerald-500/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 font-bold duration-300"
+                          title="Download referral as PDF"
+                        >
+                          <Download className="w-4 h-4" />
+                          <span className="hidden sm:inline text-sm">PDF</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteReferral(referral.id)}
+                          className="group/btn px-5 py-3 border-2 border-red-300/60 bg-red-50/60 text-red-700 rounded-xl hover:border-red-400 hover:bg-red-100/60 hover:shadow-xl hover:shadow-red-500/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 font-bold duration-300"
+                          title="Delete referral"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span className="hidden sm:inline text-sm">Delete</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : referrals && referrals.length > 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+                    <Eye className="w-8 h-8 text-slate-400" />
+                  </div>
+                  <p className="text-slate-700 font-semibold mb-2">No referrals found for this filter</p>
+                  <p className="text-slate-600 text-sm mb-6">Try switching to a different filter above to view other referrals.</p>
+                  <button
+                    type="button"
+                    onClick={() => setReferralFilter('all')}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-teal-500 to-cyan-500 text-white rounded-lg hover:shadow-lg transition-all text-sm font-bold"
+                  >
+                    View All Referrals
+                  </button>
+                </div>
+              ) : (
+                <div className="text-center py-16">
+                  <div className="w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-md">
+                    <Plus className="w-10 h-10 text-slate-400" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-900 mb-2">No Referrals Yet</h3>
+                  <p className="text-slate-600 mb-8 max-w-md mx-auto">Start creating referrals to manage your patient care coordination efficiently.</p>
+                  <button
+                    type="button"
+                    onClick={() => { setShowTypeSelection(true); setReferralType(null); }}
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white rounded-xl hover:shadow-xl hover:shadow-cyan-500/30 hover:scale-105 active:scale-95 transition-all duration-300 font-bold"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Create First Referral
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
-
-      {/* Referrals List */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {(sortedReferrals && sortedReferrals.length > 0) ? (
-          sortedReferrals
-            .map((referral) => (
-              <div key={referral.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h3 className="text-lg font-bold mb-1">{formatPatientName(getReferralPatientName(referral))}</h3>
-                <p className="text-sm text-gray-600">{new Date(referral.date).toLocaleDateString()}</p>
-              </div>
-              <div>
-                {referral.specialty === 'X-Ray Imaging' || referral.referredTo === 'X-Ray Facility' ? (
-                  <span className="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 whitespace-nowrap">
-                    X-Ray Referral
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 whitespace-nowrap">
-                    Doctor Referral
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2 mb-4">
-              <div>
-                <p className="text-sm text-gray-600">Referred To</p>
-                <p className="font-semibold">{referral.referredTo}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Reason</p>
-                <p className="text-sm">{referral.reason ? referral.reason.substring(0, 60) : 'N/A'}...</p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedReferral(referral);
-                  setShowDetailModal(true);
-                }}
-                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-gray-300 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
-              >
-                <Eye size={16} />
-                View
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDownloadReferralPDF(referral)}
-                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-emerald-300 bg-emerald-50 text-emerald-800 rounded-lg hover:bg-emerald-100 transition-colors text-sm font-medium"
-              >
-                <Download size={16} />
-                PDF
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDeleteReferral(referral.id)}
-                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-red-300 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium"
-              >
-                <Trash2 size={16} />
-                Delete
-              </button>
-            </div>
-          </div>
-            ))
-          ) : referrals && referrals.length > 0 ? (
-          <div className="col-span-2 bg-white p-12 rounded-lg shadow-sm border border-gray-200 text-center">
-            <p className="text-gray-600 mb-2">No referrals found for this view.</p>
-            <p className="text-sm text-gray-500">Try switching to a different filter above.</p>
-          </div>
-        ) : (
-          <div className="col-span-2 bg-white p-12 rounded-lg shadow-sm border border-gray-200 text-center">
-            <p className="text-gray-600 mb-4">No referrals created yet</p>
-            <button
-              type="button"
-              onClick={() => { setShowTypeSelection(true); setReferralType(null); }}
-              className="px-6 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 shadow-sm"
-            >
-              Create Your First Referral
-            </button>
-          </div>
-        )}
-      </div>
       </div>
 
       {/* Referral Detail Modal */}
       {showDetailModal && selectedReferral && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-white w-full max-w-4xl rounded-lg shadow-2xl my-8">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white/90 backdrop-blur-xl w-full max-w-4xl rounded-3xl shadow-2xl my-8 border border-slate-200/60">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-gradient-to-r from-yellow-50 to-slate-50">
-              <h1 className="text-2xl font-bold text-slate-900">
-                {isSelectedXrayReferral ? 'X-Ray Referral Form' : 'Doctor Referral Form'}
-              </h1>
+            <div className="flex items-center justify-between p-8 border-b border-slate-200/60 bg-gradient-to-r from-teal-50/80 via-white to-cyan-50/80">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <Eye className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold text-slate-900">
+                    {isSelectedXrayReferral ? '🖼️ X-Ray Referral' : '👨‍⚕️ Doctor Referral'}
+                  </h1>
+                  <p className="text-slate-600 text-sm mt-1">Complete referral details and patient information</p>
+                </div>
+              </div>
               <button
                 type="button"
                 onClick={() => {
                   setShowDetailModal(false);
                   setSelectedReferral(null);
                 }}
-                className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+                className="p-2 hover:bg-slate-200 rounded-full transition-colors duration-200"
               >
-                <X size={24} />
+                <X className="w-6 h-6 text-slate-400 hover:text-slate-600" />
               </button>
             </div>
 
             {/* Form Content */}
-            <div className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent">
+            <div className="p-8 max-h-[calc(100vh-280px)] overflow-y-auto scrollbar-thin scrollbar-thumb-cyan-300 scrollbar-track-transparent">
               {!isSelectedXrayReferral ? (
                 <div className="space-y-6">
                   <div className="space-y-4 mb-6">
@@ -1582,13 +1669,13 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
             </div>
 
             {/* Footer */}
-            <div className="flex gap-3 p-6 border-t border-slate-200 bg-slate-50">
+            <div className="flex gap-3 p-8 border-t border-slate-200/60 bg-gradient-to-r from-slate-50 to-slate-50 rounded-b-3xl">
               <button
                 onClick={() => {
                   setShowDetailModal(false);
                   setSelectedReferral(null);
                 }}
-                className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-100 transition-colors font-semibold"
+                className="flex-1 px-4 py-3 border-2 border-slate-200 text-slate-700 rounded-xl hover:border-slate-300 hover:bg-white transition-all duration-200 font-semibold"
               >
                 Close
               </button>
@@ -1598,7 +1685,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                     handleDownloadReferralPDF(selectedReferral);
                   }
                 }}
-                className="flex-1 px-4 py-2 flex items-center justify-center gap-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                className="flex-1 px-4 py-3 flex items-center justify-center gap-2 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white rounded-xl hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-105 active:scale-95 transition-all duration-300 font-semibold"
               >
                 <Download size={18} />
                 Download PDF
@@ -1611,7 +1698,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                     handleDeleteReferral(selectedReferral.id);
                   }
                 }}
-                className="flex-1 px-4 py-2 flex items-center justify-center gap-2 border border-red-300 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors font-semibold"
+                className="flex-1 px-4 py-3 flex items-center justify-center gap-2 border-2 border-red-300/60 bg-red-50/60 text-red-700 rounded-xl hover:border-red-400 hover:bg-red-100/60 hover:shadow-xl hover:shadow-red-500/20 hover:scale-105 active:scale-95 transition-all duration-300 font-semibold"
               >
                 <Trash2 size={18} />
                 Delete
@@ -1628,40 +1715,40 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
             onClick={cancelDelete}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6"
+              className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl max-w-md w-full p-8 border border-slate-200/60"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                  <Trash2 className="text-red-600" size={24} />
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-red-100 to-orange-100 flex items-center justify-center shadow-lg">
+                  <Trash2 className="text-red-600" size={28} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900">Delete Referral</h3>
-                  <p className="text-sm text-slate-500">This action cannot be undone</p>
+                  <h3 className="text-xl font-bold text-slate-900">Delete Referral?</h3>
+                  <p className="text-sm text-slate-500 mt-1">This cannot be undone</p>
                 </div>
               </div>
               
-              <p className="text-slate-700 mb-6">
-                Are you sure you want to delete this referral? All information will be permanently removed.
+              <p className="text-slate-700 mb-8 leading-relaxed">
+                You're about to permanently delete this referral and all its associated information. This action cannot be reversed.
               </p>
 
               <div className="flex gap-3">
                 <button
                   onClick={cancelDelete}
-                  className="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium"
+                  className="flex-1 px-4 py-3 border-2 border-slate-200 text-slate-700 rounded-xl hover:border-slate-300 hover:bg-white transition-all duration-200 font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmDelete}
-                  className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                  className="flex-1 px-4 py-3 bg-gradient-to-br from-red-500 to-red-600 text-white rounded-xl hover:shadow-xl hover:shadow-red-500/30 hover:scale-105 active:scale-95 transition-all duration-300 font-semibold"
                 >
                   Delete
                 </button>
@@ -1670,6 +1757,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </div>
   );
 }
