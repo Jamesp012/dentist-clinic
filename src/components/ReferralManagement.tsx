@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowRight, ArrowLeft, FileText, User, Calendar, AlertCircle, CheckCircle, Clock, Shield, Download } from 'lucide-react';
+import { ArrowRight, ArrowLeft, FileText, User, Calendar, AlertCircle, CheckCircle, Clock, Shield, Download, X } from 'lucide-react';
 import { Referral, Patient } from '../App';
 import { motion, AnimatePresence } from 'motion/react';
 import { generateReferralPDF } from '../utils/referralPdfGenerator';
@@ -14,6 +14,26 @@ type ReferralFilter = 'all' | 'incoming' | 'outgoing';
 
 export function ReferralManagement({ referrals, patients, currentUserName = 'Doc Maaño' }: ReferralManagementProps) {
   const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [previewExpanded, setPreviewExpanded] = useState(false);
+
+  const handleFileClick = (file: any) => {
+    if (file.fileType === 'image') {
+      setPreviewImage(file.url);
+      setPreviewExpanded(false);
+    } else if (file.fileType === 'pdf') {
+      // Trigger download
+      const a = document.createElement('a');
+      a.href = file.url;
+      a.download = file.fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } else {
+      // For other files, attempt to open in new tab
+      window.open(file.url, '_blank');
+    }
+  }
 
   // Categorize referrals
   const incomingReferrals = referrals.filter(
@@ -153,8 +173,25 @@ export function ReferralManagement({ referrals, patients, currentUserName = 'Doc
                           <div className="flex flex-wrap gap-2">
                             {referral.uploadedFiles.map(file => (
                               <div key={file.id} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-50 rounded-full text-xs border border-gray-200">
-                                <FileText className="w-3.5 h-3.5 text-gray-500" />
-                                <span className="font-medium text-gray-700">{file.fileName}</span>
+                                {file.fileType === 'image' ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleFileClick(file)}
+                                    className="flex items-center gap-2"
+                                  >
+                                    <img src={file.url} alt={file.fileName} className="w-6 h-6 object-cover rounded" />
+                                    <span className="font-medium text-gray-700">{file.fileName}</span>
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleFileClick(file)}
+                                    className="flex items-center gap-2"
+                                  >
+                                    <FileText className="w-3.5 h-3.5 text-gray-500" />
+                                    <span className="font-medium text-gray-700">{file.fileName}</span>
+                                  </button>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -178,6 +215,29 @@ export function ReferralManagement({ referrals, patients, currentUserName = 'Doc
           )}
         </AnimatePresence>
       </div>
+
+      {/* Image preview modal */}
+      {previewImage && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="relative max-w-[90vw] max-h-[90vh]">
+            <button
+              onClick={() => { setPreviewImage(null); setPreviewExpanded(false); }}
+              className="absolute top-2 right-2 z-50 p-2 bg-white rounded-full"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <img
+              src={previewImage}
+              alt="Preview"
+              className="block max-w-full max-h-[90vh] object-contain"
+              onClick={() => setPreviewExpanded(prev => !prev)}
+              style={previewExpanded ? { width: '95vw', height: '95vh', cursor: 'zoom-out' } : { cursor: 'zoom-in' }}
+            />
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

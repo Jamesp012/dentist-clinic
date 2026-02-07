@@ -118,7 +118,7 @@ export const PrescriptionFormMaano: React.FC = () => {
         </div>
 
         <div className="space-y-6 pl-6">
-          <MedRow id="mef" name="MEFENAMIC Acid" doses={["500mg.", "250mg."]} sig="Take 1 cap 3x a day" />
+          <MedRow id="mef" name="Mefenamic Acid" doses={["500mg.", "250mg."]} sig="Take 1 cap 3x a day" />
           <MedRow id="amox" name="AMOXICILLIN" doses={["500mg.", "250mg."]} sig="Take 1 cap 3x a day" />
           <MedRow id="tran" name="TRANEXAMIC Acid" doses={["500mg.", "250mg."]} sig="Take 1 cap 3x a day" />
         </div>

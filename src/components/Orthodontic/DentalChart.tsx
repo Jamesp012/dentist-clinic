@@ -1,7 +1,5 @@
-import React, { useRef } from "react";
-import { useDrag, useDrop } from "react-dnd";
+import React, { useRef, useState } from "react";
 import { motion } from "motion/react";
-import { BracesChart } from "./BracesChart";
 
 interface Position {
   x: number;
@@ -18,40 +16,49 @@ interface DentalChartProps {
   onPositionChange: (index: number, x: number, y: number) => void;
 }
 
-const ITEM_TYPE = "BRACKET";
-
 interface DraggableBracketProps {
   pos: Position & { index: number };
   color: string;
   isSelected: boolean;
   onToothClick: (index: number) => void;
+  onStartDrag: (index: number) => void;
+  scale?: number;
 }
 
-const DraggableBracket: React.FC<DraggableBracketProps> = ({ pos, color, isSelected, onToothClick }) => {
-  const [{ isDragging }, drag] = useDrag(() => ({
-    type: ITEM_TYPE,
-    item: { index: pos.index },
-    collect: (monitor) => ({
-      isDragging: !!monitor.isDragging(),
-    }),
-  }), [pos.index]);
+const DraggableBracket: React.FC<DraggableBracketProps> = ({
+  pos,
+  color,
+  isSelected,
+  onToothClick,
+  onStartDrag,
+  scale = 1,
+}) => {
+  const mainSize = 24 * scale;
+  const mainOffset = mainSize / 2;
+  const ringSize = 20 * scale;
+  const ringOffset = ringSize / 2;
+  const circleRadius = 35 * scale;
 
   return (
-    <g 
-      ref={(node) => { drag(node); }}
-      className={`cursor-grab active:cursor-grabbing transition-opacity ${isDragging ? "opacity-20" : "opacity-100"}`}
+    <g
+      className="cursor-grab active:cursor-grabbing transition-opacity"
       onClick={(e) => {
         e.stopPropagation();
         onToothClick(pos.index);
       }}
+      onMouseDown={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onStartDrag(pos.index);
+      }}
     >
-      <circle cx={pos.x} cy={pos.y} r={35} fill="transparent" />
-      
+      <circle cx={pos.x} cy={pos.y} r={circleRadius} fill="transparent" />
+
       <rect
-        x={pos.x - 12}
-        y={pos.y - 12}
-        width={24}
-        height={24}
+        x={pos.x - mainOffset}
+        y={pos.y - mainOffset}
+        width={mainSize}
+        height={mainSize}
         rx={3}
         fill="#94A3B8"
         stroke="#475569"
@@ -59,17 +66,45 @@ const DraggableBracket: React.FC<DraggableBracketProps> = ({ pos, color, isSelec
       />
 
       <g stroke="#64748B" strokeWidth={0.5}>
-        <rect x={pos.x - 11} y={pos.y - 11} width={7} height={7} rx={1.5} fill="#CBD5E1" />
-        <rect x={pos.x + 4} y={pos.y - 11} width={7} height={7} rx={1.5} fill="#CBD5E1" />
-        <rect x={pos.x - 11} y={pos.y + 4} width={7} height={7} rx={1.5} fill="#CBD5E1" />
-        <rect x={pos.x + 4} y={pos.y + 4} width={7} height={7} rx={1.5} fill="#CBD5E1" />
+        <rect
+          x={pos.x - 11 * scale}
+          y={pos.y - 11 * scale}
+          width={7 * scale}
+          height={7 * scale}
+          rx={1.5}
+          fill="#CBD5E1"
+        />
+        <rect
+          x={pos.x + 4 * scale}
+          y={pos.y - 11 * scale}
+          width={7 * scale}
+          height={7 * scale}
+          rx={1.5}
+          fill="#CBD5E1"
+        />
+        <rect
+          x={pos.x - 11 * scale}
+          y={pos.y + 4 * scale}
+          width={7 * scale}
+          height={7 * scale}
+          rx={1.5}
+          fill="#CBD5E1"
+        />
+        <rect
+          x={pos.x + 4 * scale}
+          y={pos.y + 4 * scale}
+          width={7 * scale}
+          height={7 * scale}
+          rx={1.5}
+          fill="#CBD5E1"
+        />
       </g>
 
       <motion.rect
-        x={pos.x - 10}
-        y={pos.y - 10}
-        width={20}
-        height={20}
+        x={pos.x - ringOffset}
+        y={pos.y - ringOffset}
+        width={ringSize}
+        height={ringSize}
         rx={6}
         fill="transparent"
         stroke={color}
@@ -83,19 +118,19 @@ const DraggableBracket: React.FC<DraggableBracketProps> = ({ pos, color, isSelec
       />
 
       <rect
-        x={pos.x - 12}
-        y={pos.y - 1.5}
-        width={24}
-        height={3}
+        x={pos.x - 12 * scale}
+        y={pos.y - 1.5 * scale}
+        width={24 * scale}
+        height={3 * scale}
         fill="#1E293B"
         fillOpacity={0.6}
       />
 
       <rect
-        x={pos.x - 1}
-        y={pos.y - 12}
-        width={2}
-        height={24}
+        x={pos.x - 1 * scale}
+        y={pos.y - 12 * scale}
+        width={2 * scale}
+        height={24 * scale}
         fill="#1E293B"
         fillOpacity={0.15}
       />
@@ -125,28 +160,30 @@ export const DentalChart: React.FC<DentalChartProps> = ({
   onPositionChange
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const width = 1000;
   const height = 650;
 
-  const [{ isOver }, drop] = useDrop(() => ({
-    accept: ITEM_TYPE,
-    collect: (monitor) => ({
-      isOver: !!monitor.isOver(),
-    }),
-    drop: (item: { index: number }, monitor) => {
-      const clientOffset = monitor.getClientOffset();
-      if (clientOffset && svgRef.current) {
-        const svgElement = svgRef.current;
-        const pt = svgElement.createSVGPoint();
-        pt.x = clientOffset.x;
-        pt.y = clientOffset.y;
-        
-        const svgPt = pt.matrixTransform(svgElement.getScreenCTM()?.inverse());
-        
-        onPositionChange(item.index, Math.round(svgPt.x), Math.round(svgPt.y));
-      }
-    },
-  }), [onPositionChange]);
+  const handleSvgMouseMove = (event: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
+    if (draggingIndex === null || !svgRef.current) return;
+
+    const svgElement = svgRef.current;
+    const pt = svgElement.createSVGPoint();
+    pt.x = event.clientX;
+    pt.y = event.clientY;
+
+    const ctm = svgElement.getScreenCTM();
+    if (!ctm) return;
+
+    const svgPt = pt.matrixTransform(ctm.inverse());
+    onPositionChange(draggingIndex, Math.round(svgPt.x), Math.round(svgPt.y));
+  };
+
+  const handleSvgMouseUp = () => {
+    if (draggingIndex !== null) {
+      setDraggingIndex(null);
+    }
+  };
 
   const getWirePath = (points: Position[]) => {
     if (points.length < 2) return "";
@@ -173,7 +210,7 @@ export const DentalChart: React.FC<DentalChartProps> = ({
 
   const lowerBrackets = lowerPositions.map((pos, i) => ({
     id: `lower-${i}`,
-    color: colors[i + 14],
+    color: colors[i + 16],
     x: pos.x,
     y: pos.y
   }));
@@ -181,36 +218,41 @@ export const DentalChart: React.FC<DentalChartProps> = ({
   return (
     <div className="w-full h-full flex items-center justify-center p-4">
       <div 
-        ref={(node) => { drop(node); }}
-        className={`relative w-full rounded-2xl overflow-hidden bg-gradient-to-br from-white to-gray-50 border-2 transition-colors duration-300 shadow-2xl ${
-          isOver ? "border-orange-400 bg-orange-50/10" : "border-gray-300"
-        }`}
-        style={{ minHeight: '600px' }}
+        className="relative w-full rounded-2xl overflow-hidden border-2 border-gray-300 bg-transparent transition-colors duration-300 shadow-2xl"
       >
-        <div className="relative w-full h-full py-12 px-8 flex items-center justify-center">
-          <div className="w-full h-auto block select-none pointer-events-none opacity-100 scale-[1.1]">
-            <BracesChart 
-              upperBrackets={upperBrackets}
-              lowerBrackets={lowerBrackets}
-              onBracketClick={(id) => {
-                const parts = id.split('-');
-                const idx = parseInt(parts[1]);
-                onToothClick(parts[0] === 'upper' ? idx : idx + 14);
-              }}
-            />
-          </div>
-        </div>
-
         <svg 
           ref={svgRef}
           viewBox={`0 0 ${width} ${height}`} 
-          className="absolute inset-0 w-full h-full pointer-events-none overflow-visible"
+          className="w-full h-auto block overflow-visible"
+          onMouseMove={handleSvgMouseMove}
+          onMouseUp={handleSvgMouseUp}
+          onMouseLeave={handleSvgMouseUp}
         >
+          {/* Background orthodontic image */}
+          <image
+            href="/dental-base.png"
+            x={0}
+            y={0}
+            width={width}
+            height={height}
+            preserveAspectRatio="xMidYMid meet"
+          />
+
           <g opacity={0.2}>
-            {[
-              { x1: upperPositions[0].x, y1: upperPositions[0].y, x2: upperPositions[13].x, y2: upperPositions[13].y },
-              { x1: lowerPositions[0].x, y1: lowerPositions[0].y, x2: lowerPositions[13].x, y2: lowerPositions[13].y },
-            ].map((line, i) => (
+            {(() => {
+              const upFirst = upperPositions[0];
+              const upLast = upperPositions[upperPositions.length - 1] || upFirst;
+              const lowFirst = lowerPositions[0];
+              const lowLast = lowerPositions[lowerPositions.length - 1] || lowFirst;
+              const guides = [] as { x1: number; y1: number; x2: number; y2: number }[];
+              if (upFirst && upLast) {
+                guides.push({ x1: upFirst.x, y1: upFirst.y, x2: upLast.x, y2: upLast.y });
+              }
+              if (lowFirst && lowLast) {
+                guides.push({ x1: lowFirst.x, y1: lowFirst.y, x2: lowLast.x, y2: lowLast.y });
+              }
+              return guides;
+            })().map((line, i) => (
               <line
                 key={`guide-${i}`}
                 x1={line.x1}
@@ -225,7 +267,7 @@ export const DentalChart: React.FC<DentalChartProps> = ({
           </g>
 
           <path
-            d={getWirePath(upperPositions)}
+            d={getWirePath(upperPositions.filter(p => !!p))}
             fill="none"
             stroke="#475569"
             strokeWidth={3}
@@ -233,7 +275,7 @@ export const DentalChart: React.FC<DentalChartProps> = ({
             className="opacity-40"
           />
           <path
-            d={getWirePath(lowerPositions)}
+            d={getWirePath(lowerPositions.filter(p => !!p))}
             fill="none"
             stroke="#94A3B8"
             strokeWidth={2.5}
@@ -242,24 +284,36 @@ export const DentalChart: React.FC<DentalChartProps> = ({
           />
 
           <g className="pointer-events-auto">
-            {upperPositions.map((pos, i) => (
-              <DraggableBracket 
-                key={`u-${i}`}
-                pos={{ ...pos, index: i }}
-                color={colors[i]}
-                isSelected={selectedIndices.includes(i)}
-                onToothClick={onToothClick}
-              />
-            ))}
-            {lowerPositions.map((pos, i) => (
-              <DraggableBracket 
-                key={`l-${i}`}
-                pos={{ ...pos, index: i + 14 }}
-                color={colors[i + 14]}
-                isSelected={selectedIndices.includes(i + 14)}
-                onToothClick={onToothClick}
-              />
-            ))}
+            {upperPositions.map((pos, i) => {
+              if (!pos) return null;
+              const isEdge = i < 3 || i >= upperPositions.length - 3;
+              return (
+                <DraggableBracket 
+                  key={`u-${i}`}
+                  pos={{ ...pos, index: i }}
+                  color={colors[i]}
+                  isSelected={selectedIndices.includes(i)}
+                  onToothClick={onToothClick}
+                  onStartDrag={(index) => setDraggingIndex(index)}
+                  scale={isEdge ? 0.8 : 1}
+                />
+              );
+            })}
+            {lowerPositions.map((pos, i) => {
+              if (!pos) return null;
+              const isEdge = i < 3 || i >= lowerPositions.length - 3;
+              return (
+                <DraggableBracket 
+                  key={`l-${i}`}
+                  pos={{ ...pos, index: i + 16 }}
+                  color={colors[i + 16]}
+                  isSelected={selectedIndices.includes(i + 16)}
+                  onToothClick={onToothClick}
+                  onStartDrag={(index) => setDraggingIndex(index)}
+                  scale={isEdge ? 0.8 : 1}
+                />
+              );
+            })}
           </g>
         </svg>
       </div>

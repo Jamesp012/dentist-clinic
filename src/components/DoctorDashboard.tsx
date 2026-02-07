@@ -566,72 +566,80 @@ export function DoctorDashboard({
           animate={{ y: 0, opacity: 1 }}
           className={`bg-white/80 backdrop-blur-md border-b border-white/40 px-8 py-6 ${sidebarOpen ? 'min-h-[104px]' : 'min-h-[100px]'} flex justify-between items-center shadow-sm relative`}
         >
+          {/* Divider between sidebar and header for visual separation */}
+          <div aria-hidden className="absolute top-0 bottom-0 pointer-events-none transition-all duration-300" style={{ left: sidebarOpen ? '18rem' : '5rem', width: '1px', backgroundColor: 'rgba(2,6,23,0.06)', boxShadow: sidebarOpen ? '1px 0 8px rgba(2,6,23,0.06)' : '1px 0 6px rgba(2,6,23,0.04)' }} />
           <div className="absolute inset-0 bg-gradient-to-r from-[#9CEAEF]/30 via-transparent to-[#68D8D6]/20 pointer-events-none"></div>
           <div className="relative z-10 flex-1">
             {activeTab === 'dashboard' && (
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Dashboard</h2>
-                <p className="text-slate-500 mt-1.5 text-sm font-medium">Overview of clinic operations</p>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Dashboard</h2>
+                <p className="text-sm text-slate-500">Overview of clinic operations</p>
               </div>
             )}
             {activeTab === 'patients' && (
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Patient Management</h2>
-                <p className="text-slate-500 mt-1.5 text-sm font-medium">Manage patient records and medical information</p>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Patient Management</h2>
+                <p className="text-sm text-slate-500">Manage patient records and medical information</p>
               </div>
             )}
             {activeTab === 'employees' && (
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Employee Management</h2>
-                <p className="text-slate-500 mt-1.5 text-sm font-medium">Manage clinic staff and their access credentials</p>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Employee Management</h2>
+                <p className="text-sm text-slate-500">Manage clinic staff and their access credentials</p>
               </div>
             )}
             {activeTab === 'appointments' && (
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Appointments</h2>
-                <p className="text-slate-500 mt-1.5 text-sm font-medium">Schedule and manage patient appointments</p>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Appointments</h2>
+                <p className="text-sm text-slate-500">Schedule and manage patient appointments</p>
               </div>
             )}
             {activeTab === 'charting' && (
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Dental Charting</h2>
-                <p className="text-slate-500 mt-1.5 text-sm font-medium">Track dental conditions and treatments</p>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Dental Charting</h2>
+                <p className="text-sm text-slate-500">Track dental conditions and treatments</p>
+              </div>
+            )}
+            {activeTab === 'photos' && (
+              <div>
+                <h3 className="text-xl font-bold text-slate-900 font-poppins">Upload Patient Photo</h3>
+                <p className="text-sm text-slate-500">Add treatment photos to patient records</p>
               </div>
             )}
             {activeTab === 'braces' && (
               <div>
-                <h2 className="text-3xl font-bold text-cyan-900">Braces Charting</h2>
-                <p className="text-gray-600 mt-1">Track and manage patient braces records</p>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Braces Charting</h2>
+                <p className="text-sm text-slate-500">Track and manage patient braces records</p>
               </div>
             )}
             {activeTab === 'referrals' && (
               <div>
-                <h2 className="text-3xl font-bold text-orange-900">Referrals</h2>
-                <p className="text-gray-600 mt-1">Generate and manage patient referrals</p>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Referrals</h2>
+                <p className="text-sm text-slate-500">Generate and manage patient referrals</p>
               </div>
             )}
             {activeTab === 'services' && (
               <div>
-                <h2 className="text-3xl font-bold text-teal-900">Services Forms</h2>
-                <p className="text-gray-600 mt-1">Manage clinic services and treatments</p>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Services Forms</h2>
+                <p className="text-sm text-slate-500">Manage clinic services and treatments</p>
               </div>
             )}
             {activeTab === 'inventory' && (
               <div>
-                <h2 className="text-3xl font-bold text-orange-900">Inventory Management</h2>
-                <p className="text-gray-600 mt-1">Track supplies and manage inventory</p>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Inventory Management</h2>
+                <p className="text-sm text-slate-500">Track supplies and manage inventory</p>
               </div>
             )}
             {activeTab === 'financial' && (
               <div>
-                <h2 className="text-3xl font-bold text-green-900">Financial Report</h2>
-                <p className="text-gray-600 mt-1">View financial data and reports</p>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Financial Report</h2>
+                <p className="text-sm text-slate-500">View financial data and reports</p>
               </div>
             )}
             {activeTab === 'announcements' && (
               <div>
-                <h2 className="text-3xl font-bold text-indigo-900">Announcements</h2>
-                <p className="text-gray-600 mt-1">Manage clinic announcements and updates</p>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Announcements</h2>
+                <p className="text-sm text-slate-500">Manage clinic announcements and updates</p>
               </div>
             )}
           </div>
@@ -695,13 +703,7 @@ export function DoctorDashboard({
                   <div className="bg-white rounded-xl shadow-lg p-8 space-y-6">
                     {/* Header */}
                     <div className="flex items-center gap-3 mb-6">
-                      <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center">
-                        <Camera className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-slate-900 font-poppins">Upload Patient Photo</h3>
-                        <p className="text-sm text-slate-500">Add treatment photos to patient records</p>
-                      </div>
+                      {/* Header text moved to top bar */}
                     </div>
 
                     <div className="grid grid-cols-2 gap-6">
@@ -945,16 +947,11 @@ export function DoctorDashboard({
                 />
               )}
               {activeTab === 'referrals' && (
-                <div className="p-6 space-y-6 max-h-full overflow-y-scroll scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent">
-                  {/* Referral Management Tab Component - View Incoming/Outgoing */}
-                  <div className="bg-white rounded-xl shadow-md p-6 space-y-4">
-                    <ReferralGeneration
-                      referrals={referrals}
-                      setReferrals={setReferrals}
-                      patients={patients}
-                    />
-                  </div>
-                </div>
+                <ReferralGeneration
+                  referrals={referrals}
+                  setReferrals={setReferrals}
+                  patients={patients}
+                />
               )}
               {activeTab === 'services' && (
                 <ServicesForms

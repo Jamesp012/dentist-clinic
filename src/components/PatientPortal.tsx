@@ -7,10 +7,9 @@ import { handlePhoneInput, formatPhoneNumber } from '../utils/phoneValidation';
 import { convertToDBDate, convertToDisplayDate, formatDateInput, formatToDD_MM_YYYY, formatToWordedDate } from '../utils/dateHelpers';
 import { appointmentAPI } from '../api';
 import { Notifications } from './Notifications';
-import { PatientNotifications } from './PatientNotifications';
-import { generatePrescriptionPDF } from '../utils/pdfGenerator';
 import { generateReferralPDF } from '../utils/referralPdfGenerator';
 import { SearchableSelect } from './SearchableSelect';
+import PatientReferralModal from './PatientReferralModal';
 
 // Helper function to extract date string without timezone conversion
 const getDateString = (date: string | Date): string => {
@@ -97,14 +96,69 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
   
   // Forms data state
   const [referrals, setReferrals] = useState<any[]>([]);
-  const [prescriptions, setPrescriptions] = useState<any[]>([]);
   const [isLoadingForms, setIsLoadingForms] = useState(false);
+  // UI: active sub-tab for Forms (doctor vs xray)
+  const [formsTab, setFormsTab] = useState<'doctor' | 'xray' | 'patient'>('doctor');
   
   // Referral file upload state
   const [referralFiles, setReferralFiles] = useState<any[]>(patient.referralFiles || []);
   const [showReferralUploadModal, setShowReferralUploadModal] = useState(false);
   const [isUploadingReferral, setIsUploadingReferral] = useState(false);
   const [referralUploadFiles, setReferralUploadFiles] = useState<File[]>([]);
+
+  // Patient Add Referral modal
+  const [showPatientReferralModal, setShowPatientReferralModal] = useState(false);
+
+  // Patient Referral detail and image preview
+  const [selectedPatientReferral, setSelectedPatientReferral] = useState<any | null>(null);
+  const [showPatientReferralDetail, setShowPatientReferralDetail] = useState(false);
+  const [patientPreviewImage, setPatientPreviewImage] = useState<string | null>(null);
+  const [patientPreviewExpanded, setPatientPreviewExpanded] = useState(false);
+
+  const viewPatientReferral = async (id: number | string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/referrals/${id}`, { headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
+      if (res.ok) {
+        const data = await res.json();
+        setSelectedPatientReferral(data);
+        setShowPatientReferralDetail(true);
+      } else {
+        console.error('Failed to load referral', await res.text());
+      }
+    } catch (err) {
+      console.error('Failed to load referral', err);
+    }
+  };
+
+  async function handleFileClick(file: any) {
+    if (!file) return;
+    if (file.fileType === 'image') {
+      setPatientPreviewImage(file.url);
+      setPatientPreviewExpanded(false);
+      return;
+    }
+    if (file.fileType === 'pdf') {
+      // Trigger download for PDFs
+      try {
+        const resp = await fetch(file.url);
+        const blob = await resp.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = file.fileName || 'document.pdf';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        return;
+      } catch (err) {
+        console.error('Failed to download file', err);
+        window.open(file.url, '_blank');
+        return;
+      }
+    }
+    // Other files: open in new tab
+    window.open(file.url, '_blank');
+  }
 
   const checkUsernameAvailability = async (username: string) => {
     if (username.trim().length < 3) {
@@ -398,10 +452,19 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
   const totalPaid = patientRecords.reduce((sum, record) => sum + Number(record.amountPaid || 0), 0);
   const currentBalance = patient.totalBalance !== undefined ? Number(patient.totalBalance) : (totalSpent - totalPaid);
 
-  // Debug logging - only when patientRecords changes
+  // Debug logging - warn when patientRecords contain unexpected values
   useEffect(() => {
-    // Removed: console.log statements to reduce noise
-  }, []);
+    try {
+      if (Array.isArray(patientRecords) && patientRecords.length > 0) {
+        const badCosts = patientRecords.filter(r => r == null || r.cost === null || r.cost === undefined);
+        if (badCosts.length > 0) {
+          console.warn('PatientPortal: found treatment records with missing cost values', badCosts.map(r => ({ id: r?.id, patientId: r?.patientId, cost: r?.cost })));
+        }
+      }
+    } catch (err) {
+      console.error('PatientPortal debug check failed', err);
+    }
+  }, [patientRecords, patient.id]);
 
   const handleSaveProfile = () => {
     if (onUpdatePatient) {
@@ -561,20 +624,10 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
           setReferrals([]);
         }
 
-        // Fetch prescriptions for this patient
-        const presResponse = await fetch(`${API_BASE}/prescriptions/patient/${patient.id}`, { headers });
-        if (presResponse.ok) {
-          const presData = await presResponse.json();
-          setPrescriptions(Array.isArray(presData) ? presData : []);
-        } else {
-          const text = await presResponse.text();
-          console.error('Failed to fetch prescriptions:', presResponse.status, text);
-          setPrescriptions([]);
-        }
+        // Prescriptions are no longer fetched in the Patient Portal (visible only to staff portals)
       } catch (error) {
         console.error('Failed to load patient forms:', error);
         setReferrals([]);
-        setPrescriptions([]);
         toast.error('Unable to load forms. Please refresh or contact support.');
       } finally {
         setIsLoadingForms(false);
@@ -781,7 +834,8 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
         <motion.div 
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className={`sticky top-0 z-40 bg-white border-b border-slate-100 px-8 py-6 ${sidebarOpen ? 'min-h-[104px]' : 'min-h-[100px]'} flex justify-between items-center shadow-sm`}
+          className={`sticky top-0 z-40 border-b border-slate-100 px-8 py-6 ${sidebarOpen ? 'min-h-[104px]' : 'min-h-[100px]'} flex justify-between items-center shadow-sm`}
+          style={{ backgroundColor: 'rgb(225, 252, 251)' }}
         >
           <div className="relative z-10 flex-1">
             {activeTab === 'profile' && (
@@ -805,9 +859,11 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
             {activeTab === 'forms' && (
               <div>
                 <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Forms</h2>
-                <p className="text-slate-500 mt-1.5 text-sm font-medium">View your referrals, X-ray referrals, and prescriptions</p>
+                <p className="text-slate-500 mt-1.5 text-sm font-medium">View your referrals and X-ray referrals</p>
               </div>
             )}
+
+
             {activeTab === 'photos' && (
               <div>
                 <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Photos</h2>
@@ -1386,7 +1442,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                               {/* Cost */}
                               <div className="flex justify-between items-center p-3 rounded-lg bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-100">
                                 <span className="text-xs font-semibold text-cyan-600 uppercase tracking-wide">Treatment Cost</span>
-                                <span className="text-lg font-extrabold text-transparent bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text">₱{record.cost.toFixed(2)}</span>
+                                <span className="text-lg font-extrabold text-transparent bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text">₱{Number(record.cost || 0).toFixed(2)}</span>
                               </div>
 
                               {/* Amount Paid */}
@@ -1441,7 +1497,8 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
 
             {/* Forms Tab */}
             {activeTab === 'forms' && (
-              <div className="p-8 space-y-8 overflow-y-auto scrollbar-visible" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+              <div className="p-8 space-y-8 overflow-y-auto scrollbar-visible no-hover-translate" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+                <style>{`.no-hover-translate .group:hover{transform:none !important} .no-hover-translate button:hover{transform:none !important}`}</style>
                 {isLoadingForms ? (
                   <div className="col-span-full flex items-center justify-center py-16">
                     <div className="text-center">
@@ -1453,16 +1510,78 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                   </div>
                 ) : (
                   <div className="space-y-8">
-                    {/* Doctor Referrals Section */}
-                    {referrals.filter(r => r.specialty !== 'X-Ray Imaging' && r.referredTo !== 'X-Ray Facility').length > 0 && (
-                      <div>
-                        <div className="mb-5 flex items-center gap-3">
-                          <div className="h-8 w-1 bg-gradient-to-b from-amber-400 to-amber-600 rounded-full"></div>
-                          <h3 className="text-xl font-bold text-slate-900">Doctor Referrals</h3>
-                          <span className="ml-auto px-3 py-1 bg-amber-50 text-amber-700 text-xs font-semibold rounded-full border border-amber-200">
-                            {referrals.filter(r => r.specialty !== 'X-Ray Imaging' && r.referredTo !== 'X-Ray Facility').length}
-                          </span>
-                        </div>
+                    {/* Forms sub-tabs */}
+                    <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                      <button
+                        role="tab"
+                        aria-selected={formsTab === 'doctor'}
+                        onClick={() => setFormsTab('doctor')}
+                        className={`px-4 py-2 -mb-px rounded-t-lg font-semibold transition-colors ${formsTab === 'doctor' ? 'text-slate-900 border-b-2 border-emerald-400' : 'text-slate-500 hover:text-slate-700'}`}
+                      >
+                        Doctor’s Referral
+                        <span className="ml-2 inline-flex items-center justify-center text-xs px-2 py-0.5 bg-emerald-50 text-emerald-500 rounded-full border border-emerald-100">
+                          {referrals.filter(r => r.specialty !== 'X-Ray Imaging' && r.referredTo !== 'X-Ray Facility').length}
+                        </span>
+                      </button>
+
+                      <button
+                        role="tab"
+                        aria-selected={formsTab === 'xray'}
+                        onClick={() => setFormsTab('xray')}
+                        className={`px-4 py-2 -mb-px rounded-t-lg font-semibold transition-colors ${formsTab === 'xray' ? 'text-slate-900 border-b-2 border-emerald-400' : 'text-slate-500 hover:text-slate-700'}`}
+                      >
+                        X-ray Referral
+                        <span className="ml-2 inline-flex items-center justify-center text-xs px-2 py-0.5 bg-emerald-50 text-emerald-500 rounded-full border border-emerald-100">
+                          {referrals.filter(r => r.specialty === 'X-Ray Imaging' || r.referredTo === 'X-Ray Facility').length}
+                        </span>
+                      </button>
+
+                      <button
+                        role="tab"
+                        aria-selected={formsTab === 'patient'}
+                        onClick={() => setFormsTab('patient')}
+                        className={`px-4 py-2 -mb-px rounded-t-lg font-semibold transition-colors ${formsTab === 'patient' ? 'text-slate-900 border-b-2 border-emerald-400' : 'text-slate-500 hover:text-slate-700'}`}
+                      >
+                        Your Referrals
+                        <span className="ml-2 inline-flex items-center justify-center text-xs px-2 py-0.5 bg-emerald-50 text-emerald-500 rounded-full border border-emerald-100">
+                          {referrals.filter(r => r.createdByRole === 'patient' && String(r.patientId) === String(patient.id)).length}
+                        </span>
+                      </button>
+
+                      {/* Add button shown to patient when viewing their referrals */}
+                      <div className="ml-auto">
+                        {formsTab === 'patient' && (
+                          <button onClick={() => setShowPatientReferralModal(true)} className="px-4 py-2 bg-emerald-600 text-white rounded-lg">Add</button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Patient Add Referral Modal (global within Forms area) */}
+                    {showPatientReferralModal && (
+                      <PatientReferralModal
+                        isOpen={showPatientReferralModal}
+                        onClose={() => setShowPatientReferralModal(false)}
+                        patientId={patient.id}
+                        patientName={patient.name}
+                        onSaved={async () => {
+                          try {
+                            setFormsTab('patient');
+                            const token = localStorage.getItem('token');
+                            const res = await fetch(`${API_BASE}/referrals/patient/${patient.id}`, { headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
+                            if (res.ok) {
+                              const data = await res.json();
+                              setReferrals(data);
+                            }
+                          } catch (err) {
+                            console.error('Failed to reload referrals after saving patient referral', err);
+                          }
+                        }}
+                      />
+                    )}
+
+                    {/* Doctor Referrals - shown when Doctor tab active */}
+                    {formsTab === 'doctor' && (
+                      referrals.filter(r => r.specialty !== 'X-Ray Imaging' && r.referredTo !== 'X-Ray Facility').length > 0 ? (
                         <div className="grid grid-cols-1 gap-4">
                           {referrals
                             .filter(r => r.specialty !== 'X-Ray Imaging' && r.referredTo !== 'X-Ray Facility')
@@ -1470,24 +1589,23 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                             .map(referral => (
                               <div
                                 key={referral.id}
-                                className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                                className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 overflow-hidden"
                               >
-                                {/* Glassmorphism accent */}
-                                <div className="absolute -right-12 -top-12 w-32 h-32 bg-amber-100 rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-                                <div className="absolute inset-0 bg-gradient-to-br from-amber-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                
+                                <div className="absolute -right-12 -top-12 w-32 h-32 bg-emerald-50 rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+                                <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
                                 <div className="relative flex justify-between items-start gap-4">
                                   <div className="flex-1">
                                     <div className="flex items-start gap-3 mb-3">
-                                      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-amber-100 to-amber-50 border border-amber-200 rounded-xl flex items-center justify-center">
-                                        <FileText className="w-5 h-5 text-amber-600" />
+                                      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-emerald-50 to-emerald-50 border border-emerald-100 rounded-xl flex items-center justify-center">
+                                        <FileText className="w-5 h-5 text-emerald-500" />
                                       </div>
                                       <div className="flex-1 min-w-0">
                                         <h4 className="font-bold text-slate-900 text-base">Referred to: {referral.referredTo || referral.specialty}</h4>
                                         <p className="text-sm font-medium text-slate-500 mt-0.5">Dr. {referral.referringDentist}</p>
                                       </div>
                                     </div>
-                                    
+
                                     <div className="space-y-2 mt-4">
                                       <div className="flex items-center justify-between">
                                         <span className="text-sm text-slate-600 font-medium">Specialty:</span>
@@ -1508,10 +1626,10 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                                       </div>
                                     )}
                                   </div>
-                                  
+
                                   <button
                                     onClick={() => generateReferralPDF(referral, patient)}
-                                    className="flex-shrink-0 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 text-sm"
+                                    className="flex-shrink-0 px-4 py-2.5 bg-gradient-to-r from-emerald-400 to-emerald-500 text-white font-semibold rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 text-sm"
                                   >
                                     <Download size={16} />
                                     <span>PDF</span>
@@ -1520,19 +1638,17 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                               </div>
                             ))}
                         </div>
-                      </div>
+                      ) : (
+                        <div className="col-span-full text-center py-8">
+                          <h4 className="text-lg font-bold text-slate-900 mb-2">No Doctor Referrals</h4>
+                          <p className="text-slate-600">You have no doctor referral forms yet.</p>
+                        </div>
+                      )
                     )}
 
-                    {/* X-Ray Referrals Section */}
-                    {referrals.filter(r => r.specialty === 'X-Ray Imaging' || r.referredTo === 'X-Ray Facility').length > 0 && (
-                      <div>
-                        <div className="mb-5 flex items-center gap-3">
-                          <div className="h-8 w-1 bg-gradient-to-b from-cyan-400 to-cyan-600 rounded-full"></div>
-                          <h3 className="text-xl font-bold text-slate-900">X-Ray Referrals</h3>
-                          <span className="ml-auto px-3 py-1 bg-cyan-50 text-cyan-700 text-xs font-semibold rounded-full border border-cyan-200">
-                            {referrals.filter(r => r.specialty === 'X-Ray Imaging' || r.referredTo === 'X-Ray Facility').length}
-                          </span>
-                        </div>
+                    {/* X-Ray Referrals - shown when X-ray tab active */}
+                    {formsTab === 'xray' && (
+                      referrals.filter(r => r.specialty === 'X-Ray Imaging' || r.referredTo === 'X-Ray Facility').length > 0 ? (
                         <div className="grid grid-cols-1 gap-4">
                           {referrals
                             .filter(r => r.specialty === 'X-Ray Imaging' || r.referredTo === 'X-Ray Facility')
@@ -1540,24 +1656,23 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                             .map(referral => (
                               <div
                                 key={referral.id}
-                                className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                                className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 overflow-hidden"
                               >
-                                {/* Glassmorphism accent */}
-                                <div className="absolute -right-12 -top-12 w-32 h-32 bg-cyan-100 rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-                                <div className="absolute inset-0 bg-gradient-to-br from-cyan-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                
+                                <div className="absolute -right-12 -top-12 w-32 h-32 bg-emerald-50 rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+                                <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
                                 <div className="relative flex justify-between items-start gap-4">
                                   <div className="flex-1">
                                     <div className="flex items-start gap-3 mb-3">
-                                      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-cyan-100 to-cyan-50 border border-cyan-200 rounded-xl flex items-center justify-center">
-                                        <FileText className="w-5 h-5 text-cyan-600" />
+                                      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-emerald-50 to-emerald-50 border border-emerald-100 rounded-xl flex items-center justify-center">
+                                        <FileText className="w-5 h-5 text-emerald-500" />
                                       </div>
                                       <div className="flex-1 min-w-0">
                                         <h4 className="font-bold text-slate-900 text-base">X-Ray Referral</h4>
                                         <p className="text-sm font-medium text-slate-500 mt-0.5">Dr. {referral.referringDentist}</p>
                                       </div>
                                     </div>
-                                    
+
                                     <div className="space-y-2 mt-4">
                                       <div className="flex items-center justify-between">
                                         <span className="text-sm text-slate-600 font-medium">Facility:</span>
@@ -1578,10 +1693,10 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                                       </div>
                                     )}
                                   </div>
-                                  
+
                                   <button
                                     onClick={() => generateReferralPDF(referral, patient)}
-                                    className="flex-shrink-0 px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white font-semibold rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 text-sm"
+                                    className="flex-shrink-0 px-4 py-2.5 bg-gradient-to-r from-emerald-400 to-emerald-500 text-white font-semibold rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 text-sm"
                                   >
                                     <Download size={16} />
                                     <span>PDF</span>
@@ -1590,104 +1705,79 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                               </div>
                             ))}
                         </div>
-                      </div>
+                      ) : (
+                        <div className="col-span-full text-center py-8">
+                          <h4 className="text-lg font-bold text-slate-900 mb-2">No X-ray Referrals</h4>
+                          <p className="text-slate-600">You have no X-ray referral forms yet.</p>
+                        </div>
+                      )
                     )}
 
-                    {/* Prescriptions Section */}
-                    {prescriptions.length > 0 && (
-                      <div>
-                        <div className="mb-5 flex items-center gap-3">
-                          <div className="h-8 w-1 bg-gradient-to-b from-emerald-400 to-emerald-600 rounded-full"></div>
-                          <h3 className="text-xl font-bold text-slate-900">Prescriptions</h3>
-                          <span className="ml-auto px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full border border-emerald-200">
-                            {prescriptions.length}
-                          </span>
-                        </div>
+                    {/* Patient Referrals (Your Referrals) - shown when Patient tab active */}
+                    {formsTab === 'patient' && (
+                      (referrals.filter(r => r.createdByRole === 'patient' && String(r.patientId) === String(patient.id))).length > 0 ? (
                         <div className="grid grid-cols-1 gap-4">
-                          {prescriptions
+                          {referrals
+                            .filter(r => r.createdByRole === 'patient' && String(r.patientId) === String(patient.id))
                             .sort((a, b) => new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime())
-                            .map(prescription => (
-                              <div
-                                key={prescription.id}
-                                className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
-                              >
-                                {/* Glassmorphism accent */}
-                                <div className="absolute -right-12 -top-12 w-32 h-32 bg-emerald-100 rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-                                <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                
+                            .map(referral => (
+                              <div key={referral.id} className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 overflow-hidden">
                                 <div className="relative flex justify-between items-start gap-4">
                                   <div className="flex-1">
                                     <div className="flex items-start gap-3 mb-3">
-                                      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-emerald-100 to-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-center">
-                                        <FileText className="w-5 h-5 text-emerald-600" />
+                                      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-emerald-50 to-emerald-50 border border-emerald-100 rounded-xl flex items-center justify-center">
+                                        <FileText className="w-5 h-5 text-emerald-500" />
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                        <h4 className="font-bold text-slate-900 text-base">Dr. {prescription.dentist}</h4>
-                                        <p className="text-sm font-medium text-slate-500 mt-0.5">
-                                          {prescription.medications?.length || 0} medication{prescription.medications?.length !== 1 ? 's' : ''} prescribed
-                                        </p>
-                                      </div>
-                                    </div>
-                                    
-                                    <div className="space-y-2 mt-4">
-                                      <div className="flex items-center justify-between">
-                                        <span className="text-sm text-slate-600 font-medium">Date:</span>
-                                        <span className="text-sm font-semibold text-slate-900">
-                                          {new Date(prescription.createdAt || prescription.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                                        </span>
+                                        <h4 className="font-bold text-slate-900 text-base">{referral.referredTo || referral.specialty || 'Referral'}</h4>
+                                        <p className="text-sm font-medium text-slate-500 mt-0.5">{referral.referringDentist}</p>
                                       </div>
                                     </div>
 
-                                    {prescription.medications && prescription.medications.length > 0 && (
+                                    <div className="mt-4 pt-4 border-t border-slate-100">
+                                      <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">Date</p>
+                                      <p className="text-sm text-slate-700 leading-relaxed">{new Date(referral.createdAt || referral.date).toLocaleDateString()}</p>
+                                    </div>
+
+                                    {referral.reason && (
                                       <div className="mt-4 pt-4 border-t border-slate-100">
-                                        <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-3">Medications</p>
-                                        <div className="space-y-2">
-                                          {prescription.medications.slice(0, 3).map((med: any, idx: number) => (
-                                            <div key={idx} className="flex items-start gap-2 p-2 bg-slate-50 rounded-lg border border-slate-100">
-                                              <span className="text-emerald-600 font-bold flex-shrink-0">•</span>
-                                              <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-semibold text-slate-900">{med.name}</p>
-                                                <p className="text-xs text-slate-600">{med.dosage} • {med.frequency} {med.duration && `• ${med.duration}`}</p>
-                                              </div>
-                                            </div>
+                                        <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">Reason</p>
+                                        <p className="text-sm text-slate-700 leading-relaxed">{referral.reason}</p>
+                                      </div>
+                                    )}
+
+                                    {referral.uploadedFiles && referral.uploadedFiles.length > 0 && (
+                                      <div className="mt-4 pt-4 border-t border-slate-100">
+                                        <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">Attachments</p>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                          {referral.uploadedFiles.map(file => (
+                                            <button key={file.id} onClick={() => handleFileClick(file)} className="px-3 py-1.5 bg-slate-100 rounded text-sm border">{file.fileName}</button>
                                           ))}
-                                          {prescription.medications.length > 3 && (
-                                            <p className="text-xs font-semibold text-slate-500 pt-1">+ {prescription.medications.length - 3} more medication{prescription.medications.length - 3 !== 1 ? 's' : ''}</p>
-                                          )}
                                         </div>
                                       </div>
                                     )}
                                   </div>
-                                  
-                                  <div className="flex-shrink-0 flex gap-2">
-                                    <button
-                                      onClick={() => {
-                                        // View prescription details
-                                        const medList = prescription.medications?.map((m: any) => 
-                                          `${m.name} - ${m.dosage} ${m.frequency} for ${m.duration}`
-                                        ).join('\n') || '';
-                                        const details = `Medications:\n${medList}\n\nNotes: ${prescription.notes || 'None'}`;
-                                        toast.success(details);
-                                      }}
-                                      className="px-4 py-2.5 bg-slate-100 text-slate-700 font-semibold rounded-xl hover:bg-slate-200 hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 text-sm"
-                                    >
-                                      <Eye size={16} />
-                                      <span>View</span>
-                                    </button>
-                                    <button
-                                      onClick={() => generatePrescriptionPDF(patient, prescription)}
-                                      className="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 text-sm"
-                                    >
-                                      <Download size={16} />
-                                      <span>PDF</span>
-                                    </button>
+
+                                  <div className="flex items-center gap-2">
+                                    <button onClick={() => viewPatientReferral(referral.id)} className="px-4 py-2 bg-slate-100 rounded">View</button>
                                   </div>
                                 </div>
                               </div>
                             ))}
                         </div>
-                      </div>
+                      ) : (
+                        <div className="col-span-full text-center py-10">
+                          <h4 className="text-lg font-bold text-slate-900 mb-2">Your Referrals</h4>
+                          <p className="text-slate-600 mb-4">You haven’t added any referrals yet. If a doctor gave you a referral slip, you can upload it here so we can share it with the receiving clinic.</p>
+                          <div className="flex items-center justify-center gap-3">
+                            <button onClick={() => setShowPatientReferralModal(true)} className="px-5 py-3 bg-emerald-500 text-white rounded-xl font-semibold hover:shadow">Add Referral</button>
+                            <button onClick={() => setFormsTab('doctor')} className="px-4 py-2 bg-slate-100 rounded">Browse Doctor Referrals</button>
+                          </div>
+                        </div>
+                      )
                     )}
+
+                    {/* Prescriptions removed from Patient Portal - visible only to staff portals */}
 
                     {/* Referral Upload Section - Only for Referred Patients */}
                     {patient.patientType === 'referred' && (
@@ -1826,18 +1916,81 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                       </div>
                     )}
 
-                    {/* Empty State */}
-                    {referrals.length === 0 && prescriptions.length === 0 && patient.patientType !== 'referred' && (
-                      <div className="col-span-full text-center py-16 px-6">
-                        <div className="inline-flex items-center justify-center w-16 h-16 bg-slate-100 rounded-2xl mb-4">
-                          <FileText className="w-8 h-8 text-slate-400" />
-                        </div>
-                        <h3 className="text-lg font-bold text-slate-900 mb-2">No Forms Yet</h3>
-                        <p className="text-slate-600 font-medium">Your referrals and prescriptions will appear here</p>
-                      </div>
-                    )}
+
+
+
                   </div>
                 )}
+              </div>
+            )}
+
+
+
+            {/* Patient Referral Detail Modal */}
+            {showPatientReferralDetail && selectedPatientReferral && (
+              <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+                  <div className="flex items-center justify-between p-6 border-b">
+                    <h3 className="text-xl font-bold">Referral</h3>
+                    <button onClick={() => { setShowPatientReferralDetail(false); setSelectedPatientReferral(null); }} className="p-2"><X className="w-5 h-5" /></button>
+                  </div>
+                  <div className="p-6 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-semibold">Patient Name</p>
+                        <p className="font-medium">{selectedPatientReferral.patientName}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold">Date</p>
+                        <p className="font-medium">{selectedPatientReferral.date}</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-semibold">Referred By</p>
+                      <p className="font-medium">{selectedPatientReferral.referringDentist}</p>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-semibold">Reason</p>
+                      <p className="font-medium">{selectedPatientReferral.reason || '—'}</p>
+                    </div>
+
+                    {selectedPatientReferral.uploadedFiles && selectedPatientReferral.uploadedFiles.length > 0 && (
+                      <div>
+                        <p className="text-sm font-semibold">Files</p>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {selectedPatientReferral.uploadedFiles.map((file: any) => (
+                            <div key={file.id} className="p-2 border rounded flex items-center gap-2">
+                              {file.fileType === 'image' ? (
+                                <button onClick={() => { setPatientPreviewImage(file.url); setPatientPreviewExpanded(false); }} className="flex items-center gap-2">
+                                  <img src={file.url} alt={file.fileName} className="w-10 h-10 object-cover rounded" />
+                                  <span className="text-sm">{file.fileName}</span>
+                                </button>
+                              ) : (
+                                <button onClick={() => { const a = document.createElement('a'); a.href = file.url; a.download = file.fileName; document.body.appendChild(a); a.click(); a.remove(); }} className="flex items-center gap-2">
+                                  <FileText className="w-4 h-4" />
+                                  <span className="text-sm">{file.fileName}</span>
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Patient preview image modal */}
+            {patientPreviewImage && (
+              <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+                <div className="relative max-w-[90vw] max-h-[90vh]">
+                  <button onClick={() => { setPatientPreviewImage(null); setPatientPreviewExpanded(false); }} className="absolute top-2 right-2 p-2 bg-white rounded-full"><X className="w-4 h-4" /></button>
+                  <img src={patientPreviewImage} alt="preview" onClick={() => setPatientPreviewExpanded(prev => !prev)} className="object-contain" style={patientPreviewExpanded ? { width: '95vw', height: '95vh', cursor: 'zoom-out' } : { maxWidth: '80vw', maxHeight: '80vh', cursor: 'zoom-in' }} />
+                </div>
               </div>
             )}
 
@@ -2082,7 +2235,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                             <p className="text-slate-600 text-sm">{formatToDD_MM_YYYY(record.date)}</p>
                           </div>
                           <div className="text-right">
-                            <p className="text-lg font-bold text-slate-900 group-hover:text-purple-600 transition-colors duration-200">₱{record.cost}</p>
+                            <p className="text-lg font-bold text-slate-900 group-hover:text-purple-600 transition-colors duration-200">₱{Number(record.cost || 0).toFixed(2)}</p>
                           </div>
                         </motion.div>
                       ))}
@@ -2851,9 +3004,6 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Patient Notifications Component */}
-      <PatientNotifications patient={patient} appointments={appointments} onNavigate={(tab: string) => setActiveTab(tab as any)} />
       </>
     </div>
   );

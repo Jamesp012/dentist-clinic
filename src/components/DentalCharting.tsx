@@ -16,12 +16,52 @@ type DentalChartingProps = {
   setTreatmentRecords: (records: TreatmentRecord[]) => void;
 };
 
+// Tooth ID sets
+const UPPER_PERMANENT_IDS = Array.from({ length: 16 }, (_, i) => i + 1); // 1-16
+const LOWER_PERMANENT_IDS = Array.from({ length: 16 }, (_, i) => i + 17); // 17-32
+
+// Primary teeth (A-T) mapped to numeric ids so we can reuse ToothData/RealisticTooth
+// A-E (upper right to upper left) => 101-105, 106-110
+// K-O (lower left) & P-T (lower right) => 111-115, 116-120
+const UPPER_PRIMARY_IDS = Array.from({ length: 10 }, (_, i) => 101 + i); // 101-110 (A-J)
+const LOWER_PRIMARY_IDS = Array.from({ length: 10 }, (_, i) => 111 + i); // 111-120 (K-T)
+
+const PRIMARY_LABELS: Record<number, string> = {
+  101: 'A',
+  102: 'B',
+  103: 'C',
+  104: 'D',
+  105: 'E',
+  106: 'F',
+  107: 'G',
+  108: 'H',
+  109: 'I',
+  110: 'J',
+  111: 'K',
+  112: 'L',
+  113: 'M',
+  114: 'N',
+  115: 'O',
+  116: 'P',
+  117: 'Q',
+  118: 'R',
+  119: 'S',
+  120: 'T'
+};
+
 // Helper to create fresh initial state
 const createInitialTeethData = (): Record<number, ToothData> => {
   const data: Record<number, ToothData> = {};
-  for (let i = 1; i <= 32; i++) {
-    data[i] = {
-      id: i,
+  const allIds = [
+    ...UPPER_PERMANENT_IDS,
+    ...LOWER_PERMANENT_IDS,
+    ...UPPER_PRIMARY_IDS,
+    ...LOWER_PRIMARY_IDS
+  ];
+
+  for (const id of allIds) {
+    data[id] = {
+      id,
       surfaces: {
         occlusal: 'healthy',
         mesial: 'healthy',
@@ -30,7 +70,8 @@ const createInitialTeethData = (): Record<number, ToothData> => {
         lingual: 'healthy'
       },
       generalCondition: 'healthy',
-      isPermanent: true,
+      // Primary teeth use the lighter outline from RealisticTooth
+      isPermanent: id <= 32,
       notes: ''
     };
   }
@@ -337,95 +378,164 @@ export function DentalCharting({ patients }: DentalChartingProps) {
 
         {/* Main Chart Area */}
         <div className="flex-1 flex items-center justify-center bg-white p-8 overflow-auto">
-          <div className="relative max-w-6xl w-full flex flex-col gap-1">
-            
-            {/* Upper Arch Roots (Buccal) */}
-            <div className="relative flex justify-center gap-1 mb-[-10px] z-0">
-               {Array.from({ length: 16 }, (_, i) => i + 1).map(id => (
-                 <div key={id} className={id === 8 ? "mr-4" : ""}>
-                    <RealisticTooth 
-                      id={id} 
-                      data={teeth[id]} 
-                      isSelected={selectedTooth === id}
-                      onToothClick={handleToothClick}
-                      view="buccal"
-                    />
-                 </div>
-               ))}
+          <div className="relative max-w-5xl w-full flex flex-col items-center gap-6">
+            {/* Legend */}
+            <div className="flex items-center gap-6 text-xs text-slate-500 mb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" className="w-5 h-5">
+                    <circle cx="12" cy="12" r="9" fill="#FDFBF7" stroke="#000000" strokeWidth="2" />
+                  </svg>
+                </div>
+                <span>Permanent teeth (outer ring)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" className="w-5 h-5">
+                    <circle cx="12" cy="12" r="9" fill="#FDFBF7" stroke="#D1D5DB" strokeWidth="2" />
+                  </svg>
+                </div>
+                <span>Primary / temporary teeth (inner ring)</span>
+              </div>
             </div>
 
-            {/* Upper Arch Crowns (Occlusal) */}
-            <div className="flex justify-center gap-1 z-10">
-               {Array.from({ length: 16 }, (_, i) => i + 1).map(id => (
-                 <div key={id} className={id === 8 ? "mr-4" : ""}>
-                    <RealisticTooth 
-                      id={id} 
-                      data={teeth[id]} 
-                      isSelected={selectedTooth === id}
-                      onToothClick={handleToothClick}
-                      view="occlusal"
-                    />
-                 </div>
-               ))}
-            </div>
+            {/* Occlusal-style Double Arch Layout */}
+            {(() => {
+              const CHART_WIDTH = 640;
+              const CHART_HEIGHT = 760;
 
-            {/* Tooth Numbers (Upper & Lower) */}
-            <div className="py-3 flex flex-col gap-1">
-               {/* Upper Numbers */}
-               <div className="flex justify-center gap-1 text-xs text-slate-400 font-medium">
-                  {Array.from({ length: 16 }, (_, i) => i + 1).map(id => (
-                    <div 
-                      key={id} 
-                      className={`w-10 text-center transition-colors ${id === 8 ? "mr-4" : ""} ${selectedTooth === id ? "bg-yellow-400 text-yellow-900 font-bold rounded-full" : ""}`}
-                    >
-                      {id}
-                    </div>
-                  ))}
-               </div>
-               
-               {/* Lower Numbers */}
-               <div className="flex justify-center gap-1 text-xs text-slate-400 font-medium">
-                  {Array.from({ length: 16 }, (_, i) => 32 - i).map(id => (
-                    <div 
-                      key={id} 
-                      className={`w-10 text-center transition-colors ${id === 25 ? "mr-4" : ""} ${selectedTooth === id ? "bg-yellow-400 text-yellow-900 font-bold rounded-full" : ""}`}
-                    >
-                      {id}
-                    </div>
-                  ))}
-               </div>
-            </div>
+              return (
+                <div
+                  className="relative"
+                  style={{ width: CHART_WIDTH, height: CHART_HEIGHT }}
+                >
+                  {/* Upper gum background */}
+                  <div
+                    className="absolute left-1/2 -translate-x-1/2 bg-rose-200/90"
+                    style={{ top: 60, width: 380, height: 240, borderRadius: '220px 220px 140px 140px' }}
+                  />
+                  <div
+                    className="absolute left-1/2 -translate-x-1/2 bg-rose-100"
+                    style={{ top: 95, width: 280, height: 180, borderRadius: '220px 220px 140px 140px' }}
+                  />
 
-            {/* Lower Arch Crowns (Occlusal) */}
-            <div className="flex justify-center gap-1 z-10">
-               {Array.from({ length: 16 }, (_, i) => 32 - i).map(id => (
-                 <div key={id} className={id === 25 ? "mr-4" : ""}>
-                    <RealisticTooth 
-                      id={id} 
-                      data={teeth[id]} 
-                      isSelected={selectedTooth === id}
-                      onToothClick={handleToothClick}
-                      view="occlusal"
-                    />
-                 </div>
-               ))}
-            </div>
+                  {/* Lower gum background */}
+                  <div
+                    className="absolute left-1/2 -translate-x-1/2 bg-rose-200/90"
+                    style={{ bottom: 60, width: 380, height: 240, borderRadius: '140px 140px 220px 220px' }}
+                  />
+                  <div
+                    className="absolute left-1/2 -translate-x-1/2 bg-rose-100"
+                    style={{ bottom: 95, width: 280, height: 180, borderRadius: '140px 140px 220px 220px' }}
+                  />
 
-            {/* Lower Arch Roots (Buccal) */}
-            <div className="relative flex justify-center gap-1 mt-[-10px] z-0" style={{ transform: 'scaleY(-1)' }}>
-               {Array.from({ length: 16 }, (_, i) => 32 - i).map(id => (
-                 <div key={id} className={id === 25 ? "mr-4" : ""}>
-                    <RealisticTooth 
-                      id={id} 
-                      data={teeth[id]} 
-                      isSelected={selectedTooth === id}
-                      onToothClick={handleToothClick}
-                      view="buccal"
-                    />
-                 </div>
-               ))}
-            </div>
+                  {/* Helper to render teeth on an arc that follows the jaw */}
+                  {(() => {
+                    const renderArc = (
+                      ids: number[],
+                      options: {
+                        centerX: number;
+                        centerY: number;
+                        radiusX: number;
+                        radiusY: number;
+                        startAngle: number;
+                        endAngle: number;
+                        labelPrimary?: boolean;
+                      }
+                    ) => {
+                      const { centerX, centerY, radiusX, radiusY, startAngle, endAngle, labelPrimary } = options;
 
+                      return ids.map((id, index) => {
+                        const t = ids.length === 1 ? 0.5 : index / (ids.length - 1);
+                        const angleDeg = startAngle + t * (endAngle - startAngle);
+                        const angleRad = (angleDeg * Math.PI) / 180;
+                        const x = centerX + radiusX * Math.cos(angleRad);
+                        const y = centerY + radiusY * Math.sin(angleRad);
+                        const label = labelPrimary ? PRIMARY_LABELS[id] : id;
+
+                        const toothData = teeth[id];
+                        if (!toothData) return null;
+
+                        return (
+                          <div
+                            key={id}
+                            className="absolute flex flex-col items-center"
+                            style={{
+                              left: `${x}px`,
+                              top: `${y}px`,
+                              transform: 'translate(-50%, -50%) scale(0.9)'
+                            }}
+                          >
+                            <RealisticTooth
+                              id={id}
+                              data={toothData}
+                              isSelected={selectedTooth === id}
+                              onToothClick={handleToothClick}
+                              view="occlusal"
+                            />
+                            <span
+                              className={`mt-0.5 text-[10px] font-medium ${
+                                selectedTooth === id ? 'text-sky-600' : 'text-slate-500'
+                              }`}
+                            >
+                              {label}
+                            </span>
+                          </div>
+                        );
+                      });
+                    };
+
+                    const cx = CHART_WIDTH / 2;
+
+                    return (
+                      <>
+                        {/* Upper permanent (1-16) outer arc closely following outer gum */}
+                        {renderArc(UPPER_PERMANENT_IDS, {
+                          centerX: cx,
+                          centerY: 210,
+                          radiusX: 190,
+                          radiusY: 155,
+                          startAngle: 205,
+                          endAngle: 335
+                        })}
+
+                        {/* Upper primary (A-J) inner arc following inner gum */}
+                        {renderArc(UPPER_PRIMARY_IDS, {
+                          centerX: cx,
+                          centerY: 215,
+                          radiusX: 150,
+                          radiusY: 120,
+                          startAngle: 205,
+                          endAngle: 335,
+                          labelPrimary: true
+                        })}
+
+                        {/* Lower permanent (17-32) outer arc */}
+                        {renderArc(LOWER_PERMANENT_IDS, {
+                          centerX: cx,
+                          centerY: CHART_HEIGHT - 210,
+                          radiusX: 190,
+                          radiusY: 155,
+                          startAngle: 25,
+                          endAngle: 155
+                        })}
+
+                        {/* Lower primary (K-T) inner arc */}
+                        {renderArc(LOWER_PRIMARY_IDS, {
+                          centerX: cx,
+                          centerY: CHART_HEIGHT - 215,
+                          radiusX: 150,
+                          radiusY: 120,
+                          startAngle: 25,
+                          endAngle: 155,
+                          labelPrimary: true
+                        })}
+                      </>
+                    );
+                  })()}
+                </div>
+              );
+            })()}
           </div>
         </div>
 

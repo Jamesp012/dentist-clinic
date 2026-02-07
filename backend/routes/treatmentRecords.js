@@ -42,32 +42,33 @@ router.get('/patient/:patientId', authMiddleware, async (req, res) => {
   }
 });
 
+const { sanitizeTreatmentInput } = require('../utils/treatmentUtils');
+
 // Create treatment record
 router.post('/', authMiddleware, async (req, res) => {
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
     
-    const { 
-      patientId, date, treatment, tooth, notes, cost, dentist, 
-      paymentType, amountPaid, remainingBalance, installmentPlan 
-    } = req.body;
-    
+    const { patientId, date, treatment, tooth, notes, dentist } = req.body;
+
+    const sanitized = sanitizeTreatmentInput(req.body);
+
     const [result] = await connection.query(
       `INSERT INTO treatmentRecords 
       (patientId, date, treatment, tooth, notes, cost, dentist, paymentType, amountPaid, remainingBalance, installmentPlan) 
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        patientId, date, treatment, tooth, notes, cost, dentist, 
-        paymentType || 'full', amountPaid || 0, remainingBalance || 0, 
-        installmentPlan ? JSON.stringify(installmentPlan) : null
+        patientId, date, treatment, tooth, notes, sanitized.cost, dentist, 
+        sanitized.paymentType, sanitized.amountPaid, sanitized.remainingBalance, 
+        sanitized.installmentPlan
       ]
     );
 
     await updatePatientBalance(patientId, connection);
     
     await connection.commit();
-    res.status(201).json({ id: result.insertId, ...req.body });
+    res.status(201).json({ id: result.insertId, ...req.body, cost: sanitized.cost, amountPaid: sanitized.amountPaid, remainingBalance: sanitized.remainingBalance });
   } catch (error) {
     await connection.rollback();
     res.status(500).json({ error: error.message });
@@ -82,20 +83,19 @@ router.put('/:id', authMiddleware, async (req, res) => {
   try {
     await connection.beginTransaction();
     
-    const { 
-      patientId, date, treatment, tooth, notes, cost, dentist, 
-      paymentType, amountPaid, remainingBalance, installmentPlan 
-    } = req.body;
-    
+    const { patientId, date, treatment, tooth, notes, dentist } = req.body;
+
+    const sanitized = sanitizeTreatmentInput(req.body);
+
     await connection.query(
       `UPDATE treatmentRecords SET 
       date=?, treatment=?, tooth=?, notes=?, cost=?, dentist=?, 
       paymentType=?, amountPaid=?, remainingBalance=?, installmentPlan=? 
       WHERE id=?`,
       [
-        date, treatment, tooth, notes, cost, dentist, 
-        paymentType, amountPaid, remainingBalance, 
-        installmentPlan ? JSON.stringify(installmentPlan) : null,
+        date, treatment, tooth, notes, sanitized.cost, dentist, 
+        sanitized.paymentType, sanitized.amountPaid, sanitized.remainingBalance, 
+        sanitized.installmentPlan,
         req.params.id
       ]
     );
@@ -103,7 +103,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
     await updatePatientBalance(patientId, connection);
     
     await connection.commit();
-    res.json({ id: req.params.id, ...req.body });
+    res.json({ id: req.params.id, ...req.body, cost: sanitized.cost, amountPaid: sanitized.amountPaid, remainingBalance: sanitized.remainingBalance });
   } catch (error) {
     await connection.rollback();
     res.status(500).json({ error: error.message });

@@ -1,7 +1,11 @@
 import { jsPDF } from 'jspdf';
 import { Referral, Patient } from '../App';
 import { toast } from 'sonner';
-import { clinicMap, redorLogo, xrayClinic, clinicLogo } from '../assets';
+// Use image paths directly to avoid TS image import issues
+const redorLogo = '/redor-logo.png';
+const clinicLogo = '/jclinic-logo.png';
+const xrayClinic = '/xray-clinic.jpg';
+const clinicMap = '/clinic-map.jpg';
 
 export const generateReferralPDF = (referral: Referral, patient?: Patient) => {
   try {

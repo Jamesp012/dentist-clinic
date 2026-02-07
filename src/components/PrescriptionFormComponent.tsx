@@ -30,7 +30,7 @@ interface PrescriptionFormComponentProps {
 }
 
 const defaultMedications: MedicationItem[] = [
-  { id: 'mef', name: 'MEFENAMIC ACID', doses: ['500mg', '250mg'], quantity: '', sig: 'Take 1 cap 3x a day' },
+  { id: 'mef', name: 'Mefenamic Acid', doses: ['500mg', '250mg'], quantity: '', sig: 'Take 1 cap 3x a day' },
   { id: 'amox', name: 'AMOXICILLIN', doses: ['500mg', '250mg'], quantity: '', sig: 'Take 1 cap 3x a day' },
   { id: 'tran', name: 'TRANEXAMIC ACID', doses: ['500mg', '250mg'], quantity: '', sig: 'Take 1 cap 3x a day' },
 ];

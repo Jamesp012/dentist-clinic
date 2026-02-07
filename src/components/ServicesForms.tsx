@@ -136,6 +136,9 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
 
       // Save to backend
       const savedRecord = await treatmentRecordAPI.create(newRecordData);
+      const nowISO = new Date().toISOString();
+      // Ensure createdAt exists so UI can sort/display by creation time
+      (savedRecord as any).createdAt = savedRecord.createdAt || nowISO;
       
       // Also create a payment record if there's an initial payment
       if (paid > 0) {
@@ -210,7 +213,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
         
         if (quantity) {
           medications.push({
-            name: 'MEFENAMIC Acid',
+            name: 'Mefenamic Acid',
             dosage: dosage,
             frequency: sig,
             duration: `Quantity: ${quantity}`,
@@ -226,7 +229,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
         
         if (quantity) {
           medications.push({
-            name: 'AMOXICILIN',
+            name: 'Amoxicilin',
             dosage: dosage,
             frequency: sig,
             duration: `Quantity: ${quantity}`,
@@ -242,7 +245,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
         
         if (quantity) {
           medications.push({
-            name: 'MEFENAMIC Acid',
+            name: 'Tranexamic Acid',
             dosage: dosage,
             frequency: sig,
             duration: `Quantity: ${quantity}`,
@@ -269,9 +272,11 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
 
       // Save to backend
       const savedPrescription = await prescriptionAPI.create(prescriptionData);
-      
-      const newPrescription: Prescription = {
-        id: savedPrescription.id.toString(),
+
+      const savedId = savedPrescription && (savedPrescription.id || savedPrescription._id) ? String(savedPrescription.id ?? savedPrescription._id) : `tmp-${Date.now()}`;
+      const nowISO = new Date().toISOString();
+      const newPrescription: Prescription & { createdAt?: string } = {
+        id: savedId,
         patientId,
         patientName: patient?.name || '',
         date: formData.get('date') as string,
@@ -280,9 +285,11 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
         notes: formData.get('notes') as string,
         licenseNumber: formData.get('license_number') as string,
         ptrNumber: formData.get('ptr_number') as string,
+        createdAt: savedPrescription?.createdAt || nowISO,
       };
 
-      setPrescriptions([...prescriptions, newPrescription]);
+      // Optimistically prepend the new prescription so it appears immediately as most recent
+      setPrescriptions(prev => [newPrescription, ...prev]);
       setViewingPrescription(newPrescription);
       setActiveForm(null);
       setPrescriptionPatientSearch('');
@@ -290,8 +297,9 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
       
       toast.success('Prescription created and saved successfully');
       
-      // Reload prescriptions to show new one
+      // Reload prescriptions to show new one (delay slightly to avoid eventual-consistency race)
       try {
+        await new Promise(res => setTimeout(res, 300));
         const allPrescriptions = await prescriptionAPI.getAll();
         if (allPrescriptions) {
           setPrescriptions(allPrescriptions);
@@ -385,7 +393,10 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
             </div>
             
             <div className="space-y-4 max-h-[500px] overflow-y-auto scrollbar-thin pr-2">
-              {treatmentRecords.slice(-5).reverse().map((record) => {
+              {[...treatmentRecords]
+                .slice()
+                .sort((a, b) => new Date(b.createdAt || b.date || 0).getTime() - new Date(a.createdAt || a.date || 0).getTime())
+                .map((record) => {
                 const patient = patients.find(p => String(p.id) === String(record.patientId));
                 return (
                   <div key={record.id} className="group/item relative p-6 border-2 border-slate-100 rounded-2xl hover:border-cyan-300/60 transition-all duration-300 bg-gradient-to-br from-white via-slate-50/30 to-cyan-50/20 hover:shadow-xl hover:scale-[1.01]">
@@ -399,7 +410,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                           </div>
                           <div>
                             <p className="text-xl font-bold text-slate-900">{patient?.name}</p>
-                            <p className="text-sm text-slate-500 mt-0.5">{formatToDD_MM_YYYY(record.date)} • Dr. {record.dentist}</p>
+                            <p className="text-sm text-slate-500 mt-0.5">{formatToDD_MM_YYYY(record.createdAt || record.date)} • Dr. {record.dentist}</p>
                           </div>
                         </div>
                         
@@ -477,7 +488,10 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
             </div>
             
             <div className="space-y-4 max-h-[500px] overflow-y-auto scrollbar-thin pr-2">
-              {prescriptions.slice(-5).reverse().map((prescription) => (
+              {[...prescriptions]
+                .slice()
+                .sort((a, b) => new Date(b.createdAt || b.date || 0).getTime() - new Date(a.createdAt || a.date || 0).getTime())
+                .map((prescription) => (
                 <div key={prescription.id} className="group/item relative p-6 border-2 border-slate-100 rounded-2xl hover:border-emerald-300/60 transition-all duration-300 bg-gradient-to-br from-white via-slate-50/30 to-emerald-50/20 hover:shadow-xl hover:scale-[1.01]">
                   <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-teal-500/5 rounded-2xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-300"></div>
                   
@@ -489,7 +503,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                         </div>
                         <div>
                           <p className="text-xl font-bold text-slate-900">{prescription.patientName}</p>
-                          <p className="text-sm text-slate-500 mt-0.5">{formatToDD_MM_YYYY(prescription.date)} • Dr. {prescription.dentist}</p>
+                          <p className="text-sm text-slate-500 mt-0.5">{formatToDD_MM_YYYY(prescription.createdAt || prescription.date)} • Dr. {prescription.dentist}</p>
                         </div>
                       </div>
                       
@@ -937,7 +951,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
 
               {/* Medicine Options */}
               <div className="space-y-6 ml-8">
-                {/* MEFENAMIC Acid */}
+                {/* Mefenamic Acid */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-4">
                     <input
@@ -947,7 +961,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                       className="w-5 h-5 rounded-full border-2 border-gray-400"
                     />
                     <label htmlFor="med_mefenamic" className="text-base font-semibold text-gray-900">
-                      MEFENAMIC Acid
+                      Mefenamic Acid
                     </label>
                     <div className="flex items-center gap-4 ml-8">
                       <label className="flex items-center gap-2 cursor-pointer">
@@ -990,7 +1004,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                   </div>
                 </div>
 
-                {/* AMOXICILIN */}
+                {/* Amoxicilin */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-4">
                     <input
@@ -1000,7 +1014,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                       className="w-5 h-5 rounded-full border-2 border-gray-400"
                     />
                     <label htmlFor="med_amoxicillin" className="text-base font-semibold text-gray-900">
-                      AMOXICILIN
+                      Amoxicilin
                     </label>
                     <div className="flex items-center gap-4 ml-8">
                       <label className="flex items-center gap-2 cursor-pointer">
@@ -1043,7 +1057,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                   </div>
                 </div>
 
-                {/* MEFENAMIC Acid (third entry) */}
+                {/* Tranexamic Acid (third entry) */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-4">
                     <input
@@ -1053,7 +1067,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                       className="w-5 h-5 rounded-full border-2 border-gray-400"
                     />
                     <label htmlFor="med_mefenamic_2" className="text-base font-semibold text-gray-900">
-                      MEFENAMIC Acid
+                      Tranexamic Acid
                     </label>
                     <div className="flex items-center gap-4 ml-8">
                       <label className="flex items-center gap-2 cursor-pointer">
@@ -1222,9 +1236,9 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                   };
 
                   const rows = [
-                    { key: 'mefenamic1' as const, label: 'MEFENAMIC Acid', med: pickBySlot('mefenamic1', 'MEFENAMIC Acid') },
-                    { key: 'amoxicilin' as const, label: 'AMOXICILIN', med: pickBySlot('amoxicilin', 'AMOXICILIN') },
-                    { key: 'mefenamic2' as const, label: 'MEFENAMIC Acid', med: pickBySlot('mefenamic2', 'MEFENAMIC Acid') },
+                    { key: 'mefenamic1' as const, label: 'Mefenamic Acid', med: pickBySlot('mefenamic1', 'Mefenamic Acid') },
+                    { key: 'amoxicilin' as const, label: 'Amoxicilin', med: pickBySlot('amoxicilin', 'Amoxicilin') },
+                    { key: 'mefenamic2' as const, label: 'Tranexamic Acid', med: pickBySlot('mefenamic2', 'Tranexamic Acid') },
                   ];
 
                   return rows.map((row, index) => {

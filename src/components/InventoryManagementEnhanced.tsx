@@ -397,12 +397,9 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
       {/* PAGE 1: OVERVIEW */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
-          {/* Header */}
+          {/* Header removed as requested */}
           <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900">Inventory Overview</h2>
-              <p className="text-gray-600 mt-2">View all inventory items and stock status</p>
-            </div>
+            <div></div>
             <button
               onClick={() => setShowAddModal(true)}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"

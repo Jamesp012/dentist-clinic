@@ -187,6 +187,22 @@ export const referralAPI = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+  uploadFile: async (formData) => {
+    // Uploading files requires FormData and not JSON. We use fetch directly to allow FormData as body.
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE}/referrals/upload`, {
+      method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to upload file');
+    }
+    return response.json();
+  },
   update: (id, data) =>
     fetchWithAuth(`${API_BASE}/referrals/${id}`, {
       method: 'PUT',

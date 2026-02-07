@@ -656,80 +656,86 @@ export function AssistantDashboard({
           <div className="relative z-10 flex-1">
             {activeTab === 'patients' && (
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Patient Management</h2>
-                <p className="text-slate-500 mt-1.5 text-sm font-medium">Manage patient records and medical information</p>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Patient Management</h2>
+                <p className="text-sm text-slate-500">Manage patient records and medical information</p>
               </div>
             )}
             {activeTab === 'appointments' && (
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Appointments</h2>
-                <p className="text-slate-500 mt-1.5 text-sm font-medium">Schedule and manage patient appointments</p>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Appointments</h2>
+                <p className="text-sm text-slate-500">Schedule and manage patient appointments</p>
               </div>
             )}
             {activeTab === 'employees' && (
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Employee Management</h2>
-                <p className="text-slate-500 mt-1.5 text-sm font-medium">Manage clinic staff and their access credentials</p>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Employee Management</h2>
+                <p className="text-sm text-slate-500">Manage clinic staff and their access credentials</p>
               </div>
             )}
             {activeTab === 'dental-charting' && (
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Dental Charting</h2>
-                <p className="text-slate-500 mt-1.5 text-sm font-medium">Track dental conditions and treatments</p>
-              </div>
-            )}
-            {activeTab === 'financial-report' && (
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Financial Report</h2>
-                <p className="text-slate-500 mt-1.5 text-sm font-medium">View financial data and reports</p>
-              </div>
-            )}
-            {activeTab === 'braces-charting' && (
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Braces Charting</h2>
-                <p className="text-slate-500 mt-1.5 text-sm font-medium">Track and manage patient braces records</p>
-              </div>
-            )}
-            {activeTab === 'inventory' && (
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Inventory Management</h2>
-                <p className="text-slate-500 mt-1.5 text-sm font-medium">Manage clinic supplies and equipment</p>
-              </div>
-            )}
-            {activeTab === 'braces' && (
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Braces Charting</h2>
-                <p className="text-slate-500 mt-1.5 text-sm font-medium">Track and manage patient braces records</p>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Dental Charting</h2>
+                <p className="text-sm text-slate-500">Track dental conditions and treatments</p>
               </div>
             )}
             {activeTab === 'photos' && (
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Patient Photos</h2>
-                <p className="text-slate-500 mt-1.5 text-sm font-medium">Manage patient treatment photos</p>
+                <h3 className="text-xl font-bold text-slate-900 font-poppins">Upload Patient Photo</h3>
+                <p className="text-sm text-slate-500">Add treatment photos to patient records</p>
+              </div>
+            )}
+            {activeTab === 'financial-report' && (
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Financial Report</h2>
+                <p className="text-sm text-slate-500">View financial data and reports</p>
+              </div>
+            )}
+            {activeTab === 'braces-charting' && (
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Braces Charting</h2>
+                <p className="text-sm text-slate-500">Track and manage patient braces records</p>
+              </div>
+            )}
+            {activeTab === 'inventory' && (
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Inventory Management</h2>
+                <p className="text-sm text-slate-500">Manage clinic supplies and equipment</p>
+              </div>
+            )}
+            {activeTab === 'braces' && (
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Braces Charting</h2>
+                <p className="text-sm text-slate-500">Track and manage patient braces records</p>
+              </div>
+            )}
+            {activeTab === 'photos' && (
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Patient Photos</h2>
+                <p className="text-sm text-slate-500">Manage patient treatment photos</p>
               </div>
             )}
             {activeTab === 'referrals' && (
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Referrals</h2>
-                <p className="text-slate-500 mt-1.5 text-sm font-medium">Generate and manage patient referrals</p>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Referrals</h2>
+                <p className="text-sm text-slate-500">Generate and manage patient referrals</p>
               </div>
             )}
             {activeTab === 'services' && (
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Services Forms</h2>
-                <p className="text-slate-500 mt-1.5 text-sm font-medium">Manage clinic services and treatments</p>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Services Forms</h2>
+                <p className="text-sm text-slate-500">Manage clinic services and treatments</p>
               </div>
             )}
             {activeTab === 'financial' && (
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Financial Report</h2>
-                <p className="text-slate-500 mt-1.5 text-sm font-medium">View financial data and reports</p>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Financial Report</h2>
+                <p className="text-sm text-slate-500">View financial data and reports</p>
               </div>
             )}
             {(activeTab === 'dashboard' || !activeTab) && (
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Dashboard</h2>
-                <p className="text-slate-500 mt-1.5 text-sm font-medium">Overview of clinic operations</p>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Dashboard</h2>
+                <p className="text-sm text-slate-500">Overview of clinic operations</p>
               </div>
             )}
           </div>
@@ -801,13 +807,7 @@ export function AssistantDashboard({
                   <div className="bg-white rounded-xl shadow-lg p-8 space-y-6">
                     {/* Header */}
                     <div className="flex items-center gap-3 mb-6">
-                      <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center">
-                        <Camera className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-slate-900 font-poppins">Upload Patient Photo</h3>
-                        <p className="text-sm text-slate-500">Add treatment photos to patient records</p>
-                      </div>
+                      {/* Header text moved to top bar */}
                     </div>
 
                     <div className="grid grid-cols-2 gap-6">

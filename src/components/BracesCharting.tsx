@@ -72,18 +72,19 @@ const COLORS = [
   { name: "Lavender", value: "#A78BFA" },
 ];
 
+// 16 brackets per arch to match full dentition
 const INITIAL_UPPER_POSITIONS = [
-  { x: 78, y: 275 }, { x: 140, y: 312 }, { x: 215, y: 342 }, { x: 295, y: 362 }, 
-  { x: 382, y: 375 }, { x: 472, y: 382 }, { x: 528, y: 382 }, { x: 618, y: 375 }, 
-  { x: 705, y: 362 }, { x: 785, y: 342 }, { x: 860, y: 312 }, { x: 922, y: 275 },
-  { x: 960, y: 230 }, { x: 982, y: 185 }
+  { x: 60, y: 260 }, { x: 115, y: 295 }, { x: 175, y: 325 }, { x: 240, y: 345 },
+  { x: 310, y: 360 }, { x: 385, y: 370 }, { x: 455, y: 375 }, { x: 525, y: 375 },
+  { x: 595, y: 370 }, { x: 665, y: 360 }, { x: 730, y: 345 }, { x: 790, y: 325 },
+  { x: 845, y: 295 }, { x: 895, y: 260 }, { x: 935, y: 230 }, { x: 965, y: 205 }
 ];
 
 const INITIAL_LOWER_POSITIONS = [
-  { x: 78, y: 495 }, { x: 140, y: 450 }, { x: 215, y: 415 }, { x: 295, y: 390 }, 
-  { x: 382, y: 375 }, { x: 472, y: 365 }, { x: 528, y: 365 }, { x: 618, y: 375 }, 
-  { x: 705, y: 390 }, { x: 785, y: 415 }, { x: 860, y: 450 }, { x: 922, y: 495 },
-  { x: 960, y: 535 }, { x: 982, y: 580 }
+  { x: 75, y: 515 }, { x: 130, y: 485 }, { x: 190, y: 455 }, { x: 255, y: 435 },
+  { x: 320, y: 420 }, { x: 390, y: 410 }, { x: 460, y: 405 }, { x: 530, y: 405 },
+  { x: 600, y: 410 }, { x: 670, y: 420 }, { x: 735, y: 435 }, { x: 795, y: 455 },
+  { x: 850, y: 485 }, { x: 900, y: 515 }, { x: 940, y: 545 }, { x: 970, y: 575 }
 ];
 
 // Available rubber band colors
@@ -113,10 +114,22 @@ export function BracesCharting({ patients }: BracesChartingProps) {
   const [activeTab, setActiveTab] = useState<"palette" | "history">("palette");
   const [selectionMode, setSelectionMode] = useState<"single" | "all">("all");
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
-  const [previewColors, setPreviewColors] = useState<string[]>(new Array(28).fill("#E2E8F0"));
-  const [bracketColors, setBracketColors] = useState<string[]>(new Array(28).fill("#E2E8F0"));
+  const [previewColors, setPreviewColors] = useState<string[]>(new Array(32).fill("#E2E8F0"));
+  const [bracketColors, setBracketColors] = useState<string[]>(new Array(32).fill("#E2E8F0"));
   const [upperPositions, setUpperPositions] = useState(INITIAL_UPPER_POSITIONS);
   const [lowerPositions, setLowerPositions] = useState(INITIAL_LOWER_POSITIONS);
+
+  // Helper to normalize saved positions to 16 upper + 16 lower
+  const normalizePositions = (saved: any[] | undefined, initial: typeof INITIAL_UPPER_POSITIONS) => {
+    if (!Array.isArray(saved) || saved.length === 0) return initial;
+    const result = [...initial];
+    saved.forEach((pos, idx) => {
+      if (pos && typeof pos.x === 'number' && typeof pos.y === 'number' && idx < result.length) {
+        result[idx] = { x: pos.x, y: pos.y };
+      }
+    });
+    return result;
+  };
 
   // Load data from localStorage on mount
   useEffect(() => {
@@ -129,10 +142,8 @@ export function BracesCharting({ patients }: BracesChartingProps) {
       const savedPositions = localStorage.getItem('ortho_bracket_positions');
       if (savedPositions) {
         const { upper, lower } = JSON.parse(savedPositions);
-        if (upper && lower) {
-          setUpperPositions(upper);
-          setLowerPositions(lower);
-        }
+        setUpperPositions(normalizePositions(upper, INITIAL_UPPER_POSITIONS));
+        setLowerPositions(normalizePositions(lower, INITIAL_LOWER_POSITIONS));
       }
     } catch (error) {
       console.error('Error loading saved braces data:', error);
@@ -180,7 +191,7 @@ export function BracesCharting({ patients }: BracesChartingProps) {
   const handleColorSelect = (color: typeof COLORS[0]) => {
     setSelectedColor(color);
     if (selectionMode === "all") {
-      setPreviewColors(new Array(28).fill(color.value));
+      setPreviewColors(new Array(32).fill(color.value));
     } else if (selectedIndices.length > 0) {
       const newPreview = [...previewColors];
       selectedIndices.forEach(idx => {
@@ -239,25 +250,26 @@ export function BracesCharting({ patients }: BracesChartingProps) {
   };
 
   const handlePositionChange = useCallback((index: number, x: number, y: number) => {
-    if (index < 14) {
+    if (index < 16) {
       const newPos = [...upperPositions];
       newPos[index] = { x, y };
       setUpperPositions(newPos);
+      try {
+        localStorage.setItem('ortho_bracket_positions', JSON.stringify({ upper: newPos, lower: lowerPositions }));
+      } catch (error) {
+        console.error('Error saving positions:', error);
+      }
     } else {
       const newPos = [...lowerPositions];
-      newPos[index - 14] = { x, y };
+      newPos[index - 16] = { x, y };
       setLowerPositions(newPos);
+      try {
+        localStorage.setItem('ortho_bracket_positions', JSON.stringify({ upper: upperPositions, lower: newPos }));
+      } catch (error) {
+        console.error('Error saving positions:', error);
+      }
     }
   }, [upperPositions, lowerPositions]);
-
-  const saveAdjustments = () => {
-    try {
-      localStorage.setItem('ortho_bracket_positions', JSON.stringify({ upper: upperPositions, lower: lowerPositions }));
-      console.log("Positions saved");
-    } catch (error) {
-      console.error('Error saving positions:', error);
-    }
-  };
 
   const resetPositions = () => {
     setUpperPositions(INITIAL_UPPER_POSITIONS);
@@ -266,7 +278,7 @@ export function BracesCharting({ patients }: BracesChartingProps) {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="p-8 bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 min-h-screen">
+      <div className="p-8 bg-white">
         {/* Patient Selection */}
         <motion.div 
           className="relative bg-white p-6 rounded-xl shadow-lg border border-purple-100 mb-6 backdrop-blur-sm bg-opacity-90 z-40"
@@ -283,10 +295,10 @@ export function BracesCharting({ patients }: BracesChartingProps) {
         </motion.div>
 
         {selectedPatient && (
-          <div className="flex flex-col lg:flex-row gap-6">
+          <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-stretch">
             {/* Main Dental Chart Area */}
             <motion.div 
-              className="flex-1 bg-white p-8 rounded-xl shadow-xl border border-purple-100 backdrop-blur-sm bg-opacity-90"
+              className="flex-1 bg-white p-8 rounded-xl shadow-xl border border-purple-100"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
@@ -326,23 +338,23 @@ export function BracesCharting({ patients }: BracesChartingProps) {
 
                 <div className="flex gap-3 mt-4">
                   <button 
-                    onClick={resetPositions}
+                    onClick={() => {
+                      resetPositions();
+                      try {
+                        localStorage.setItem('ortho_bracket_positions', JSON.stringify({ upper: INITIAL_UPPER_POSITIONS, lower: INITIAL_LOWER_POSITIONS }));
+                      } catch (error) {
+                        console.error('Error resetting positions:', error);
+                      }
+                    }}
                     className="flex items-center gap-2 px-4 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-all text-gray-600 text-xs font-bold"
                   >
                     <RotateCcw className="w-4 h-4" />
                     RESET POSITIONS
                   </button>
-                  <button 
-                    onClick={saveAdjustments}
-                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all text-xs font-bold"
-                  >
-                    <Save className="w-4 h-4" />
-                    SAVE ADJUSTMENT
-                  </button>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-white via-blue-50 to-white rounded-2xl border-2 border-gray-200 p-8 mb-6 shadow-xl min-h-[700px]">
+              <div className="bg-white rounded-2xl border border-gray-200 p-8 mb-6 shadow-xl">
                 <div className="h-full">
                   <DentalChart 
                     colors={previewColors} 
@@ -391,7 +403,7 @@ export function BracesCharting({ patients }: BracesChartingProps) {
 
             {/* Color Palette Sidebar */}
             <motion.div 
-              className="lg:w-96 bg-white rounded-xl shadow-lg border border-purple-100 backdrop-blur-sm bg-opacity-90 h-fit"
+              className="lg:w-96 bg-white rounded-xl shadow-lg border border-purple-100 backdrop-blur-sm bg-opacity-90 flex flex-col"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
@@ -417,7 +429,7 @@ export function BracesCharting({ patients }: BracesChartingProps) {
                 </button>
               </div>
 
-              <div className="h-96 overflow-y-auto">
+              <div className="flex-1 min-h-0 overflow-y-auto">
                 <AnimatePresence mode="wait">
                   {activeTab === "palette" ? (
                     <ColorPalette 

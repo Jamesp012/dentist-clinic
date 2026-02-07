@@ -6,8 +6,10 @@ import { referralAPI } from '../api';
 import { generateReferralPDF } from '../utils/referralPdfGenerator';
 import { PatientSearchInput } from './PatientSearchInput';
 import { motion, AnimatePresence } from 'motion/react';
-import { redorLogo, clinicLogo, xrayClinic } from '../assets';
-
+// NOTE: Image assets referenced by path to avoid TypeScript image import issues
+const redorLogo = '/redor-logo.png';
+const clinicLogo = '/jclinic-logo.png';
+const xrayClinic = '/xray-clinic.jpg';
 const clinicMap = '/clinic-map.jpg';
 
 
@@ -361,15 +363,9 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 flex flex-col flex-1">
-      {/* Subtle background decoration */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-20 right-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"></div>
-      </div>
-
+    <div className="min-h-screen bg-white flex flex-col flex-1">
       {/* Content with padding and relative positioning */}
-      <div className="relative z-10 p-10 space-y-10 flex flex-col flex-1 max-w-6xl mx-auto w-full">
+      <div className="relative z-10 px-8 pt-4 pb-10 space-y-8 flex flex-col flex-1 w-full">
       {/* Type Selection Modal */}
       {showTypeSelection && referralType === null && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -1012,21 +1008,15 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
         </div>
       )}
 
-      <div className="max-w-6xl mx-auto">
         {/* Premium Header Section */}
-        <div className="relative flex items-center justify-between mb-10">
-          <div>
-            <h1 className="text-4xl font-bold text-slate-900 mb-2">Referrals Management</h1>
-            <p className="text-slate-600 text-lg">Create, manage, and track patient referrals with ease</p>
-          </div>
-          
+        <div className="relative flex items-center justify-end mb-4 mt-2">
           <button
             type="button"
             onClick={() => { setShowTypeSelection(true); setReferralType(null); }}
-            className="group relative px-8 py-4 bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white rounded-2xl hover:shadow-2xl hover:shadow-cyan-500/30 hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-3 font-bold overflow-hidden whitespace-nowrap"
+            className="group relative px-5 py-2.5 bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white rounded-xl hover:shadow-xl hover:shadow-cyan-500/30 hover:scale-[1.02] active:scale-95 transition-all duration-300 flex items-center gap-2 font-semibold overflow-hidden whitespace-nowrap text-sm"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <Plus className="w-6 h-6 relative z-10" />
+            <Plus className="w-4 h-4 relative z-10" />
             <span className="relative z-10">New Referral</span>
           </button>
         </div>
@@ -1052,8 +1042,8 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
             {referralFilter !== 'all'
               ? 'All Referrals'
               : allViewMode === 'alphabetical'
-              ? 'Alphabetical Order'
-              : 'Recent First'}
+              ? 'View Recent'
+              : 'Alphabetical Order'}
           </button>
           <button
             type="button"
@@ -1080,31 +1070,22 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
         </div>
 
         {/* Referrals List - Premium Card Design */}
-        <div className="relative group">
+        <div className="relative group w-full">
           <div className="absolute -inset-1 bg-gradient-to-r from-teal-500 via-cyan-500 to-blue-500 rounded-3xl opacity-20 group-hover:opacity-30 blur transition-all duration-500"></div>
-          <div className="relative bg-white/90 backdrop-blur-xl p-10 rounded-3xl shadow-xl border border-slate-200/60 hover:shadow-2xl transition-all duration-500">
-            <div className="flex items-center justify-between mb-10">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
-                  <Eye className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-3xl font-bold text-slate-900">All Referrals</h2>
-                  <p className="text-slate-500 mt-1">{sortedReferrals?.length || 0} total</p>
-                </div>
-              </div>
-              <span className="px-4 py-2 bg-teal-50 text-teal-700 rounded-xl text-sm font-bold">
+          <div className="relative w-full bg-white/90 backdrop-blur-xl px-8 pt-4 pb-8 rounded-3xl shadow-xl border border-slate-200/60 hover:shadow-2xl transition-all duration-500 flex flex-col">
+            <div className="flex justify-end mb-4">
+              <span className="px-4 py-1.5 bg-teal-50 text-teal-700 rounded-xl text-xs font-bold">
                 {sortedReferrals?.length || 0} Records
               </span>
             </div>
 
             {/* Referrals Grid */}
-            <div className="space-y-4 max-h-[600px] overflow-y-auto scrollbar-thin pr-3">
+            <div className="space-y-4 flex-1 overflow-y-auto scrollbar-thin pr-3 min-h-[400px]">
               {(sortedReferrals && sortedReferrals.length > 0) ? (
                 sortedReferrals.map((referral) => (
                   <div
                     key={referral.id}
-                    className="group/item relative p-6 border-2 border-slate-100 rounded-2xl hover:border-cyan-300/60 transition-all duration-300 bg-gradient-to-br from-white via-slate-50/30 to-cyan-50/20 hover:shadow-xl hover:scale-[1.01]"
+                    className="group/item relative p-6 border-2 border-slate-100 rounded-2xl hover:border-cyan-300/60 transition-all duration-300 bg-gradient-to-br from-white via-slate-50/30 to-cyan-50/20 hover:shadow-xl"
                   >
                     <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-teal-500/5 rounded-2xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-300"></div>
 
@@ -1757,7 +1738,6 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
           </motion.div>
         )}
       </AnimatePresence>
-      </div>
     </div>
   );
 }

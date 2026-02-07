@@ -40,10 +40,24 @@ const upload = multer({
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const [referrals] = await pool.query('SELECT * FROM referrals ORDER BY createdAt DESC');
+
+    // Attach uploaded files for each referral
+    const referralIds = referrals.map(r => r.id);
+    let filesByReferral = {};
+    if (referralIds.length > 0) {
+      const [files] = await pool.query('SELECT id, referralId, fileName, fileType, uploadedDate, url FROM referral_files WHERE referralId IN (?)', [referralIds]);
+      filesByReferral = files.reduce((acc, f) => {
+        acc[f.referralId] = acc[f.referralId] || [];
+        acc[f.referralId].push(f);
+        return acc;
+      }, {});
+    }
+
     const parsedReferrals = referrals.map(ref => ({
       ...ref,
       selectedServices: ref.selectedServices ? JSON.parse(ref.selectedServices) : {},
-      xrayDiagramSelections: ref.xrayDiagramSelections ? JSON.parse(ref.xrayDiagramSelections) : {}
+      xrayDiagramSelections: ref.xrayDiagramSelections ? JSON.parse(ref.xrayDiagramSelections) : {},
+      uploadedFiles: filesByReferral[ref.id] || []
     }));
     res.json(parsedReferrals);
   } catch (error) {
@@ -58,10 +72,23 @@ router.get('/patient/:patientId', authMiddleware, async (req, res) => {
       'SELECT * FROM referrals WHERE patientId = ? ORDER BY createdAt DESC',
       [req.params.patientId]
     );
+
+    const referralIds = referrals.map(r => r.id);
+    let filesByReferral = {};
+    if (referralIds.length > 0) {
+      const [files] = await pool.query('SELECT id, referralId, fileName, fileType, uploadedDate, url FROM referral_files WHERE referralId IN (?)', [referralIds]);
+      filesByReferral = files.reduce((acc, f) => {
+        acc[f.referralId] = acc[f.referralId] || [];
+        acc[f.referralId].push(f);
+        return acc;
+      }, {});
+    }
+
     const parsedReferrals = referrals.map(ref => ({
       ...ref,
       selectedServices: ref.selectedServices ? JSON.parse(ref.selectedServices) : {},
-      xrayDiagramSelections: ref.xrayDiagramSelections ? JSON.parse(ref.xrayDiagramSelections) : {}
+      xrayDiagramSelections: ref.xrayDiagramSelections ? JSON.parse(ref.xrayDiagramSelections) : {},
+      uploadedFiles: filesByReferral[ref.id] || []
     }));
     res.json(parsedReferrals);
   } catch (error) {
@@ -77,10 +104,14 @@ router.get('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Referral not found' });
     }
     const referral = referrals[0];
+
+    const [files] = await pool.query('SELECT id, fileName, fileType, uploadedDate, url FROM referral_files WHERE referralId = ?', [referral.id]);
+
     res.json({
       ...referral,
       selectedServices: referral.selectedServices ? JSON.parse(referral.selectedServices) : {},
-      xrayDiagramSelections: referral.xrayDiagramSelections ? JSON.parse(referral.xrayDiagramSelections) : {}
+      xrayDiagramSelections: referral.xrayDiagramSelections ? JSON.parse(referral.xrayDiagramSelections) : {},
+      uploadedFiles: files || []
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -90,23 +121,49 @@ router.get('/:id', authMiddleware, async (req, res) => {
 // Create referral
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { patientId, patientName, referringDentist, referredByContact, referredByEmail, referredTo, specialty, reason, selectedServices, date, urgency, createdByRole, referralType, xrayDiagramSelections, xrayNotes } = req.body;
+    const { patientId, patientName, referringDentist, referredByContact, referredByEmail, referredTo, specialty, reason, selectedServices, date, urgency, createdByRole, referralType, xrayDiagramSelections, xrayNotes, uploadedFileIds, source } = req.body;
+
+    // Treat patient-created referrals as incoming
     const roleValue = createdByRole === 'patient' ? 'patient' : 'staff';
     const servicesJson = selectedServices ? JSON.stringify(selectedServices) : null;
     const xrayDiagJson = xrayDiagramSelections ? JSON.stringify(xrayDiagramSelections) : null;
-    const refType = referralType || 'outgoing';
-    
+    const refType = roleValue === 'patient' ? 'incoming' : (referralType || 'outgoing');
+
+    // Source default: if provided use it, otherwise patient uploads set source accordingly
+    let sourceValue = source || (roleValue === 'patient' ? 'patient-uploaded' : 'staff-upload');
+
     const [result] = await pool.query(
-      'INSERT INTO referrals (patientId, patientName, referringDentist, referredByContact, referredByEmail, referredTo, specialty, reason, selectedServices, date, urgency, createdByRole, referralType, xrayDiagramSelections, xrayNotes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [patientId || null, patientName, referringDentist, referredByContact || null, referredByEmail || null, referredTo, specialty || null, reason || null, servicesJson, date, urgency || 'routine', roleValue, refType, xrayDiagJson, xrayNotes || null]
+      'INSERT INTO referrals (patientId, patientName, referringDentist, referredByContact, referredByEmail, referredTo, specialty, reason, selectedServices, date, urgency, createdByRole, referralType, source, xrayDiagramSelections, xrayNotes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [patientId || null, patientName, referringDentist, referredByContact || null, referredByEmail || null, referredTo, specialty || null, reason || null, servicesJson, date, urgency || 'routine', roleValue, refType, sourceValue, xrayDiagJson, xrayNotes || null]
     );
+
+    // If uploaded files were provided, attach them to this referral
+    if (Array.isArray(uploadedFileIds) && uploadedFileIds.length > 0) {
+      await pool.query('UPDATE referral_files SET referralId = ? WHERE id IN (?)', [result.insertId, uploadedFileIds]);
+    }
+
+    // Load attached files to include in the response
+    const [files] = await pool.query('SELECT id, fileName, fileType, uploadedDate, url FROM referral_files WHERE referralId = ?', [result.insertId]);
+
     res.status(201).json({ 
       id: result.insertId, 
-      ...req.body, 
+      patientId: patientId || null,
+      patientName,
+      referringDentist,
+      referredByContact: referredByContact || null,
+      referredByEmail: referredByEmail || null,
+      referredTo,
+      specialty: specialty || null,
+      reason: reason || null,
+      selectedServices: selectedServices || {},
+      date,
+      urgency: urgency || 'routine',
       createdByRole: roleValue,
       referralType: refType,
-      selectedServices: selectedServices || {},
-      xrayDiagramSelections: xrayDiagramSelections || {}
+      source: sourceValue,
+      xrayDiagramSelections: xrayDiagramSelections || {},
+      xrayNotes: xrayNotes || null,
+      uploadedFiles: files || []
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -120,23 +177,30 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req, res) =
       return res.status(400).json({ error: 'No file provided' });
     }
 
-    const { patientId, fileType } = req.body;
+    const { patientId, referralId } = req.body;
     const fileName = req.file.originalname;
     const filePath = req.file.path;
     const fileSize = req.file.size;
     const userId = req.user?.id || null;
+    const mime = req.file.mimetype || '';
+    const fileType = mime.startsWith('image/') ? 'image' : mime === 'application/pdf' ? 'pdf' : 'document';
 
     // Store file information in database
     const [result] = await pool.query(
-      'INSERT INTO referral_files (patientId, fileName, fileType, filePath, fileSize, uploadedBy) VALUES (?, ?, ?, ?, ?, ?)',
-      [patientId, fileName, fileType || 'document', filePath, fileSize, userId]
+      'INSERT INTO referral_files (referralId, patientId, fileName, fileType, filePath, fileSize, uploadedBy) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [referralId || null, patientId || null, fileName, fileType, filePath, fileSize, userId]
     );
+
+    // If referralId provided, ensure it's attached; otherwise client may attach later
+    if (referralId) {
+      await pool.query('UPDATE referral_files SET referralId = ? WHERE id = ?', [referralId, result.insertId]);
+    }
 
     res.status(201).json({
       id: result.insertId,
       patientId,
       fileName,
-      fileType: fileType || 'document',
+      fileType,
       uploadedDate: new Date().toISOString(),
       url: `/uploads/referrals/${req.file.filename}`
     });

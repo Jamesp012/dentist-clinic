@@ -197,19 +197,24 @@ export function Notifications({ patients: _patients, appointments, referrals, cu
         if (createdByRole !== 'patient') return;
       }
 
+      // Ensure referral date is valid
+      if (!referral.date) return;
       const referralDate = new Date(referral.date);
+      if (isNaN(referralDate.getTime())) return;
+
       const daysSinceReferral = Math.ceil((today.getTime() - referralDate.getTime()) / (1000 * 60 * 60 * 24));
       
       // Show notification for referrals made within the last 7 days
       if (daysSinceReferral >= 0 && daysSinceReferral <= 7) {
-        let message = `You have been referred to ${referral.referredTo} (${referral.specialty})`;
+        const specialty = referral.specialty || '';
+        let message = `You have been referred to ${referral.referredTo || 'the specified clinic'} (${specialty || 'General'})`;
         
-        if (referral.specialty === 'X-Ray Imaging') {
+        if (specialty === 'X-Ray Imaging') {
           message += '. Please schedule your X-ray appointment as soon as possible';
-        } else if (referral.specialty.includes('Orthodontics')) {
+        } else if (specialty.includes('Orthodontics')) {
           message += ' for specialized orthodontic treatment';
         } else {
-          message += ` for specialized treatment. Reason: ${referral.reason}`;
+          message += ` for specialized treatment. Reason: ${referral.reason || 'Not specified'}`;
         }
 
         if (referral.urgency === 'urgent' || referral.urgency === 'emergency') {

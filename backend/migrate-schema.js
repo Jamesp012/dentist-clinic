@@ -109,6 +109,21 @@ async function migrateDatabase() {
       `);
     }
 
+    // Sanitize numeric columns in treatmentRecords (handle existing NULLs)
+    console.log('Sanitizing treatmentRecords numeric fields (cost, amountPaid, remainingBalance)');
+    try {
+      await connection.execute("UPDATE treatmentRecords SET cost = 0 WHERE cost IS NULL");
+      await connection.execute("UPDATE treatmentRecords SET amountPaid = 0 WHERE amountPaid IS NULL");
+      await connection.execute("UPDATE treatmentRecords SET remainingBalance = 0 WHERE remainingBalance IS NULL");
+
+      console.log('Altering treatmentRecords numeric columns to NOT NULL DEFAULT 0');
+      await connection.execute("ALTER TABLE treatmentRecords MODIFY COLUMN cost DECIMAL(10,2) NOT NULL DEFAULT 0");
+      await connection.execute("ALTER TABLE treatmentRecords MODIFY COLUMN amountPaid DECIMAL(10,2) NOT NULL DEFAULT 0");
+      await connection.execute("ALTER TABLE treatmentRecords MODIFY COLUMN remainingBalance DECIMAL(10,2) NOT NULL DEFAULT 0");
+    } catch (err) {
+      console.warn('Sanitization/alter for treatmentRecords encountered an issue (continuing):', err.message);
+    }
+
     // Set correct character set for critical tables
     console.log('Setting character set for tables...');
     await connection.execute("ALTER TABLE users CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");

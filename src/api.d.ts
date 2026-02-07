@@ -121,6 +121,7 @@ export const getAuthToken: () => string | null;
 export const authAPI: {
   login: (username: string, password: string) => Promise<AuthResponse>;
   register: (userData: any) => Promise<any>;
+  changePassword: (userId: string | number, newPassword: string) => Promise<any>;
 };
 
 export const patientAPI: {
