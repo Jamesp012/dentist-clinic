@@ -127,6 +127,7 @@ export function BracesCharting({ patients }: BracesChartingProps) {
   const [upperPositions, setUpperPositions] = useState(INITIAL_UPPER_POSITIONS);
   const [lowerPositions, setLowerPositions] = useState(INITIAL_LOWER_POSITIONS);
   const [bracketVisibility, setBracketVisibility] = useState<boolean[]>(new Array(32).fill(true));
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Helper to normalize saved positions to 16 upper + 16 lower
   const normalizePositions = (saved: any[] | undefined, initial: typeof INITIAL_UPPER_POSITIONS) => {
@@ -140,6 +141,40 @@ export function BracesCharting({ patients }: BracesChartingProps) {
     return result;
   };
 
+  const saveChanges = () => {
+    if (!selectedPatient) return;
+
+    const currentData = getPatientBracesData();
+    const newHistoryEntry: ColorHistoryEntry = {
+      date: new Date().toISOString(),
+      colorName: 'Manual Save',
+      colorValue: '',
+      notes: `Saved current braces chart`
+    };
+
+    const snapshot: ChartSnapshot = {
+      id: `${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      bracketColors: [...previewColors],
+      bracketVisibility: [...bracketVisibility],
+    };
+
+    setBracesData({
+      ...bracesData,
+      [selectedPatient.id]: {
+        ...currentData,
+        colorHistory: [newHistoryEntry, ...(currentData.colorHistory || [])],
+        lastUpdated: new Date().toISOString(),
+        currentBracketVisibility: [...bracketVisibility],
+        chartSnapshots: [snapshot, ...(currentData.chartSnapshots || [])]
+      }
+    });
+
+    // reflect that changes are saved
+    setBracketColors([...previewColors]);
+    setHasUnsavedChanges(false);
+  };
+
   // Load data from localStorage on mount
   useEffect(() => {
     try {
@@ -148,7 +183,12 @@ export function BracesCharting({ patients }: BracesChartingProps) {
         const parsedData = JSON.parse(savedData);
         setBracesData(parsedData);
       }
-      // bracket positions are fixed to the image defaults; do not load saved positions
+      const savedPositions = localStorage.getItem('ortho_bracket_positions');
+      if (savedPositions) {
+        const { upper, lower } = JSON.parse(savedPositions);
+        setUpperPositions(normalizePositions(upper, INITIAL_UPPER_POSITIONS));
+        setLowerPositions(normalizePositions(lower, INITIAL_LOWER_POSITIONS));
+      }
     } catch (error) {
       console.error('Error loading saved braces data:', error);
     }
@@ -218,38 +258,7 @@ export function BracesCharting({ patients }: BracesChartingProps) {
     }
   };
 
-  const applyColors = () => {
-    if (!selectedPatient) return;
-    
-    const newColors = [...previewColors];
-    setBracketColors(newColors);
-
-    const currentData = getPatientBracesData();
-    const newHistoryEntry: ColorHistoryEntry = {
-      date: new Date().toISOString(),
-      colorName: selectedColor.name,
-      colorValue: selectedColor.value,
-      notes: `Applied ${selectedColor.name} to brackets`
-    };
-
-    const snapshot: ChartSnapshot = {
-      id: `${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      bracketColors: newColors,
-      bracketVisibility: [...bracketVisibility],
-    };
-    
-    setBracesData({
-      ...bracesData,
-      [selectedPatient.id]: {
-        ...currentData,
-        colorHistory: [newHistoryEntry, ...currentData.colorHistory],
-        lastUpdated: new Date().toISOString(),
-        currentBracketVisibility: [...bracketVisibility],
-        chartSnapshots: [snapshot, ...(currentData.chartSnapshots || [])]
-      }
-    });
-  };
+  // applyColors removed — preview changes are live and saved only when Save is clicked
 
   const toggleToothSelection = (index: number) => {
     if (selectionMode === "all") {
@@ -277,7 +286,7 @@ export function BracesCharting({ patients }: BracesChartingProps) {
   };
 
 
-  // Position updates removed — brackets remain at the fixed image-aligned coordinates.
+  // Positions are fixed; no position-change handler.
 
 
 
@@ -294,26 +303,44 @@ export function BracesCharting({ patients }: BracesChartingProps) {
       }
     });
 
+    // Just update visibility visually; only persist when user clicks Save
     setBracketVisibility(nextVisibility);
-
-    const currentData = getPatientBracesData();
-    const snapshot: ChartSnapshot = {
-      id: `${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      bracketColors: [...bracketColors],
-      bracketVisibility: [...nextVisibility],
-    };
-
-    setBracesData({
-      ...bracesData,
-      [selectedPatient.id]: {
-        ...currentData,
-        lastUpdated: new Date().toISOString(),
-        currentBracketVisibility: [...nextVisibility],
-        chartSnapshots: [snapshot, ...(currentData.chartSnapshots || [])]
-      }
-    });
+    setHasUnsavedChanges(true);
   };
+
+  // Sync bracket colors and preview when patient or stored data changes
+  useEffect(() => {
+    if (!selectedPatient) return;
+    const data = bracesData[selectedPatient.id];
+    if (data && Array.isArray(data.chartSnapshots) && data.chartSnapshots.length > 0) {
+      const latest = data.chartSnapshots[0];
+      if (Array.isArray(latest.bracketColors) && latest.bracketColors.length === 32) {
+        setBracketColors([...latest.bracketColors]);
+        setPreviewColors([...latest.bracketColors]);
+      }
+      if (Array.isArray(data.currentBracketVisibility) && data.currentBracketVisibility.length === 32) {
+        setBracketVisibility([...data.currentBracketVisibility]);
+      }
+    } else {
+      // fallback to defaults
+      setBracketColors(new Array(32).fill(COLORS[0].value));
+      setPreviewColors(new Array(32).fill(COLORS[0].value));
+    }
+    setHasUnsavedChanges(false);
+  }, [selectedPatient, bracesData]);
+
+  // Track unsaved changes by comparing preview vs last-saved bracketColors and visibility
+  useEffect(() => {
+    if (!selectedPatient) {
+      setHasUnsavedChanges(false);
+      return;
+    }
+    const data = bracesData[selectedPatient.id] || {} as BracesData;
+    const savedVisibility = Array.isArray(data.currentBracketVisibility) ? data.currentBracketVisibility : new Array(32).fill(true);
+    const colorsChanged = previewColors.some((c, i) => c !== bracketColors[i]);
+    const visibilityChanged = savedVisibility.some((v, i) => v !== bracketVisibility[i]);
+    setHasUnsavedChanges(colorsChanged || visibilityChanged);
+  }, [previewColors, bracketVisibility, bracketColors, selectedPatient, bracesData]);
 
   const handleRemoveBrackets = () => updateBracketVisibility(false);
   const handleAddBrackets = () => updateBracketVisibility(true);
@@ -420,11 +447,12 @@ export function BracesCharting({ patients }: BracesChartingProps) {
               </div>
 
               <button 
-                onClick={applyColors}
-                className="w-full py-4 px-6 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-lg font-bold text-lg hover:from-pink-700 hover:to-purple-700 transition-all shadow-lg"
+                onClick={saveChanges}
+                disabled={!hasUnsavedChanges}
+                className={`w-full py-4 px-6 rounded-lg font-bold text-lg transition-all shadow-lg ${hasUnsavedChanges ? 'bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}
               >
-                <Palette className="w-5 h-5 inline mr-2" />
-                APPLY COLOR SELECTION
+                <Save className="w-5 h-5 inline mr-2" />
+                SAVE
               </button>
 
               {/* Tips Section */}

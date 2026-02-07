@@ -14,7 +14,7 @@ interface DentalChartProps {
   upperPositions: Position[];
   lowerPositions: Position[];
   bracketVisibility?: boolean[];
-  // No position updates — brackets are fixed to the image.
+  // No position change callback when positions are fixed
 }
 
 interface DraggableBracketProps {
@@ -40,7 +40,7 @@ const DraggableBracket: React.FC<DraggableBracketProps> = ({
 
   return (
     <g
-      className="cursor-default transition-opacity"
+      className="cursor-pointer transition-opacity"
       onClick={(e) => {
         e.stopPropagation();
         onToothClick(pos.index);
@@ -172,7 +172,7 @@ export const DentalChart: React.FC<DentalChartProps> = ({
     return d;
   };
 
-  // Dragging removed — brackets are fixed to the image coordinates.
+  // Dragging removed — positions are fixed to the provided arrays
 
 
 
