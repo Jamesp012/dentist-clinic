@@ -273,59 +273,7 @@ export function BracesCharting({ patients }: BracesChartingProps) {
   };
 
 
-  // Handler to update a bracket position (expects percent values from DentalChart)
-  const handlePositionChange = (index: number, xPercent: number, yPercent: number) => {
-    if (index < 0 || index >= 32) return;
-    if (index < 16) {
-      setUpperPositions(prev => {
-        const copy = [...prev];
-        copy[index] = { x: xPercent, y: yPercent };
-        // persist to backend asynchronously
-        (async () => {
-          try {
-            await fetch('http://localhost:5000/api/braces/positions', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                scope: selectedPatient ? 'patient' : 'global',
-                patientId: selectedPatient ? selectedPatient.id : undefined,
-                upper: copy,
-                lower: lowerPositions
-              })
-            });
-          } catch (e) {
-            try { localStorage.setItem('ortho_bracket_positions', JSON.stringify({ upper: copy, lower: lowerPositions })); } catch {}
-          }
-        })();
-        return copy;
-      });
-    } else {
-      const li = index - 16;
-      setLowerPositions(prev => {
-        const copy = [...prev];
-        copy[li] = { x: xPercent, y: yPercent };
-        // persist to backend asynchronously
-        (async () => {
-          try {
-            await fetch('http://localhost:5000/api/braces/positions', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                scope: selectedPatient ? 'patient' : 'global',
-                patientId: selectedPatient ? selectedPatient.id : undefined,
-                upper: upperPositions,
-                lower: copy
-              })
-            });
-          } catch (e) {
-            try { localStorage.setItem('ortho_bracket_positions', JSON.stringify({ upper: upperPositions, lower: copy })); } catch {}
-          }
-        })();
-        return copy;
-      });
-    }
-    setHasUnsavedChanges(true);
-  };
+  // Bracket positions are static; no handler needed
 
   const updateBracketVisibility = (makeVisible: boolean) => {
     if (!selectedPatient) return;
@@ -366,31 +314,7 @@ export function BracesCharting({ patients }: BracesChartingProps) {
     setHasUnsavedChanges(false);
   }, [selectedPatient, bracesData]);
 
-  // Load positions for the selected patient (or global) from backend when patient changes
-  useEffect(() => {
-    (async () => {
-      try {
-        const pid = selectedPatient ? `?patientId=${selectedPatient.id}` : '';
-        const res = await fetch(`http://localhost:5000/api/braces/positions${pid}`);
-        if (!res.ok) throw new Error('no positions');
-        const json = await res.json();
-        if (json && json.upper && json.lower) {
-          setUpperPositions(normalizePositions(json.upper, INITIAL_UPPER_POSITIONS));
-          setLowerPositions(normalizePositions(json.lower, INITIAL_LOWER_POSITIONS));
-        }
-      } catch (e) {
-        // fallback: try localStorage
-        try {
-          const savedPositions = localStorage.getItem('ortho_bracket_positions');
-          if (savedPositions) {
-            const { upper, lower } = JSON.parse(savedPositions);
-            setUpperPositions(normalizePositions(upper, INITIAL_UPPER_POSITIONS));
-            setLowerPositions(normalizePositions(lower, INITIAL_LOWER_POSITIONS));
-          }
-        } catch (err) {}
-      }
-    })();
-  }, [selectedPatient]);
+  // Bracket positions are static; no effect needed for loading positions
 
   // Track unsaved changes by comparing preview vs last-saved bracketColors and visibility
   useEffect(() => {
