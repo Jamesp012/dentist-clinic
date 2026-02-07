@@ -219,6 +219,34 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
 
   const handleDownloadReferralPDF = (referral: Referral) => {
     const patient = patients.find(p => String(p.id) === String(referral.patientId));
+
+    const isIncomingPatient = (referral.referralType === 'incoming' && referral.source === 'patient') || referral.createdByRole === 'patient';
+
+    if (isIncomingPatient) {
+      // If patient uploaded original files, prefer downloading original PDF
+      const files = referral.uploadedFiles || [];
+      const pdfFile = files.find(f => f.fileType === 'application/pdf' || /\.pdf$/i.test(String(f.fileName)));
+      if (pdfFile && pdfFile.url) {
+        // trigger download of original PDF
+        try {
+          const a = document.createElement('a');
+          a.href = String(pdfFile.url);
+          a.download = String(pdfFile.fileName || 'referral.pdf');
+          a.target = '_blank';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          return;
+        } catch (e) {
+          // fallback: open in new tab
+          window.open(String(pdfFile.url), '_blank');
+          return;
+        }
+      }
+      // If no original PDF found, fall back to generator to provide a PDF
+    }
+
+    // Default behavior for outgoing referrals or when no original PDF exists
     generateReferralPDF(referral, patient);
   };
 
@@ -264,6 +292,116 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
   const isSelectedXrayReferral = selectedReferral
     ? selectedReferral.specialty === 'X-Ray Imaging' || selectedReferral.referredTo === 'X-Ray Facility'
     : false;
+
+  // Helper: determine if selected referral is an incoming referral uploaded by patient
+  const isSelectedIncomingPatientReferral = (ref?: Referral | null) => {
+    if (!ref) return false;
+    return (ref.referralType === 'incoming' && ref.source === 'patient') || ref.createdByRole === 'patient';
+  };
+
+  // Incoming referral read-only view component
+  const IncomingReferralView = ({ referral, patient, onClose }: { referral: Referral; patient?: Patient; onClose: () => void }) => {
+    const [expandedImageIndex, setExpandedImageIndex] = useState<number | null>(null);
+    const files = referral.uploadedFiles || [];
+    const file = files.length > 0 ? files[0] : null;
+
+    const patientName = referral.patientName || patient?.name || '';
+    const clinicName = referral.referredBy || referral.referringDentist || '';
+    const referringDoctor = referral.referringDentist || '';
+    const dateReferred = formatToDD_MM_YYYY(referral.date);
+
+    const isImage = file && (file.fileType?.startsWith?.('image/') || /\.(jpg|jpeg|png|gif|bmp)$/i.test(String(file.fileName)));
+    const isPDF = file && (file.fileType === 'application/pdf' || /\.pdf$/i.test(String(file.fileName)));
+
+    return (
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div className="bg-white/95 w-full max-w-3xl rounded-2xl shadow-2xl my-8 border border-slate-200/60">
+          <div className="flex items-center justify-between p-6 border-b">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center text-white font-bold">📨</div>
+              <div>
+                <h2 className="text-xl font-bold">Incoming Referral</h2>
+                <p className="text-sm text-slate-600">Patient-uploaded referral (read-only)</p>
+              </div>
+            </div>
+            <button className="p-2" onClick={onClose}><X className="w-5 h-5" /></button>
+          </div>
+
+          <div className="p-6 space-y-6 max-h-[calc(100vh-220px)] overflow-y-auto">
+            {/* Top: Patient Details (read-only) */}
+            <div className="space-y-3 border-b pb-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-semibold">Patient Name</label>
+                  <div className="mt-1 text-sm text-slate-800">{patientName}</div>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold">Date Referred</label>
+                  <div className="mt-1 text-sm text-slate-800">{dateReferred}</div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-semibold">Referring Clinic</label>
+                  <div className="mt-1 text-sm text-slate-800">{clinicName}</div>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold">Referring Doctor</label>
+                  <div className="mt-1 text-sm text-slate-800">{referringDoctor}</div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-semibold">Contact</label>
+                  <div className="mt-1 text-sm text-slate-800">{referral.referredByContact || patient?.phone || '-'}</div>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold">Email</label>
+                  <div className="mt-1 text-sm text-slate-800">{referral.referredByEmail || patient?.email || '-'}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom: Uploaded file */}
+            <div className="pt-4">
+              <label className="text-sm font-semibold">Uploaded Referral File</label>
+              <div className="mt-3">
+                {!file && <div className="text-sm text-slate-600">No uploaded file available.</div>}
+                {file && isImage && (
+                  <div>
+                    {expandedImageIndex === null && (
+                      <img
+                        src={String(file.url)}
+                        alt={String(file.fileName)}
+                        className="max-h-64 object-contain rounded-lg cursor-pointer border"
+                        onClick={() => setExpandedImageIndex(0)}
+                      />
+                    )}
+
+                    {expandedImageIndex === 0 && (
+                      <div className="relative mt-2">
+                        <button onClick={() => setExpandedImageIndex(null)} className="absolute right-2 top-2 z-40 p-2 bg-black/40 rounded-full text-white">
+                          <X className="w-5 h-5" />
+                        </button>
+                        <img src={String(file.url)} alt={String(file.fileName)} className="w-full h-[60vh] object-contain rounded-md" />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {file && isPDF && (
+                  <div className="flex items-center gap-3">
+                    <a href={String(file.url)} download className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg">Download PDF</a>
+                    <span className="text-sm text-slate-600">{file.fileName}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // Referral filtering helpers
   const incomingReferrals = referrals.filter(
@@ -1208,7 +1346,18 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
       </div>
 
       {/* Referral Detail Modal */}
-      {showDetailModal && selectedReferral && (
+      {showDetailModal && selectedReferral && isSelectedIncomingPatientReferral(selectedReferral) && (
+        <IncomingReferralView
+          referral={selectedReferral}
+          patient={selectedPatient}
+          onClose={() => {
+            setShowDetailModal(false);
+            setSelectedReferral(null);
+          }}
+        />
+      )}
+
+      {showDetailModal && selectedReferral && !isSelectedIncomingPatientReferral(selectedReferral) && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-white/90 backdrop-blur-xl w-full max-w-4xl rounded-3xl shadow-2xl my-8 border border-slate-200/60">
             {/* Header */}

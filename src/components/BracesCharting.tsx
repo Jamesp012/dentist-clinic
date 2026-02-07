@@ -342,8 +342,44 @@ export function BracesCharting({ patients }: BracesChartingProps) {
     setHasUnsavedChanges(colorsChanged || visibilityChanged);
   }, [previewColors, bracketVisibility, bracketColors, selectedPatient, bracesData]);
 
-  const handleRemoveBrackets = () => updateBracketVisibility(false);
-  const handleAddBrackets = () => updateBracketVisibility(true);
+  const handleRemoveBrackets = () => {
+    // If in 'all' mode, remove brackets from all teeth immediately
+    if (selectionMode === 'all') {
+      const nextVisibility = new Array(32).fill(false);
+      setBracketVisibility(nextVisibility);
+      setSelectedIndices([]);
+      setHasUnsavedChanges(true);
+      return;
+    }
+
+    // Default: remove for selected indices only
+    updateBracketVisibility(false);
+  };
+  const handleAddBrackets = () => {
+    // If in 'all' mode, add brackets to all teeth immediately
+    if (selectionMode === 'all') {
+      const nextVisibility = new Array(32).fill(true);
+      setBracketVisibility(nextVisibility);
+      setSelectedIndices([]);
+      setHasUnsavedChanges(true);
+      return;
+    }
+
+    // If no specific teeth selected, add one bracket at a time (first hidden)
+    if (selectedIndices.length === 0) {
+      const firstHidden = bracketVisibility.findIndex(v => v === false);
+      if (firstHidden === -1) return; // nothing to add
+      const nextVisibility = [...bracketVisibility];
+      nextVisibility[firstHidden] = true;
+      setBracketVisibility(nextVisibility);
+      setSelectedIndices([firstHidden]);
+      setHasUnsavedChanges(true);
+      return;
+    }
+
+    // If there are selected indices, apply add to those
+    updateBracketVisibility(true);
+  };
 
   const handleSnapshotSelect = (index: number) => {
     if (!selectedPatient) return;

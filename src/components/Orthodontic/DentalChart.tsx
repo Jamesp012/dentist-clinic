@@ -245,33 +245,59 @@ export const DentalChart: React.FC<DentalChartProps> = ({
             {upperPositions.map((pos, i) => {
               if (!pos) return null;
               const globalIndex = i;
-              if (bracketVisibility && bracketVisibility[globalIndex] === false) return null;
               const isEdge = i < 3 || i >= upperPositions.length - 3;
+              const visible = !(bracketVisibility && bracketVisibility[globalIndex] === false);
+
+              if (visible) {
+                return (
+                  <DraggableBracket 
+                    key={`u-${i}`}
+                    pos={{ ...pos, index: i }}
+                    color={colors[i]}
+                    isSelected={selectedIndices.includes(i)}
+                    onToothClick={onToothClick}
+                    scale={isEdge ? 0.8 : 1}
+                  />
+                );
+              }
+
+              // Render clickable empty slot for teeth without a bracket
               return (
-                <DraggableBracket 
-                  key={`u-${i}`}
-                  pos={{ ...pos, index: i }}
-                  color={colors[i]}
-                  isSelected={selectedIndices.includes(i)}
-                  onToothClick={onToothClick}
-                  scale={isEdge ? 0.8 : 1}
-                />
+                <g key={`u-empty-${i}`} className="cursor-pointer" onClick={(e) => { e.stopPropagation(); onToothClick(i); }}>
+                  <circle cx={pos.x} cy={pos.y} r={20} fill="transparent" stroke="#CBD5E1" strokeWidth={1} strokeDasharray="4 3" />
+                  {selectedIndices.includes(i) && (
+                    <circle cx={pos.x} cy={pos.y} r={26} fill="none" stroke="#F97316" strokeWidth={3} strokeDasharray="4 2" opacity={0.9} />
+                  )}
+                </g>
               );
             })}
+
             {lowerPositions.map((pos, i) => {
               if (!pos) return null;
               const globalIndex = i + 16;
-              if (bracketVisibility && bracketVisibility[globalIndex] === false) return null;
               const isEdge = i < 3 || i >= lowerPositions.length - 3;
+              const visible = !(bracketVisibility && bracketVisibility[globalIndex] === false);
+
+              if (visible) {
+                return (
+                  <DraggableBracket 
+                    key={`l-${i}`}
+                    pos={{ ...pos, index: i + 16 }}
+                    color={colors[i + 16]}
+                    isSelected={selectedIndices.includes(i + 16)}
+                    onToothClick={onToothClick}
+                    scale={isEdge ? 0.8 : 1}
+                  />
+                );
+              }
+
               return (
-                <DraggableBracket 
-                  key={`l-${i}`}
-                  pos={{ ...pos, index: i + 16 }}
-                  color={colors[i + 16]}
-                  isSelected={selectedIndices.includes(i + 16)}
-                  onToothClick={onToothClick}
-                  scale={isEdge ? 0.8 : 1}
-                />
+                <g key={`l-empty-${i}`} className="cursor-pointer" onClick={(e) => { e.stopPropagation(); onToothClick(i + 16); }}>
+                  <circle cx={pos.x} cy={pos.y} r={20} fill="transparent" stroke="#CBD5E1" strokeWidth={1} strokeDasharray="4 3" />
+                  {selectedIndices.includes(i + 16) && (
+                    <circle cx={pos.x} cy={pos.y} r={26} fill="none" stroke="#F97316" strokeWidth={3} strokeDasharray="4 2" opacity={0.9} />
+                  )}
+                </g>
               );
             })}
           </g>
