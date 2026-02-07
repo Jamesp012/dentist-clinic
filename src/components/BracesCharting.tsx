@@ -3,7 +3,6 @@ import { Patient } from '../App';
 import { 
   Palette, 
   History, 
-  RotateCcw, 
   Save, 
   Settings,
   ChevronDown,
@@ -54,6 +53,15 @@ type BracesData = {
   totalCost: number;
   totalPaid: number;
   lastUpdated?: string;
+  chartSnapshots?: ChartSnapshot[];
+  currentBracketVisibility?: boolean[];
+};
+
+type ChartSnapshot = {
+  id: string;
+  timestamp: string;
+  bracketColors: string[];
+  bracketVisibility: boolean[];
 };
 
 // Orthodontic colors
@@ -118,6 +126,7 @@ export function BracesCharting({ patients }: BracesChartingProps) {
   const [bracketColors, setBracketColors] = useState<string[]>(new Array(32).fill("#E2E8F0"));
   const [upperPositions, setUpperPositions] = useState(INITIAL_UPPER_POSITIONS);
   const [lowerPositions, setLowerPositions] = useState(INITIAL_LOWER_POSITIONS);
+  const [bracketVisibility, setBracketVisibility] = useState<boolean[]>(new Array(32).fill(true));
 
   // Helper to normalize saved positions to 16 upper + 16 lower
   const normalizePositions = (saved: any[] | undefined, initial: typeof INITIAL_UPPER_POSITIONS) => {
@@ -181,12 +190,25 @@ export function BracesCharting({ patients }: BracesChartingProps) {
         colorHistory: [],
         paymentRecords: [],
         totalCost: 0,
-        totalPaid: 0
+        totalPaid: 0,
+        chartSnapshots: [],
+        currentBracketVisibility: new Array(32).fill(true)
       };
     }
     
     return bracesData[selectedPatient.id];
   };
+
+  // Sync bracket visibility when patient changes
+  useEffect(() => {
+    if (!selectedPatient) return;
+    const data = bracesData[selectedPatient.id];
+    if (data && Array.isArray(data.currentBracketVisibility) && data.currentBracketVisibility.length === 32) {
+      setBracketVisibility(data.currentBracketVisibility);
+    } else {
+      setBracketVisibility(new Array(32).fill(true));
+    }
+  }, [selectedPatient, bracesData]);
 
   const handleColorSelect = (color: typeof COLORS[0]) => {
     setSelectedColor(color);
@@ -204,8 +226,9 @@ export function BracesCharting({ patients }: BracesChartingProps) {
   const applyColors = () => {
     if (!selectedPatient) return;
     
-    setBracketColors([...previewColors]);
-    
+    const newColors = [...previewColors];
+    setBracketColors(newColors);
+
     const currentData = getPatientBracesData();
     const newHistoryEntry: ColorHistoryEntry = {
       date: new Date().toISOString(),
@@ -213,13 +236,22 @@ export function BracesCharting({ patients }: BracesChartingProps) {
       colorValue: selectedColor.value,
       notes: `Applied ${selectedColor.name} to brackets`
     };
+
+    const snapshot: ChartSnapshot = {
+      id: `${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      bracketColors: newColors,
+      bracketVisibility: [...bracketVisibility],
+    };
     
     setBracesData({
       ...bracesData,
       [selectedPatient.id]: {
         ...currentData,
         colorHistory: [newHistoryEntry, ...currentData.colorHistory],
-        lastUpdated: new Date().toISOString()
+        lastUpdated: new Date().toISOString(),
+        currentBracketVisibility: [...bracketVisibility],
+        chartSnapshots: [snapshot, ...(currentData.chartSnapshots || [])]
       }
     });
   };
@@ -249,35 +281,58 @@ export function BracesCharting({ patients }: BracesChartingProps) {
     }
   };
 
-  const handlePositionChange = useCallback((index: number, x: number, y: number) => {
-    if (index < 16) {
-      const newPos = [...upperPositions];
-      newPos[index] = { x, y };
-      setUpperPositions(newPos);
-      try {
-        localStorage.setItem('ortho_bracket_positions', JSON.stringify({ upper: newPos, lower: lowerPositions }));
-      } catch (error) {
-        console.error('Error saving positions:', error);
-      }
-    } else {
-      const newPos = [...lowerPositions];
-      newPos[index - 16] = { x, y };
-      setLowerPositions(newPos);
-      try {
-        localStorage.setItem('ortho_bracket_positions', JSON.stringify({ upper: upperPositions, lower: newPos }));
-      } catch (error) {
-        console.error('Error saving positions:', error);
-      }
-    }
-  }, [upperPositions, lowerPositions]);
 
-  const resetPositions = () => {
-    setUpperPositions(INITIAL_UPPER_POSITIONS);
-    setLowerPositions(INITIAL_LOWER_POSITIONS);
+
+  const updateBracketVisibility = (makeVisible: boolean) => {
+    if (!selectedPatient) return;
+    if (selectedIndices.length === 0) return; // require explicit selection for individual control
+
+    const indices = selectedIndices;
+
+    const nextVisibility = [...bracketVisibility];
+    indices.forEach(idx => {
+      if (idx >= 0 && idx < nextVisibility.length) {
+        nextVisibility[idx] = makeVisible;
+      }
+    });
+
+    setBracketVisibility(nextVisibility);
+
+    const currentData = getPatientBracesData();
+    const snapshot: ChartSnapshot = {
+      id: `${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      bracketColors: [...bracketColors],
+      bracketVisibility: [...nextVisibility],
+    };
+
+    setBracesData({
+      ...bracesData,
+      [selectedPatient.id]: {
+        ...currentData,
+        lastUpdated: new Date().toISOString(),
+        currentBracketVisibility: [...nextVisibility],
+        chartSnapshots: [snapshot, ...(currentData.chartSnapshots || [])]
+      }
+    });
+  };
+
+  const handleRemoveBrackets = () => updateBracketVisibility(false);
+  const handleAddBrackets = () => updateBracketVisibility(true);
+
+  const handleSnapshotSelect = (index: number) => {
+    if (!selectedPatient) return;
+    const data = getPatientBracesData();
+    const snapshots = data.chartSnapshots || [];
+    const snapshot = snapshots[index];
+    if (!snapshot) return;
+
+    setBracketColors([...snapshot.bracketColors]);
+    setPreviewColors([...snapshot.bracketColors]);
+    setBracketVisibility([...snapshot.bracketVisibility]);
   };
 
   return (
-    <DndProvider backend={HTML5Backend}>
       <div className="p-8 bg-white">
         {/* Patient Selection */}
         <motion.div 
@@ -310,7 +365,7 @@ export function BracesCharting({ patients }: BracesChartingProps) {
                       BRACES MAPPING - {selectedPatient.name}
                     </h2>
                     <p className="text-sm text-gray-600 mt-1">
-                      Drag brackets to adjust positioning. Select color mode to apply shades.
+                      Select brackets to color, remove, or add back.
                     </p>
                   </div>
                   
@@ -337,19 +392,17 @@ export function BracesCharting({ patients }: BracesChartingProps) {
                 </div>
 
                 <div className="flex gap-3 mt-4">
-                  <button 
-                    onClick={() => {
-                      resetPositions();
-                      try {
-                        localStorage.setItem('ortho_bracket_positions', JSON.stringify({ upper: INITIAL_UPPER_POSITIONS, lower: INITIAL_LOWER_POSITIONS }));
-                      } catch (error) {
-                        console.error('Error resetting positions:', error);
-                      }
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-all text-gray-600 text-xs font-bold"
+                  <button
+                    onClick={handleRemoveBrackets}
+                    className="flex items-center gap-2 px-4 py-2 border-2 border-red-200 rounded-lg hover:bg-red-50 transition-all text-red-600 text-xs font-bold"
                   >
-                    <RotateCcw className="w-4 h-4" />
-                    RESET POSITIONS
+                    REMOVE BRACKET
+                  </button>
+                  <button
+                    onClick={handleAddBrackets}
+                    className="flex items-center gap-2 px-4 py-2 border-2 border-emerald-200 rounded-lg hover:bg-emerald-50 transition-all text-emerald-600 text-xs font-bold"
+                  >
+                    ADD BRACKET
                   </button>
                 </div>
               </div>
@@ -363,7 +416,7 @@ export function BracesCharting({ patients }: BracesChartingProps) {
                     selectionMode={selectionMode}
                     upperPositions={upperPositions}
                     lowerPositions={lowerPositions}
-                    onPositionChange={handlePositionChange}
+                    bracketVisibility={bracketVisibility}
                   />
                 </div>
               </div>
@@ -389,7 +442,7 @@ export function BracesCharting({ patients }: BracesChartingProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
                     <p className="text-sm text-gray-700">
-                      <span className="font-semibold text-purple-600">Drag & Drop:</span> Precisely position each bracket on the tooth surface for optimal alignment.
+                      <span className="font-semibold text-purple-600">Bracket Control:</span> Use REMOVE and ADD to hide or restore specific brackets.
                     </p>
                   </div>
                   <div className="p-4 bg-gradient-to-r from-pink-50 to-blue-50 rounded-lg border border-pink-200">
@@ -441,15 +494,16 @@ export function BracesCharting({ patients }: BracesChartingProps) {
                   ) : (
                     <ColorHistory 
                       key="history"
-                      history={getPatientBracesData().colorHistory.map(entry => ({
-                        color: { name: entry.colorName, value: entry.colorValue },
-                        timestamp: new Date(entry.date).toLocaleString("en-US", {
+                      history={(getPatientBracesData().chartSnapshots || []).map(entry => ({
+                        color: { name: "Chart Snapshot", value: "#E5E7EB" },
+                        timestamp: new Date(entry.timestamp).toLocaleString("en-US", {
                           hour: "2-digit",
                           minute: "2-digit",
                           month: "short",
                           day: "numeric"
                         })
                       }))}
+                      onSelectItem={handleSnapshotSelect}
                     />
                   )}
                 </AnimatePresence>
@@ -458,6 +512,5 @@ export function BracesCharting({ patients }: BracesChartingProps) {
           </div>
         )}
       </div>
-    </DndProvider>
   );
 }

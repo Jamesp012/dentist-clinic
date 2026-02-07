@@ -64,6 +64,10 @@ export interface Referral {
   date: string;
   urgency: 'routine' | 'urgent' | 'emergency';
   createdByRole?: 'patient' | 'staff';
+  // Optional workflow metadata
+  referralType?: 'incoming' | 'outgoing';
+  source?: string;
+  uploadedFiles?: Array<{ id: string | number; fileName: string; fileType: string; url: string }>;
 }
 
 export interface Announcement {

@@ -9,9 +9,10 @@ interface HistoryItem {
 
 interface ColorHistoryProps {
   history: HistoryItem[];
+  onSelectItem?: (index: number) => void;
 }
 
-export const ColorHistory: React.FC<ColorHistoryProps> = ({ history }) => {
+export const ColorHistory: React.FC<ColorHistoryProps> = ({ history, onSelectItem }) => {
   return (
     <motion.div 
       initial={{ opacity: 0, x: -20 }}
@@ -44,7 +45,8 @@ export const ColorHistory: React.FC<ColorHistoryProps> = ({ history }) => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
               key={index}
-              className="group bg-white border border-orange-50 p-5 rounded-3xl flex items-center gap-5 hover:border-orange-200 hover:shadow-2xl hover:shadow-orange-100/50 transition-all cursor-default"
+              className={`group bg-white border border-orange-50 p-5 rounded-3xl flex items-center gap-5 hover:border-orange-200 hover:shadow-2xl hover:shadow-orange-100/50 transition-all ${onSelectItem ? 'cursor-pointer' : 'cursor-default'}`}
+              onClick={onSelectItem ? () => onSelectItem(index) : undefined}
             >
               <div 
                 className="w-14 h-14 rounded-2xl shadow-sm border-2 border-white ring-1 ring-slate-100 flex-shrink-0"
