@@ -17,6 +17,7 @@ const patientClaimingRoutes = require('./routes/patient-claiming');
 const announcementsRoutes = require('./routes/announcements');
 const photosRoutes = require('./routes/photos');
 const notificationsRoutes = require('./routes/notifications');
+const bracesRoutes = require('./routes/braces');
 
 const app = express();
 
@@ -48,6 +49,7 @@ app.use('/api/patient-claiming', patientClaimingRoutes);
 app.use('/api/announcements', announcementsRoutes);
 app.use('/api/photos', photosRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/braces', bracesRoutes);
 
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {

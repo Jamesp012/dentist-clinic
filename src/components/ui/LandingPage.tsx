@@ -20,8 +20,8 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const birthdatePickerRef = useRef<HTMLInputElement | null>(null);
-  
+  const birthdatePickerRef = useRef<HTMLInputElement | null>(null);  const [activeNav, setActiveNav] = useState('home');
+  const [hoveredNav, setHoveredNav] = useState<string | null>(null);  
   const [signupData, setSignupData] = useState({
     firstName: '',
     lastName: '',
@@ -83,6 +83,27 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5000);
     return () => clearInterval(timer);
+  }, []);
+
+  // Handle scroll detection for active nav
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = ['home', 'services', 'contact', 'about'];
+      
+      for (const section of sections) {
+        const element = document.getElementById(section);
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          // Active if section is in viewport or passed
+          if (rect.top <= 100) {
+            setActiveNav(section);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -193,36 +214,99 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
           </div>
           {/* Navigation */}
           <nav className="hidden md:flex gap-8">
-            <button onClick={() => {
-              const element = document.getElementById('home');
-              if (element) {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }
-            }} className="text-slate-600 hover:text-teal-600 transition cursor-pointer">Home</button>
-            <button onClick={() => {
-              const element = document.getElementById('services');
-              if (element) {
-                const offset = 80;
-                const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
-                window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
-              }
-            }} className="text-slate-600 hover:text-teal-600 transition cursor-pointer">Services</button>
-            <button onClick={() => {
-              const element = document.getElementById('contact');
-              if (element) {
-                const offset = 80;
-                const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
-                window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
-              }
-            }} className="text-slate-600 hover:text-teal-600 transition cursor-pointer">Contact</button>
-            <button onClick={() => {
-              const element = document.getElementById('about');
-              if (element) {
-                const offset = 80;
-                const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
-                window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
-              }
-            }} className="text-slate-600 hover:text-teal-600 transition cursor-pointer">About</button>
+            {/* Home */}
+            <button 
+              onMouseEnter={() => setHoveredNav('home')}
+              onMouseLeave={() => setHoveredNav(null)}
+              onClick={() => {
+                setActiveNav('home');
+                const element = document.getElementById('home');
+                if (element) {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              }} 
+              className={`relative pb-2 font-medium transition-all duration-300 ${
+                activeNav === 'home' 
+                  ? 'text-teal-600' 
+                  : 'text-slate-600 hover:text-teal-600'
+              }`}>
+              Home
+              <span className={`absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-teal-500 to-cyan-500 transition-all duration-300 ease-out origin-left ${
+                activeNav === 'home' || hoveredNav === 'home' ? 'w-full' : 'w-0'
+              }`}></span>
+            </button>
+            
+            {/* Services */}
+            <button 
+              onMouseEnter={() => setHoveredNav('services')}
+              onMouseLeave={() => setHoveredNav(null)}
+              onClick={() => {
+                setActiveNav('services');
+                const element = document.getElementById('services');
+                if (element) {
+                  const offset = 80;
+                  const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+                  window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
+                }
+              }} 
+              className={`relative pb-2 font-medium transition-all duration-300 ${
+                activeNav === 'services' 
+                  ? 'text-teal-600' 
+                  : 'text-slate-600 hover:text-teal-600'
+              }`}>
+              Services
+              <span className={`absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-teal-500 to-cyan-500 transition-all duration-300 ease-out origin-left ${
+                activeNav === 'services' || hoveredNav === 'services' ? 'w-full' : 'w-0'
+              }`}></span>
+            </button>
+            
+            {/* Contact */}
+            <button 
+              onMouseEnter={() => setHoveredNav('contact')}
+              onMouseLeave={() => setHoveredNav(null)}
+              onClick={() => {
+                setActiveNav('contact');
+                const element = document.getElementById('contact');
+                if (element) {
+                  const offset = 80;
+                  const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+                  window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
+                }
+              }} 
+              className={`relative pb-2 font-medium transition-all duration-300 ${
+                activeNav === 'contact' 
+                  ? 'text-teal-600' 
+                  : 'text-slate-600 hover:text-teal-600'
+              }`}>
+              Contact
+              <span className={`absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-teal-500 to-cyan-500 transition-all duration-300 ease-out origin-left ${
+                activeNav === 'contact' || hoveredNav === 'contact' ? 'w-full' : 'w-0'
+              }`}></span>
+            </button>
+            
+            {/* About */}
+            <button 
+              onMouseEnter={() => setHoveredNav('about')}
+              onMouseLeave={() => setHoveredNav(null)}
+              onClick={() => {
+                setActiveNav('about');
+                const element = document.getElementById('about');
+                if (element) {
+                  const offset = 80;
+                  const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+                  window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
+                }
+              }} 
+              className={`relative pb-2 font-medium transition-all duration-300 ${
+                activeNav === 'about' 
+                  ? 'text-teal-600' 
+                  : 'text-slate-600 hover:text-teal-600'
+              }`}>
+              About
+              <span className={`absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-teal-500 to-cyan-500 transition-all duration-300 ease-out origin-left ${
+                activeNav === 'about' || hoveredNav === 'about' ? 'w-full' : 'w-0'
+              }`}></span>
+            </button>
           </nav>
         </div>
       </header>
@@ -357,52 +441,54 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                   </div>
                 </div>
               ) : (
-                // Auth Form
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+                // Auth Form - Fixed height container (same for both Sign In and Sign Up)
+              <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col transition-all duration-300" style={{ 
+                height: 'min(640px, calc(100vh - 120px))'
+              }}>
                 {/* Fixed Header with Tabs */}
-                <div className="px-8 pt-8 pb-6 border-b border-slate-200 flex-shrink-0">
+                <div className="px-6 sm:px-8 pt-6 sm:pt-8 pb-5 sm:pb-6 border-b border-slate-200 flex-shrink-0 bg-gradient-to-b from-white to-slate-50">
                   <div className="text-center">
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{ type: "spring", duration: 0.6 }}
-                      className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl mb-4 shadow-lg"
+                      className="inline-flex items-center justify-center w-14 sm:w-16 h-14 sm:h-16 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl mb-3 sm:mb-4 shadow-lg"
                     >
                       {isLoginMode ? (
-                        <LogIn className="w-8 h-8 text-white" />
+                        <LogIn className="w-7 sm:w-8 h-7 sm:h-8 text-white" />
                       ) : (
-                        <UserPlus className="w-8 h-8 text-white" />
+                        <UserPlus className="w-7 sm:w-8 h-7 sm:h-8 text-white" />
                       )}
                     </motion.div>
-                    <h2 className="text-2xl font-bold text-slate-800 mb-2">
-                      {isLoginMode ? 'Welcome Back' : 'Create Account'}
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-1 sm:mb-2">
+                      {isLoginMode ? 'Welcome Back' : 'Create Your Account'}
                     </h2>
-                    <p className="text-slate-600">
-                      {isLoginMode ? 'Sign in to access your portal' : 'Join our dental care platform'}
+                    <p className="text-xs sm:text-sm text-slate-600">
+                      {isLoginMode ? 'Sign in to access your patient portal' : 'Join our dental care platform'}
                     </p>
                   </div>
 
                   {/* Toggle between Login and Signup */}
-                  <div className="flex mt-6 bg-slate-100 rounded-xl p-1.5">
+                  <div className="flex mt-5 sm:mt-6 bg-slate-100 rounded-xl p-1 sm:p-1.5 gap-1">
                     <button
                       type="button"
                       onClick={() => {
                         setIsLoginMode(true);
                       }}
-                      className={`flex-1 py-2.5 rounded-lg transition-all duration-300 font-medium ${
+                      className={`flex-1 py-2 sm:py-2.5 rounded-lg transition-all duration-300 font-medium text-sm sm:text-base ${
                         isLoginMode
                           ? 'bg-white shadow-md text-teal-600'
                           : 'text-slate-600 hover:text-slate-800'
                       }`}
                     >
-                      Sign in
+                      Sign In
                     </button>
                     <button
                       type="button"
                       onClick={() => {
                         setIsLoginMode(false);
                       }}
-                      className={`flex-1 py-2.5 rounded-lg transition-all duration-300 font-medium ${
+                      className={`flex-1 py-2 sm:py-2.5 rounded-lg transition-all duration-300 font-medium text-sm sm:text-base ${
                         !isLoginMode
                           ? 'bg-white shadow-md text-teal-600'
                           : 'text-slate-600 hover:text-slate-800'
@@ -413,19 +499,23 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                   </div>
                 </div>
 
-                {/* Scrollable Form Content */}
-                <div className="px-8 py-6 overflow-y-auto flex-grow custom-scrollbar" style={{
+                {/* Form Content - Scrollable for Sign Up, centered for Sign In */}
+                <div className={`px-6 sm:px-8 py-5 sm:py-6 flex-grow ${
+                  isLoginMode 
+                    ? 'overflow-hidden flex flex-col justify-center' 
+                    : 'overflow-y-auto custom-scrollbar'
+                }`} style={{
                   scrollbarWidth: 'thin',
                   scrollbarColor: '#14b8a6 transparent'
                 }}>
 
                 {isLoginMode ? (
-                  // Login Form
-                  <form onSubmit={(e) => { e.preventDefault(); onLogin?.(username, password); }} className="space-y-5">
+                  // Login Form - No scrolling needed
+                  <form onSubmit={(e) => { e.preventDefault(); onLogin?.(username, password); }} className="space-y-4 sm:space-y-5">
                     <div>
-                      <label htmlFor="login-username" className="block text-sm font-medium mb-2 text-slate-700">Username</label>
+                      <label htmlFor="login-username" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Username</label>
                       <div className="relative">
-                        <User className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                        <User className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
                         <input
                           id="login-username"
                           name="username"
@@ -434,15 +524,15 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                           onChange={(e) => setUsername(e.target.value)}
                           required
                           placeholder="Enter username"
-                          className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                          className="w-full pl-10 sm:pl-11 pr-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label htmlFor="login-password" className="block text-sm font-medium mb-2 text-slate-700">Password</label>
+                      <label htmlFor="login-password" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Password</label>
                       <div className="relative">
-                        <Lock className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                        <Lock className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
                         <input
                           id="login-password"
                           name="password"
@@ -451,28 +541,28 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                           onChange={(e) => setPassword(e.target.value)}
                           required
                           placeholder="Enter password"
-                          className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                          className="w-full pl-10 sm:pl-11 pr-11 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                          className="absolute right-3 sm:right-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                         >
-                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          {showPassword ? <EyeOff className="w-4 sm:w-5 h-4 sm:h-5" /> : <Eye className="w-4 sm:w-5 h-4 sm:h-5" />}
                         </button>
                       </div>
                     </div>
 
                     <button
                       type="submit"
-                      className="w-full py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl font-medium mb-6"
+                      className="w-full py-2.5 sm:py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl font-semibold mt-6 sm:mt-8 text-sm sm:text-base"
                     >
-                      <LogIn className="w-5 h-5" />
+                      <LogIn className="w-4 sm:w-5 h-4 sm:h-5" />
                       Sign In
                     </button>
                   </form>
                 ) : (
-                  // Signup Form
+                  // Signup Form - Scrollable when needed
                   <form onSubmit={(e) => { 
                     e.preventDefault(); 
                     // Store signup data and show claiming flow
@@ -483,12 +573,13 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                       fullName: `${first}\n\n${last}`.trim()
                     });
                     setShowClaimingFlow(true);
-                  }} className="space-y-4">
-                    <div className="space-y-4">
+                  }} className="space-y-3.5 sm:space-y-4 pb-3 sm:pb-4">
+                    {/* Name Fields Row */}
+                    <div className="grid grid-cols-2 gap-3 sm:gap-4">
                       <div>
-                        <label htmlFor="signup-firstname" className="block text-sm font-medium mb-2 text-slate-700">First Name *</label>
+                        <label htmlFor="signup-firstname" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">First Name *</label>
                         <div className="relative">
-                          <User className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                          <User className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
                           <input
                             id="signup-firstname"
                             name="firstName"
@@ -496,16 +587,16 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                             value={signupData.firstName}
                             onChange={(e) => updateNameFields('firstName', e.target.value)}
                             required
-                            placeholder="Enter your first name"
-                            className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                            placeholder="First name"
+                            className="w-full pl-10 sm:pl-11 pr-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base"
                           />
                         </div>
                       </div>
 
                       <div>
-                        <label htmlFor="signup-lastname" className="block text-sm font-medium mb-2 text-slate-700">Last Name *</label>
+                        <label htmlFor="signup-lastname" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Last Name *</label>
                         <div className="relative">
-                          <User className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                          <User className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
                           <input
                             id="signup-lastname"
                             name="lastName"
@@ -513,17 +604,17 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                             value={signupData.lastName}
                             onChange={(e) => updateNameFields('lastName', e.target.value)}
                             required
-                            placeholder="Enter your last name"
-                            className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                            placeholder="Last name"
+                            className="w-full pl-10 sm:pl-11 pr-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base"
                           />
                         </div>
                       </div>
                     </div>
 
                     <div>
-                      <label htmlFor="signup-email" className="block text-sm font-medium mb-2 text-slate-700">Email *</label>
+                      <label htmlFor="signup-email" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Email *</label>
                       <div className="relative">
-                        <Mail className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                        <Mail className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
                         <input
                           id="signup-email"
                           name="email"
@@ -532,15 +623,15 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                           onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
                           required
                           placeholder="your@email.com"
-                          className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                          className="w-full pl-10 sm:pl-11 pr-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label htmlFor="signup-phone" className="block text-sm font-medium mb-2 text-slate-700">Phone</label>
+                      <label htmlFor="signup-phone" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Phone</label>
                       <div className="relative">
-                        <Phone className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                        <Phone className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
                         <input
                           id="signup-phone"
                           name="phone"
@@ -551,15 +642,15 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                             setSignupData({ ...signupData, phone: formatted });
                           }}
                           placeholder="+63 912 345 6789"
-                          className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                          className="w-full pl-10 sm:pl-11 pr-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label htmlFor="signup-birthdate" className="block text-sm font-medium mb-2 text-slate-700">Birthdate *</label>
+                      <label htmlFor="signup-birthdate" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Birthdate *</label>
                       <div className="relative">
-                        <Calendar className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                        <Calendar className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
                         <input
                           id="signup-birthdate"
                           name="dateOfBirth"
@@ -568,7 +659,7 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                           onChange={(e) => setSignupData({ ...signupData, dateOfBirth: formatDateInput(e.target.value) })}
                           placeholder="DD/MM/YYYY"
                           required
-                          className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                          className="w-full pl-10 sm:pl-11 pr-11 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base"
                         />
                         <button
                           type="button"
@@ -580,10 +671,10 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                               birthdatePickerRef.current?.click();
                             }
                           }}
-                          className="absolute right-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                          className="absolute right-3 sm:right-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                           aria-label="Open calendar"
                         >
-                          <Calendar className="w-5 h-5" />
+                          <Calendar className="w-4 sm:w-5 h-4 sm:h-5" />
                         </button>
                         <input
                           ref={birthdatePickerRef}
@@ -595,9 +686,9 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                     </div>
 
                     <div>
-                      <label htmlFor="signup-address" className="block text-sm font-medium mb-2 text-slate-700">Address *</label>
+                      <label htmlFor="signup-address" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Address *</label>
                       <div className="relative">
-                        <MapPin className="w-5 h-5 absolute left-3.5 top-3.5 text-slate-400" />
+                        <MapPin className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-3 sm:top-3.5 text-slate-400" />
                         <textarea
                           id="signup-address"
                           name="address"
@@ -606,15 +697,15 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                           placeholder="Enter your address"
                           required
                           rows={2}
-                          className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all resize-none"
+                          className="w-full pl-10 sm:pl-11 pr-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all resize-none text-sm sm:text-base"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label htmlFor="signup-username" className="block text-sm font-medium mb-2 text-slate-700">Username *</label>
+                      <label htmlFor="signup-username" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Username *</label>
                       <div className="relative">
-                        <User className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                        <User className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
                         <input
                           id="signup-username"
                           name="username"
@@ -623,15 +714,15 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                           onChange={(e) => setSignupData({ ...signupData, username: e.target.value })}
                           required
                           placeholder="Choose a username"
-                          className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                          className="w-full pl-10 sm:pl-11 pr-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label htmlFor="signup-password" className="block text-sm font-medium mb-2 text-slate-700">Password *</label>
+                      <label htmlFor="signup-password" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Password *</label>
                       <div className="relative">
-                        <Lock className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                        <Lock className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
                         <input
                           id="signup-password"
                           name="password"
@@ -640,22 +731,22 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                           onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
                           required
                           placeholder="Create a password"
-                          className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                          className="w-full pl-10 sm:pl-11 pr-11 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                          className="absolute right-3 sm:right-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                         >
-                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          {showPassword ? <EyeOff className="w-4 sm:w-5 h-4 sm:h-5" /> : <Eye className="w-4 sm:w-5 h-4 sm:h-5" />}
                         </button>
                       </div>
                     </div>
 
                     <div>
-                      <label htmlFor="signup-confirm-password" className="block text-sm font-medium mb-2 text-slate-700">Confirm Password *</label>
+                      <label htmlFor="signup-confirm-password" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Confirm Password *</label>
                       <div className="relative">
-                        <Lock className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                        <Lock className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
                         <input
                           id="signup-confirm-password"
                           name="confirmPassword"
@@ -664,26 +755,26 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
                           onChange={(e) => setConfirmPassword(e.target.value)}
                           required
                           placeholder="Confirm your password"
-                          className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                          className="w-full pl-10 sm:pl-11 pr-11 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base"
                         />
                         <button
                           type="button"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                          className="absolute right-3 sm:right-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                         >
-                          {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          {showConfirmPassword ? <EyeOff className="w-4 sm:w-5 h-4 sm:h-5" /> : <Eye className="w-4 sm:w-5 h-4 sm:h-5" />}
                         </button>
                       </div>
                       {confirmPassword && signupData.password !== confirmPassword && (
-                        <p className="text-red-500 text-sm mt-1">Passwords do not match</p>
+                        <p className="text-red-500 text-xs sm:text-sm mt-1.5 font-medium">Passwords do not match</p>
                       )}
                     </div>
 
                     <button
                       type="submit"
-                      className="w-full py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl font-medium mb-6"
+                      className="w-full py-2.5 sm:py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl font-semibold mt-6 sm:mt-8 text-sm sm:text-base"
                     >
-                      <UserPlus className="w-5 h-5" />
+                      <UserPlus className="w-4 sm:w-5 h-4 sm:h-5" />
                       Create Account
                     </button>
                   </form>

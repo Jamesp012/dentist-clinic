@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
+import Moveable from 'react-moveable';
 import { cn } from '../../lib/utils';
-import { 
-  getToothType, 
-  RealisticOcclusal, 
-  RealisticBuccal 
+import {
+  getToothType,
+  RealisticOcclusal,
+  RealisticBuccal,
 } from './ToothAssets';
-import { ToothData, Surface, Condition } from '../Tooth';
+import { ToothData } from '../Tooth';
 
 interface RealisticToothProps {
   id: number;
@@ -16,372 +17,289 @@ interface RealisticToothProps {
   view: 'buccal' | 'occlusal';
 }
 
-export function RealisticTooth({ 
-  id, 
-  data, 
-  isSelected, 
-  onToothClick, 
-  view 
+export function RealisticTooth({
+  id,
+  data,
+  isSelected,
+  onToothClick,
+  view,
 }: RealisticToothProps) {
+  const [transform, setTransform] = useState<string>('');
+
+  const ref = React.useRef<HTMLDivElement | null>(null);
+
   const type = getToothType(id);
   const isUpper = id >= 1 && id <= 16;
-  
-  // Determine rotation/transform based on position and view
-  const getTransform = () => {
-    if (view === 'buccal') {
-      // Upper Buccal (Row 1): Roots UP. SVG is drawn Roots UP. No rotation.
-      // Lower Buccal (Row 4): Roots DOWN. SVG is drawn Roots UP. Rotate 180.
-      return isUpper ? '' : 'rotate(180)';
-    } else {
-      // Occlusal views
-      // Usually mirrored. Let's just rotate 180 for lower to match orientation
-      return isUpper ? '' : 'rotate(180)';
-    }
-  };
 
   const isMissing = data.generalCondition === 'missing';
   const condition = data.generalCondition;
 
-  // Determine fill color based on condition
   const getToothFill = () => {
     if (isMissing) return 'none';
-    if (condition === 'amalgam') return '#8B8B8B'; // Silver/grey
-    if (condition === 'composite') return '#F5EFE0'; // Tooth-colored
-    if (condition === 'crown') return '#FFD700'; // Gold
-    if (condition === 'discolored') return '#D4C5A9'; // Yellowish
-    if (condition === 'stained') return '#C4B5A0'; // Brownish stain
-    if (condition === 'non_vital') return '#E5E5E5'; // Greyish dead tooth
-    return '#FDFBF7'; // Natural tooth color
+    if (condition === 'amalgam') return '#8B8B8B';
+    if (condition === 'composite') return '#F5EFE0';
+    if (condition === 'crown') return '#E5E7EB';
+    if (condition === 'discolored') return '#D4C5A9';
+    if (condition === 'stained') return '#C4B5A0';
+    if (condition === 'non_vital') return '#E5E5E5';
+    return 'url(#toothGradient)';
   };
 
-  // Determine stroke style
   const getStrokeProps = () => {
     if (isMissing) {
       return {
-        stroke: data.isPermanent ? '#000000' : '#D1D5DB',
+        stroke: data.isPermanent ? '#0F172A' : '#CBD5F5',
         strokeDasharray: '4 4',
-        strokeWidth: 2
+        strokeWidth: 2,
       };
     }
     return {
-      stroke: data.isPermanent ? '#000000' : '#D1D5DB', // Black for permanent, light grey for temporary
-      strokeWidth: 1
+      stroke: data.isPermanent ? '#0F172A' : '#CBD5F5',
+      strokeWidth: 1.5,
     };
   };
 
   const strokeProps = getStrokeProps();
   const toothFill = getToothFill();
 
+  const baseRotation = view === 'buccal' ? (isUpper ? 0 : 180) : isUpper ? 0 : 180;
+
   return (
-    <div 
+    <div
+      ref={ref}
       className={cn(
-        "group relative cursor-pointer transition-transform duration-200 select-none",
-        isSelected && "z-10",
-        view === 'buccal' ? "h-24 w-10" : "h-14 w-10", // Taller for roots
-        "flex items-center justify-center"
+        'relative group cursor-pointer select-none',
+        isSelected && 'z-10',
+        view === 'buccal' ? 'h-24 w-10' : 'h-14 w-10',
+        'flex items-center justify-center',
       )}
       onClick={() => onToothClick(id)}
+      style={{ transform }}
     >
-      {/* Tooltip for Notes */}
       {data.notes && (
-        <div className={cn(
-          "absolute left-1/2 -translate-x-1/2 px-3 py-2 bg-slate-900/95 text-white text-xs rounded-md shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-[100] w-max max-w-[180px] text-center backdrop-blur-sm",
-          // Position logic: Always show tooltip above
-          "bottom-full mb-2"
-        )}>
+        <div
+          className={cn(
+            'pointer-events-none absolute left-1/2 bottom-full mb-2 w-max max-w-[180px] -translate-x-1/2 rounded-md bg-slate-900/95 px-3 py-2 text-xs text-white shadow-xl opacity-0 transition-opacity duration-200 group-hover:opacity-100 backdrop-blur-sm z-[100]',
+          )}
+        >
           {data.notes}
-          {/* Arrow */}
-          <div className={cn(
-            "absolute left-1/2 -translate-x-1/2 border-4 border-transparent",
-            "top-full border-t-slate-900/95"
-          )} />
+          <div
+            className={cn(
+              'absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-slate-900/95',
+            )}
+          />
         </div>
       )}
 
-      {/* SVG Container */}
-      <svg 
-        viewBox={view === 'buccal' ? "0 0 100 150" : "0 0 100 100"} 
-        className={cn(
-          "w-full h-full transition-all", 
-          !isMissing && "drop-shadow-sm hover:drop-shadow-md"
-        )}
-        style={{ transform: getTransform() }}
-      >
-        <defs>
-          <radialGradient id={`toothGradient-${id}`} cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#E6DCCA" stopOpacity="0.2" />
-          </radialGradient>
-          
-          {/* Pattern for caries/decay */}
-          <pattern id={`cariesPattern-${id}`} patternUnits="userSpaceOnUse" width="8" height="8">
-            <rect width="8" height="8" fill="#6B7280" opacity="0.3"/>
-            <circle cx="2" cy="2" r="1" fill="#4B5563" opacity="0.5"/>
-            <circle cx="6" cy="6" r="1" fill="#4B5563" opacity="0.5"/>
-          </pattern>
-        </defs>
+      <div className="relative flex h-full w-full items-center justify-center">
+        <svg
+          viewBox={view === 'buccal' ? '0 0 100 150' : '0 0 100 100'}
+          className={cn(
+            'h-full w-full transition-all',
+            !isMissing && 'drop-shadow-[0_0_15px_rgba(56,189,248,0.35)] group-hover:drop-shadow-[0_0_18px_rgba(56,189,248,0.65)]',
+          )}
+          style={{ transform: `rotate(${baseRotation}deg)` }}
+        >
+          <defs>
+            <radialGradient id="toothGradient" cx="50%" cy="40%" r="60%">
+              <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.95" />
+              <stop offset="35%" stopColor="#F7F2E9" stopOpacity="0.98" />
+              <stop offset="100%" stopColor="#E5D6C2" stopOpacity="0.95" />
+            </radialGradient>
 
-        <g className={cn(isMissing && "opacity-40")}>
-           {view === 'occlusal' ? (
-             <RealisticOcclusal 
-               type={type} 
-               fill={toothFill}
-               {...strokeProps}
-             />
-           ) : (
-             <RealisticBuccal 
-               type={type}
-               fill={toothFill}
-               {...strokeProps}
-             />
-           )}
-        </g>
-
-        {/* Condition-specific overlays */}
-        {!isMissing && (
-          <>
-            {/* Caries: Show a hole/cavity */}
-            {condition === 'caries' && view === 'occlusal' && (
-              <>
-                {/* Dark cavity hole in center */}
-                <ellipse 
-                  cx="50" cy="50" rx="20" ry="15" 
-                  fill="#1F2937"
-                  className="transition-all duration-300"
-                />
-                {/* Decayed area around the hole */}
-                <ellipse 
-                  cx="50" cy="50" rx="28" ry="22" 
-                  fill={`url(#cariesPattern-${id})`}
-                  opacity="0.6"
-                  className="transition-all duration-300"
-                />
-              </>
-            )}
-            
-            {/* Caries on buccal view: show grey decay */}
-            {condition === 'caries' && view === 'buccal' && (
-              <rect 
-                x="25" y={isUpper ? "20" : "80"} width="50" height="30" 
-                fill={`url(#cariesPattern-${id})`}
-                opacity="0.5"
-                className="transition-all duration-300"
+            <filter id="toothShadow" x="-50%" y="-50%" width="200%" height="200%">
+              <feOffset dx="0" dy={isUpper ? 4 : -4} in="SourceAlpha" result="shadowOffset" />
+              <feGaussianBlur in="shadowOffset" stdDeviation="3" result="shadowBlur" />
+              <feColorMatrix
+                in="shadowBlur"
+                type="matrix"
+                values="0 0 0 0 0   0 0 0 0 0.2   0 0 0 0 0.4  0 0 0 0.25 0"
+                result="shadowColor"
               />
-            )}
+              <feMerge>
+                <feMergeNode in="shadowColor" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
 
-            {/* Broken tooth: Show jagged break line */}
-            {condition === 'broken' && view === 'buccal' && (
-              <>
-                <path 
-                  d={`M20,${isUpper ? '60' : '90'} L30,${isUpper ? '55' : '85'} L40,${isUpper ? '65' : '95'} L50,${isUpper ? '58' : '88'} L60,${isUpper ? '68' : '98'} L70,${isUpper ? '62' : '92'} L80,${isUpper ? '60' : '90'}`}
-                  stroke="#DC2626"
-                  strokeWidth="2"
-                  fill="none"
-                />
-                {/* Show missing part */}
-                <rect 
-                  x="20" y={isUpper ? "60" : "0"} 
-                  width="60" 
-                  height={isUpper ? "40" : "90"}
-                  fill="white"
-                  opacity="0.8"
-                />
-              </>
-            )}
+            <pattern id="cariesPattern" patternUnits="userSpaceOnUse" width="8" height="8">
+              <rect width="8" height="8" fill="#4B5563" opacity="0.35" />
+              <circle cx="2" cy="2" r="1" fill="#111827" opacity="0.7" />
+              <circle cx="6" cy="6" r="1" fill="#111827" opacity="0.7" />
+            </pattern>
+          </defs>
 
-            {/* Cracked tooth: Show crack lines */}
-            {condition === 'cracked' && (
-              <>
-                <path 
-                  d={view === 'occlusal' 
-                    ? "M50,20 Q48,40 50,50 Q52,60 48,80"
-                    : "M50,10 Q48,50 50,80 Q52,110 48,140"
-                  }
-                  stroke="#4B5563"
-                  strokeWidth="1.5"
-                  fill="none"
-                  opacity="0.7"
+          <g filter="url(#toothShadow)">
+            {view === 'occlusal' ? (
+              <RealisticOcclusal type={type} fill={toothFill} {...strokeProps} />
+            ) : (
+              <RealisticBuccal type={type} fill={toothFill} {...strokeProps} />
+            )}
+          </g>
+
+          {!isMissing && (
+            <>
+              {condition === 'caries' && view === 'occlusal' && (
+                <>
+                  <ellipse
+                    cx="50"
+                    cy="48"
+                    rx="18"
+                    ry="13"
+                    fill="#020617"
+                    opacity="0.95"
+                    className="transition-all duration-300"
+                  />
+                  <ellipse
+                    cx="50"
+                    cy="48"
+                    rx="26"
+                    ry="20"
+                    fill="url(#cariesPattern)"
+                    opacity="0.8"
+                    className="transition-all duration-300"
+                  />
+                </>
+              )}
+
+              {condition === 'caries' && view === 'buccal' && (
+                <rect
+                  x="24"
+                  y={isUpper ? '22' : '78'}
+                  width="52"
+                  height="34"
+                  rx="10"
+                  fill="url(#cariesPattern)"
+                  opacity="0.9"
+                  className="transition-all duration-300"
                 />
-                <path 
-                  d={view === 'occlusal'
-                    ? "M30,30 Q45,45 60,35"
-                    : "M30,40 Q50,60 70,45"
-                  }
-                  stroke="#4B5563"
+              )}
+
+              {condition === 'broken' && view === 'buccal' && (
+                <>
+                  <path
+                    d={`M20,${isUpper ? '64' : '86'} L30,${
+                      isUpper ? '58' : '92'
+                    } L40,${isUpper ? '69' : '81'} L50,${
+                      isUpper ? '60' : '90'
+                    } L60,${isUpper ? '72' : '78'} L70,${
+                      isUpper ? '66' : '84'
+                    } L80,${isUpper ? '64' : '86'}`}
+                    stroke="#EF4444"
+                    strokeWidth="2.2"
+                    fill="none"
+                  />
+                  <rect
+                    x="20"
+                    y={isUpper ? '64' : '0'}
+                    width="60"
+                    height={isUpper ? '44' : '86'}
+                    fill="#F9FAFB"
+                    opacity="0.92"
+                  />
+                </>
+              )}
+
+              {condition === 'cracked' && (
+                <>
+                  <path
+                    d={
+                      view === 'occlusal'
+                        ? 'M50,18 Q48,40 52,52 Q49,64 51,82'
+                        : 'M50,8 Q48,52 52,84 Q49,118 51,142'
+                    }
+                    stroke="#1F2937"
+                    strokeWidth="1.6"
+                    fill="none"
+                    opacity="0.85"
+                  />
+                  <path
+                    d={
+                      view === 'occlusal'
+                        ? 'M32,30 Q47,46 64,38'
+                        : 'M32,42 Q50,62 70,48'
+                    }
+                    stroke="#4B5563"
+                    strokeWidth="1.2"
+                    fill="none"
+                    opacity="0.75"
+                  />
+                </>
+              )}
+
+              {condition === 'chipped' && view === 'buccal' && (
+                <path
+                  d={`${isUpper ? 'M36,12 L42,5 L48,12' : 'M36,138 L42,145 L48,138'} Z`}
+                  fill="#F9FAFB"
+                  stroke="#D1C4B0"
                   strokeWidth="1"
-                  fill="none"
-                  opacity="0.5"
                 />
-              </>
-            )}
+              )}
 
-            {/* Chipped tooth: Small chip on edge */}
-            {condition === 'chipped' && view === 'buccal' && (
-              <path 
-                d={`M${isUpper ? '35,10' : '35,140'} L${isUpper ? '40,5' : '40,145'} L${isUpper ? '45,10' : '45,140'} Z`}
-                fill="white"
-                stroke="#D1C4B0"
-                strokeWidth="1"
-              />
-            )}
-
-            {/* Abscess: Red swollen area */}
-            {condition === 'abscess' && view === 'buccal' && (
-              <ellipse 
-                cx="30" 
-                cy={isUpper ? "120" : "30"} 
-                rx="20" 
-                ry="15" 
-                fill="#EF4444"
-                opacity="0.4"
-                className="transition-all duration-300"
-              />
-            )}
-
-            {/* Erosion: Worn surface */}
-            {condition === 'erosion' && view === 'occlusal' && (
-              <ellipse 
-                cx="50" cy="50" rx="25" ry="20" 
-                fill="#9CA3AF"
-                opacity="0.4"
-                className="transition-all duration-300"
-              />
-            )}
-
-            {/* Impacted: Tilted/rotated appearance */}
-            {condition === 'impacted' && view === 'buccal' && (
-              <line 
-                x1="10" y1={isUpper ? "30" : "120"} 
-                x2="90" y2={isUpper ? "50" : "100"}
-                stroke="#F59E0B"
-                strokeWidth="2"
-                strokeDasharray="5 3"
-                opacity="0.6"
-              />
-            )}
-
-            {/* Retained root: Only show root portion */}
-            {condition === 'retained_root' && view === 'buccal' && (
-              <rect 
-                x="20" 
-                y={isUpper ? "0" : "80"}
-                width="60" 
-                height={isUpper ? "60" : "70"}
-                fill="white"
-                opacity="0.9"
-              />
-            )}
-
-            {/* Needs filling: Yellow/orange warning indicator */}
-            {condition === 'needs_filling' && view === 'occlusal' && (
-              <ellipse 
-                cx="50" cy="50" rx="15" ry="12" 
-                fill="#F59E0B"
-                opacity="0.5"
-                className="transition-all duration-300"
-              />
-            )}
-
-            {/* Needs root canal: Red center indicator */}
-            {condition === 'needs_root_canal' && view === 'buccal' && (
-              <line 
-                x1="50" 
-                y1={isUpper ? "60" : "40"}
-                x2="50" 
-                y2={isUpper ? "140" : "110"}
-                stroke="#DC2626"
-                strokeWidth="3"
-                opacity="0.6"
-              />
-            )}
-
-            {/* Needs extraction: Orange X mark */}
-            {condition === 'needs_extraction' && (
-              <>
-                <line 
-                  x1="20" y1="20" 
-                  x2="80" y2={view === 'buccal' ? "80" : "80"} 
-                  stroke="#F59E0B" 
-                  strokeWidth="3"
-                  opacity="0.7"
+              {condition === 'abscess' && view === 'buccal' && (
+                <ellipse
+                  cx="30"
+                  cy={isUpper ? '118' : '32'}
+                  rx="22"
+                  ry="16"
+                  fill="#EF4444"
+                  opacity="0.55"
+                  className="transition-all duration-300"
                 />
-                <line 
-                  x1="80" y1="20" 
-                  x2="20" y2={view === 'buccal' ? "80" : "80"} 
-                  stroke="#F59E0B" 
-                  strokeWidth="3"
-                  opacity="0.7"
+              )}
+
+              {condition === 'erosion' && view === 'occlusal' && (
+                <ellipse
+                  cx="50"
+                  cy="50"
+                  rx="27"
+                  ry="21"
+                  fill="#9CA3AF"
+                  opacity="0.45"
+                  className="transition-all duration-300"
                 />
-              </>
-            )}
+              )}
 
-            {/* Extraction: Show red X mark (already exists but keeping for reference) */}
-            {condition === 'extraction' && (
-              <>
-                <line 
-                  x1="20" y1="20" 
-                  x2="80" y2={view === 'buccal' ? "80" : "80"} 
-                  stroke="#EF4444" 
-                  strokeWidth="3"
-                  opacity="0.7"
+              {condition === 'impacted' && view === 'buccal' && (
+                <line
+                  x1="10"
+                  y1={isUpper ? '32' : '118'}
+                  x2="90"
+                  y2={isUpper ? '52' : '98'}
+                  stroke="#F97316"
+                  strokeWidth="2.3"
+                  strokeDasharray="5 3"
+                  opacity="0.75"
                 />
-                <line 
-                  x1="80" y1="20" 
-                  x2="20" y2={view === 'buccal' ? "80" : "80"} 
-                  stroke="#EF4444" 
-                  strokeWidth="3"
-                  opacity="0.7"
-                />
-              </>
-            )}
+              )}
+            </>
+          )}
+        </svg>
+      </div>
 
-            {/* Crown: Add shine/reflection effect */}
-            {condition === 'crown' && (
-              <ellipse 
-                cx="40" cy={view === 'buccal' ? "40" : "35"} 
-                rx="15" ry="20" 
-                fill="white" 
-                opacity="0.4"
-                className="transition-all duration-300"
-              />
-            )}
-
-            {/* Amalgam: Add metallic sheen */}
-            {condition === 'amalgam' && view === 'occlusal' && (
-              <ellipse 
-                cx="50" cy="50" rx="18" ry="14" 
-                fill="#B8B8B8"
-                opacity="0.8"
-                className="transition-all duration-300"
-              />
-            )}
-
-            {/* Composite: Slightly different shade in center */}
-            {condition === 'composite' && view === 'occlusal' && (
-              <ellipse 
-                cx="50" cy="50" rx="16" ry="12" 
-                fill="#E8DCC8"
-                opacity="0.6"
-                className="transition-all duration-300"
-              />
-            )}
-
-            {/* Loose tooth: Dotted outline to indicate mobility */}
-            {condition === 'loose' && (
-              <rect 
-                x="15" y="15" 
-                width="70" 
-                height={view === 'buccal' ? "120" : "70"}
-                fill="none"
-                stroke="#F59E0B"
-                strokeWidth="2"
-                strokeDasharray="3 3"
-                opacity="0.5"
-              />
-            )}
-          </>
-        )}
-      </svg>
+      {isSelected && ref.current && (
+        <Moveable
+          target={ref.current}
+          draggable
+          throttleDrag={0}
+          onDrag={e => {
+            setTransform(e.transform);
+          }}
+          keepRatio
+          scalable={false}
+          rotatable
+          throttleRotate={0}
+          onRotate={e => {
+            setTransform(e.drag.transform);
+          }}
+          origin={false}
+          edge={false}
+          padding={{ left: 4, right: 4, top: 4, bottom: 4 }}
+          hideDefaultLines={false}
+          snappable={false}
+          className="z-[60]"
+        />
+      )}
     </div>
   );
 }

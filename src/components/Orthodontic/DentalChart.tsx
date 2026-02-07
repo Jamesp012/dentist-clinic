@@ -1,9 +1,9 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { motion } from "motion/react";
 
 interface Position {
-  x: number;
-  y: number;
+  x: number; // interpreted as percentage (0-100)
+  y: number; // interpreted as percentage (0-100)
 }
 
 interface DentalChartProps {
@@ -14,7 +14,10 @@ interface DentalChartProps {
   upperPositions: Position[];
   lowerPositions: Position[];
   bracketVisibility?: boolean[];
-  // No position change callback when positions are fixed
+  // x,y are percentages (0-100). optional: if provided, will be called during drag.
+  onPositionChange?: (index: number, x: number, y: number) => void;
+  // when false, brackets are static and not draggable
+  draggable?: boolean;
 }
 
 interface DraggableBracketProps {
@@ -23,6 +26,8 @@ interface DraggableBracketProps {
   isSelected: boolean;
   onToothClick: (index: number) => void;
   scale?: number;
+  onStartDrag: (index: number) => void;
+  draggable?: boolean;
 }
 
 const DraggableBracket: React.FC<DraggableBracketProps> = ({
@@ -31,6 +36,8 @@ const DraggableBracket: React.FC<DraggableBracketProps> = ({
   isSelected,
   onToothClick,
   scale = 1,
+  onStartDrag,
+  draggable = true,
 }) => {
   const mainSize = 24 * scale;
   const mainOffset = mainSize / 2;
@@ -40,11 +47,12 @@ const DraggableBracket: React.FC<DraggableBracketProps> = ({
 
   return (
     <g
-      className="cursor-pointer transition-opacity"
+      className={`${draggable ? 'cursor-grab active:cursor-grabbing' : ''} transition-opacity`}
       onClick={(e) => {
         e.stopPropagation();
         onToothClick(pos.index);
       }}
+      onMouseDown={draggable ? (e => { e.preventDefault(); e.stopPropagation(); onStartDrag(pos.index); }) : undefined}
     >
       <circle cx={pos.x} cy={pos.y} r={circleRadius} fill="transparent" />
 
@@ -152,10 +160,17 @@ export const DentalChart: React.FC<DentalChartProps> = ({
   upperPositions,
   lowerPositions,
   bracketVisibility,
+  onPositionChange,
+  draggable = true,
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const width = 1000;
   const height = 650;
+
+  // Convert percentage positions to pixel positions for rendering
+  const upperPx: Position[] = upperPositions.map(p => ({ x: (p.x * width) / 100, y: (p.y * height) / 100 }));
+  const lowerPx: Position[] = lowerPositions.map(p => ({ x: (p.x * width) / 100, y: (p.y * height) / 100 }));
 
   const getWirePath = (points: Position[]) => {
     if (points.length < 2) return "";
@@ -172,20 +187,42 @@ export const DentalChart: React.FC<DentalChartProps> = ({
     return d;
   };
 
-  // Dragging removed — positions are fixed to the provided arrays
+  const handleSvgMouseMove = (event: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
+    if (draggingIndex === null || !svgRef.current) return;
 
+    const svgElement = svgRef.current;
+    const pt = svgElement.createSVGPoint();
+    pt.x = event.clientX;
+    pt.y = event.clientY;
 
+    const ctm = svgElement.getScreenCTM();
+    if (!ctm) return;
+
+    const svgPt = pt.matrixTransform(ctm.inverse());
+    const percentX = (svgPt.x / width) * 100;
+    const percentY = (svgPt.y / height) * 100;
+    if (onPositionChange) onPositionChange(draggingIndex, Math.round(percentX * 100) / 100, Math.round(percentY * 100) / 100);
+  };
+
+  const handleSvgMouseUp = () => {
+    if (draggingIndex !== null) {
+      setDraggingIndex(null);
+    }
+  };
 
   return (
     <div className="w-full h-full flex items-center justify-center p-4">
       <div 
         className="relative w-full rounded-2xl overflow-hidden border-2 border-gray-300 bg-transparent transition-colors duration-300 shadow-2xl"
       >
-        <svg 
-          ref={svgRef}
-          viewBox={`0 0 ${width} ${height}`} 
-          className="w-full h-auto block overflow-visible"
-        >
+          <svg 
+                ref={svgRef}
+                viewBox={`0 0 ${width} ${height}`} 
+                className="w-full h-auto block overflow-visible"
+                onMouseMove={draggable ? handleSvgMouseMove : undefined}
+                onMouseUp={draggable ? handleSvgMouseUp : undefined}
+                onMouseLeave={draggable ? handleSvgMouseUp : undefined}
+              >
           {/* Background orthodontic image */}
           <image
             href="/dental-base.png"
@@ -225,7 +262,7 @@ export const DentalChart: React.FC<DentalChartProps> = ({
           </g>
 
           <path
-            d={getWirePath(upperPositions.filter(p => !!p))}
+            d={getWirePath(upperPx.filter(p => !!p))}
             fill="none"
             stroke="#475569"
             strokeWidth={3}
@@ -233,7 +270,7 @@ export const DentalChart: React.FC<DentalChartProps> = ({
             className="opacity-40"
           />
           <path
-            d={getWirePath(lowerPositions.filter(p => !!p))}
+            d={getWirePath(lowerPx.filter(p => !!p))}
             fill="none"
             stroke="#94A3B8"
             strokeWidth={2.5}
@@ -242,62 +279,40 @@ export const DentalChart: React.FC<DentalChartProps> = ({
           />
 
           <g className="pointer-events-auto">
-            {upperPositions.map((pos, i) => {
+            {upperPx.map((pos, i) => {
               if (!pos) return null;
               const globalIndex = i;
-              const isEdge = i < 3 || i >= upperPositions.length - 3;
-              const visible = !(bracketVisibility && bracketVisibility[globalIndex] === false);
-
-              if (visible) {
-                return (
-                  <DraggableBracket 
-                    key={`u-${i}`}
-                    pos={{ ...pos, index: i }}
-                    color={colors[i]}
-                    isSelected={selectedIndices.includes(i)}
-                    onToothClick={onToothClick}
-                    scale={isEdge ? 0.8 : 1}
-                  />
-                );
-              }
-
-              // Render clickable empty slot for teeth without a bracket
+              if (bracketVisibility && bracketVisibility[globalIndex] === false) return null;
+              const isEdge = i < 3 || i >= upperPx.length - 3;
               return (
-                <g key={`u-empty-${i}`} className="cursor-pointer" onClick={(e) => { e.stopPropagation(); onToothClick(i); }}>
-                  <circle cx={pos.x} cy={pos.y} r={20} fill="transparent" stroke="#CBD5E1" strokeWidth={1} strokeDasharray="4 3" />
-                  {selectedIndices.includes(i) && (
-                    <circle cx={pos.x} cy={pos.y} r={26} fill="none" stroke="#F97316" strokeWidth={3} strokeDasharray="4 2" opacity={0.9} />
-                  )}
-                </g>
+                <DraggableBracket 
+                  key={`u-${i}`}
+                  pos={{ ...pos, index: i }}
+                  color={colors[i]}
+                  isSelected={selectedIndices.includes(i)}
+                  onToothClick={onToothClick}
+                  scale={isEdge ? 0.8 : 1}
+                  onStartDrag={draggable ? (index) => setDraggingIndex(index) : () => {}}
+                  draggable={draggable}
+                />
               );
             })}
-
-            {lowerPositions.map((pos, i) => {
+            {lowerPx.map((pos, i) => {
               if (!pos) return null;
               const globalIndex = i + 16;
-              const isEdge = i < 3 || i >= lowerPositions.length - 3;
-              const visible = !(bracketVisibility && bracketVisibility[globalIndex] === false);
-
-              if (visible) {
-                return (
-                  <DraggableBracket 
-                    key={`l-${i}`}
-                    pos={{ ...pos, index: i + 16 }}
-                    color={colors[i + 16]}
-                    isSelected={selectedIndices.includes(i + 16)}
-                    onToothClick={onToothClick}
-                    scale={isEdge ? 0.8 : 1}
-                  />
-                );
-              }
-
+              if (bracketVisibility && bracketVisibility[globalIndex] === false) return null;
+              const isEdge = i < 3 || i >= lowerPx.length - 3;
               return (
-                <g key={`l-empty-${i}`} className="cursor-pointer" onClick={(e) => { e.stopPropagation(); onToothClick(i + 16); }}>
-                  <circle cx={pos.x} cy={pos.y} r={20} fill="transparent" stroke="#CBD5E1" strokeWidth={1} strokeDasharray="4 3" />
-                  {selectedIndices.includes(i + 16) && (
-                    <circle cx={pos.x} cy={pos.y} r={26} fill="none" stroke="#F97316" strokeWidth={3} strokeDasharray="4 2" opacity={0.9} />
-                  )}
-                </g>
+                <DraggableBracket 
+                  key={`l-${i}`}
+                  pos={{ ...pos, index: i + 16 }}
+                  color={colors[i + 16]}
+                  isSelected={selectedIndices.includes(i + 16)}
+                  onToothClick={onToothClick}
+                  scale={isEdge ? 0.8 : 1}
+                  onStartDrag={draggable ? (index) => setDraggingIndex(index) : () => {}}
+                  draggable={draggable}
+                />
               );
             })}
           </g>

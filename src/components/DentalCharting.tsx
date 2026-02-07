@@ -100,15 +100,12 @@ export function DentalCharting({ patients }: DentalChartingProps) {
   const [selectedTooth, setSelectedTooth] = useState<number | null>(12); 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [archOpacity, setArchOpacity] = useState(0.9);
 
   const activeChart = charts.find(c => c.id === activeChartId) || charts[0];
   const teeth = activeChart.data;
 
   const handleToothClick = (id: number) => {
-    if (!selectedPatient) {
-      toast.info('Please select a patient first.');
-      return;
-    }
     setSelectedTooth(id);
     setIsSidebarOpen(true);
   };
@@ -314,14 +311,27 @@ export function DentalCharting({ patients }: DentalChartingProps) {
           </button>
           
         </div>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 text-xs text-slate-500">
+            <span className="uppercase tracking-[0.16em] text-[10px] text-slate-400">Arch Opacity</span>
+            <input
+              type="range"
+              min={40}
+              max={100}
+              value={Math.round(archOpacity * 100)}
+              onChange={(e) => setArchOpacity(Number(e.target.value) / 100)}
+              className="w-32 accent-sky-500 cursor-pointer"
+            />
+          </div>
 
-        <button 
-          onClick={handleNewChart}
-          className="flex items-center gap-2 px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg shadow-sm transition-colors font-medium text-sm"
-        >
-          <Plus className="w-4 h-4" />
-          New Chart
-        </button>
+          <button 
+            onClick={handleNewChart}
+            className="flex items-center gap-2 px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg shadow-sm transition-colors font-medium text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            New Chart
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-1 overflow-hidden relative">
@@ -412,21 +422,21 @@ export function DentalCharting({ patients }: DentalChartingProps) {
                   {/* Upper gum background */}
                   <div
                     className="absolute left-1/2 -translate-x-1/2 bg-rose-200/90"
-                    style={{ top: 60, width: 380, height: 240, borderRadius: '220px 220px 140px 140px' }}
+                    style={{ top: 60, width: 380, height: 240, borderRadius: '220px 220px 140px 140px', opacity: archOpacity }}
                   />
                   <div
                     className="absolute left-1/2 -translate-x-1/2 bg-rose-100"
-                    style={{ top: 95, width: 280, height: 180, borderRadius: '220px 220px 140px 140px' }}
+                    style={{ top: 95, width: 280, height: 180, borderRadius: '220px 220px 140px 140px', opacity: archOpacity }}
                   />
 
                   {/* Lower gum background */}
                   <div
                     className="absolute left-1/2 -translate-x-1/2 bg-rose-200/90"
-                    style={{ bottom: 60, width: 380, height: 240, borderRadius: '140px 140px 220px 220px' }}
+                    style={{ bottom: 60, width: 380, height: 240, borderRadius: '140px 140px 220px 220px', opacity: archOpacity }}
                   />
                   <div
                     className="absolute left-1/2 -translate-x-1/2 bg-rose-100"
-                    style={{ bottom: 95, width: 280, height: 180, borderRadius: '140px 140px 220px 220px' }}
+                    style={{ bottom: 95, width: 280, height: 180, borderRadius: '140px 140px 220px 220px', opacity: archOpacity }}
                   />
 
                   {/* Helper to render teeth on an arc that follows the jaw */}
