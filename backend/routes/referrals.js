@@ -72,6 +72,12 @@ router.get('/', authMiddleware, async (req, res) => {
     }));
     res.json(parsedReferrals);
   } catch (error) {
+    console.error('Error fetching referrals:', error);
+    // Workaround: if the database is missing optional 'url' column in file rows,
+    // return an empty list to avoid spamming the frontend with repeated 500s.
+    if (error && error.message && error.message.includes("Unknown column 'url'")) {
+      return res.json([]);
+    }
     res.status(500).json({ error: error.message });
   }
 });
@@ -113,6 +119,10 @@ router.get('/patient/:patientId', authMiddleware, async (req, res) => {
     }));
     res.json(parsedReferrals);
   } catch (error) {
+    console.error('Error fetching referrals by patient:', error);
+    if (error && error.message && error.message.includes("Unknown column 'url'")) {
+      return res.json([]);
+    }
     res.status(500).json({ error: error.message });
   }
 });
@@ -143,6 +153,10 @@ router.get('/:id', authMiddleware, async (req, res) => {
       uploadedFiles: normalizedFiles || []
     });
   } catch (error) {
+    console.error('Error fetching referral by id:', error);
+    if (error && error.message && error.message.includes("Unknown column 'url'")) {
+      return res.status(500).json({ error: 'Referral file url column missing; please check DB schema' });
+    }
     res.status(500).json({ error: error.message });
   }
 });
@@ -222,10 +236,13 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req, res) =
     const mime = req.file.mimetype || '';
     const fileType = mime.startsWith('image/') ? 'image' : mime === 'application/pdf' ? 'pdf' : 'document';
 
-    // Store file information in database
+    // Compute public URL for the uploaded file
+    const publicUrl = `/uploads/referrals/${req.file.filename}`;
+
+    // Store file information in database (include `url` column)
     const [result] = await pool.query(
-      'INSERT INTO referral_files (referralId, patientId, fileName, fileType, filePath, fileSize, uploadedBy) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [referralId || null, patientId || null, fileName, fileType, filePath, fileSize, userId]
+      'INSERT INTO referral_files (referralId, patientId, fileName, fileType, filePath, fileSize, uploadedBy, url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [referralId || null, patientId || null, fileName, fileType, filePath, fileSize, userId, publicUrl]
     );
 
     // If referralId provided, ensure it's attached; otherwise client may attach later
@@ -239,7 +256,7 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req, res) =
       fileName,
       fileType,
       uploadedDate: new Date().toISOString(),
-      url: `/uploads/referrals/${req.file.filename}`
+      url: publicUrl
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

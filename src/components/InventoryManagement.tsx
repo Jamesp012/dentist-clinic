@@ -1,79 +1,49 @@
 // Reduce inventory for multiple services
-import { inventoryManagementAPI } from '../api';
-
+import { inventoryManagementAPI, inventoryAPI } from '../api';
 export async function reduceInventoryForServices(serviceNames: DentalService[], inventory: InventoryItem[], setInventory: (inventory: InventoryItem[]) => void, onDataChanged?: () => Promise<void>) {
   let reductionCount = 0;
   for (const serviceName of serviceNames) {
-    // Try to fetch configured auto-reduction rule for this service type from backend
-    let ruleItems = null;
+    // Attempt to use backend rules first
+    let ruleItems: any[] | null = null;
     try {
-      const result = await inventoryManagementAPI.getRulesByType(serviceName).catch(() => null);
-      // API returns object with items or array depending on endpoint - attempt to normalize
-      if (result && (result.items || Array.isArray(result))) {
-        ruleItems = result.items || result;
+      const allRules = await inventoryManagementAPI.getAutoReductionRules().catch(() => null);
+      if (allRules && Array.isArray(allRules)) {
+        const found = allRules.find((r: any) => String(r.appointmentType) === String(serviceName));
+        if (found) ruleItems = found.items || found;
       }
-    } catch (error) {
-      // ignore and fallback to static mapping
+    } catch (err) {
       ruleItems = null;
     }
 
     const updatedInventory = [...inventory];
 
     if (ruleItems && ruleItems.length > 0) {
-      // ruleItems are expected to have inventoryItemId (or itemId) and quantityToReduce, optionally quantityUnit
       for (const rItem of ruleItems) {
         const itemId = rItem.inventoryItemId ?? rItem.itemId;
         const inventoryItem = updatedInventory.find(i => i.id === itemId);
         if (!inventoryItem) continue;
 
         const qtyToReduce = Number(rItem.quantityToReduce || 0);
-        const unit = rItem.quantityUnit || 'piece';
 
-        // Handle conversion between boxes and pieces when quantityPerBox is present
         if (inventoryItem.quantityPerBox && inventoryItem.quantityPerBox > 0) {
           const qpb = inventoryItem.quantityPerBox;
-          // inventory stored in inventoryItem.unit (e.g., 'box' or 'piece')
-          if (unit === 'piece' && inventoryItem.unit && inventoryItem.unit.toLowerCase().includes('box')) {
-            // Convert available to pieces then subtract
-            const availablePieces = inventoryItem.quantity * qpb;
-            if (availablePieces < qtyToReduce) {
-              // not enough
-              continue;
-            }
-            const remainingPieces = availablePieces - qtyToReduce;
-            const remainingBoxes = Math.floor(remainingPieces / qpb);
-            inventoryItem.quantity = Math.max(0, remainingBoxes);
-            try {
-              await inventoryAPI.update(inventoryItem.id, inventoryItem);
-              reductionCount++;
-            } catch (error) {
-              // ignore and continue
-            }
-          } else if (unit === 'box' && inventoryItem.unit && inventoryItem.unit.toLowerCase().includes('box')) {
-            // reduce boxes directly
-            inventoryItem.quantity = Math.max(0, inventoryItem.quantity - qtyToReduce);
-            try {
-              await inventoryAPI.update(inventoryItem.id, inventoryItem);
-              reductionCount++;
-            } catch (error) {}
-          } else if (unit === 'box' && inventoryItem.unit && inventoryItem.unit.toLowerCase().includes('piece')) {
-            // rule wants boxes but inventory stored as pieces
-            const reducePieces = qtyToReduce * qpb;
-            inventoryItem.quantity = Math.max(0, inventoryItem.quantity - reducePieces);
-            try {
-              await inventoryAPI.update(inventoryItem.id, inventoryItem);
-              reductionCount++;
-            } catch (error) {}
-          } else {
-            // default fallback: subtract qtyToReduce from the stored quantity
-            inventoryItem.quantity = Math.max(0, inventoryItem.quantity - qtyToReduce);
-            try {
-              await inventoryAPI.update(inventoryItem.id, inventoryItem);
-              reductionCount++;
-            } catch (error) {}
+          const currentBoxes = inventoryItem.quantity || 0;
+          const currentRemainder = inventoryItem.remainderPieces || 0;
+          const availablePieces = currentBoxes * qpb + currentRemainder;
+
+          if (availablePieces < qtyToReduce) continue;
+
+          const remainingPieces = availablePieces - qtyToReduce;
+          inventoryItem.quantity = Math.floor(remainingPieces / qpb);
+          inventoryItem.remainderPieces = remainingPieces % qpb;
+          try {
+            await inventoryAPI.update(inventoryItem.id, inventoryItem);
+            reductionCount++;
+          } catch (error) {
+            // continue
           }
         } else {
-          // No quantityPerBox: subtract directly
+          // simple subtraction
           inventoryItem.quantity = Math.max(0, inventoryItem.quantity - qtyToReduce);
           try {
             await inventoryAPI.update(inventoryItem.id, inventoryItem);
@@ -82,7 +52,7 @@ export async function reduceInventoryForServices(serviceNames: DentalService[], 
         }
       }
     } else {
-      // Fallback: use static SERVICE_INVENTORY_MAP and subtract 1 per mapped item
+      // fallback static mapping: subtract 1 per mapped item
       const itemsNeeded = SERVICE_INVENTORY_MAP[serviceName];
       if (!itemsNeeded || itemsNeeded.length === 0) continue;
       for (const itemType of itemsNeeded) {
@@ -92,17 +62,13 @@ export async function reduceInventoryForServices(serviceNames: DentalService[], 
           try {
             await inventoryAPI.update(item.id, item);
             reductionCount++;
-          } catch (error) {
-            // log error, but continue
-          }
+          } catch (error) {}
         }
       }
     }
 
     setInventory(updatedInventory);
-    if (onDataChanged) {
-      await onDataChanged();
-    }
+    if (onDataChanged) await onDataChanged();
   }
   return reductionCount;
 }
@@ -110,7 +76,6 @@ import { useState } from 'react';
 import { InventoryItem } from '../App';
 import { Package, Plus, X, Edit, Search, Zap, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { inventoryAPI } from '../api';
 
 // Inventory Item Types
 type InventoryItemType = 

@@ -62,6 +62,7 @@ export type InventoryItem = {
   lastOrdered?: string;
   cost: number;
   quantityPerBox?: number;
+  remainderPieces?: number;
 };
 
 export type TreatmentRecord = {

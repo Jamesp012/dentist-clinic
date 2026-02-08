@@ -459,7 +459,16 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
       if (Array.isArray(patientRecords) && patientRecords.length > 0) {
         const badCosts = patientRecords.filter(r => r == null || r.cost === null || r.cost === undefined);
         if (badCosts.length > 0) {
-          console.warn('PatientPortal: found treatment records with missing cost values', badCosts.map(r => ({ id: r?.id, patientId: r?.patientId, cost: r?.cost })));
+          // Avoid spamming the console: only warn once per patient (use string keys)
+          if (!(window as any).__patientPortalWarnedMissingCosts) {
+            (window as any).__patientPortalWarnedMissingCosts = new Set();
+          }
+          const warnedSet: Set<string> = (window as any).__patientPortalWarnedMissingCosts;
+          const patientKey = String(patient && (patient.id ?? patient.patientId) ? (patient.id ?? patient.patientId) : 'unknown');
+          if (!warnedSet.has(patientKey)) {
+            warnedSet.add(patientKey);
+            console.warn('PatientPortal: found treatment records with missing cost values', badCosts.map(r => ({ id: r?.id, patientId: r?.patientId, cost: r?.cost })));
+          }
         }
       }
     } catch (err) {

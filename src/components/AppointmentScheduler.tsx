@@ -25,7 +25,7 @@ type AppointmentSchedulerProps = {
   patients: Patient[];
   treatmentRecords?: TreatmentRecord[];
   setTreatmentRecords?: (records: TreatmentRecord[]) => void;
-  onOpenServiceForm?: (appointmentData: { patientId: string; patientName: string; appointmentType: string }) => void;
+  onOpenServiceForm?: (appointmentData: { patientId: string; patientName: string; appointmentType: string; appointmentId?: string }) => void;
   onDataChanged?: () => Promise<void>;
   services?: Service[];
 };
@@ -202,15 +202,13 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
   };
 
   const handleDoneClick = async (appointment: Appointment) => {
-    // Update appointment status to completed
-    await updateAppointmentStatus(appointment.id, 'completed');
-    
-    // If there's a callback, use it to open the service form in parent component
+    // Do NOT mark appointment completed here. Open the Record Receipt form first.
     if (onOpenServiceForm) {
       onOpenServiceForm({
         patientId: String(appointment.patientId),
         patientName: appointment.patientName,
         appointmentType: Array.isArray(appointment.type) ? appointment.type.join(', ') : (appointment.type as unknown as string),
+        appointmentId: String(appointment.id),
       });
     }
   };

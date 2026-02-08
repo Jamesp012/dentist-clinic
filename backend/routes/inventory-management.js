@@ -433,75 +433,102 @@ router.post('/auto-reduce/appointment/:appointmentId', authMiddleware, async (re
 
     const appointment = appointments[0];
 
-    // Get auto-reduction rules for this appointment type
-    const [ruleRows] = await pool.query(`
-      SELECT r.id as ruleId, r.appointmentType, ri.id as itemId, ri.inventoryItemId, ri.quantityToReduce
-      FROM inventory_auto_reduction_rules_v2 r
-      LEFT JOIN inventory_auto_reduction_rule_items ri ON r.id = ri.ruleId
-      WHERE r.appointmentType = ? AND r.isActive = TRUE
-    `, [appointment.appointmentType]);
+    // Determine appointment types (support single type, comma-separated, or JSON array stored in `type`)
+    let appointmentTypes = [];
+    try {
+      // If appointment.type already JSON array string, parse it
+      if (appointment.appointmentType && typeof appointment.appointmentType === 'string') {
+        const raw = appointment.appointmentType.trim();
+        if (raw.startsWith('[')) {
+          appointmentTypes = JSON.parse(raw);
+        } else if (raw.includes(',')) {
+          appointmentTypes = raw.split(',').map(s => s.trim()).filter(Boolean);
+        } else if (raw.length > 0) {
+          appointmentTypes = [raw];
+        }
+      }
 
-    if (ruleRows.length === 0 || !ruleRows[0].itemId) {
-      return res.json({ message: 'No auto-reduction rules found for this appointment type' });
-    }
+      if (appointmentTypes.length === 0) {
+        return res.json({ message: 'No appointment types found for this appointment' });
+      }
 
-    const reductionRecords = [];
+      // Fetch rules for any of the appointment types (deduplicate by rule item)
+      const [ruleRows] = await pool.query(`
+        SELECT r.id as ruleId, r.appointmentType, ri.id as itemId, ri.inventoryItemId, ri.quantityToReduce
+        FROM inventory_auto_reduction_rules_v2 r
+        LEFT JOIN inventory_auto_reduction_rule_items ri ON r.id = ri.ruleId
+        WHERE r.appointmentType IN (?) AND r.isActive = TRUE
+      `, [appointmentTypes]);
 
-    // Process each rule item
-    for (const rule of ruleRows) {
-      if (!rule.itemId || !rule.inventoryItemId) continue;
+      if (ruleRows.length === 0) {
+        return res.json({ message: 'No auto-reduction rules found for the appointment types' });
+      }
 
-      // Get current inventory quantity
-      const [inventoryItems] = await pool.query(
-        'SELECT id, name, quantity FROM inventory WHERE id = ?',
-        [rule.inventoryItemId]
-      );
+      const reductionRecords = [];
 
-      if (inventoryItems.length === 0) continue;
+      // Ensure we only apply each inventoryItemId once per invocation even if multiple rules reference it
+      const seenInventoryIds = new Set();
 
-      const item = inventoryItems[0];
-      const quantityBefore = item.quantity;
-      const quantityToReduce = Math.min(rule.quantityToReduce, quantityBefore);
-      const quantityAfter = quantityBefore - quantityToReduce;
+      for (const rule of ruleRows) {
+        if (!rule.itemId || !rule.inventoryItemId) continue;
+        if (seenInventoryIds.has(rule.inventoryItemId)) continue;
+        seenInventoryIds.add(rule.inventoryItemId);
 
-      // Update inventory quantity
-      await pool.query(
-        'UPDATE inventory SET quantity = ? WHERE id = ?',
-        [quantityAfter, rule.inventoryItemId]
-      );
+        // Get current inventory quantity
+        const [inventoryItems] = await pool.query(
+          'SELECT id, name, quantity FROM inventory WHERE id = ?',
+          [rule.inventoryItemId]
+        );
 
-      // Record the reduction in history
-      const [historyResult] = await pool.query(`
-        INSERT INTO inventory_reduction_history 
-        (appointmentId, patientId, patientName, appointmentType, inventoryItemId, inventoryItemName, quantityReduced, quantityBefore, quantityAfter)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
+        if (inventoryItems.length === 0) continue;
+
+        const item = inventoryItems[0];
+        const quantityBefore = item.quantity;
+        const quantityToReduce = Math.min(rule.quantityToReduce, quantityBefore);
+        const quantityAfter = quantityBefore - quantityToReduce;
+
+        // Update inventory quantity
+        await pool.query(
+          'UPDATE inventory SET quantity = ? WHERE id = ?',
+          [quantityAfter, rule.inventoryItemId]
+        );
+
+        // Record the reduction in history
+        await pool.query(`
+          INSERT INTO inventory_reduction_history 
+          (appointmentId, patientId, patientName, appointmentType, inventoryItemId, inventoryItemName, quantityReduced, quantityBefore, quantityAfter)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+          appointmentId,
+          appointment.patientId,
+          appointment.patientName,
+          JSON.stringify(appointmentTypes),
+          rule.inventoryItemId,
+          item.name,
+          quantityToReduce,
+          quantityBefore,
+          quantityAfter
+        ]);
+
+        reductionRecords.push({
+          itemId: rule.inventoryItemId,
+          itemName: item.name,
+          quantityReduced: quantityToReduce,
+          quantityBefore,
+          quantityAfter
+        });
+      }
+
+      res.json({
+        message: 'Inventory reduced successfully',
         appointmentId,
-        appointment.patientId,
-        appointment.patientName,
-        appointment.appointmentType,
-        rule.inventoryItemId,
-        item.name,
-        quantityToReduce,
-        quantityBefore,
-        quantityAfter
-      ]);
-
-      reductionRecords.push({
-        itemId: rule.inventoryItemId,
-        itemName: item.name,
-        quantityReduced: quantityToReduce,
-        quantityBefore,
-        quantityAfter
+        reductionsApplied: reductionRecords.length,
+        reductions: reductionRecords
       });
+    } catch (err) {
+      console.error('Error processing multi-type auto-reduction:', err);
+      res.status(500).json({ error: err.message });
     }
-
-    res.json({
-      message: 'Inventory reduced successfully',
-      appointmentId,
-      reductionsApplied: reductionRecords.length,
-      reductions: reductionRecords
-    });
   } catch (error) {
     console.error('Error processing inventory auto-reduction:', error);
     res.status(500).json({ error: error.message });

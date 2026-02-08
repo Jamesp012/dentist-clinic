@@ -1,7 +1,7 @@
+import { treatmentRecordAPI, paymentAPI, prescriptionAPI, appointmentAPI } from '../api';
 import { useState, useEffect } from 'react';
 import { Patient, TreatmentRecord, Payment } from '../App';
 import { FileText, Printer, Download, Plus, X, CreditCard } from 'lucide-react';
-import { treatmentRecordAPI, paymentAPI, prescriptionAPI } from '../api';
 import { reduceInventoryForServices } from './InventoryManagement';
 import { toast } from 'sonner';
 import { formatToDD_MM_YYYY } from '../utils/dateHelpers';
@@ -15,7 +15,8 @@ type ServicesFormsProps = {
   prefilledAppointment?: {
     patientId: string;
     patientName: string;
-    appointmentType: string;
+    appointmentType: string | string[];
+    appointmentId?: string;
   };
   onServiceCreated?: (patientId: string, service: TreatmentRecord) => void;
   onDataChanged?: () => Promise<void>;
@@ -194,11 +195,10 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
   ];
   const [selectedService, setSelectedService] = useState<string>(() => dentalServices[0]);
     const [selectedServices, setSelectedServices] = useState<string[]>(() => {
-      if (prefilledAppointment && Array.isArray(prefilledAppointment.appointmentType)) {
-        return prefilledAppointment.appointmentType;
-      } else if (prefilledAppointment && typeof prefilledAppointment.appointmentType === 'string') {
-        return [prefilledAppointment.appointmentType];
-      }
+      if (!prefilledAppointment) return [];
+      const at = prefilledAppointment.appointmentType;
+      if (Array.isArray(at)) return at as string[];
+      if (typeof at === 'string') return at.split(',').map(s => s.trim()).filter(Boolean);
       return [];
     });
   const [selectedPatient, setSelectedPatient] = useState<string>(prefilledAppointment?.patientId || '');
@@ -267,66 +267,98 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
       }
 
       // Convert FormDataEntryValue[] to string[]
-      const serviceList = services.map(s => typeof s === 'string' ? s : '');
-      const newRecords = [];
-      for (const service of serviceList) {
-        const newRecordData = {
+      const serviceList = services.map(s => typeof s === 'string' ? s : '').filter(Boolean);
+
+      // Create a single combined treatment record representing all selected services
+      const combinedTreatment = serviceList.join(', ');
+      const newRecordData = {
+        patientId,
+        date,
+        description: combinedTreatment,
+        treatment: combinedTreatment,
+        // preserve legacy and new formats for backend compatibility
+        type: combinedTreatment,
+        types: serviceList,
+        tooth: formData.get('tooth') as string || undefined,
+        notes: formData.get('notes') as string,
+        cost: totalCost,
+        dentist,
+        paymentType: type,
+        amountPaid: paid,
+        remainingBalance: totalCost - paid,
+        installmentPlan,
+      } as any;
+
+      // Save to backend (single record)
+      const savedRecord = await treatmentRecordAPI.create(newRecordData);
+      const nowISO = new Date().toISOString();
+      (savedRecord as any).createdAt = savedRecord.createdAt || nowISO;
+
+      // Create a single payment record if there's an initial payment
+      if (paid > 0) {
+        await paymentAPI.create({
           patientId,
-          date,
-          description: service,
-          treatment: service,
-          tooth: formData.get('tooth') as string || undefined,
-          notes: formData.get('notes') as string,
-          cost: totalCost,
-          dentist,
-          paymentType: type,
-          amountPaid: paid,
-          remainingBalance: totalCost - paid,
-          installmentPlan,
-        };
-        // Save to backend
-        const savedRecord = await treatmentRecordAPI.create(newRecordData);
-        const nowISO = new Date().toISOString();
-        (savedRecord as any).createdAt = savedRecord.createdAt || nowISO;
-        // Also create a payment record if there's an initial payment
-        if (paid > 0) {
-          await paymentAPI.create({
-            patientId,
-            treatmentRecordId: savedRecord.id,
-            amount: paid,
-            paymentDate: date,
-            paymentMethod: 'cash',
-            status: 'paid',
-            notes: `Initial payment for ${service}`,
-            recordedBy: dentist
-          });
-        }
-        newRecords.push(savedRecord);
+          treatmentRecordId: savedRecord.id,
+          amount: paid,
+          paymentDate: date,
+          paymentMethod: 'cash',
+          status: 'paid',
+          notes: `Initial payment for ${combinedTreatment}`,
+          recordedBy: dentist
+        });
       }
-      setTreatmentRecords([...treatmentRecords, ...newRecords]);
-      setLastCreatedService(newRecords[newRecords.length - 1]);
+
+      setTreatmentRecords([...treatmentRecords, savedRecord]);
+      setLastCreatedService(savedRecord);
       setPaymentType('full');
       setAmountPaid(0);
       setNumberOfInstallments(3);
       setSelectedPatient('');
       setPatientSearch('');
-      // Auto-reduce inventory for all services
-      const reductionCount = await reduceInventoryForServices(serviceList, inventory, setInventory, onDataChanged);
-      if (reductionCount > 0) {
-        toast.success(`Inventory reduced for ${reductionCount} item(s).`);
+      // Auto-reduce inventory for all services.
+      // If this receipt is created from an appointment, let the backend apply all rules
+      // for each service when we mark the appointment completed (avoid double-reduction).
+      if (!isFromAppointment || !prefilledAppointment?.appointmentId) {
+        const reductionCount = await reduceInventoryForServices(serviceList, inventory, setInventory, onDataChanged);
+        if (reductionCount > 0) {
+          toast.success(`Inventory reduced for ${reductionCount} item(s).`);
+        }
       }
       toast.success('Service records saved successfully');
       if (onDataChanged) {
         await onDataChanged();
       }
       if (isFromAppointment) {
+        // If this receipt was created from an appointment, mark the appointment completed now
+        try {
+          const appointmentId = prefilledAppointment?.appointmentId;
+          if (appointmentId) {
+            await appointmentAPI.update(appointmentId, { status: 'completed' });
+            toast.success('Appointment marked completed');
+            try {
+              const inventoryManagementAPI = await import('../api').then(m => m.inventoryManagementAPI);
+              const result = await inventoryManagementAPI.autoReduceForAppointment(appointmentId);
+              if (result && result.reductionsApplied > 0) {
+                toast.success(`Inventory reduced by server policies: ${result.reductionsApplied} item(s).`);
+                if (onDataChanged) await onDataChanged();
+              }
+            } catch (err) {
+              console.warn('Server auto-reduction not applied or failed:', err);
+            }
+          }
+        } catch (err) {
+          console.error('Failed to mark appointment completed:', err);
+          toast.error('Failed to mark appointment completed');
+        }
+
         setActiveForm(null);
         setIsFromAppointment(false);
+        if (onDataChanged) await onDataChanged();
         return;
       }
       setShowPrescriptionPrompt(true);
       if (onServiceCreated) {
-        onServiceCreated(patientId, newRecords[newRecords.length - 1]);
+        onServiceCreated(patientId, savedRecord);
       }
     } catch (err) {
       console.error('Failed to save service:', err);
@@ -659,29 +691,27 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                     <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
                     Service Types *
                   </label>
-                  <select
-                    name="services"
-                    multiple
-                    required
-                    value={selectedServices}
-                    onChange={(e) => {
-                      const options = Array.from(e.target.selectedOptions).map(opt => opt.value);
-                      setSelectedServices(options);
-                    }}
-                    className="w-full px-5 py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-cyan-400/30 focus:border-cyan-400 transition-all text-base font-medium"
-                    size={8}
-                  >
+                  <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-teal-400 scrollbar-track-slate-100 p-2">
                     {dentalServices.map(service => (
-                      <option key={service} value={service}>
-                        {service}
-                      </option>
+                      <label key={service} className="flex items-center gap-2 bg-white border border-slate-200 rounded px-2 py-1 cursor-pointer hover:bg-slate-50 transition">
+                        <input
+                          type="checkbox"
+                          value={service}
+                          checked={selectedServices.includes(service)}
+                          onChange={(e) => {
+                            if (e.target.checked) setSelectedServices(prev => [...prev, service]);
+                            else setSelectedServices(prev => prev.filter(s => s !== service));
+                          }}
+                          className="w-4 h-4 accent-teal-500"
+                        />
+                        <span className="text-sm">{service}</span>
+                      </label>
                     ))}
-                  </select>
-                  {/* Hidden inputs for all selected services to ensure formData.getAll works reliably */}
+                  </div>
+                  {/* Hidden inputs for form submission fallback (keeps existing handler working) */}
                   {selectedServices.map((service, idx) => (
                     <input key={service + idx} type="hidden" name="services" value={service} />
                   ))}
-                  <p className="text-xs text-slate-500 mt-2">Hold Ctrl (Windows) or Cmd (Mac) to select multiple.</p>
                 </div>
               </div>
 

@@ -64,18 +64,18 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
   const slides = [
     {
       icon: Stethoscope,
-      title: 'Modern Dental Management',
-      description: 'All-in-one solution for your clinic'
+      title: 'Expert Dental Care',
+      description: 'Comprehensive dental services for the whole family'
     },
     {
       icon: Users,
       title: 'Patient Care Excellence',
-      description: 'Comprehensive patient management system'
+      description: 'Personalized treatment with your comfort in mind'
     },
     {
       icon: Award,
-      title: 'Award-Winning Platform',
-      description: 'Trusted by leading dental professionals'
+      title: 'Professional Excellence',
+      description: 'State-of-the-art technology and proven expertise'
     }
   ];
 
@@ -467,7 +467,7 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
                       {isLoginMode ? 'Welcome Back' : 'Create Your Account'}
                     </h2>
                     <p className="text-xs sm:text-sm text-slate-600">
-                      {isLoginMode ? 'Sign in to access your patient portal' : 'Join our dental care platform'}
+                      {isLoginMode ? 'Sign in to access your patient portal' : 'Create your account with Maaño Dental Care'}
                     </p>
                   </div>
 
@@ -800,9 +800,9 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold text-slate-900 mb-4">Powerful Features</h2>
+            <h2 className="text-4xl font-bold text-slate-900 mb-4">Our Services</h2>
             <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-              Everything you need to manage your dental clinic efficiently and professionally
+              Comprehensive dental care services for your entire family's oral health
             </p>
           </motion.div>
 
@@ -810,23 +810,23 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
             {[
               {
                 icon: Users,
-                title: 'Patient Management',
-                description: 'Complete patient profiles, medical history, and digital records'
+                title: 'General Dentistry',
+                description: 'Routine cleanings, exams, and preventive care for the whole family'
               },
               {
                 icon: Award,
-                title: 'Appointment Scheduling',
-                description: 'Smart calendar system with automated reminders and confirmations'
+                title: 'Restorative Treatment',
+                description: 'Fillings, crowns, and bridges to restore your natural smile'
               },
               {
                 icon: Heart,
-                title: 'Dental Charting',
-                description: 'Advanced visual charting system for treatments and procedures'
+                title: 'Cosmetic Dentistry',
+                description: 'Teeth whitening, veneers, and smile enhancements'
               },
               {
                 icon: Stethoscope,
-                title: 'Financial Reporting',
-                description: 'Track revenue, expenses, and generate comprehensive reports'
+                title: 'Emergency Care',
+                description: 'Prompt treatment for dental emergencies and urgent issues'
               }
             ].map((feature, index) => (
               <motion.div
@@ -914,13 +914,13 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16">
               <div className="space-y-6">
                 <p className="text-lg text-slate-700 leading-relaxed">
-                  DentaCare Pro is built on the foundation of modern dental practice management. Our system has been developed by dental professionals and software engineers working together to solve the unique challenges faced by dental clinics.
+                  Maaño Dental Care is an established dental clinic dedicated to providing exceptional oral healthcare to our community. With a commitment to excellence and patient comfort, we combine modern dental technology with personalized, compassionate care that puts our patients' needs first.
                 </p>
                 <p className="text-lg text-slate-700 leading-relaxed">
-                  With over a decade of experience in healthcare technology, we understand the importance of security, efficiency, and patient care. Our platform is trusted by clinics worldwide to manage their operations seamlessly.
+                  Our team of experienced dental professionals stays at the forefront of modern dental practices and the latest advancements in dentistry. We follow the highest standards of infection control and patient safety, ensuring that every patient receives care in a clean, safe, and professional environment.
                 </p>
                 <p className="text-lg text-slate-700 leading-relaxed">
-                  We're committed to continuous innovation and improvement, ensuring that our clients always have access to cutting-edge dental management solutions.
+                  We believe that trustworthy relationships are built on transparency, quality care, and genuine concern for our patients' dental health and overall wellbeing. Every member of our team is dedicated to helping you achieve and maintain a healthy, beautiful smile.
                 </p>
               </div>
 
@@ -928,25 +928,25 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
                 <div className="bg-white p-6 rounded-xl shadow-md">
                   <h3 className="text-xl font-semibold text-slate-900 mb-3 flex items-center gap-2">
                     <Award className="w-6 h-6 text-teal-600" />
-                    HIPAA Compliant
+                    Professional Excellence
                   </h3>
-                  <p className="text-slate-600">We maintain the highest standards of data security and patient privacy compliance</p>
+                  <p className="text-slate-600">We maintain the highest standards of clinical care, continuing education, and professional ethics in all our treatments</p>
                 </div>
 
                 <div className="bg-white p-6 rounded-xl shadow-md">
                   <h3 className="text-xl font-semibold text-slate-900 mb-3 flex items-center gap-2">
                     <Heart className="w-6 h-6 text-teal-600" />
-                    Patient-Centered
+                    Compassionate Care
                   </h3>
-                  <p className="text-slate-600">Every feature is designed with patients and healthcare providers in mind</p>
+                  <p className="text-slate-600">Your comfort and wellbeing are our priority. We listen to your concerns and create personalized treatment plans tailored to your needs</p>
                 </div>
 
                 <div className="bg-white p-6 rounded-xl shadow-md">
                   <h3 className="text-xl font-semibold text-slate-900 mb-3 flex items-center gap-2">
                     <Stethoscope className="w-6 h-6 text-teal-600" />
-                    24/7 Support
+                    Modern Technology
                   </h3>
-                  <p className="text-slate-600">Our dedicated support team is always available to help your clinic succeed</p>
+                  <p className="text-slate-600">We invest in state-of-the-art dental equipment and techniques to provide efficient, effective, and comfortable treatment</p>
                 </div>
               </div>
             </div>
@@ -955,7 +955,7 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
       </section>
 
       {/* Developers Section */}
-      <section className="py-20 bg-gradient-to-br from-slate-900 to-slate-800 text-white">
+      <section className="py-20 bg-gradient-to-br from-teal-50 to-cyan-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -964,8 +964,8 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold mb-4">Meet Our Team</h2>
-            <p className="text-xl text-slate-300">Passionate developers and designers behind DentaCare Pro</p>
+            <h2 className="text-4xl font-bold mb-4">Meet Our Developers</h2>
+            <p className="text-xl text-slate-600">The developers behind the web presence and tools supporting Maaño Dental Care</p>
           </motion.div>
 
           <div className="flex justify-center">
@@ -977,7 +977,6 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
                 bio: 'Southern Luzon State University - Class of 2026'
               },
               {
-                
                 name: 'Sarah J. Zarsadias',
                 role: 'Computer Engineering | Researcher',
                 bio: 'Southern Luzon State University - Class of 2026'
@@ -1010,7 +1009,7 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
           <div className="border-t border-slate-800 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <p className="text-sm text-center md:text-left">
-                © 2026 DentaCare Pro. All rights reserved. | Developed with ❤️ by our dedicated team
+                © 2026 Maaño Dental Care. All rights reserved. | Committed to your oral health with ❤️
               </p>
               <div className="flex gap-4">
                 <a href="#" className="text-sm hover:text-teal-400 transition-colors duration-300">

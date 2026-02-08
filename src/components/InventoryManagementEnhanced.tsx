@@ -59,6 +59,7 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
     quantity: 0,
     quantityPerBox: undefined,
     unit: 'piece',
+    remainderPieces: 0,
     minQuantity: 0,
     category: '',
     supplier: '',
@@ -98,32 +99,31 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
 
   // Load appointment types
   const loadAppointmentTypes = async () => {
-    try {
-      // First try to fetch from API
-      const response = await fetch('http://localhost:5000/api/inventory-management/appointment-types', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        if (data.appointmentTypes && data.appointmentTypes.length > 0) {
-          setAvailableAppointmentTypes(data.appointmentTypes);
-          return;
-        }
-      }
-    } catch (error) {
-      console.error('Error loading appointment types from API:', error);
-    }
-    
-    // Fallback to hardcoded types matching the appointment system
-    const defaultAppointmentTypes = [
+    // Legacy hardcoded 21 appointment/service types (original list requested)
+    const staticAppointmentTypes = [
       'Dental consultation',
       'Oral examination',
+      'Diagnosis',
+      'Treatment planning',
       'Dental cleaning',
-      'Tooth extraction',
+      'Scaling',
+      'Polishing',
+      'Stain removal',
+      'Temporary filling',
+      'Permanent filling',
+      'Tooth repair',
+      'Dental bonding',
+      'Simple tooth extraction',
+      'Surgical extraction',
+      'Impacted tooth removal',
       'Braces installation',
-      'Consultation'
+      'Braces adjustment',
+      'Retainers',
+      'Orthodontic consultation',
+      'Complete dentures',
+      'Partial dentures'
     ];
-    setAvailableAppointmentTypes(defaultAppointmentTypes);
+    setAvailableAppointmentTypes(staticAppointmentTypes);
   };
 
   // Load reduction history
@@ -313,7 +313,7 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
         cost: newItemForm.cost || 0,
       };
 
-      const created = await inventoryAPI.create(payload as any);
+      const created = await inventoryAPI.create({ ...payload, remainderPieces: payload.remainderPieces ?? 0 } as any);
       setInventory([...inventory, created as InventoryItem]);
       setShowAddModal(false);
       setNewItemForm({ name: '', quantity: 0, unit: 'piece' });
@@ -540,7 +540,7 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                     <tr>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Item Name</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Quantity</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Per Box/Pack</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Remaining per Box/Pack (pcs)</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Unit</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Min Level</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
@@ -565,11 +565,15 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                               status === 'critical' ? 'text-yellow-600' :
                               'text-green-600'
                             }`}>
-                              {item.quantity}
+                              {item.unit && item.unit.toLowerCase().includes('box') && item.quantityPerBox ? (
+                                <>{item.quantity} box{item.quantity !== 1 ? 'es' : ''}</>
+                              ) : (
+                                <>{item.quantity}</>
+                              )}
                             </span>
                           </td>
                           <td className="px-6 py-4 text-gray-600">
-                            {item.quantityPerBox ? `${item.quantityPerBox} ${item.unit}` : '-'}
+                            {item.quantityPerBox ? `${(item.remainderPieces ?? 0)} pcs` : '-'}
                           </td>
                           <td className="px-6 py-4 text-gray-600">{item.unit}</td>
                           <td className="px-6 py-4 text-gray-600">{minLevel}</td>
@@ -639,7 +643,22 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Quantity Per Box/Pack</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Per Box/Pack (pcs remaining)</label>
+                    <div className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-700">
+                      {newItemForm.quantityPerBox && newItemForm.quantity ? (
+                        <span>
+                          {newItemForm.quantityPerBox} {newItemForm.unit || 'piece'} per box — total: {newItemForm.quantity * newItemForm.quantityPerBox} {newItemForm.unit || 'piece'}
+                        </span>
+                      ) : newItemForm.quantityPerBox ? (
+                        <span>{newItemForm.quantityPerBox} {newItemForm.unit || 'piece'} per box/pack</span>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Quantity Per Box/Pack (pcs)</label>
                     <input
                       type="number"
                       value={newItemForm.quantityPerBox || ''}
@@ -721,7 +740,7 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Quantity Per Box/Pack</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Quantity Per Box/Pack (pcs)</label>
                     <input
                       type="number"
                       value={editFormData.quantityPerBox || ''}

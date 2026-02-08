@@ -149,7 +149,7 @@ export function AssistantDashboard({
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [usernameCheckTimeout, setUsernameCheckTimeout] = useState<NodeJS.Timeout | null>(null);
-  const [prefilledAppointmentData, setPrefilledAppointmentData] = useState<{ patientId: string; patientName: string; appointmentType: string } | null>(null);
+  const [prefilledAppointmentData, setPrefilledAppointmentData] = useState<{ patientId: string; patientName: string; appointmentType: string; appointmentId?: string } | null>(null);
 
   const checkUsernameAvailability = async (username: string) => {
     if (username === currentUser.username) {
@@ -269,7 +269,7 @@ export function AssistantDashboard({
     setUsernameCheckTimeout(timeout);
   };
 
-  const handleOpenServiceForm = (appointmentData: { patientId: string; patientName: string; appointmentType: string }) => {
+  const handleOpenServiceForm = (appointmentData: { patientId: string; patientName: string; appointmentType: string; appointmentId?: string }) => {
     setPrefilledAppointmentData(appointmentData);
     setActiveTab('services');
   };
