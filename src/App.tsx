@@ -58,11 +58,12 @@ export type InventoryItem = {
   quantity: number;
   minQuantity: number;
   unit: string;
+  unit_type?: 'box' | 'piece';
+  pieces_per_box?: number;
+  remaining_pieces?: number;
   supplier: string;
   lastOrdered?: string;
   cost: number;
-  quantityPerBox?: number;
-  remainderPieces?: number;
 };
 
 export type TreatmentRecord = {

@@ -17,10 +17,32 @@ router.get('/', authMiddleware, async (req, res) => {
 // Create inventory item
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { name, category, quantity, minQuantity, unit, supplier, cost } = req.body;
+    const {
+      name,
+      category,
+      quantity,
+      minQuantity,
+      unit,
+      unit_type,
+      pieces_per_box,
+      remaining_pieces,
+      supplier,
+      cost
+    } = req.body;
     const [result] = await pool.query(
-      'INSERT INTO inventory (name, category, quantity, minQuantity, unit, supplier, cost) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [name, category, quantity, minQuantity, unit, supplier, cost]
+      'INSERT INTO inventory (name, category, quantity, minQuantity, unit, unit_type, pieces_per_box, remaining_pieces, supplier, cost) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        name,
+        category,
+        quantity,
+        minQuantity,
+        unit,
+        unit_type || 'piece',
+        pieces_per_box ?? null,
+        remaining_pieces ?? null,
+        supplier,
+        cost
+      ]
     );
     res.status(201).json({ id: result.insertId, ...req.body });
   } catch (error) {
@@ -31,10 +53,33 @@ router.post('/', authMiddleware, async (req, res) => {
 // Update inventory
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
-    const { name, category, quantity, minQuantity, unit, supplier, cost } = req.body;
+    const {
+      name,
+      category,
+      quantity,
+      minQuantity,
+      unit,
+      unit_type,
+      pieces_per_box,
+      remaining_pieces,
+      supplier,
+      cost
+    } = req.body;
     await pool.query(
-      'UPDATE inventory SET name=?, category=?, quantity=?, minQuantity=?, unit=?, supplier=?, cost=? WHERE id=?',
-      [name, category, quantity, minQuantity, unit, supplier, cost, req.params.id]
+      'UPDATE inventory SET name=?, category=?, quantity=?, minQuantity=?, unit=?, unit_type=?, pieces_per_box=?, remaining_pieces=?, supplier=?, cost=? WHERE id=?',
+      [
+        name,
+        category,
+        quantity,
+        minQuantity,
+        unit,
+        unit_type || 'piece',
+        pieces_per_box ?? null,
+        remaining_pieces ?? null,
+        supplier,
+        cost,
+        req.params.id
+      ]
     );
     res.json({ id: req.params.id, ...req.body });
   } catch (error) {

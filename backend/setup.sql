@@ -63,6 +63,9 @@ CREATE TABLE inventory (
   quantity INT,
   minQuantity INT,
   unit VARCHAR(20),
+  unit_type ENUM('box', 'piece') NOT NULL DEFAULT 'piece',
+  pieces_per_box INT DEFAULT NULL,
+  remaining_pieces INT DEFAULT NULL,
   supplier VARCHAR(100),
   lastOrdered DATE,
   cost DECIMAL(10, 2),
@@ -139,10 +142,10 @@ INSERT INTO appointments (patientId, patientName, appointmentDateTime, type, dur
 (1, 'Krista', '2025-02-06 10:00:00', 'Braces Adjustment', 45, 'scheduled', 'Monthly braces adjustment'),
 (2, 'Sarah', '2025-02-15 14:00:00', 'Root Canal', 90, 'scheduled', 'Tooth #14');
 
-INSERT INTO inventory (name, category, quantity, minQuantity, unit, supplier, cost) VALUES
-('Nitrile Gloves (Box)', 'PPE', 45, 20, 'box', 'MedSupply Co.', 12.99),
-('Dental Anesthetic', 'Medications', 15, 25, 'vial', 'PharmaDent', 45.00),
-('Composite Filling Material', 'Restorative', 8, 10, 'syringe', 'DentalCare Inc.', 78.50);
+INSERT INTO inventory (name, category, quantity, minQuantity, unit, unit_type, pieces_per_box, remaining_pieces, supplier, cost) VALUES
+('Nitrile Gloves (Box)', 'PPE', 45, 20, 'box', 'box', 40, 40, 'MedSupply Co.', 12.99),
+('Dental Anesthetic', 'Medications', 15, 25, 'vial', 'piece', NULL, NULL, 'PharmaDent', 45.00),
+('Composite Filling Material', 'Restorative', 8, 10, 'syringe', 'piece', NULL, NULL, 'DentalCare Inc.', 78.50);
 
 INSERT INTO servicePrices (serviceName, description, price, category, duration) VALUES
 ('Teeth Cleaning', 'Professional dental cleaning and polishing', 1500, 'Preventive', '45 minutes'),

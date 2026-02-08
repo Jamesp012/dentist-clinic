@@ -505,62 +505,97 @@ router.post('/auto-reduce/appointment/:appointmentId', authMiddleware, async (re
 
     // Query rules for any of the appointment types
     const [rules] = await connection.query(`
-      SELECT ri.inventoryItemId, ri.quantityToReduce, ri.quantityUnit, i.name as itemName
+      SELECT ri.inventoryItemId, ri.quantityToReduce, i.name as itemName
       FROM inventory_auto_reduction_rules_v2 r
       JOIN inventory_auto_reduction_rule_items ri ON r.id = ri.ruleId
       JOIN inventory i ON ri.inventoryItemId = i.id
       WHERE r.appointmentType IN (?) AND r.isActive = TRUE
     `, [appointmentTypes]);
 
-    // Aggregate reductions by inventory item (sum quantities across rules)
-    const reductionsMap = new Map(); // itemId -> { itemName, totalPieces: 0, raw: [] }
+    // Aggregate reductions by inventory item (sum pieces across rules)
+    // Procedure rules are PIECE-level: quantityToReduce is interpreted as pieces.
+    const reductionsMap = new Map(); // itemId -> { itemName, totalPieces: number }
 
     for (const rule of rules) {
       const itemId = rule.inventoryItemId;
-      const qty = Number(rule.quantityToReduce || 0);
-      const unit = rule.quantityUnit || 'piece';
-      const existing = reductionsMap.get(itemId) || { itemName: rule.itemName, raw: [] };
+      const pieces = Number(rule.quantityToReduce || 0);
+      const existing = reductionsMap.get(itemId) || { itemName: rule.itemName, totalPieces: 0 };
       existing.itemName = rule.itemName;
-      existing.raw.push({ qty, unit });
+      existing.totalPieces += pieces;
       reductionsMap.set(itemId, existing);
     }
 
     const reductionRecords = [];
 
-    // Apply aggregated reductions
-    for (const [itemId, data] of reductionsMap.entries()) {
-      // Fetch inventory item details (quantity = full boxes or pieces, quantityPerBox, remainderPieces)
-      const [items] = await connection.query(`SELECT id, quantity, quantityPerBox, remainderPieces, unit FROM inventory WHERE id = ?`, [itemId]);
-      if (items.length === 0) continue;
-      const inv = items[0];
+    const applyBoxPieceReductionStrict = ({ quantity, pieces_per_box, remaining_pieces }, piecesToReduce) => {
+      const piecesPerBox = Math.max(0, Number(pieces_per_box || 0));
+      let boxes = Math.max(0, Number(quantity || 0));
 
-      const qpb = Number(inv.quantityPerBox) || 0; // pieces per box
-      const currentBoxes = Number(inv.quantity) || 0;
-      const currentRemainder = Number(inv.remainderPieces) || 0;
+      if (boxes === 0 || piecesPerBox === 0) {
+        return { quantity: 0, remaining_pieces: 0, ok: piecesToReduce <= 0 };
+      }
 
-      // Sum total pieces to reduce for this inventory item
-      let totalPiecesToReduce = 0;
-      for (const r of data.raw) {
-        if (r.unit === 'box' && qpb > 0) {
-          totalPiecesToReduce += Number(r.qty) * qpb;
-        } else {
-          totalPiecesToReduce += Number(r.qty);
+      let remaining = remaining_pieces == null ? piecesPerBox : Number(remaining_pieces);
+      if (!Number.isFinite(remaining) || remaining < 0) remaining = piecesPerBox;
+      if (remaining > piecesPerBox) remaining = piecesPerBox;
+
+      const totalAvailablePieces = (boxes - 1) * piecesPerBox + remaining;
+      if (totalAvailablePieces < piecesToReduce) {
+        return { quantity: boxes, remaining_pieces: remaining, ok: false, totalAvailablePieces };
+      }
+
+      let piecesLeftToReduce = piecesToReduce;
+      while (piecesLeftToReduce > 0 && boxes > 0) {
+        const used = Math.min(remaining, piecesLeftToReduce);
+        remaining -= used;
+        piecesLeftToReduce -= used;
+
+        if (remaining === 0) {
+          boxes -= 1;
+          if (boxes > 0) {
+            remaining = piecesPerBox;
+          }
         }
       }
 
-      const availablePieces = currentBoxes * qpb + currentRemainder;
-      if (availablePieces <= 0) continue;
+      if (boxes === 0) remaining = 0;
+      return { quantity: boxes, remaining_pieces: remaining, ok: true, totalAvailablePieces };
+    };
 
-      const piecesAfter = Math.max(0, availablePieces - totalPiecesToReduce);
+    // Apply aggregated reductions
+    for (const [itemId, data] of reductionsMap.entries()) {
+      const [items] = await connection.query(
+        `SELECT id, quantity, unit_type, pieces_per_box, remaining_pieces, unit FROM inventory WHERE id = ?`,
+        [itemId]
+      );
+      if (items.length === 0) continue;
+      const inv = items[0];
 
-      if (qpb > 0) {
-        const newBoxes = Math.floor(piecesAfter / qpb);
-        const newRemainder = piecesAfter % qpb;
+      const unitType = inv.unit_type || (inv.unit === 'box' ? 'box' : 'piece');
+      const totalPiecesToReduce = Math.max(0, Number(data.totalPieces || 0));
 
-        // Update inventory with new box count and remainder pieces
-        await connection.query(`UPDATE inventory SET quantity = ?, remainderPieces = ? WHERE id = ?`, [newBoxes, newRemainder, itemId]);
+      if (unitType === 'box') {
+        const beforeBoxes = Math.max(0, Number(inv.quantity || 0));
+        const beforePiecesPerBox = Math.max(0, Number(inv.pieces_per_box || 0));
+        const beforeRemaining = inv.remaining_pieces == null ? beforePiecesPerBox : Math.max(0, Number(inv.remaining_pieces || 0));
 
-        // Record history (we store quantityBefore/After as box counts for compatibility)
+        const result = applyBoxPieceReductionStrict(
+          { quantity: beforeBoxes, pieces_per_box: beforePiecesPerBox, remaining_pieces: beforeRemaining },
+          totalPiecesToReduce
+        );
+
+        if (!result.ok) {
+          // Not enough stock; skip reduction for this item
+          reductionRecords.push({ itemId, itemName: data.itemName, quantityReduced: 0, error: 'insufficient_stock', availablePieces: result.totalAvailablePieces, neededPieces: totalPiecesToReduce });
+          continue;
+        }
+
+        await connection.query(
+          `UPDATE inventory SET quantity = ?, remaining_pieces = ? WHERE id = ?`,
+          [result.quantity, result.remaining_pieces, itemId]
+        );
+
+        // Record history (store quantityBefore/After as box counts)
         await connection.query(`
           INSERT INTO inventory_reduction_history 
           (appointmentId, patientId, patientName, appointmentType, inventoryItemId, inventoryItemName, quantityReduced, quantityBefore, quantityAfter)
@@ -573,11 +608,20 @@ router.post('/auto-reduce/appointment/:appointmentId', authMiddleware, async (re
           itemId,
           data.itemName,
           totalPiecesToReduce,
-          currentBoxes,
-          newBoxes
+          beforeBoxes,
+          result.quantity
         ]);
 
-        reductionRecords.push({ itemId, itemName: data.itemName, quantityReduced: totalPiecesToReduce, beforeBoxes: currentBoxes, afterBoxes: newBoxes, beforePieces: availablePieces, afterPieces: piecesAfter });
+        reductionRecords.push({
+          itemId,
+          itemName: data.itemName,
+          quantityReduced: totalPiecesToReduce,
+          beforeBoxes,
+          afterBoxes: result.quantity,
+          pieces_per_box: beforePiecesPerBox,
+          beforeRemainingPieces: beforeRemaining,
+          afterRemainingPieces: result.remaining_pieces
+        });
       } else {
         // Non-boxed item: quantity likely represents piece count
         const currentQty = Number(inv.quantity) || 0;

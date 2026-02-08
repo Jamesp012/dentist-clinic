@@ -1,6 +1,76 @@
 // Reduce inventory for multiple services
 import { inventoryManagementAPI, inventoryAPI } from '../api';
 export async function reduceInventoryForServices(serviceNames: DentalService[], inventory: InventoryItem[], setInventory: (inventory: InventoryItem[]) => void, onDataChanged?: () => Promise<void>) {
+  const normalizeBoxFields = (item: any) => {
+    if (item.unit_type !== 'box') return;
+    const ppb = Math.max(0, Number(item.pieces_per_box || 0));
+    if (ppb <= 0) return;
+    if (item.quantity > 0 && (item.remaining_pieces == null || !Number.isFinite(Number(item.remaining_pieces)))) {
+      item.remaining_pieces = ppb;
+    }
+    if (item.quantity <= 0) {
+      item.remaining_pieces = 0;
+    }
+    if (Number(item.remaining_pieces) > ppb) item.remaining_pieces = ppb;
+    if (Number(item.remaining_pieces) < 0) item.remaining_pieces = 0;
+  };
+
+  const getAvailablePieces = (item: any) => {
+    if (item.unit_type !== 'box') return Math.max(0, Number(item.quantity || 0));
+    const ppb = Math.max(0, Number(item.pieces_per_box || 0));
+    const boxes = Math.max(0, Number(item.quantity || 0));
+    if (boxes <= 0 || ppb <= 0) return 0;
+    const rem = Math.max(0, Number(item.remaining_pieces == null ? ppb : item.remaining_pieces));
+    return (boxes - 1) * ppb + Math.min(rem, ppb);
+  };
+
+  const reduceInventoryItemByPiecesStrict = async (inventoryItem: any, piecesToReduce: number) => {
+    if (!inventoryItem) return false;
+    const pieces = Math.max(0, Number(piecesToReduce || 0));
+    if (pieces === 0) return true;
+
+    if (inventoryItem.unit_type === 'box') {
+      normalizeBoxFields(inventoryItem);
+      const ppb = Math.max(0, Number(inventoryItem.pieces_per_box || 0));
+      let boxes = Math.max(0, Number(inventoryItem.quantity || 0));
+      if (boxes <= 0 || ppb <= 0) return false;
+      let rem = Math.max(0, Number(inventoryItem.remaining_pieces == null ? ppb : inventoryItem.remaining_pieces));
+      if (rem > ppb) rem = ppb;
+
+      const available = getAvailablePieces(inventoryItem);
+      if (available < pieces) return false;
+
+      let left = pieces;
+      while (left > 0 && boxes > 0) {
+        const used = Math.min(rem, left);
+        rem -= used;
+        left -= used;
+        if (rem === 0) {
+          boxes -= 1;
+          if (boxes > 0) rem = ppb;
+        }
+      }
+      if (boxes === 0) rem = 0;
+
+      inventoryItem.quantity = boxes;
+      inventoryItem.remaining_pieces = rem;
+      try {
+        await inventoryAPI.update(inventoryItem.id, inventoryItem);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    inventoryItem.quantity = Math.max(0, Number(inventoryItem.quantity || 0) - pieces);
+    try {
+      await inventoryAPI.update(inventoryItem.id, inventoryItem);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   let reductionCount = 0;
   for (const serviceName of serviceNames) {
     // Attempt to use backend rules first
@@ -25,31 +95,8 @@ export async function reduceInventoryForServices(serviceNames: DentalService[], 
 
         const qtyToReduce = Number(rItem.quantityToReduce || 0);
 
-        if (inventoryItem.quantityPerBox && inventoryItem.quantityPerBox > 0) {
-          const qpb = inventoryItem.quantityPerBox;
-          const currentBoxes = inventoryItem.quantity || 0;
-          const currentRemainder = inventoryItem.remainderPieces || 0;
-          const availablePieces = currentBoxes * qpb + currentRemainder;
-
-          if (availablePieces < qtyToReduce) continue;
-
-          const remainingPieces = availablePieces - qtyToReduce;
-          inventoryItem.quantity = Math.floor(remainingPieces / qpb);
-          inventoryItem.remainderPieces = remainingPieces % qpb;
-          try {
-            await inventoryAPI.update(inventoryItem.id, inventoryItem);
-            reductionCount++;
-          } catch (error) {
-            // continue
-          }
-        } else {
-          // simple subtraction
-          inventoryItem.quantity = Math.max(0, inventoryItem.quantity - qtyToReduce);
-          try {
-            await inventoryAPI.update(inventoryItem.id, inventoryItem);
-            reductionCount++;
-          } catch (error) {}
-        }
+        const ok = await reduceInventoryItemByPiecesStrict(inventoryItem, qtyToReduce);
+        if (ok) reductionCount++;
       }
     } else {
       // fallback static mapping: subtract 1 per mapped item
@@ -58,11 +105,8 @@ export async function reduceInventoryForServices(serviceNames: DentalService[], 
       for (const itemType of itemsNeeded) {
         const item = updatedInventory.find(i => i.name.toUpperCase().includes(itemType.replace(/_/g, ' ')));
         if (item && item.quantity > 0) {
-          item.quantity = Math.max(0, item.quantity - 1);
-          try {
-            await inventoryAPI.update(item.id, item);
-            reductionCount++;
-          } catch (error) {}
+          const ok = await reduceInventoryItemByPiecesStrict(item, 1);
+          if (ok) reductionCount++;
         }
       }
     }
@@ -223,11 +267,28 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
     e.preventDefault();
     try {
       const formData = new FormData(e.currentTarget);
+      const unitType = (formData.get('unit_type') as string) || 'piece';
+      const piecesPerBox = formData.get('pieces_per_box') ? Number(formData.get('pieces_per_box')) : undefined;
+      const remainingPieces = formData.get('remaining_pieces') ? Number(formData.get('remaining_pieces')) : undefined;
+
       const newItem = {
         name: formData.get('name') as string,
         quantity: parseInt(formData.get('quantity') as string),
         unit: formData.get('unit') as string,
+        unit_type: unitType as any,
+        pieces_per_box: unitType === 'box' ? piecesPerBox : undefined,
+        remaining_pieces: unitType === 'box' ? remainingPieces : undefined,
+        minQuantity: formData.get('minQuantity') ? Number(formData.get('minQuantity')) : 0,
       };
+
+      if (newItem.unit_type === 'box' && newItem.quantity > 0 && newItem.pieces_per_box && (newItem.remaining_pieces == null || Number.isNaN(Number(newItem.remaining_pieces)))) {
+        newItem.remaining_pieces = newItem.pieces_per_box;
+      }
+      if (newItem.unit_type === 'box' && (!newItem.pieces_per_box || Number(newItem.pieces_per_box) <= 0)) {
+        toast.error('Pieces per box is required for box-tracked items');
+        return;
+      }
+
       const createdItem = await inventoryAPI.create(newItem);
       setInventory([...inventory, createdItem as InventoryItem]);
       setShowAddModal(false);
@@ -248,12 +309,36 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
 
     try {
       const formData = new FormData(e.currentTarget);
+      const unitType = (formData.get('unit_type') as string) || (editingItem.unit_type as any) || 'piece';
+      const piecesPerBox = formData.get('pieces_per_box') ? Number(formData.get('pieces_per_box')) : editingItem.pieces_per_box;
+      const remainingPieces = formData.get('remaining_pieces') ? Number(formData.get('remaining_pieces')) : editingItem.remaining_pieces;
+
       const updatedItem = {
         ...editingItem,
         name: formData.get('name') as string,
         quantity: parseInt(formData.get('quantity') as string),
         unit: formData.get('unit') as string,
+        unit_type: unitType as any,
+        pieces_per_box: unitType === 'box' ? piecesPerBox : undefined,
+        remaining_pieces: unitType === 'box' ? remainingPieces : undefined,
+        minQuantity: formData.get('minQuantity') ? Number(formData.get('minQuantity')) : (editingItem.minQuantity || 0),
       };
+
+      if (updatedItem.unit_type === 'box' && (!updatedItem.pieces_per_box || Number(updatedItem.pieces_per_box) <= 0)) {
+        toast.error('Pieces per box is required for box-tracked items');
+        return;
+      }
+      if (updatedItem.unit_type === 'box') {
+        const ppb = Number(updatedItem.pieces_per_box || 0);
+        if (updatedItem.quantity > 0 && (updatedItem.remaining_pieces == null || !Number.isFinite(Number(updatedItem.remaining_pieces)))) {
+          updatedItem.remaining_pieces = ppb;
+        }
+        if (updatedItem.quantity <= 0) {
+          updatedItem.remaining_pieces = 0;
+        }
+        if (Number(updatedItem.remaining_pieces) > ppb) updatedItem.remaining_pieces = ppb;
+        if (Number(updatedItem.remaining_pieces) < 0) updatedItem.remaining_pieces = 0;
+      }
 
       await inventoryAPI.update(updatedItem.id, updatedItem);
       setInventory(inventory.map(item => item.id === updatedItem.id ? updatedItem : item));
@@ -290,8 +375,17 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
     try {
       const item = inventory.find(i => i.id === id);
       if (!item) return;
-      
-      const updatedItem = { ...item, quantity: Math.max(0, item.quantity + change) };
+
+      const updatedItem: any = { ...item, quantity: Math.max(0, item.quantity + change) };
+      if (updatedItem.unit_type === 'box') {
+        const ppb = Math.max(0, Number(updatedItem.pieces_per_box || 0));
+        if (updatedItem.quantity === 0) {
+          updatedItem.remaining_pieces = 0;
+        } else if (ppb > 0 && (updatedItem.remaining_pieces == null || Number(updatedItem.remaining_pieces) === 0)) {
+          updatedItem.remaining_pieces = ppb;
+        }
+        if (ppb > 0 && Number(updatedItem.remaining_pieces) > ppb) updatedItem.remaining_pieces = ppb;
+      }
       await inventoryAPI.update(id, updatedItem);
       setInventory(inventory.map(i => i.id === id ? updatedItem : i));
       // Sync data across all users
@@ -310,31 +404,176 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
     return inventory.find(item => item.name.toUpperCase().includes(itemType.replace(/_/g, ' ')));
   };
 
+  // Helper: reduce an inventory item by a number of pieces, respecting boxes and remainderPieces
+  const reduceInventoryItemByPieces = async (inventoryItem: any, piecesToReduce: number) => {
+    if (!inventoryItem) return false;
+
+    const pieces = Math.max(0, Number(piecesToReduce || 0));
+    if (pieces === 0) return true;
+
+    if (inventoryItem.unit_type === 'box') {
+      const ppb = Math.max(0, Number(inventoryItem.pieces_per_box || 0));
+      let boxes = Math.max(0, Number(inventoryItem.quantity || 0));
+      if (ppb <= 0 || boxes <= 0) return false;
+      let rem = inventoryItem.remaining_pieces == null ? ppb : Number(inventoryItem.remaining_pieces);
+      if (!Number.isFinite(rem) || rem < 0) rem = ppb;
+      if (rem > ppb) rem = ppb;
+
+      const available = (boxes - 1) * ppb + rem;
+      if (available < pieces) return false;
+
+      let left = pieces;
+      while (left > 0 && boxes > 0) {
+        const used = Math.min(rem, left);
+        rem -= used;
+        left -= used;
+        if (rem === 0) {
+          boxes -= 1;
+          if (boxes > 0) rem = ppb;
+        }
+      }
+      if (boxes === 0) rem = 0;
+
+      inventoryItem.quantity = boxes;
+      inventoryItem.remaining_pieces = rem;
+
+      try {
+        await inventoryAPI.update(inventoryItem.id, inventoryItem);
+        return true;
+      } catch (error) {
+        console.error('Failed to update boxed inventory item:', error);
+        return false;
+      }
+    }
+
+    inventoryItem.quantity = Math.max(0, Number(inventoryItem.quantity || 0) - pieces);
+    try {
+      await inventoryAPI.update(inventoryItem.id, inventoryItem);
+      return true;
+    } catch (error) {
+      console.error('Failed to update inventory item:', error);
+      return false;
+    }
+  };
+
+  // Helper: fetch backend auto-reduction rule items for a service (if any)
+  const getAutoReductionRuleForService = async (serviceName: DentalService) => {
+    try {
+      const allRules = await inventoryManagementAPI.getAutoReductionRules().catch(() => null);
+      if (allRules && Array.isArray(allRules)) {
+        const found = allRules.find((r: any) => String(r.appointmentType) === String(serviceName));
+        if (found) return found.items || found;
+      }
+    } catch (err) {
+      // ignore
+    }
+    return null;
+  };
+
   // Execute a service and deduct inventory
   const executeService = async (serviceName: DentalService, quantity: number = 1) => {
+    // Try backend rule first
+    const ruleItems: any[] | null = await getAutoReductionRuleForService(serviceName);
+
+    const updatedInventory = [...inventory];
+
+    if (ruleItems && ruleItems.length > 0) {
+      // Validate stock based on rule quantities (rule quantity is per procedure)
+      const outOfStock: string[] = [];
+      const lowStock: string[] = [];
+
+      for (const rItem of ruleItems) {
+        const itemId = rItem.inventoryItemId ?? rItem.itemId;
+        const qtyPerProcedure = Number(rItem.quantityToReduce || 0);
+        const totalNeeded = qtyPerProcedure * quantity;
+        const inventoryItem = updatedInventory.find(i => i.id === itemId);
+        if (!inventoryItem) {
+          outOfStock.push(rItem.itemName || `Item ${itemId}`);
+          continue;
+        }
+
+        if (inventoryItem.unit_type === 'box') {
+          const ppb = Number(inventoryItem.pieces_per_box || 0);
+          const boxes = Number(inventoryItem.quantity || 0);
+          const rem = Number(inventoryItem.remaining_pieces == null ? ppb : inventoryItem.remaining_pieces);
+          const availablePieces = boxes > 0 && ppb > 0 ? ((boxes - 1) * ppb + Math.min(rem, ppb)) : 0;
+          if (availablePieces < totalNeeded) {
+            outOfStock.push(inventoryItem.name + ` (need ${totalNeeded} pcs, have ${availablePieces} pcs)`);
+          } else if (availablePieces - totalNeeded <= (inventoryItem.minQuantity || 0) * ppb) {
+            lowStock.push(inventoryItem.name);
+          }
+        } else {
+          if (Number(inventoryItem.quantity || 0) < totalNeeded) {
+            outOfStock.push(inventoryItem.name + ` (need ${totalNeeded}, have ${inventoryItem.quantity})`);
+          } else if (Number(inventoryItem.quantity || 0) - totalNeeded <= (inventoryItem.minQuantity || 0)) {
+            lowStock.push(inventoryItem.name);
+          }
+        }
+      }
+
+      if (outOfStock.length > 0) {
+        toast.error(`OUT OF STOCK: ${outOfStock.join(', ')}`);
+        return false;
+      }
+
+      if (lowStock.length > 0) {
+        toast.warning(`LOW STOCK WARNING: ${lowStock.join(', ')}`);
+      }
+
+      // Perform actual reduction
+      for (const rItem of ruleItems) {
+        const itemId = rItem.inventoryItemId ?? rItem.itemId;
+        const qtyPerProcedure = Number(rItem.quantityToReduce || 0);
+        const totalNeeded = qtyPerProcedure * quantity;
+        const inventoryItem = updatedInventory.find(i => i.id === itemId);
+        if (!inventoryItem) continue;
+
+        const ok = await reduceInventoryItemByPieces(inventoryItem, totalNeeded);
+        if (!ok) {
+          toast.error(`Failed to deduct ${inventoryItem.name}`);
+          return false;
+        }
+      }
+
+      setInventory(updatedInventory);
+      if (onDataChanged) await onDataChanged();
+
+      const serviceName_display = SERVICE_DISPLAY_NAMES[serviceName] || serviceName;
+      toast.success(`${serviceName_display} completed! Inventory updated.`);
+      return true;
+    }
+
+    // Fallback: use static mapping but apply boxed logic (reduce pieces where applicable)
     const itemsNeeded = SERVICE_INVENTORY_MAP[serviceName];
-    
     if (!itemsNeeded || itemsNeeded.length === 0) {
       toast.error('No items configured for this service');
       return false;
     }
 
-    // Check stock before deducting
     const outOfStockItems: string[] = [];
     const lowStockItems: string[] = [];
 
-    itemsNeeded.forEach(itemType => {
-      const inventoryItem = getInventoryItemByName(itemType);
-      if (!inventoryItem) {
+    // validate
+    for (const itemType of itemsNeeded) {
+      const item = updatedInventory.find(i => i.name.toUpperCase().includes(itemType.replace(/_/g, ' ')));
+      if (!item) {
         outOfStockItems.push(ITEM_DISPLAY_NAMES[itemType]);
-      } else if (inventoryItem.quantity < quantity) {
-        outOfStockItems.push(`${ITEM_DISPLAY_NAMES[itemType]} (need ${quantity}, have ${inventoryItem.quantity})`);
-      } else if (inventoryItem.quantity - quantity <= inventoryItem.minQuantity) {
-        lowStockItems.push(ITEM_DISPLAY_NAMES[itemType]);
+        continue;
       }
-    });
+      const neededPieces = quantity; // default 1 piece per procedure per mapping
+      if (item.unit_type === 'box') {
+        const ppb = Number(item.pieces_per_box || 0);
+        const boxes = Number(item.quantity || 0);
+        const rem = Number(item.remaining_pieces == null ? ppb : item.remaining_pieces);
+        const availablePieces = boxes > 0 && ppb > 0 ? ((boxes - 1) * ppb + Math.min(rem, ppb)) : 0;
+        if (availablePieces < neededPieces) outOfStockItems.push(item.name);
+        else if (availablePieces - neededPieces <= (item.minQuantity || 0) * ppb) lowStockItems.push(item.name);
+      } else {
+        if (Number(item.quantity || 0) < neededPieces) outOfStockItems.push(item.name);
+        else if (Number(item.quantity || 0) - neededPieces <= (item.minQuantity || 0)) lowStockItems.push(item.name);
+      }
+    }
 
-    // Show warnings
     if (outOfStockItems.length > 0) {
       toast.error(`OUT OF STOCK: ${outOfStockItems.join(', ')}`);
       return false;
@@ -344,26 +583,19 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
       toast.warning(`LOW STOCK WARNING: ${lowStockItems.join(', ')}`);
     }
 
-    // Deduct items
-    const updatedInventory = [...inventory];
+    // deduct
     for (const itemType of itemsNeeded) {
       const item = updatedInventory.find(i => i.name.toUpperCase().includes(itemType.replace(/_/g, ' ')));
-      if (item) {
-        item.quantity = Math.max(0, item.quantity - quantity);
-        try {
-          await inventoryAPI.update(item.id, item);
-        } catch (error) {
-          console.error(`Failed to update ${itemType}:`, error);
-          toast.error(`Failed to deduct ${ITEM_DISPLAY_NAMES[itemType]}`);
-          return false;
-        }
+      if (!item) continue;
+      const ok = await reduceInventoryItemByPieces(item, quantity);
+      if (!ok) {
+        toast.error(`Failed to deduct ${item.name}`);
+        return false;
       }
     }
 
     setInventory(updatedInventory);
-    if (onDataChanged) {
-      await onDataChanged();
-    }
+    if (onDataChanged) await onDataChanged();
 
     const serviceName_display = SERVICE_DISPLAY_NAMES[serviceName] || serviceName;
     toast.success(`${serviceName_display} completed! Inventory updated.`);
@@ -377,35 +609,41 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
       return;
     }
 
-    // Check stock before deducting
+    // Deduct items (use boxed logic when applicable)
+    const updatedInventory = [...inventory];
+
+    // Validate stock first
     const outOfStockItems: string[] = [];
-    customServiceItems.forEach(itemType => {
-      const inventoryItem = getInventoryItemByName(itemType);
-      if (!inventoryItem) {
+    for (const itemType of customServiceItems) {
+      const item = updatedInventory.find(i => i.name.toUpperCase().includes(itemType.replace(/_/g, ' ')));
+      if (!item) {
         outOfStockItems.push(ITEM_DISPLAY_NAMES[itemType]);
-      } else if (inventoryItem.quantity < quantity) {
-        outOfStockItems.push(`${ITEM_DISPLAY_NAMES[itemType]} (need ${quantity}, have ${inventoryItem.quantity})`);
+        continue;
       }
-    });
+      const needed = quantity;
+      if (item.unit_type === 'box') {
+        const ppb = Number(item.pieces_per_box || 0);
+        const boxes = Number(item.quantity || 0);
+        const rem = Number(item.remaining_pieces == null ? ppb : item.remaining_pieces);
+        const availablePieces = boxes > 0 && ppb > 0 ? ((boxes - 1) * ppb + Math.min(rem, ppb)) : 0;
+        if (availablePieces < needed) outOfStockItems.push(`${item.name} (need ${needed} pcs, have ${availablePieces} pcs)`);
+      } else {
+        if (Number(item.quantity || 0) < needed) outOfStockItems.push(`${item.name} (need ${needed}, have ${item.quantity})`);
+      }
+    }
 
     if (outOfStockItems.length > 0) {
       toast.error(`OUT OF STOCK: ${outOfStockItems.join(', ')}`);
       return;
     }
 
-    // Deduct items
-    const updatedInventory = [...inventory];
     for (const itemType of customServiceItems) {
       const item = updatedInventory.find(i => i.name.toUpperCase().includes(itemType.replace(/_/g, ' ')));
-      if (item) {
-        item.quantity = Math.max(0, item.quantity - quantity);
-        try {
-          await inventoryAPI.update(item.id, item);
-        } catch (error) {
-          console.error(`Failed to update ${itemType}:`, error);
-          toast.error(`Failed to deduct ${ITEM_DISPLAY_NAMES[itemType]}`);
-          return;
-        }
+      if (!item) continue;
+      const ok = await reduceInventoryItemByPieces(item, quantity);
+      if (!ok) {
+        toast.error(`Failed to deduct ${item.name}`);
+        return;
       }
     }
 
@@ -504,7 +742,15 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                   {SERVICE_INVENTORY_MAP[selectedService]?.map((itemType) => {
                     const item = getInventoryItemByName(itemType);
                     const needed = serviceQuantity;
-                    const isOutOfStock = !item || item.quantity < needed;
+                    const isOutOfStock = !item || (item.unit_type === 'box'
+                      ? (() => {
+                          const ppb = Number(item.pieces_per_box || 0);
+                          const boxes = Number(item.quantity || 0);
+                          const rem = Number(item.remaining_pieces == null ? ppb : item.remaining_pieces);
+                          const availablePieces = boxes > 0 && ppb > 0 ? ((boxes - 1) * ppb + Math.min(rem, ppb)) : 0;
+                          return availablePieces < needed;
+                        })()
+                      : (Number(item.quantity || 0) < needed));
                     
                     return (
                       <div key={itemType} className={`flex justify-between p-2 rounded ${isOutOfStock ? 'bg-red-100' : 'bg-white'}`}>
@@ -512,7 +758,17 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                           {ITEM_DISPLAY_NAMES[itemType]}
                         </span>
                         <span className={`font-medium ${isOutOfStock ? 'text-red-700' : 'text-gray-700'}`}>
-                          {item ? `${item.quantity}` : '0'} available (need {needed})
+                          {item
+                            ? (item.unit_type === 'box'
+                                ? (() => {
+                                    const ppb = Number(item.pieces_per_box || 0);
+                                    const boxes = Number(item.quantity || 0);
+                                    const rem = Number(item.remaining_pieces == null ? ppb : item.remaining_pieces);
+                                    const availablePieces = boxes > 0 && ppb > 0 ? ((boxes - 1) * ppb + Math.min(rem, ppb)) : 0;
+                                    return `${availablePieces} pcs available (${item.quantity} box${item.quantity !== 1 ? 'es' : ''})`;
+                                  })()
+                                : `${item.quantity} available`)
+                            : '0 available'} (need {needed})
                         </span>
                       </div>
                     );
@@ -678,7 +934,9 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                                 −
                               </button>
                               <span className={`font-semibold w-8 text-center ${isOutOfStock ? 'text-red-600' : 'text-gray-900'}`}>
-                                {item.quantity}
+                                {item.unit_type === 'box'
+                                  ? `${item.quantity} box${item.quantity !== 1 ? 'es' : ''}`
+                                  : `${item.quantity}`}
                               </span>
                               <button
                                 onClick={() => updateQuantity(item.id, 1)}
@@ -687,6 +945,11 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                                 +
                               </button>
                             </div>
+                            {item.unit_type === 'box' && (
+                              <div className="text-sm text-gray-500 mt-1">
+                                {`${item.quantity} boxes | ${item.pieces_per_box ?? '—'} pcs/box | ${item.remaining_pieces ?? 0} pcs remaining`}
+                              </div>
+                            )}
                           </td>
                           <td className="px-6 py-4">
                             <span className="inline-block bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm font-medium">{item.unit}</span>
@@ -756,12 +1019,54 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                 </select>
               </div>
               <div>
+                <label className="block text-sm mb-1">Unit Type *</label>
+                <select
+                  name="unit_type"
+                  required
+                  defaultValue="piece"
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="piece">Piece</option>
+                  <option value="box">Box</option>
+                </select>
+              </div>
+              <div>
                 <label className="block text-sm mb-1">Quantity *</label>
                 <input
                   type="number"
                   name="quantity"
                   required
                   min="0"
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Pieces Per Box</label>
+                <input
+                  type="number"
+                  name="pieces_per_box"
+                  min="0"
+                  placeholder="e.g., 40"
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Remaining Pieces (Current Box)</label>
+                <input
+                  type="number"
+                  name="remaining_pieces"
+                  min="0"
+                  placeholder="e.g., 40"
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Minimum Quantity Warning Threshold (optional)</label>
+                <input
+                  type="number"
+                  name="minQuantity"
+                  min="0"
+                  placeholder="e.g., 5"
                   className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -823,6 +1128,18 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                 </select>
               </div>
               <div>
+                <label className="block text-sm mb-1">Unit Type *</label>
+                <select
+                  name="unit_type"
+                  required
+                  defaultValue={editingItem.unit_type || 'piece'}
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="piece">Piece</option>
+                  <option value="box">Box</option>
+                </select>
+              </div>
+              <div>
                 <label className="block text-sm mb-1">Quantity *</label>
                 <input
                   type="number"
@@ -830,6 +1147,36 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                   required
                   min="0"
                   defaultValue={editingItem.quantity}
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Pieces Per Box</label>
+                <input
+                  type="number"
+                  name="pieces_per_box"
+                  min="0"
+                  defaultValue={editingItem.pieces_per_box}
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Remaining Pieces (Current Box)</label>
+                <input
+                  type="number"
+                  name="remaining_pieces"
+                  min="0"
+                  defaultValue={editingItem.remaining_pieces || 0}
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Minimum Quantity Warning Threshold (optional)</label>
+                <input
+                  type="number"
+                  name="minQuantity"
+                  min="0"
+                  defaultValue={editingItem.minQuantity || 0}
                   className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>

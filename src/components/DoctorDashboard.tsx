@@ -935,7 +935,7 @@ export function DoctorDashboard({
                 />
               )}
               {activeTab === 'charting' && (
-                <DentalChartWebsite />
+                <DentalChartWebsite patients={patients} />
               )}
               {activeTab === 'braces' && (
                 <BracesCharting

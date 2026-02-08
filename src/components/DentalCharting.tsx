@@ -6,7 +6,8 @@ import { ToothDetailsSidebar } from './dental/ToothDetailsSidebar';
 import { 
   Plus,
   History,
-  X
+  X,
+  Save
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -197,6 +198,11 @@ export function DentalCharting({ patients }: DentalChartingProps) {
   }, [selectedPatient]);
 
   const handleNewChart = () => {
+    if (!selectedPatient) {
+      toast.info('Please select a patient first.');
+      return;
+    }
+
     if (window.confirm('Create a new chart for this patient? Previous charts will be saved.')) {
       const newId = (charts.length + 1).toString();
       const newChart: ChartRecord = {
@@ -216,6 +222,21 @@ export function DentalCharting({ patients }: DentalChartingProps) {
       
       toast.success('New chart created and saved');
     }
+  };
+
+  const handleSaveChart = () => {
+    if (!selectedPatient) {
+      toast.info('Please select a patient first.');
+      return;
+    }
+
+    if (!activeChart) {
+      toast.error('No chart available to save.');
+      return;
+    }
+
+    saveDentalChartToStorage(activeChart);
+    toast.success('Dental chart saved');
   };
 
   const filteredPatients = patients.filter(patient =>
@@ -325,11 +346,19 @@ export function DentalCharting({ patients }: DentalChartingProps) {
           </div>
 
           <button 
+            onClick={handleSaveChart}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg shadow-sm transition-colors font-medium text-sm"
+          >
+            <Save className="w-4 h-4" />
+            Save Chart
+          </button>
+
+          <button 
             onClick={handleNewChart}
             className="flex items-center gap-2 px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg shadow-sm transition-colors font-medium text-sm"
           >
             <Plus className="w-4 h-4" />
-            New Chart
+            Add New Chart
           </button>
         </div>
       </div>

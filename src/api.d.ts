@@ -48,8 +48,9 @@ export interface InventoryItem {
   unit: string;
   supplier: string;
   cost: number;
-  quantityPerBox?: number;
-  remainderPieces?: number;
+  unit_type?: 'box' | 'piece';
+  pieces_per_box?: number;
+  remaining_pieces?: number;
 }
 
 export interface Referral {
