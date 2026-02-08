@@ -957,6 +957,7 @@ export function DoctorDashboard({
                   payments={payments}
                   prefilledAppointment={prefilledAppointmentData || undefined}
                   onServiceCreated={() => setPrefilledAppointmentData(null)}
+                  onDataChanged={onDataChanged}
                 />
               )}
               {activeTab === 'financial' && (

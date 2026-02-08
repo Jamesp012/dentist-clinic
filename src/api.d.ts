@@ -48,6 +48,8 @@ export interface InventoryItem {
   unit: string;
   supplier: string;
   cost: number;
+  quantityPerBox?: number;
+  remainderPieces?: number;
 }
 
 export interface Referral {
@@ -156,6 +158,7 @@ export const inventoryManagementAPI: {
   create: (data: any) => Promise<any>;
   update: (id: string | number, data: any) => Promise<any>;
   delete: (id: string | number) => Promise<any>;
+  getAutoReductionRules: () => Promise<any[]>;
   getActiveRules: () => Promise<any[]>;
   autoReduceForAppointment: (appointmentId: string | number) => Promise<any>;
 };

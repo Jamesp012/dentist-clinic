@@ -307,6 +307,7 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
         quantity: newItemForm.quantity || 0,
         quantityPerBox: newItemForm.quantityPerBox || undefined,
         unit: newItemForm.unit || 'piece',
+        remainderPieces: newItemForm.remainderPieces || 0,
         minQuantity: newItemForm.minQuantity || 0,
         category: newItemForm.category || '',
         supplier: newItemForm.supplier || '',
@@ -540,7 +541,7 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                     <tr>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Item Name</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Quantity</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Remaining per Box/Pack (pcs)</th>
+                      
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Unit</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Min Level</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
@@ -560,21 +561,24 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                             <span className="font-medium text-gray-900">{item.name}</span>
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`font-semibold ${
-                              status === 'out_of_stock' ? 'text-red-600' :
-                              status === 'critical' ? 'text-yellow-600' :
-                              'text-green-600'
-                            }`}>
+                            <div>
+                              <span className={`font-semibold ${
+                                status === 'out_of_stock' ? 'text-red-600' :
+                                status === 'critical' ? 'text-yellow-600' :
+                                'text-green-600'
+                              }`}>
+                                {item.unit && item.unit.toLowerCase().includes('box') && item.quantityPerBox ? (
+                                  <>{item.quantity} box{item.quantity !== 1 ? 'es' : ''}</>
+                                ) : (
+                                  <>{item.quantity}</>
+                                )}
+                              </span>
                               {item.unit && item.unit.toLowerCase().includes('box') && item.quantityPerBox ? (
-                                <>{item.quantity} box{item.quantity !== 1 ? 'es' : ''}</>
-                              ) : (
-                                <>{item.quantity}</>
-                              )}
-                            </span>
+                                <div className="text-xs text-gray-500 mt-1">{(item.remainderPieces ?? 0)} pcs remaining</div>
+                              ) : null}
+                            </div>
                           </td>
-                          <td className="px-6 py-4 text-gray-600">
-                            {item.quantityPerBox ? `${(item.remainderPieces ?? 0)} pcs` : '-'}
-                          </td>
+                          
                           <td className="px-6 py-4 text-gray-600">{item.unit}</td>
                           <td className="px-6 py-4 text-gray-600">{minLevel}</td>
                           <td className="px-6 py-4">
@@ -746,6 +750,16 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                       value={editFormData.quantityPerBox || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, quantityPerBox: e.target.value ? parseInt(e.target.value) : undefined })}
                       placeholder="e.g., 12 items per box"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Pieces Remaining</label>
+                    <input
+                      type="number"
+                      value={editFormData.remainderPieces ?? 0}
+                      onChange={(e) => setEditFormData({ ...editFormData, remainderPieces: e.target.value ? parseInt(e.target.value) : 0 })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
                   </div>

@@ -26,6 +26,9 @@ interface ToothDetailsSidebarProps {
   toothData: ToothData | null;
   onUpdateTooth: (id: number, updates: Partial<ToothData>) => void;
   onSelectTooth: (id: number) => void;
+  // When provided, the tooth type is fixed and the Permanent/Temporary
+  // toggle in the header is replaced with a static label.
+  fixedIsPermanent?: boolean;
 }
 
 export function ToothDetailsSidebar({
@@ -34,7 +37,8 @@ export function ToothDetailsSidebar({
   selectedTooth,
   toothData,
   onUpdateTooth,
-  onSelectTooth
+  onSelectTooth,
+  fixedIsPermanent
 }: ToothDetailsSidebarProps) {
   if (!selectedTooth || !toothData) return null;
 
@@ -198,31 +202,46 @@ export function ToothDetailsSidebar({
                      </h2>
                   </div>
 
-                  {/* Permanent/Temporary Toggle */}
-                  <div className="mt-6 flex items-center justify-center gap-4">
-                     <button
-                       onClick={() => onUpdateTooth(selectedTooth, { isPermanent: true })}
-                       className={cn(
-                         "px-6 py-3 rounded-lg border-2 font-medium transition-all",
-                         toothData.isPermanent
-                           ? "border-black bg-black text-white"
-                           : "border-slate-300 text-slate-600 hover:border-slate-400"
-                       )}
-                     >
-                       Permanent Tooth
-                     </button>
-                     <button
-                       onClick={() => onUpdateTooth(selectedTooth, { isPermanent: false })}
-                       className={cn(
-                         "px-6 py-3 rounded-lg border-2 font-medium transition-all",
-                         !toothData.isPermanent
-                           ? "border-slate-400 bg-slate-400 text-white"
-                           : "border-slate-300 text-slate-600 hover:border-slate-400"
-                       )}
-                     >
-                       Temporary Tooth
-                     </button>
-                  </div>
+                  {/* Permanent/Temporary Toggle (or fixed label) */}
+                  {typeof fixedIsPermanent === 'boolean' ? (
+                    <div className="mt-6 flex items-center justify-center">
+                      <span
+                        className={cn(
+                          "px-6 py-3 rounded-lg border-2 font-medium",
+                          fixedIsPermanent
+                            ? "border-black bg-black text-white"
+                            : "border-slate-400 bg-slate-400 text-white"
+                        )}
+                      >
+                        {fixedIsPermanent ? 'Permanent Tooth' : 'Temporary Tooth'}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="mt-6 flex items-center justify-center gap-4">
+                      <button
+                        onClick={() => onUpdateTooth(selectedTooth, { isPermanent: true })}
+                        className={cn(
+                          "px-6 py-3 rounded-lg border-2 font-medium transition-all",
+                          toothData.isPermanent
+                            ? "border-black bg-black text-white"
+                            : "border-slate-300 text-slate-600 hover:border-slate-400"
+                        )}
+                      >
+                        Permanent Tooth
+                      </button>
+                      <button
+                        onClick={() => onUpdateTooth(selectedTooth, { isPermanent: false })}
+                        className={cn(
+                          "px-6 py-3 rounded-lg border-2 font-medium transition-all",
+                          !toothData.isPermanent
+                            ? "border-slate-400 bg-slate-400 text-white"
+                            : "border-slate-300 text-slate-600 hover:border-slate-400"
+                        )}
+                      >
+                        Temporary Tooth
+                      </button>
+                    </div>
+                  )}
                </div>
 
                {/* Tooth Conditions Section */}

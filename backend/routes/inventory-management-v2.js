@@ -469,7 +469,6 @@ router.get('/history/item/:itemId', authMiddleware, async (req, res) => {
 // Execute auto-reduce for appointment
 router.post('/auto-reduce/appointment/:appointmentId', authMiddleware, async (req, res) => {
   const connection = await pool.getConnection();
-
   try {
     const { appointmentId } = req.params;
 
@@ -483,67 +482,130 @@ router.post('/auto-reduce/appointment/:appointmentId', authMiddleware, async (re
     }
 
     const appointment = appointments[0];
-    const appointmentType = appointment.type;
+    let appointmentTypes = [];
 
-    // Get reduction rules for this appointment type
+    // appointment.type may be stored as JSON array, comma-separated string, or single value
+    try {
+      if (Array.isArray(appointment.type)) appointmentTypes = appointment.type;
+      else if (typeof appointment.type === 'string') {
+        const t = appointment.type.trim();
+        if (t.startsWith('[')) {
+          appointmentTypes = JSON.parse(t);
+        } else if (t.includes(',')) {
+          appointmentTypes = t.split(',').map(s => s.trim()).filter(Boolean);
+        } else if (t) {
+          appointmentTypes = [t];
+        }
+      }
+    } catch (err) {
+      appointmentTypes = [appointment.type];
+    }
+
+    if (!appointmentTypes || appointmentTypes.length === 0) appointmentTypes = [appointment.type];
+
+    // Query rules for any of the appointment types
     const [rules] = await connection.query(`
-      SELECT ri.inventoryItemId, ri.quantityToReduce, i.name as itemName
+      SELECT ri.inventoryItemId, ri.quantityToReduce, ri.quantityUnit, i.name as itemName
       FROM inventory_auto_reduction_rules_v2 r
       JOIN inventory_auto_reduction_rule_items ri ON r.id = ri.ruleId
       JOIN inventory i ON ri.inventoryItemId = i.id
-      WHERE r.appointmentType = ? AND r.isActive = TRUE
-    `, [appointmentType]);
+      WHERE r.appointmentType IN (?) AND r.isActive = TRUE
+    `, [appointmentTypes]);
+
+    // Aggregate reductions by inventory item (sum quantities across rules)
+    const reductionsMap = new Map(); // itemId -> { itemName, totalPieces: 0, raw: [] }
+
+    for (const rule of rules) {
+      const itemId = rule.inventoryItemId;
+      const qty = Number(rule.quantityToReduce || 0);
+      const unit = rule.quantityUnit || 'piece';
+      const existing = reductionsMap.get(itemId) || { itemName: rule.itemName, raw: [] };
+      existing.itemName = rule.itemName;
+      existing.raw.push({ qty, unit });
+      reductionsMap.set(itemId, existing);
+    }
 
     const reductionRecords = [];
 
-    // Apply reductions
-    for (const rule of rules) {
-      // Get current quantity
-      const [items] = await connection.query(`
-        SELECT quantity FROM inventory WHERE id = ?
-      `, [rule.inventoryItemId]);
-
+    // Apply aggregated reductions
+    for (const [itemId, data] of reductionsMap.entries()) {
+      // Fetch inventory item details (quantity = full boxes or pieces, quantityPerBox, remainderPieces)
+      const [items] = await connection.query(`SELECT id, quantity, quantityPerBox, remainderPieces, unit FROM inventory WHERE id = ?`, [itemId]);
       if (items.length === 0) continue;
+      const inv = items[0];
 
-      const currentQuantity = items[0].quantity;
-      const newQuantity = Math.max(0, currentQuantity - rule.quantityToReduce);
+      const qpb = Number(inv.quantityPerBox) || 0; // pieces per box
+      const currentBoxes = Number(inv.quantity) || 0;
+      const currentRemainder = Number(inv.remainderPieces) || 0;
 
-      // Update inventory
-      await connection.query(`
-        UPDATE inventory SET quantity = ? WHERE id = ?
-      `, [newQuantity, rule.inventoryItemId]);
+      // Sum total pieces to reduce for this inventory item
+      let totalPiecesToReduce = 0;
+      for (const r of data.raw) {
+        if (r.unit === 'box' && qpb > 0) {
+          totalPiecesToReduce += Number(r.qty) * qpb;
+        } else {
+          totalPiecesToReduce += Number(r.qty);
+        }
+      }
 
-      // Record in history
-      await connection.query(`
-        INSERT INTO inventory_reduction_history 
-        (appointmentId, patientId, patientName, appointmentType, inventoryItemId, inventoryItemName, quantityReduced, quantityBefore, quantityAfter)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
-        appointmentId,
-        appointment.patientId,
-        appointment.patientName,
-        appointmentType,
-        rule.inventoryItemId,
-        rule.itemName,
-        rule.quantityToReduce,
-        currentQuantity,
-        newQuantity
-      ]);
+      const availablePieces = currentBoxes * qpb + currentRemainder;
+      if (availablePieces <= 0) continue;
 
-      reductionRecords.push({
-        itemId: rule.inventoryItemId,
-        itemName: rule.itemName,
-        quantityReduced: rule.quantityToReduce,
-        before: currentQuantity,
-        after: newQuantity
-      });
+      const piecesAfter = Math.max(0, availablePieces - totalPiecesToReduce);
+
+      if (qpb > 0) {
+        const newBoxes = Math.floor(piecesAfter / qpb);
+        const newRemainder = piecesAfter % qpb;
+
+        // Update inventory with new box count and remainder pieces
+        await connection.query(`UPDATE inventory SET quantity = ?, remainderPieces = ? WHERE id = ?`, [newBoxes, newRemainder, itemId]);
+
+        // Record history (we store quantityBefore/After as box counts for compatibility)
+        await connection.query(`
+          INSERT INTO inventory_reduction_history 
+          (appointmentId, patientId, patientName, appointmentType, inventoryItemId, inventoryItemName, quantityReduced, quantityBefore, quantityAfter)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+          appointmentId,
+          appointment.patientId,
+          appointment.patientName,
+          JSON.stringify(appointmentTypes),
+          itemId,
+          data.itemName,
+          totalPiecesToReduce,
+          currentBoxes,
+          newBoxes
+        ]);
+
+        reductionRecords.push({ itemId, itemName: data.itemName, quantityReduced: totalPiecesToReduce, beforeBoxes: currentBoxes, afterBoxes: newBoxes, beforePieces: availablePieces, afterPieces: piecesAfter });
+      } else {
+        // Non-boxed item: quantity likely represents piece count
+        const currentQty = Number(inv.quantity) || 0;
+        const newQty = Math.max(0, currentQty - totalPiecesToReduce);
+
+        await connection.query(`UPDATE inventory SET quantity = ? WHERE id = ?`, [newQty, itemId]);
+
+        await connection.query(`
+          INSERT INTO inventory_reduction_history 
+          (appointmentId, patientId, patientName, appointmentType, inventoryItemId, inventoryItemName, quantityReduced, quantityBefore, quantityAfter)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+          appointmentId,
+          appointment.patientId,
+          appointment.patientName,
+          JSON.stringify(appointmentTypes),
+          itemId,
+          data.itemName,
+          totalPiecesToReduce,
+          currentQty,
+          newQty
+        ]);
+
+        reductionRecords.push({ itemId, itemName: data.itemName, quantityReduced: totalPiecesToReduce, before: currentQty, after: newQty });
+      }
     }
 
-    res.json({
-      appointmentId,
-      reductionsApplied: reductionRecords.length,
-      reductions: reductionRecords
-    });
+    res.json({ appointmentId, reductionsApplied: reductionRecords.length, reductions: reductionRecords });
   } catch (error) {
     console.error('Error processing inventory auto-reduction:', error);
     res.status(500).json({ error: error.message });

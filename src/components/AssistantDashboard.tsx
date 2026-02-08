@@ -1046,6 +1046,7 @@ export function AssistantDashboard({
                   payments={payments}
                   prefilledAppointment={prefilledAppointmentData || undefined}
                   onServiceCreated={() => setPrefilledAppointmentData(null)}
+                  onDataChanged={onDataChanged}
                 />
               )}
               {activeTab === "financial" && (

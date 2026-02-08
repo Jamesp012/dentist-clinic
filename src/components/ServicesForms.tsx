@@ -337,13 +337,20 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
             toast.success('Appointment marked completed');
             try {
               const inventoryManagementAPI = await import('../api').then(m => m.inventoryManagementAPI);
+              console.log('Calling server auto-reduce for appointment:', appointmentId);
               const result = await inventoryManagementAPI.autoReduceForAppointment(appointmentId);
+              console.log('Server auto-reduce response:', result);
               if (result && result.reductionsApplied > 0) {
                 toast.success(`Inventory reduced by server policies: ${result.reductionsApplied} item(s).`);
-                if (onDataChanged) await onDataChanged();
+              } else {
+                console.log('Server auto-reduce applied 0 reductions for appointment', appointmentId);
               }
+              // Refresh data regardless of whether reductions were applied to ensure UI stays in sync
+              if (onDataChanged) await onDataChanged();
             } catch (err) {
               console.warn('Server auto-reduction not applied or failed:', err);
+              // Still attempt to refresh data
+              if (onDataChanged) await onDataChanged();
             }
           }
         } catch (err) {
