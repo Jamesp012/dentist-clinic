@@ -5,7 +5,7 @@ import { Dashboard } from './Dashboard';
 import { PatientManagement } from './PatientManagement';
 import { AppointmentScheduler } from './AppointmentScheduler';
 import { InventoryManagement } from './InventoryManagementEnhanced';
-import { DentalCharting } from './DentalCharting';
+import { DentalChartWebsite } from './DentalChartWebsite';
 import { BracesCharting } from './BracesCharting';
 import { ReferralGeneration } from './ReferralGeneration';
 // import { ReferralManagement } from './ReferralManagement';
@@ -935,11 +935,7 @@ export function DoctorDashboard({
                 />
               )}
               {activeTab === 'charting' && (
-                <DentalCharting
-                  patients={patients}
-                  treatmentRecords={treatmentRecords}
-                  setTreatmentRecords={setTreatmentRecords}
-                />
+                <DentalChartWebsite />
               )}
               {activeTab === 'braces' && (
                 <BracesCharting

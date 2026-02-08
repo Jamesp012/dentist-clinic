@@ -45,8 +45,19 @@ router.get('/', authMiddleware, async (req, res) => {
     const referralIds = referrals.map(r => r.id);
     let filesByReferral = {};
     if (referralIds.length > 0) {
-      const [files] = await pool.query('SELECT id, referralId, fileName, fileType, uploadedDate, url FROM referral_files WHERE referralId IN (?)', [referralIds]);
-      filesByReferral = files.reduce((acc, f) => {
+      const [files] = await pool.query('SELECT id, referralId, fileName, fileType, filePath, uploadedDate FROM referral_files WHERE referralId IN (?)', [referralIds]);
+
+      // Normalize files and generate public URL from stored filePath
+      const normalizedFiles = files.map(f => ({
+        id: f.id,
+        referralId: f.referralId,
+        fileName: f.fileName,
+        fileType: f.fileType,
+        uploadedDate: f.uploadedDate,
+        url: f.url || `/uploads/referrals/${path.basename(f.filePath || '')}`
+      }));
+
+      filesByReferral = normalizedFiles.reduce((acc, f) => {
         acc[f.referralId] = acc[f.referralId] || [];
         acc[f.referralId].push(f);
         return acc;
@@ -76,8 +87,18 @@ router.get('/patient/:patientId', authMiddleware, async (req, res) => {
     const referralIds = referrals.map(r => r.id);
     let filesByReferral = {};
     if (referralIds.length > 0) {
-      const [files] = await pool.query('SELECT id, referralId, fileName, fileType, uploadedDate, url FROM referral_files WHERE referralId IN (?)', [referralIds]);
-      filesByReferral = files.reduce((acc, f) => {
+      const [files] = await pool.query('SELECT id, referralId, fileName, fileType, filePath, uploadedDate FROM referral_files WHERE referralId IN (?)', [referralIds]);
+
+      const normalizedFiles = files.map(f => ({
+        id: f.id,
+        referralId: f.referralId,
+        fileName: f.fileName,
+        fileType: f.fileType,
+        uploadedDate: f.uploadedDate,
+        url: f.url || `/uploads/referrals/${path.basename(f.filePath || '')}`
+      }));
+
+      filesByReferral = normalizedFiles.reduce((acc, f) => {
         acc[f.referralId] = acc[f.referralId] || [];
         acc[f.referralId].push(f);
         return acc;
@@ -105,13 +126,21 @@ router.get('/:id', authMiddleware, async (req, res) => {
     }
     const referral = referrals[0];
 
-    const [files] = await pool.query('SELECT id, fileName, fileType, uploadedDate, url FROM referral_files WHERE referralId = ?', [referral.id]);
+    const [files] = await pool.query('SELECT id, fileName, fileType, filePath, uploadedDate FROM referral_files WHERE referralId = ?', [referral.id]);
+
+    const normalizedFiles = files.map(f => ({
+      id: f.id,
+      fileName: f.fileName,
+      fileType: f.fileType,
+      uploadedDate: f.uploadedDate,
+      url: f.url || `/uploads/referrals/${path.basename(f.filePath || '')}`
+    }));
 
     res.json({
       ...referral,
       selectedServices: referral.selectedServices ? JSON.parse(referral.selectedServices) : {},
       xrayDiagramSelections: referral.xrayDiagramSelections ? JSON.parse(referral.xrayDiagramSelections) : {},
-      uploadedFiles: files || []
+      uploadedFiles: normalizedFiles || []
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -143,7 +172,15 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 
     // Load attached files to include in the response
-    const [files] = await pool.query('SELECT id, fileName, fileType, uploadedDate, url FROM referral_files WHERE referralId = ?', [result.insertId]);
+    const [files] = await pool.query('SELECT id, fileName, fileType, filePath, uploadedDate FROM referral_files WHERE referralId = ?', [result.insertId]);
+
+    const normalizedFiles = files.map(f => ({
+      id: f.id,
+      fileName: f.fileName,
+      fileType: f.fileType,
+      uploadedDate: f.uploadedDate,
+      url: f.url || `/uploads/referrals/${path.basename(f.filePath || '')}`
+    }));
 
     res.status(201).json({ 
       id: result.insertId, 
@@ -163,7 +200,7 @@ router.post('/', authMiddleware, async (req, res) => {
       source: sourceValue,
       xrayDiagramSelections: xrayDiagramSelections || {},
       xrayNotes: xrayNotes || null,
-      uploadedFiles: files || []
+      uploadedFiles: normalizedFiles || []
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

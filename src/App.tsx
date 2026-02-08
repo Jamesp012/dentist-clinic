@@ -43,7 +43,7 @@ export type Appointment = {
   date: string;
   time: string;
   appointmentDateTime?: string;
-  type: string;
+  type: string[];
   duration?: number;
   status: 'scheduled' | 'completed' | 'cancelled';
   notes: string;
@@ -102,6 +102,7 @@ export type Referral = {
   patientId: string | number;
   patientName: string;
   referringDentist: string;
+  referredBy?: string;
   referredByContact?: string;
   referredByEmail?: string;
   referredTo: string;
@@ -115,6 +116,7 @@ export type Referral = {
   xrayNotes?: string;
   // Referral workflow fields
   referralType?: 'incoming' | 'outgoing'; // incoming: from other doctors to Doc Maaño, outgoing: from Doc Maaño to others
+  source?: 'patient-uploaded' | 'staff-upload' | 'external';
   uploadedFiles?: {
     id: string;
     fileName: string;

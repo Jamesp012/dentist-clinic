@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Patient, TreatmentRecord, Payment } from '../App';
 import { FileText, Printer, Download, Plus, X, CreditCard } from 'lucide-react';
 import { treatmentRecordAPI, paymentAPI, prescriptionAPI } from '../api';
+import { reduceInventoryForServices } from './InventoryManagement';
 import { toast } from 'sonner';
 import { formatToDD_MM_YYYY } from '../utils/dateHelpers';
 import { generatePrescriptionPDF, generateDetailedReceiptPDF } from '../utils/pdfGenerator';
@@ -20,7 +21,7 @@ type ServicesFormsProps = {
   onDataChanged?: () => Promise<void>;
 };
 
-type ServiceType = 'Extraction' | 'Pasta' | 'Braces' | 'Cleaning' | 'Pustiso/Dentures';
+
 
 type Prescription = {
   id: string;
@@ -41,19 +42,165 @@ type Prescription = {
 };
 
 export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords, payments, prefilledAppointment, onServiceCreated, onDataChanged }: ServicesFormsProps) {
+    // ...existing code...
+
+    const handleCreatePrescription = async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      try {
+        const formData = new FormData(e.currentTarget);
+        const patientId = prescriptionPatientId;
+        const patientName = prescriptionPatientSearch;
+        const dentist = formData.get('dentist') as string;
+        const licenseNumber = formData.get('license_number') as string;
+        const ptrNumber = formData.get('ptr_number') as string;
+        const date = formData.get('date') as string;
+        const notes = formData.get('notes') as string;
+
+        // Collect medications from form
+        const medications: Prescription['medications'] = [];
+        // Example: Add logic to collect medication fields from formData
+        // (You may need to adjust this based on your actual form structure)
+        if (formData.get('med_mefenamic_1') === 'on') {
+          const dosage = formData.get('mefenamic1_dosage') as string || '';
+          const quantity = formData.get('mefenamic1_quantity') as string || '';
+          const sig = formData.get('mefenamic1_sig') as string || 'Take 1 cap 3x a day';
+          if (quantity) {
+            medications.push({
+              name: 'Mefenamic Acid',
+              dosage,
+              frequency: sig,
+              duration: `Quantity: ${quantity}`,
+              slot: 'mefenamic1',
+            });
+          }
+        }
+        if (formData.get('med_amoxicillin') === 'on') {
+          const dosage = formData.get('amoxicillin_dosage') as string || '';
+          const quantity = formData.get('amoxicillin_quantity') as string || '';
+          const sig = formData.get('amoxicillin_sig') as string || 'Take 1 cap 3x a day';
+          if (quantity) {
+            medications.push({
+              name: 'Amoxicilin',
+              dosage,
+              frequency: sig,
+              duration: `Quantity: ${quantity}`,
+              slot: 'amoxicilin',
+            });
+          }
+        }
+        if (formData.get('med_mefenamic_2') === 'on') {
+          const dosage = formData.get('mefenamic2_dosage') as string || '';
+          const quantity = formData.get('mefenamic2_quantity') as string || '';
+          const sig = formData.get('mefenamic2_sig') as string || 'Take 1 cap 3x a day';
+          if (quantity) {
+            medications.push({
+              name: 'Tranexamic Acid',
+              dosage,
+              frequency: sig,
+              duration: `Quantity: ${quantity}`,
+              slot: 'mefenamic2',
+            });
+          }
+        }
+
+        if (medications.length === 0) {
+          toast.error('Please select at least one medication and specify quantity');
+          return;
+        }
+
+        const prescriptionData = {
+          patientId,
+          patientName,
+          date,
+          medications,
+          dentist,
+          notes,
+          licenseNumber,
+          ptrNumber,
+        };
+
+        // Save to backend
+        const savedPrescription = await prescriptionAPI.create(prescriptionData);
+
+        const savedId = savedPrescription && (savedPrescription.id || savedPrescription._id) ? String(savedPrescription.id ?? savedPrescription._id) : `tmp-${Date.now()}`;
+        const nowISO = new Date().toISOString();
+        const newPrescription: Prescription & { createdAt?: string } = {
+          id: savedId,
+          patientId,
+          patientName,
+          date,
+          medications,
+          dentist,
+          notes,
+          licenseNumber,
+          ptrNumber,
+          createdAt: savedPrescription?.createdAt || nowISO,
+        };
+
+        // Optimistically prepend the new prescription so it appears immediately as most recent
+        setPrescriptions(prev => [newPrescription, ...prev]);
+        setViewingPrescription(newPrescription);
+        setActiveForm(null);
+        setPrescriptionPatientSearch('');
+        setPrescriptionPatientId('');
+
+        toast.success('Prescription created and saved successfully');
+
+        // Reload prescriptions to show new one (delay slightly to avoid eventual-consistency race)
+        try {
+          await new Promise(res => setTimeout(res, 300));
+          const allPrescriptions = await prescriptionAPI.getAll();
+          if (allPrescriptions) {
+            setPrescriptions(allPrescriptions);
+          }
+        } catch (error) {
+          console.error('Failed to reload prescriptions:', error);
+        }
+
+        // Refresh all data
+        if (onDataChanged) {
+          await onDataChanged();
+        }
+      } catch (error) {
+        console.error('Failed to create prescription:', error);
+        toast.error('Failed to create prescription');
+      }
+    };
   const [activeForm, setActiveForm] = useState<'service' | 'prescription' | 'receipt' | null>(prefilledAppointment ? 'service' : null);
-  const [selectedService, setSelectedService] = useState<ServiceType>(() => {
-    // Try to match appointment type to service type
-    if (prefilledAppointment) {
-      const appointmentType = prefilledAppointment.appointmentType.toLowerCase();
-      if (appointmentType.includes('extraction')) return 'Extraction';
-      if (appointmentType.includes('cleaning')) return 'Cleaning';
-      if (appointmentType.includes('braces')) return 'Braces';
-      if (appointmentType.includes('root')) return 'Pasta';
-      if (appointmentType.includes('denture')) return 'Pustiso/Dentures';
-    }
-    return 'Cleaning';
-  });
+  // Inventory context (assume passed as prop or via context, or fetch from App)
+  const [inventory, setInventory] = useState([]);
+  const dentalServices = [
+    'Dental consultation',
+    'Oral examination',
+    'Diagnosis',
+    'Treatment planning',
+    'Dental cleaning',
+    'Scaling',
+    'Polishing',
+    'Stain removal',
+    'Temporary filling',
+    'Permanent filling',
+    'Tooth repair',
+    'Dental bonding',
+    'Simple tooth extraction',
+    'Surgical extraction',
+    'Impacted tooth removal',
+    'Braces installation',
+    'Braces adjustment',
+    'Retainers',
+    'Orthodontic consultation',
+    'Complete dentures',
+    'Partial dentures'
+  ];
+  const [selectedService, setSelectedService] = useState<string>(() => dentalServices[0]);
+    const [selectedServices, setSelectedServices] = useState<string[]>(() => {
+      if (prefilledAppointment && Array.isArray(prefilledAppointment.appointmentType)) {
+        return prefilledAppointment.appointmentType;
+      } else if (prefilledAppointment && typeof prefilledAppointment.appointmentType === 'string') {
+        return [prefilledAppointment.appointmentType];
+      }
+      return [];
+    });
   const [selectedPatient, setSelectedPatient] = useState<string>(prefilledAppointment?.patientId || '');
   const [patientSearch, setPatientSearch] = useState<string>(() => {
     if (prefilledAppointment) {
@@ -75,7 +222,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
   const [numberOfInstallments, setNumberOfInstallments] = useState<number>(3);
   const [isFromAppointment, setIsFromAppointment] = useState<boolean>(!!prefilledAppointment);
 
-  const services: ServiceType[] = ['Extraction', 'Pasta', 'Braces', 'Cleaning', 'Pustiso/Dentures'];
+  // ...existing code...
 
   // Load prescriptions on component mount
   useEffect(() => {
@@ -101,7 +248,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
       const paid = parseFloat(formData.get('amountPaid') as string) || 0;
       const type = (formData.get('paymentType') as 'full' | 'installment') || 'full';
       const date = formData.get('date') as string;
-      const service = formData.get('service') as string;
+      const services = formData.getAll('services');
       const dentist = formData.get('dentist') as string;
 
       let installmentPlan;
@@ -119,204 +266,73 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
         };
       }
 
-      const newRecordData = {
-        patientId,
-        date,
-        description: service,
-        treatment: service,
-        tooth: formData.get('tooth') as string || undefined,
-        notes: formData.get('notes') as string,
-        cost: totalCost,
-        dentist,
-        paymentType: type,
-        amountPaid: paid,
-        remainingBalance: totalCost - paid,
-        installmentPlan,
-      };
-
-      // Save to backend
-      const savedRecord = await treatmentRecordAPI.create(newRecordData);
-      const nowISO = new Date().toISOString();
-      // Ensure createdAt exists so UI can sort/display by creation time
-      (savedRecord as any).createdAt = savedRecord.createdAt || nowISO;
-      
-      // Also create a payment record if there's an initial payment
-      if (paid > 0) {
-        await paymentAPI.create({
+      // Convert FormDataEntryValue[] to string[]
+      const serviceList = services.map(s => typeof s === 'string' ? s : '');
+      const newRecords = [];
+      for (const service of serviceList) {
+        const newRecordData = {
           patientId,
-          treatmentRecordId: savedRecord.id,
-          amount: paid,
-          paymentDate: date,
-          paymentMethod: 'cash', // Default to cash for now
-          status: 'paid',
-          notes: `Initial payment for ${service}`,
-          recordedBy: dentist
-        });
+          date,
+          description: service,
+          treatment: service,
+          tooth: formData.get('tooth') as string || undefined,
+          notes: formData.get('notes') as string,
+          cost: totalCost,
+          dentist,
+          paymentType: type,
+          amountPaid: paid,
+          remainingBalance: totalCost - paid,
+          installmentPlan,
+        };
+        // Save to backend
+        const savedRecord = await treatmentRecordAPI.create(newRecordData);
+        const nowISO = new Date().toISOString();
+        (savedRecord as any).createdAt = savedRecord.createdAt || nowISO;
+        // Also create a payment record if there's an initial payment
+        if (paid > 0) {
+          await paymentAPI.create({
+            patientId,
+            treatmentRecordId: savedRecord.id,
+            amount: paid,
+            paymentDate: date,
+            paymentMethod: 'cash',
+            status: 'paid',
+            notes: `Initial payment for ${service}`,
+            recordedBy: dentist
+          });
+        }
+        newRecords.push(savedRecord);
       }
-
-      // Update local state immediately to show the receipt
-      setTreatmentRecords([...treatmentRecords, savedRecord]);
-      
-      setLastCreatedService(savedRecord);
+      setTreatmentRecords([...treatmentRecords, ...newRecords]);
+      setLastCreatedService(newRecords[newRecords.length - 1]);
       setPaymentType('full');
       setAmountPaid(0);
       setNumberOfInstallments(3);
       setSelectedPatient('');
       setPatientSearch('');
-      
-      toast.success('Service record saved successfully');
-      
-      // Refresh all data to update balances
+      // Auto-reduce inventory for all services
+      const reductionCount = await reduceInventoryForServices(serviceList, inventory, setInventory, onDataChanged);
+      if (reductionCount > 0) {
+        toast.success(`Inventory reduced for ${reductionCount} item(s).`);
+      }
+      toast.success('Service records saved successfully');
       if (onDataChanged) {
         await onDataChanged();
       }
-      
-      // If opened from appointment, close immediately after save
       if (isFromAppointment) {
         setActiveForm(null);
         setIsFromAppointment(false);
         return;
       }
-      
-      // Show prescription prompt for regular service form
       setShowPrescriptionPrompt(true);
-      
-      // Call callback if provided
       if (onServiceCreated) {
-        onServiceCreated(patientId, savedRecord);
+        onServiceCreated(patientId, newRecords[newRecords.length - 1]);
       }
-    } catch (error) {
-      console.error('Failed to save service:', error);
+    } catch (err) {
+      console.error('Failed to save service:', err);
       toast.error('Failed to save service record');
     }
-  };
-
-  const handleCreatePrescription = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    try {
-      const formData = new FormData(e.currentTarget);
-      const patientId = prescriptionPatientId || selectedPatient;
-      const patient = patients.find(p => String(p.id) === String(patientId));
-
-      if (!patientId || !patient) {
-        toast.error('Please select a patient');
-        return;
-      }
-
-      const medications = [];
-      
-      // Check each medicine
-      if (formData.get('med_mefenamic') === 'on') {
-        const dosage = formData.get('mefenamic_dosage') as string || '';
-        const quantity = formData.get('mefenamic_quantity') as string || '';
-        const sig = formData.get('mefenamic_sig') as string || 'Take 1 cap 3x a day';
-        
-        if (quantity) {
-          medications.push({
-            name: 'Mefenamic Acid',
-            dosage: dosage,
-            frequency: sig,
-            duration: `Quantity: ${quantity}`,
-            slot: 'mefenamic1' as const,
-          });
-        }
-      }
-      
-      if (formData.get('med_amoxicillin') === 'on') {
-        const dosage = formData.get('amoxicillin_dosage') as string || '';
-        const quantity = formData.get('amoxicillin_quantity') as string || '';
-        const sig = formData.get('amoxicillin_sig') as string || 'Take 1 cap 3x a day';
-        
-        if (quantity) {
-          medications.push({
-            name: 'Amoxicilin',
-            dosage: dosage,
-            frequency: sig,
-            duration: `Quantity: ${quantity}`,
-            slot: 'amoxicilin' as const,
-          });
-        }
-      }
-      
-      if (formData.get('med_mefenamic_2') === 'on') {
-        const dosage = formData.get('mefenamic2_dosage') as string || '';
-        const quantity = formData.get('mefenamic2_quantity') as string || '';
-        const sig = formData.get('mefenamic2_sig') as string || 'Take 1 cap 3x a day';
-        
-        if (quantity) {
-          medications.push({
-            name: 'Tranexamic Acid',
-            dosage: dosage,
-            frequency: sig,
-            duration: `Quantity: ${quantity}`,
-            slot: 'mefenamic2' as const,
-          });
-        }
-      }
-
-      if (medications.length === 0) {
-        toast.error('Please select at least one medication and specify quantity');
-        return;
-      }
-
-      const prescriptionData = {
-        patientId,
-        patientName: patient?.name || '',
-        date: formData.get('date') as string,
-        medications,
-        dentist: formData.get('dentist') as string,
-        notes: formData.get('notes') as string,
-        licenseNumber: formData.get('license_number') as string,
-        ptrNumber: formData.get('ptr_number') as string,
-      };
-
-      // Save to backend
-      const savedPrescription = await prescriptionAPI.create(prescriptionData);
-
-      const savedId = savedPrescription && (savedPrescription.id || savedPrescription._id) ? String(savedPrescription.id ?? savedPrescription._id) : `tmp-${Date.now()}`;
-      const nowISO = new Date().toISOString();
-      const newPrescription: Prescription & { createdAt?: string } = {
-        id: savedId,
-        patientId,
-        patientName: patient?.name || '',
-        date: formData.get('date') as string,
-        medications,
-        dentist: formData.get('dentist') as string,
-        notes: formData.get('notes') as string,
-        licenseNumber: formData.get('license_number') as string,
-        ptrNumber: formData.get('ptr_number') as string,
-        createdAt: savedPrescription?.createdAt || nowISO,
-      };
-
-      // Optimistically prepend the new prescription so it appears immediately as most recent
-      setPrescriptions(prev => [newPrescription, ...prev]);
-      setViewingPrescription(newPrescription);
-      setActiveForm(null);
-      setPrescriptionPatientSearch('');
-      setPrescriptionPatientId('');
-      
-      toast.success('Prescription created and saved successfully');
-      
-      // Reload prescriptions to show new one (delay slightly to avoid eventual-consistency race)
-      try {
-        await new Promise(res => setTimeout(res, 300));
-        const allPrescriptions = await prescriptionAPI.getAll();
-        if (allPrescriptions) {
-          setPrescriptions(allPrescriptions);
-        }
-      } catch (error) {
-        console.error('Failed to reload prescriptions:', error);
-      }
-      
-      // Refresh all data
-      if (onDataChanged) {
-        await onDataChanged();
-      }
-    } catch (error) {
-      console.error('Failed to create prescription:', error);
-      toast.error('Failed to create prescription');
-    }
-  };
+  }
 
   const printPrescription = (prescription: Prescription) => {
     const patient = patients.find(p => String(p.id) === String(prescription.patientId));
@@ -395,7 +411,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
             <div className="space-y-4 max-h-[500px] overflow-y-auto scrollbar-thin pr-2">
               {[...treatmentRecords]
                 .slice()
-                .sort((a, b) => new Date(b.createdAt || b.date || 0).getTime() - new Date(a.createdAt || a.date || 0).getTime())
+                .sort((a, b) => new Date((b as any).createdAt || b.date || 0).getTime() - new Date((a as any).createdAt || a.date || 0).getTime())
                 .map((record) => {
                 const patient = patients.find(p => String(p.id) === String(record.patientId));
                 return (
@@ -410,7 +426,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                           </div>
                           <div>
                             <p className="text-xl font-bold text-slate-900">{patient?.name}</p>
-                            <p className="text-sm text-slate-500 mt-0.5">{formatToDD_MM_YYYY(record.createdAt || record.date)} • Dr. {record.dentist}</p>
+                            <p className="text-sm text-slate-500 mt-0.5">{formatToDD_MM_YYYY((record as any).createdAt || record.date)} • Dr. {record.dentist}</p>
                           </div>
                         </div>
                         
@@ -490,7 +506,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
             <div className="space-y-4 max-h-[500px] overflow-y-auto scrollbar-thin pr-2">
               {[...prescriptions]
                 .slice()
-                .sort((a, b) => new Date(b.createdAt || b.date || 0).getTime() - new Date(a.createdAt || a.date || 0).getTime())
+                .sort((a, b) => new Date((b as any).createdAt || b.date || 0).getTime() - new Date((a as any).createdAt || a.date || 0).getTime())
                 .map((prescription) => (
                 <div key={prescription.id} className="group/item relative p-6 border-2 border-slate-100 rounded-2xl hover:border-emerald-300/60 transition-all duration-300 bg-gradient-to-br from-white via-slate-50/30 to-emerald-50/20 hover:shadow-xl hover:scale-[1.01]">
                   <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-teal-500/5 rounded-2xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-300"></div>
@@ -503,7 +519,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                         </div>
                         <div>
                           <p className="text-xl font-bold text-slate-900">{prescription.patientName}</p>
-                          <p className="text-sm text-slate-500 mt-0.5">{formatToDD_MM_YYYY(prescription.createdAt || prescription.date)} • Dr. {prescription.dentist}</p>
+                          <p className="text-sm text-slate-500 mt-0.5">{formatToDD_MM_YYYY((prescription as any).createdAt || prescription.date)} • Dr. {prescription.dentist}</p>
                         </div>
                       </div>
                       
@@ -641,21 +657,31 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                 <div>
                   <label className="block text-xs font-extrabold uppercase tracking-widest mb-4 text-slate-700 flex items-center gap-2">
                     <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
-                    Service Type *
+                    Service Types *
                   </label>
                   <select
-                    name="service"
+                    name="services"
+                    multiple
                     required
-                    value={selectedService}
-                    onChange={(e) => setSelectedService(e.target.value as ServiceType)}
+                    value={selectedServices}
+                    onChange={(e) => {
+                      const options = Array.from(e.target.selectedOptions).map(opt => opt.value);
+                      setSelectedServices(options);
+                    }}
                     className="w-full px-5 py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-cyan-400/30 focus:border-cyan-400 transition-all text-base font-medium"
+                    size={8}
                   >
-                    {services.map(service => (
+                    {dentalServices.map(service => (
                       <option key={service} value={service}>
                         {service}
                       </option>
                     ))}
                   </select>
+                  {/* Hidden inputs for all selected services to ensure formData.getAll works reliably */}
+                  {selectedServices.map((service, idx) => (
+                    <input key={service + idx} type="hidden" name="services" value={service} />
+                  ))}
+                  <p className="text-xs text-slate-500 mt-2">Hold Ctrl (Windows) or Cmd (Mac) to select multiple.</p>
                 </div>
               </div>
 

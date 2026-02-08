@@ -23,49 +23,50 @@ interface ReferralGenerationProps {
   patients: Patient[];
 }
 
-// Helper to get boolean value from selectedServices
-const getCheckboxValue = (value: string | boolean | undefined): boolean => {
-  return typeof value === 'boolean' ? value : (typeof value === 'string' && value === 'true');
+type UnderlineInputProps = {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
 };
 
-const UnderlineInput = ({ label, value, onChange, className = '', disabled = false }: { label: string; value: string; onChange: (v: string) => void; className?: string; disabled?: boolean }) => {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    onChange(newValue);
-  };
-
-  return (
-    <div className={`flex items-center gap-2 ${className}`}>
-      <label htmlFor={`input-${label}`} className="text-sm whitespace-nowrap font-semibold">{label}</label>
-      <input 
-        id={`input-${label}`}
-        name={label.toLowerCase().replace(/\s+/g, '-')}
-        type="text" 
-        value={value}
-        onChange={handleChange}
-        disabled={disabled}
-        autoComplete="off"
-        spellCheck="false"
-        className={`flex-1 border-b-2 border-slate-400 focus:outline-none focus:border-yellow-500 focus:bg-yellow-50 px-2 py-2 text-sm transition-colors font-medium ${disabled ? 'bg-slate-50 cursor-not-allowed' : 'bg-white cursor-text'}`}
-      />
-    </div>
-  );
+const getCheckboxValue = (value: any): boolean => {
+  if (value === true) return true;
+  if (typeof value === 'string') return value.trim() !== '';
+  return false;
 };
+
+const UnderlineInput = ({ label, value, onChange, disabled }: UnderlineInputProps) => (
+  <div className="flex items-center gap-2">
+    <span className="text-sm whitespace-nowrap font-semibold">{label}</span>
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      disabled={disabled}
+      className={`flex-1 border-b-2 px-2 py-2 text-sm ${
+        disabled
+          ? 'border-slate-300 bg-slate-50 cursor-not-allowed text-slate-500'
+          : 'border-slate-400 bg-white focus:outline-none focus:border-teal-500'
+      }`}
+    />
+  </div>
+);
 
 export function ReferralGeneration({ referrals, setReferrals, patients }: ReferralGenerationProps) {
   const [referralType, setReferralType] = useState<ReferralType>(null);
   const [referralFilter, setReferralFilter] = useState<ReferralFilter>('all');
   const [allViewMode, setAllViewMode] = useState<'alphabetical' | 'recent'>('alphabetical');
   const [showTypeSelection, setShowTypeSelection] = useState(false);
-  const [selectedServices, setSelectedServices] = useState<Record<string, string | boolean>>({});
-  const [selectedXrayItems, setSelectedXrayItems] = useState<Record<string, string | boolean>>({});
-  const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [referralToDelete, setReferralToDelete] = useState<string | number | null>(null);
+  const [selectedServices, setSelectedServices] = useState<Record<string, boolean | string>>({});
+  const [selectedXrayItems, setSelectedXrayItems] = useState<Record<string, boolean | string>>({});
   const [xrayDiagramSelections, setXrayDiagramSelections] = useState<Record<string, 'black' | 'red'>>({});
   const [xrayColorMode, setXrayColorMode] = useState<'black' | 'red'>('black');
   const [xrayNotes, setXrayNotes] = useState('');
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [referralToDelete, setReferralToDelete] = useState<string | number | null>(null);
   const [formData, setFormData] = useState({
     patientName: '',
     patientId: '',
@@ -79,9 +80,8 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
     specialty: '',
     reason: '',
     date: new Date().toISOString().split('T')[0],
-    urgency: 'routine' as 'routine' | 'urgent' | 'emergency'
+    urgency: 'routine' as 'routine' | 'urgent' | 'emergency',
   });
-
   const toggleService = (id: string) => {
     setSelectedServices(prev => {
       const current = prev[id];
@@ -220,7 +220,9 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
   const handleDownloadReferralPDF = (referral: Referral) => {
     const patient = patients.find(p => String(p.id) === String(referral.patientId));
 
-    const isIncomingPatient = (referral.referralType === 'incoming' && referral.source === 'patient') || referral.createdByRole === 'patient';
+    const isIncomingPatient =
+      (referral.referralType === 'incoming' && referral.source === 'patient-uploaded') ||
+      referral.createdByRole === 'patient';
 
     if (isIncomingPatient) {
       // If patient uploaded original files, prefer downloading original PDF
@@ -296,7 +298,10 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
   // Helper: determine if selected referral is an incoming referral uploaded by patient
   const isSelectedIncomingPatientReferral = (ref?: Referral | null) => {
     if (!ref) return false;
-    return (ref.referralType === 'incoming' && ref.source === 'patient') || ref.createdByRole === 'patient';
+    return (
+      (ref.referralType === 'incoming' && ref.source === 'patient-uploaded') ||
+      ref.createdByRole === 'patient'
+    );
   };
 
   // Incoming referral read-only view component
@@ -324,7 +329,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                 <p className="text-sm text-slate-600">Patient-uploaded referral (read-only)</p>
               </div>
             </div>
-            <button className="p-2" onClick={onClose}><X className="w-5 h-5" /></button>
+            <button type="button" className="p-2" onClick={onClose}><X className="w-5 h-5" /></button>
           </div>
 
           <div className="p-6 space-y-6 max-h-[calc(100vh-220px)] overflow-y-auto">
@@ -366,35 +371,41 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
             <div className="pt-4">
               <label className="text-sm font-semibold">Uploaded Referral File</label>
               <div className="mt-3">
-                {!file && <div className="text-sm text-slate-600">No uploaded file available.</div>}
-                {file && isImage && (
-                  <div>
-                    {expandedImageIndex === null && (
-                      <img
-                        src={String(file.url)}
-                        alt={String(file.fileName)}
-                        className="max-h-64 object-contain rounded-lg cursor-pointer border"
-                        onClick={() => setExpandedImageIndex(0)}
-                      />
-                    )}
-
-                    {expandedImageIndex === 0 && (
-                      <div className="relative mt-2">
-                        <button onClick={() => setExpandedImageIndex(null)} className="absolute right-2 top-2 z-40 p-2 bg-black/40 rounded-full text-white">
-                          <X className="w-5 h-5" />
-                        </button>
-                        <img src={String(file.url)} alt={String(file.fileName)} className="w-full h-[60vh] object-contain rounded-md" />
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {file && isPDF && (
-                  <div className="flex items-center gap-3">
-                    <a href={String(file.url)} download className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg">Download PDF</a>
-                    <span className="text-sm text-slate-600">{file.fileName}</span>
-                  </div>
-                )}
+                {files.length === 0 && <div className="text-sm text-slate-600">No uploaded file available.</div>}
+                {files.length > 0 && files.map((f, idx) => {
+                  const isImg = f.fileType?.startsWith?.('image/') || /\.(jpg|jpeg|png|gif|bmp)$/i.test(String(f.fileName));
+                  const isPdf = f.fileType === 'application/pdf' || /\.pdf$/i.test(String(f.fileName));
+                  return (
+                    <div key={idx} className="mb-4">
+                      {isImg && (
+                        <>
+                          {expandedImageIndex !== idx && (
+                            <img
+                              src={String(f.url)}
+                              alt={String(f.fileName)}
+                              className="max-h-64 object-contain rounded-lg cursor-pointer border"
+                              onClick={() => setExpandedImageIndex(idx)}
+                            />
+                          )}
+                          {expandedImageIndex === idx && (
+                            <div className="relative mt-2">
+                              <button onClick={() => setExpandedImageIndex(null)} className="absolute right-2 top-2 z-40 p-2 bg-black/40 rounded-full text-white">
+                                <X className="w-5 h-5" />
+                              </button>
+                              <img src={String(f.url)} alt={String(f.fileName)} className="w-full h-[60vh] object-contain rounded-md" />
+                            </div>
+                          )}
+                        </>
+                      )}
+                      {isPdf && (
+                        <div className="flex items-center gap-3">
+                          <a href={String(f.url)} download className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg">Download PDF</a>
+                          <span className="text-sm text-slate-600">{f.fileName}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -518,29 +529,42 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
-              <button
-                type="button"
-                onClick={() => setReferralType('doctor')}
-                className="group relative p-10 border-2 border-slate-200 rounded-2xl hover:border-cyan-400 hover:bg-cyan-50/40 transition-all duration-300 text-center shadow-md hover:shadow-xl hover:scale-105"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-teal-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="text-6xl mb-4 group-hover:scale-125 transition-transform duration-300 relative z-10">👨‍⚕️</div>
-                <h3 className="font-bold text-lg text-slate-900 mb-3 relative z-10">Doctor Referral</h3>
-                <p className="text-sm text-slate-600 relative z-10">Refer patient to a specialist dentist for consultation and treatment</p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setReferralType('xray')}
-                className="group relative p-10 border-2 border-slate-200 rounded-2xl hover:border-violet-400 hover:bg-violet-50/40 transition-all duration-300 text-center shadow-md hover:shadow-xl hover:scale-105"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-purple-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="text-6xl mb-4 group-hover:scale-125 transition-transform duration-300 relative z-10">🖼️</div>
-                <h3 className="font-bold text-lg text-slate-900 mb-3 relative z-10">X-Ray Referral</h3>
-                <p className="text-sm text-slate-600 relative z-10">Request advanced X-ray imaging services from a diagnostic center</p>
-              </button>
-            </div>
+                <div className="grid grid-cols-2 gap-6">
+                  {[
+                    { label: 'Dental consultation', id: 'consultation' },
+                    { label: 'Oral examination', id: 'oral_examination' },
+                    { label: 'Diagnosis', id: 'diagnosis' },
+                    { label: 'Treatment planning', id: 'treatment_planning' },
+                    { label: 'Dental cleaning', id: 'cleaning' },
+                    { label: 'Scaling', id: 'scaling' },
+                    { label: 'Polishing', id: 'polishing' },
+                    { label: 'Stain removal', id: 'stain_removal' },
+                    { label: 'Temporary filling', id: 'temporary_filling' },
+                    { label: 'Permanent filling', id: 'permanent_filling' },
+                    { label: 'Tooth repair', id: 'tooth_repair' },
+                    { label: 'Dental bonding', id: 'bonding' },
+                    { label: 'Simple tooth extraction', id: 'simple_extraction' },
+                    { label: 'Surgical extraction', id: 'surgical_extraction' },
+                    { label: 'Impacted tooth removal', id: 'impacted_tooth_removal' },
+                    { label: 'Braces installation', id: 'braces_installation' },
+                    { label: 'Braces adjustment', id: 'braces_adjustment' },
+                    { label: 'Retainers', id: 'retainers' },
+                    { label: 'Orthodontic consultation', id: 'ortho_consultation' },
+                    { label: 'Complete dentures', id: 'complete_dentures' },
+                    { label: 'Partial dentures', id: 'partial_dentures' },
+                  ].map(item => (
+                    <label key={item.id} className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={!!selectedServices[item.id]}
+                        onChange={() => toggleService(item.id)}
+                        className="w-5 h-5 border-2 border-yellow-400 rounded focus:ring-2 focus:ring-yellow-500"
+                        style={{ zIndex: 10000, pointerEvents: 'auto' }}
+                      />
+                      <span className="font-bold text-sm">{item.label}</span>
+                    </label>
+                  ))}
+                </div>
           </div>
         </div>
       )}
@@ -584,50 +608,17 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                 </div>
               </div>
               <div className="mb-8 py-8 border-t-4 border-yellow-400">
-                <h2 className="font-black text-lg uppercase mb-4">Diagnostic Services:</h2>
+                <h2 className="font-black text-lg uppercase mb-4">Dental Services:</h2>
                 <div className="grid grid-cols-2 gap-6">
                   {[
-                    { label: 'STANDARD PANORAMIC', id: 'pano' },
-                    { label: 'TMJ (OPEN & CLOSE)', id: 'tmj' },
-                    { label: 'SINUS PA', id: 'sinus' },
-                    { label: 'BITEWING LEFT SIDE', id: 'bite-l' },
-                    { label: 'BITEWING RIGHT SIDE', id: 'bite-r' },
-                  ].map(item => (
-                    <label key={item.id} className="flex items-center gap-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={!!selectedServices[item.id]}
-                        onChange={() => toggleService(item.id)}
-                        className="w-5 h-5 border-2 border-yellow-400 rounded focus:ring-2 focus:ring-yellow-500"
-                        style={{ zIndex: 10000, pointerEvents: 'auto' }}
-                      />
-                      <span className="font-bold text-sm">{item.label}</span>
-                    </label>
-                  ))}
-                  <label className="flex items-center gap-2 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={!!selectedServices['peri']}
-                      onChange={() => toggleService('peri')}
-                      className="w-5 h-5 border-2 border-yellow-400 rounded focus:ring-2 focus:ring-yellow-500"
-                      style={{ zIndex: 10000, pointerEvents: 'auto' }}
-                    />
-                    <span className="font-bold text-sm">PERIAPICAL XRAY TOOTH#</span>
-                    <input
-                      type="text"
-                      value={typeof selectedServices['peri'] === 'string' ? selectedServices['peri'] : ''}
-                      onChange={e => handleServiceInputChange('peri', e.target.value)}
-                      className="ml-2 w-16 border-b border-slate-400 bg-transparent text-sm px-1 font-normal"
-                      style={{ zIndex: 10000, pointerEvents: 'auto' }}
-                    />
-                  </label>
-                </div>
-                <h2 className="font-black text-lg uppercase mt-8 mb-4">Other Services:</h2>
-                <div className="grid grid-cols-2 gap-6">
-                  {[
-                    { label: 'DIAGNOSTIC MODEL CAST', id: 'model' },
-                    { label: 'INTRAORAL PHOTOGRAPH', id: 'intra' },
-                    { label: 'EXTRAORAL PHOTOGRAPH', id: 'extra' },
+                    { label: 'Dental consultation', id: 'consultation' },
+                    { label: 'Dental cleaning', id: 'cleaning' },
+                    { label: 'Dental bonding', id: 'bonding' },
+                    { label: 'Simple tooth extraction', id: 'simple_extraction' },
+                    { label: 'Surgical extraction', id: 'surgical_extraction' },
+                    { label: 'Braces installation', id: 'braces_installation' },
+                    { label: 'Braces adjustment', id: 'braces_adjustment' },
+                    { label: 'Orthodontic consultation', id: 'ortho_consultation' },
                   ].map(item => (
                     <label key={item.id} className="flex items-center gap-2 cursor-pointer select-none">
                       <input
@@ -1258,8 +1249,36 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                           <div className="flex items-start gap-3">
                             <span className="w-1.5 h-1.5 bg-cyan-500 rounded-full mt-2 flex-shrink-0"></span>
                             <div>
-                              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Referred To</p>
-                              <p className="text-base text-slate-900 font-bold">{referral.referredTo}</p>
+                              {/* Show correct details for each referral type */}
+                              {(() => {
+                                if (referral.referralType === 'incoming' || (referral.createdByRole === 'patient' && referral.referredByContact)) {
+                                  return (
+                                    <>
+                                      <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Referred By</p>
+                                      <p className="text-base text-slate-900 font-bold">{referral.referredBy || referral.referringDentist || referral.referredTo}</p>
+                                    </>
+                                  );
+                                } else if (referral.referralType === 'outgoing' || referral.createdByRole === 'staff') {
+                                  return (
+                                    <>
+                                      <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Referred To</p>
+                                      <p className="text-base text-slate-900 font-bold">{referral.referredTo}</p>
+                                      {referral.specialty === 'X-Ray Imaging' || referral.referredTo === 'X-Ray Facility' ? (
+                                        <div className="mt-1 text-xs text-slate-600 font-semibold">Redor Dental Center</div>
+                                      ) : (
+                                        <div className="mt-1 text-xs text-slate-600 font-semibold">J. Aguilar Dental Clinic</div>
+                                      )}
+                                    </>
+                                  );
+                                } else {
+                                  return (
+                                    <>
+                                      <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Referred To</p>
+                                      <p className="text-base text-slate-900 font-bold">{referral.referredTo}</p>
+                                    </>
+                                  );
+                                }
+                              })()}
                             </div>
                           </div>
                           <div className="flex items-start gap-3">
@@ -1269,6 +1288,14 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                               <p className="text-sm text-slate-700 line-clamp-2">{referral.reason || 'No reason provided'}</p>
                             </div>
                           </div>
+                          {Array.isArray(referral.uploadedFiles) && referral.uploadedFiles.length > 0 && (
+                            <div className="flex items-center gap-3 mt-1">
+                              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-1 flex-shrink-0"></span>
+                              <div className="text-xs text-emerald-700 font-semibold">
+                                {referral.uploadedFiles.length} attachment{referral.uploadedFiles.length > 1 ? 's' : ''} from patient
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
 

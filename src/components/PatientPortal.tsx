@@ -89,7 +89,8 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
   // Appointment booking state
   const [appointmentDate, setAppointmentDate] = useState('');
 
-  const [appointmentType, setAppointmentType] = useState('');
+  const [appointmentTypes, setAppointmentTypes] = useState<string[]>([]);
+  const [showServiceChecklist, setShowServiceChecklist] = useState(false);
   const [appointmentNotes, setAppointmentNotes] = useState('');
   const [isBookingAppointment, setIsBookingAppointment] = useState(false);
   const [selectedSchedulePeriod, setSelectedSchedulePeriod] = useState<'am' | 'pm' | null>(null);
@@ -654,7 +655,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
   };
 
   const handleBookAppointment = async () => {
-    if (!appointmentDate || !appointmentType) {
+    if (!appointmentDate || appointmentTypes.length === 0) {
       toast.error('Please fill in all appointment details');
       return;
     }
@@ -671,20 +672,22 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
     }
 
     setIsBookingAppointment(true);
-    
+
     // Normalize the appointment date to ensure consistent YYYY-MM-DD format
     const normalizedDate = getDateString(appointmentDate);
-    
+
     // For queue system, use a default time based on the period (24-hour format)
     const defaultTime = selectedSchedulePeriod === 'am' ? '09:00' : '14:00';
-    
-    const newAppointment: Appointment = {
-      id: Date.now().toString(),
+
+    // Create one appointment with selected service types (as array)
+    const newAppointment: any = {
       patientId: patient.id,
       patientName: patient.name,
       date: normalizedDate,
       time: defaultTime,
-      type: appointmentType,
+      // API compatibility: send `type` as joined string and `types` as array
+      type: appointmentTypes.join(', '),
+      types: appointmentTypes,
       duration: 60,
       status: 'scheduled',
       notes: appointmentNotes,
@@ -693,30 +696,51 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
 
     try {
       // Save appointment to API
-      const createdAppointment = await appointmentAPI.create(newAppointment);
-      
+      const created = await appointmentAPI.create(newAppointment);
+
       // Ensure the appointment date is normalized before adding to state
-      const appointmentToAdd = createdAppointment as Appointment || newAppointment;
-      if (appointmentToAdd.date) {
-        appointmentToAdd.date = getDateString(appointmentToAdd.date);
+      const raw = (created as any) || newAppointment;
+      if (raw.date) raw.date = getDateString(raw.date);
+
+      // Normalize `type` into string[] for app state (prefer `types` when available)
+      let normalizedType: string[] = [];
+      if (Array.isArray(raw.types) && raw.types.length > 0) {
+        normalizedType = raw.types.map((s: any) => String(s).trim()).filter(Boolean);
+      } else if (typeof raw.type === 'string' && raw.type.trim()) {
+        normalizedType = raw.type.split(',').map((s: string) => s.trim()).filter(Boolean);
       }
-      
+
+      const appointmentToAdd: Appointment = {
+        id: raw.id ?? Date.now().toString(),
+        patientId: raw.patientId,
+        patientName: raw.patientName,
+        date: raw.date,
+        time: raw.time,
+        type: normalizedType,
+        duration: raw.duration ?? 60,
+        status: raw.status ?? 'scheduled',
+        notes: raw.notes ?? '',
+        createdAt: raw.createdAt,
+        createdByRole: raw.createdByRole ?? 'patient'
+      };
+
       // Update local state with the created appointment
       setAppointments([...appointments, appointmentToAdd]);
-      
+
       setAppointmentDate('');
-      setAppointmentType('');
+      setAppointmentTypes([]);
       setAppointmentNotes('');
       setSelectedSchedulePeriod(null);
       toast.success('Successfully joined the queue! Please arrive at your selected time.');
-      
+
       // Sync data across all users
       if (onDataChanged) {
         await onDataChanged();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to book appointment:', error);
-      toast.error('Failed to join queue. Please try again.');
+      const msg = error?.message || 'Failed to join queue. Please try again.';
+      toast.error(msg);
     } finally {
       setIsBookingAppointment(false);
     }
@@ -1218,19 +1242,64 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                       </div>
                     )}
 
-                    {/* Service Type */}
+                    {/* Service Type (Multi-select, checklist hidden until clicked) */}
                     <div>
-                      <label className="text-sm text-gray-600 mb-1 block font-semibold">Service Type</label>
-                      <SearchableSelect
-                        options={displayServices && displayServices.length > 0
-                          ? displayServices.flatMap(s => s.description || [])
-                          : ['Dental consultation', 'Oral examination', 'Dental cleaning', 'Tooth extraction', 'Braces installation', 'Consultation']
-                        }
-                        value={appointmentType}
-                        onChange={(value) => setAppointmentType(value)}
-                        placeholder="Select service..."
-                        className="w-full px-3 py-2 border border-purple-300 rounded-lg"
-                      />
+                      <label
+                        className="text-sm text-gray-600 mb-1 block font-semibold cursor-pointer select-none"
+                        onClick={() => setShowServiceChecklist(v => !v)}
+                        tabIndex={0}
+                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setShowServiceChecklist(v => !v); }}
+                        style={{ userSelect: 'none' }}
+                      >
+                        Service Type
+                        <span className="ml-2 text-xs text-purple-600 underline">{showServiceChecklist ? 'Hide' : 'Show'} checklist</span>
+                      </label>
+                      {showServiceChecklist && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                          {[
+                            'Dental consultation',
+                            'Oral examination',
+                            'Diagnosis',
+                            'Treatment planning',
+                            'Dental cleaning',
+                            'Scaling',
+                            'Polishing',
+                            'Stain removal',
+                            'Temporary filling',
+                            'Permanent filling',
+                            'Tooth repair',
+                            'Dental bonding',
+                            'Simple tooth extraction',
+                            'Surgical extraction',
+                            'Impacted tooth removal',
+                            'Braces installation',
+                            'Braces adjustment',
+                            'Retainers',
+                            'Orthodontic consultation',
+                            'Complete dentures',
+                            'Partial dentures'
+                          ].map(service => (
+                            <label key={service} className="flex items-center gap-2 bg-white border border-purple-200 rounded px-2 py-1 cursor-pointer hover:bg-purple-50 transition">
+                              <input
+                                type="checkbox"
+                                value={service}
+                                checked={appointmentTypes.includes(service)}
+                                onChange={e => {
+                                  if (e.target.checked) {
+                                    setAppointmentTypes([...appointmentTypes, service]);
+                                  } else {
+                                    setAppointmentTypes(appointmentTypes.filter(s => s !== service));
+                                  }
+                                }}
+                              />
+                              <span className="text-sm">{service}</span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                      {showServiceChecklist && appointmentTypes.length === 0 && (
+                        <p className="text-xs text-red-500 mt-1">Please select at least one service.</p>
+                      )}
                     </div>
 
                     {/* Notes */}

@@ -4,12 +4,13 @@ import { useState, useEffect, useRef } from 'react';
 import { PatientRecordClaiming } from '../PatientRecordClaiming';
 import { convertToDBDate, convertToDisplayDate, formatDateInput } from '../../utils/dateHelpers';
 
-type LandingPageProps = {
+export type LandingPageProps = {
+  onGetStarted?: () => void;
   onLogin?: (username: string, password: string) => void;
   onSignup?: (signupData: any) => void;
 };
 
-export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
+export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showAuthForm, setShowAuthForm] = useState(false);
   const [showClaimingFlow, setShowClaimingFlow] = useState(false);
@@ -206,11 +207,13 @@ export function LandingPage({ onLogin, onSignup }: LandingPageProps) {
       <header className="w-full bg-white shadow-md fixed top-0 left-0 right-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           {/* Logo and Brand */}
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <span className="text-2xl">🦷</span>
-            </div>
-            <span className="text-xl font-semibold text-teal-600">DentaCare Pro</span>
+          <div className="flex items-center h-12">
+            <img 
+              src="/maano-logo.png" 
+              alt="MAANO Dental Care" 
+              className="h-full object-contain"
+              style={{ maxHeight: '48px' }}
+            />
           </div>
           {/* Navigation */}
           <nav className="hidden md:flex gap-8">

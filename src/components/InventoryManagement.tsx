@@ -1,3 +1,111 @@
+// Reduce inventory for multiple services
+import { inventoryManagementAPI } from '../api';
+
+export async function reduceInventoryForServices(serviceNames: DentalService[], inventory: InventoryItem[], setInventory: (inventory: InventoryItem[]) => void, onDataChanged?: () => Promise<void>) {
+  let reductionCount = 0;
+  for (const serviceName of serviceNames) {
+    // Try to fetch configured auto-reduction rule for this service type from backend
+    let ruleItems = null;
+    try {
+      const result = await inventoryManagementAPI.getRulesByType(serviceName).catch(() => null);
+      // API returns object with items or array depending on endpoint - attempt to normalize
+      if (result && (result.items || Array.isArray(result))) {
+        ruleItems = result.items || result;
+      }
+    } catch (error) {
+      // ignore and fallback to static mapping
+      ruleItems = null;
+    }
+
+    const updatedInventory = [...inventory];
+
+    if (ruleItems && ruleItems.length > 0) {
+      // ruleItems are expected to have inventoryItemId (or itemId) and quantityToReduce, optionally quantityUnit
+      for (const rItem of ruleItems) {
+        const itemId = rItem.inventoryItemId ?? rItem.itemId;
+        const inventoryItem = updatedInventory.find(i => i.id === itemId);
+        if (!inventoryItem) continue;
+
+        const qtyToReduce = Number(rItem.quantityToReduce || 0);
+        const unit = rItem.quantityUnit || 'piece';
+
+        // Handle conversion between boxes and pieces when quantityPerBox is present
+        if (inventoryItem.quantityPerBox && inventoryItem.quantityPerBox > 0) {
+          const qpb = inventoryItem.quantityPerBox;
+          // inventory stored in inventoryItem.unit (e.g., 'box' or 'piece')
+          if (unit === 'piece' && inventoryItem.unit && inventoryItem.unit.toLowerCase().includes('box')) {
+            // Convert available to pieces then subtract
+            const availablePieces = inventoryItem.quantity * qpb;
+            if (availablePieces < qtyToReduce) {
+              // not enough
+              continue;
+            }
+            const remainingPieces = availablePieces - qtyToReduce;
+            const remainingBoxes = Math.floor(remainingPieces / qpb);
+            inventoryItem.quantity = Math.max(0, remainingBoxes);
+            try {
+              await inventoryAPI.update(inventoryItem.id, inventoryItem);
+              reductionCount++;
+            } catch (error) {
+              // ignore and continue
+            }
+          } else if (unit === 'box' && inventoryItem.unit && inventoryItem.unit.toLowerCase().includes('box')) {
+            // reduce boxes directly
+            inventoryItem.quantity = Math.max(0, inventoryItem.quantity - qtyToReduce);
+            try {
+              await inventoryAPI.update(inventoryItem.id, inventoryItem);
+              reductionCount++;
+            } catch (error) {}
+          } else if (unit === 'box' && inventoryItem.unit && inventoryItem.unit.toLowerCase().includes('piece')) {
+            // rule wants boxes but inventory stored as pieces
+            const reducePieces = qtyToReduce * qpb;
+            inventoryItem.quantity = Math.max(0, inventoryItem.quantity - reducePieces);
+            try {
+              await inventoryAPI.update(inventoryItem.id, inventoryItem);
+              reductionCount++;
+            } catch (error) {}
+          } else {
+            // default fallback: subtract qtyToReduce from the stored quantity
+            inventoryItem.quantity = Math.max(0, inventoryItem.quantity - qtyToReduce);
+            try {
+              await inventoryAPI.update(inventoryItem.id, inventoryItem);
+              reductionCount++;
+            } catch (error) {}
+          }
+        } else {
+          // No quantityPerBox: subtract directly
+          inventoryItem.quantity = Math.max(0, inventoryItem.quantity - qtyToReduce);
+          try {
+            await inventoryAPI.update(inventoryItem.id, inventoryItem);
+            reductionCount++;
+          } catch (error) {}
+        }
+      }
+    } else {
+      // Fallback: use static SERVICE_INVENTORY_MAP and subtract 1 per mapped item
+      const itemsNeeded = SERVICE_INVENTORY_MAP[serviceName];
+      if (!itemsNeeded || itemsNeeded.length === 0) continue;
+      for (const itemType of itemsNeeded) {
+        const item = updatedInventory.find(i => i.name.toUpperCase().includes(itemType.replace(/_/g, ' ')));
+        if (item && item.quantity > 0) {
+          item.quantity = Math.max(0, item.quantity - 1);
+          try {
+            await inventoryAPI.update(item.id, item);
+            reductionCount++;
+          } catch (error) {
+            // log error, but continue
+          }
+        }
+      }
+    }
+
+    setInventory(updatedInventory);
+    if (onDataChanged) {
+      await onDataChanged();
+    }
+  }
+  return reductionCount;
+}
 import { useState } from 'react';
 import { InventoryItem } from '../App';
 import { Package, Plus, X, Edit, Search, Zap, AlertCircle } from 'lucide-react';
@@ -398,9 +506,18 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                   onChange={(e) => setSelectedService(e.target.value as DentalService)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  {Object.entries(SERVICE_DISPLAY_NAMES).map(([key, value]) => (
-                    <option key={key} value={key}>{value}</option>
-                  ))}
+                  <option value="ANESTHESIA">Local Anesthetic / Anesthesia</option>
+                  <option value="PROPHYLAXIS">Teeth Cleaning / Prophylaxis</option>
+                  <option value="BRACES">Orthodontic Adjustment / Braces</option>
+                  <option value="EXTRACTION">Tooth Extraction</option>
+                  <option value="FILLING">Filling / Restoration</option>
+                  <option value="SCALING">Scaling & Root Planing</option>
+                  <option value="ROOT_CANAL">Root Canal Treatment</option>
+                  <option value="CROWN_PREP">Crown Preparation</option>
+                  <option value="BONDING">Composite Bonding</option>
+                  <option value="WHITENING">Teeth Whitening</option>
+                  <option value="CLEANING">Professional Cleaning</option>
+                  <option value="IMPLANT_PREP">Implant Preparation</option>
                 </select>
               </div>
 

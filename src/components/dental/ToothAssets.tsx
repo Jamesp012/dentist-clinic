@@ -34,8 +34,8 @@ interface ToothAssetProps extends React.SVGProps<SVGElement> {
 export const RealisticOcclusal = ({ type, ...props }: { type: string } & ToothAssetProps) => {
   const commonProps = {
     fill: props.fill || "#FDFBF7",
-    stroke: props.stroke || "#D1C4B0",
-    strokeWidth: props.strokeWidth || "2",
+    stroke: props.stroke || "#8B5C2A", // darker brown for more contrast
+    strokeWidth: props.strokeWidth ? Number(props.strokeWidth) + 1.5 : 3.5, // make lines bolder
     strokeDasharray: props.strokeDasharray
   };
 
@@ -46,7 +46,7 @@ export const RealisticOcclusal = ({ type, ...props }: { type: string } & ToothAs
           <path d="M10,30 Q10,10 30,5 Q70,5 90,30 Q95,50 90,70 Q70,95 30,95 Q10,70 10,30 Z" {...commonProps} />
           {/* Grooves - only show if not missing (dashed) to avoid clutter? Or keep simple */}
           {props.strokeDasharray ? null : (
-             <path d="M20,30 Q50,50 80,30 M50,50 L50,85 M20,70 Q50,50 80,70" fill="none" stroke="#E6DCCA" strokeWidth="2" strokeLinecap="round" />
+             <path d="M20,30 Q50,50 80,30 M50,50 L50,85 M20,70 Q50,50 80,70" fill="none" stroke="#8B5C2A" strokeWidth="3.5" strokeLinecap="round" />
           )}
           {props.strokeDasharray ? null : (
              <circle cx="50" cy="50" r="15" fill="url(#toothGradient)" opacity="0.3" />
@@ -58,7 +58,10 @@ export const RealisticOcclusal = ({ type, ...props }: { type: string } & ToothAs
         <g>
           <ellipse cx="50" cy="50" rx="35" ry="40" {...commonProps} />
           {props.strokeDasharray ? null : (
-             <path d="M30,50 L70,50" fill="none" stroke="#E6DCCA" strokeWidth="2" strokeLinecap="round" />
+             <path d="M20,50 Q50,20 80,50 Q50,80 20,50 Z" fill="none" stroke="#8B5C2A" strokeWidth="3.5" strokeLinecap="round" />
+          )}
+          {props.strokeDasharray ? null : (
+             <path d="M30,50 L70,50" fill="none" stroke="#8B5C2A" strokeWidth="3.5" strokeLinecap="round" />
           )}
         </g>
       );
@@ -67,7 +70,7 @@ export const RealisticOcclusal = ({ type, ...props }: { type: string } & ToothAs
         <g>
            <path d="M20,50 Q50,10 80,50 Q50,90 20,50 Z" {...commonProps} />
            {props.strokeDasharray ? null : (
-              <circle cx="50" cy="50" r="5" fill="#E6DCCA" opacity="0.5" />
+              <circle cx="50" cy="50" r="5" fill="#8B5C2A" opacity="0.5" />
            )}
         </g>
       );
@@ -77,7 +80,7 @@ export const RealisticOcclusal = ({ type, ...props }: { type: string } & ToothAs
         <g>
            <rect x="10" y="30" width="80" height="40" rx="10" {...commonProps} />
            {props.strokeDasharray ? null : (
-              <path d="M15,50 L85,50" fill="none" stroke="#E6DCCA" strokeWidth="1" opacity="0.5" />
+              <path d="M15,50 L85,50" fill="none" stroke="#8B5C2A" strokeWidth="2.5" opacity="0.7" />
            )}
         </g>
       );

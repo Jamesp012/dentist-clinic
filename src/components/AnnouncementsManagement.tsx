@@ -564,15 +564,6 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
       {/* Services Tab */}
       {activeTab === 'services' && (
         <div>
-          <div className="flex justify-end mb-2 mt-0">
-            <button
-              onClick={() => handleOpenServiceEditor(null)}
-              className="px-6 py-3 bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-xl hover:shadow-xl shadow-lg hover:shadow-cyan-200/50 transform hover:scale-105 transition-all duration-300 flex items-center gap-2 font-semibold flex-shrink-0"
-            >
-              <Plus className="w-5 h-5" />
-              Add Service
-            </button>
-          </div>
 
           {displayServices && displayServices.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-7">

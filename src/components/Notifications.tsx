@@ -82,7 +82,7 @@ export function Notifications({ patients: _patients, appointments, referrals, cu
   const getQueueInfo = (appointment: Appointment) => {
     const appointmentHour = parseInt(appointment.time.split(':')[0]);
     const period = appointmentHour < 12 ? 'AM' : 'PM';
-    
+
     // Get all appointments for the same date and period (scheduled or completed)
     const sameQueueAppointments = appointments
       .filter(apt => {
@@ -100,7 +100,7 @@ export function Notifications({ patients: _patients, appointments, referrals, cu
         const timeB = parseInt(b.time.split(':')[0]);
         return timeA - timeB;
       });
-    
+
     const queueNumber = sameQueueAppointments.findIndex(apt => apt.id === appointment.id) + 1;
     return { queueNumber, period, totalInQueue: sameQueueAppointments.length, queueList: sameQueueAppointments };
   };
@@ -133,12 +133,15 @@ export function Notifications({ patients: _patients, appointments, referrals, cu
       // Create date with UTC to avoid timezone issues
       const appointmentDate = new Date(normalizedDate + 'T00:00:00Z');
       appointmentDate.setHours(0, 0, 0, 0);
-      
+
+      // Create a display-friendly appointment type string
+      const displayType = Array.isArray(appointment.type) ? appointment.type.join(', ') : String(appointment.type);
+
       // Show notification for newly scheduled appointments
       // For patients viewing staff-created appointments, always show the initial notification
       if (appointment.status === 'scheduled') {
         const { queueNumber, period } = getQueueInfo(appointment);
-        const message = `New appointment scheduled for ${appointment.type} (Queue #${queueNumber} - ${period}) on ${getDisplayDate(normalizedDate)}`;
+        const message = `New appointment scheduled for ${displayType} (Queue #${queueNumber} - ${period}) on ${getDisplayDate(normalizedDate)}`;
         const notifId = `apt-new-${appointment.id}`;
         const isRead = readIds.includes(notifId);
         generatedNotifications.push({
@@ -152,22 +155,22 @@ export function Notifications({ patients: _patients, appointments, referrals, cu
           details: appointment
         });
       }
-      
+
       // Appointment reminders (2 days before)
       const twoDaysBefore = new Date(appointmentDate);
       twoDaysBefore.setDate(twoDaysBefore.getDate() - 2);
-      
+
       // Show notification if today is 2 days before or appointment is upcoming
       if (today >= twoDaysBefore && appointmentDate >= today && appointment.status === 'scheduled') {
         const daysUntil = Math.ceil((appointmentDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        
+
         let message = '';
         if (daysUntil === 0) {
-          message = `Your ${appointment.type} appointment is today at ${formatTime(appointment.time)}`;
+          message = `Your ${displayType} appointment is today at ${formatTime(appointment.time)}`;
         } else if (daysUntil === 1) {
-          message = `Your ${appointment.type} appointment is tomorrow at ${formatTime(appointment.time)}`;
+          message = `Your ${displayType} appointment is tomorrow at ${formatTime(appointment.time)}`;
         } else {
-          message = `Your ${appointment.type} appointment is in ${daysUntil} days on ${getDisplayDate(normalizedDate)} at ${formatTime(appointment.time)}`;
+          message = `Your ${displayType} appointment is in ${daysUntil} days on ${getDisplayDate(normalizedDate)} at ${formatTime(appointment.time)}`;
         }
 
         const notifId = `apt-${appointment.id}`;
@@ -203,12 +206,12 @@ export function Notifications({ patients: _patients, appointments, referrals, cu
       if (isNaN(referralDate.getTime())) return;
 
       const daysSinceReferral = Math.ceil((today.getTime() - referralDate.getTime()) / (1000 * 60 * 60 * 24));
-      
+
       // Show notification for referrals made within the last 7 days
       if (daysSinceReferral >= 0 && daysSinceReferral <= 7) {
         const specialty = referral.specialty || '';
         let message = `You have been referred to ${referral.referredTo || 'the specified clinic'} (${specialty || 'General'})`;
-        
+
         if (specialty === 'X-Ray Imaging') {
           message += '. Please schedule your X-ray appointment as soon as possible';
         } else if (specialty.includes('Orthodontics')) {

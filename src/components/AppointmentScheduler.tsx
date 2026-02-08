@@ -117,12 +117,16 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
       // For queue system, use a default time based on the period (24-hour format)
       const defaultTime = schedulePeriod === 'am' ? '09:00' : '14:00';
 
+      // Get all selected services
+      const types = formData.getAll('types').map(t => String(t));
       const newAppointment = {
         patientId,
         patientName: patient?.name || '',
         date: normalizedDate,
         time: defaultTime,
-        type: formData.get('type') as string,
+        // API compatibility: send both `type` (string) and `types` (array)
+        type: types.join(', '),
+        types,
         notes: formData.get('notes') as string,
         createdByRole: 'staff',
       };
@@ -130,12 +134,26 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
       const createdAppointment = await appointmentAPI.create(newAppointment);
       
       // Ensure the created appointment has the status for immediate filtering
-      const appointmentWithStatus = {
-        ...(createdAppointment as any),
-        status: (createdAppointment as any).status || 'scheduled'
+      const raw = (createdAppointment as any) || newAppointment;
+      const normalizedType = Array.isArray(raw.types) && raw.types.length > 0
+        ? raw.types.map((s: any) => String(s).trim()).filter(Boolean)
+        : (typeof raw.type === 'string' && raw.type.trim() ? raw.type.split(',').map((s: string) => s.trim()).filter(Boolean) : []);
+
+      const appointmentWithStatus: Appointment = {
+        id: raw.id ?? Date.now().toString(),
+        patientId: raw.patientId,
+        patientName: raw.patientName,
+        date: raw.date,
+        time: raw.time,
+        type: normalizedType,
+        duration: raw.duration,
+        status: raw.status || 'scheduled',
+        notes: raw.notes || '',
+        createdAt: raw.createdAt,
+        createdByRole: raw.createdByRole || 'staff'
       };
 
-      setAppointments([...appointments, appointmentWithStatus as Appointment]);
+      setAppointments([...appointments, appointmentWithStatus]);
       setSelectedDate(normalizedDate);
       setShowAddModal(false);
       toast.success('Successfully joined the queue!');
@@ -192,7 +210,7 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
       onOpenServiceForm({
         patientId: String(appointment.patientId),
         patientName: appointment.patientName,
-        appointmentType: appointment.type,
+        appointmentType: Array.isArray(appointment.type) ? appointment.type.join(', ') : (appointment.type as unknown as string),
       });
     }
   };
@@ -704,22 +722,43 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Service Type *</label>
-                <select
-                  name="type"
-                  required
-                  defaultValue="Dental consultation"
-                  className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 shadow-sm"
-                >
-                  {services && services.length > 0
-                    ? services.flatMap(s => s.description || []).map(desc => (
-                      <option key={desc} value={desc}>{desc}</option>
-                    ))
-                    : ['Dental consultation', 'Oral examination', 'Dental cleaning', 'Tooth extraction', 'Braces installation', 'Consultation'].map(s => (
-                      <option key={s} value={s}>{s}</option>
-                    ))
-                  }
-                </select>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Service Types *</label>
+                <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl p-3">
+                  {[
+                    'Dental consultation',
+                    'Oral examination',
+                    'Diagnosis',
+                    'Treatment planning',
+                    'Dental cleaning',
+                    'Scaling',
+                    'Polishing',
+                    'Stain removal',
+                    'Temporary filling',
+                    'Permanent filling',
+                    'Tooth repair',
+                    'Dental bonding',
+                    'Simple tooth extraction',
+                    'Surgical extraction',
+                    'Impacted tooth removal',
+                    'Braces installation',
+                    'Braces adjustment',
+                    'Retainers',
+                    'Orthodontic consultation',
+                    'Complete dentures',
+                    'Partial dentures'
+                  ].map(s => (
+                    <label key={s} className="flex items-center gap-2 cursor-pointer select-none text-slate-800 text-sm">
+                      <input
+                        type="checkbox"
+                        name="types"
+                        value={s}
+                        className="accent-teal-500 w-4 h-4"
+                        // checked logic handled by browser for formData.getAll
+                      />
+                      {s}
+                    </label>
+                  ))}
+                </div>
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Notes (Optional)</label>

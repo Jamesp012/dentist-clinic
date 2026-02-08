@@ -15,6 +15,7 @@ interface RuleItem {
   itemId: number;
   itemName: string;
   quantityToReduce: number;
+  quantityUnit?: 'box' | 'piece';
 }
 
 interface AutoReductionRule {
@@ -52,6 +53,17 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
 
   // Edit form state
   const [editFormData, setEditFormData] = useState<InventoryItem | null>(null);
+  // Add form state
+  const [newItemForm, setNewItemForm] = useState<Partial<InventoryItem>>({
+    name: '',
+    quantity: 0,
+    quantityPerBox: undefined,
+    unit: 'piece',
+    minQuantity: 0,
+    category: '',
+    supplier: '',
+    cost: 0,
+  });
 
   // Auto-reduction form state
   const [appointmentType, setAppointmentType] = useState('');
@@ -59,6 +71,7 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
   const [selectedItems, setSelectedItems] = useState<RuleItem[]>([]);
   const [selectedItemToAdd, setSelectedItemToAdd] = useState<number | string>('');
   const [quantityForItem, setQuantityForItem] = useState(1);
+  const [quantityUnitForItem, setQuantityUnitForItem] = useState<'box' | 'piece'>('piece');
   const [editingRuleId, setEditingRuleId] = useState<number | null>(null);
 
   // History filters
@@ -190,13 +203,15 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
     const newItem: RuleItem = {
       itemId: itemId,
       itemName: item.name,
-      quantityToReduce: quantityForItem
+      quantityToReduce: quantityForItem,
+      quantityUnit: quantityUnitForItem
     };
 
     console.log('Adding item:', newItem);
     setSelectedItems([...selectedItems, newItem]);
     setSelectedItemToAdd('');
     setQuantityForItem(1);
+    setQuantityUnitForItem('piece');
     toast.success('Item added to rule');
   };
 
@@ -281,6 +296,31 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
       }
     } finally {
       setCreatingRule(false);
+    }
+  };
+
+  // Create inventory item
+  const handleCreateItem = async () => {
+    try {
+      const payload = {
+        name: newItemForm.name,
+        quantity: newItemForm.quantity || 0,
+        quantityPerBox: newItemForm.quantityPerBox || undefined,
+        unit: newItemForm.unit || 'piece',
+        minQuantity: newItemForm.minQuantity || 0,
+        category: newItemForm.category || '',
+        supplier: newItemForm.supplier || '',
+        cost: newItemForm.cost || 0,
+      };
+
+      const created = await inventoryAPI.create(payload as any);
+      setInventory([...inventory, created as InventoryItem]);
+      setShowAddModal(false);
+      setNewItemForm({ name: '', quantity: 0, unit: 'piece' });
+      toast.success('Inventory item added');
+    } catch (error) {
+      console.error('Failed to add item:', error);
+      toast.error('Failed to add item');
     }
   };
 
@@ -567,6 +607,82 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
           </div>
 
           {/* Edit Item Modal */}
+          {showAddModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+                  <h3 className="text-lg font-semibold text-gray-900">Add Inventory Item</h3>
+                  <button onClick={() => setShowAddModal(false)} className="text-gray-500 hover:text-gray-700">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Item Name</label>
+                    <input
+                      type="text"
+                      value={newItemForm.name}
+                      onChange={(e) => setNewItemForm({ ...newItemForm, name: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
+                    <input
+                      type="number"
+                      value={newItemForm.quantity}
+                      onChange={(e) => setNewItemForm({ ...newItemForm, quantity: parseInt(e.target.value) || 0 })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Quantity Per Box/Pack</label>
+                    <input
+                      type="number"
+                      value={newItemForm.quantityPerBox || ''}
+                      onChange={(e) => setNewItemForm({ ...newItemForm, quantityPerBox: e.target.value ? parseInt(e.target.value) : undefined })}
+                      placeholder="e.g., 12 items per box"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Unit</label>
+                    <input
+                      type="text"
+                      value={newItemForm.unit}
+                      onChange={(e) => setNewItemForm({ ...newItemForm, unit: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Minimum Level</label>
+                    <input
+                      type="number"
+                      value={newItemForm.minQuantity}
+                      onChange={(e) => setNewItemForm({ ...newItemForm, minQuantity: parseInt(e.target.value) || 0 })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-6 border-t border-gray-200 flex gap-3">
+                  <button onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                    Cancel
+                  </button>
+                  <button onClick={handleCreateItem} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2">
+                    <Plus className="w-4 h-4" />
+                    Add Item
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {editingItem && editFormData && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
@@ -677,15 +793,21 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                     Cancel
                   </button>
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       if (editFormData) {
-                        const updatedInventory = inventory.map(item => 
-                          item.id === editingItem.id ? editFormData : item
-                        );
-                        setInventory(updatedInventory);
-                        setEditingItem(null);
-                        setEditFormData(null);
-                        toast.success('Item updated successfully');
+                        try {
+                          await inventoryAPI.update(editFormData.id, editFormData);
+                          const updatedInventory = inventory.map(item => 
+                            item.id === editingItem.id ? editFormData : item
+                          );
+                          setInventory(updatedInventory);
+                          setEditingItem(null);
+                          setEditFormData(null);
+                          toast.success('Item updated successfully');
+                        } catch (error) {
+                          console.error('Failed to update item:', error);
+                          toast.error('Failed to update item');
+                        }
                       }
                     }}
                     className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2"
@@ -778,7 +900,7 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
               <div className="bg-gray-50 rounded-lg p-4 space-y-4 border border-gray-200">
                 <h4 className="font-medium text-gray-900">Add Items to Rule</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
+                        <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Item</label>
                     <select
                       value={selectedItemToAdd}
@@ -791,6 +913,18 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                           {item.name} ({item.quantity} {item.unit})
                         </option>
                       ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Unit</label>
+                    <select
+                      value={quantityUnitForItem}
+                      onChange={(e) => setQuantityUnitForItem(e.target.value as any)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                    >
+                      <option value="piece">piece</option>
+                      <option value="box">box</option>
                     </select>
                   </div>
 
@@ -956,7 +1090,7 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                         {/* Add More Items */}
                         <div className="border-t border-blue-200 pt-4">
                           <h6 className="text-xs font-medium text-gray-700 mb-2">Add More Items</h6>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
                             <div>
                               <select
                                 value={selectedItemToAdd}
@@ -971,6 +1105,18 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                                 ))}
                               </select>
                             </div>
+
+                            <div>
+                              <select
+                                value={quantityUnitForItem}
+                                onChange={(e) => setQuantityUnitForItem(e.target.value as any)}
+                                className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                              >
+                                <option value="piece">piece</option>
+                                <option value="box">box</option>
+                              </select>
+                            </div>
+
                             <div>
                               <input
                                 type="number"
@@ -994,7 +1140,8 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                                 const newItem: RuleItem = {
                                   itemId: parseInt(selectedItemToAdd.toString()),
                                   itemName: item.name,
-                                  quantityToReduce: quantityForItem
+                                  quantityToReduce: quantityForItem,
+                                  quantityUnit: quantityUnitForItem
                                 };
 
                                 const newItems = [...rule.items, newItem];
@@ -1004,6 +1151,7 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                                 setAutoReductionRules(updatedRules);
                                 setSelectedItemToAdd('');
                                 setQuantityForItem(1);
+                                setQuantityUnitForItem('piece');
                               }}
                               className="w-full px-2 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm flex items-center justify-center gap-1"
                             >
