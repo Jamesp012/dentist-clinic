@@ -45,17 +45,21 @@ router.get('/', authMiddleware, async (req, res) => {
     const referralIds = referrals.map(r => r.id);
     let filesByReferral = {};
     if (referralIds.length > 0) {
-      const [files] = await pool.query('SELECT id, referralId, fileName, fileType, filePath, uploadedDate FROM referral_files WHERE referralId IN (?)', [referralIds]);
+      // FIX: Added 'url' to SELECT query to prevent 404s on files
+      const [files] = await pool.query('SELECT id, referralId, fileName, fileType, filePath, uploadedDate, url FROM referral_files WHERE referralId IN (?)', [referralIds]);
 
       // Normalize files and generate public URL from stored filePath
-      const normalizedFiles = files.map(f => ({
-        id: f.id,
-        referralId: f.referralId,
-        fileName: f.fileName,
-        fileType: f.fileType,
-        uploadedDate: f.uploadedDate,
-        url: f.url || `/uploads/referrals/${path.basename(f.filePath || '')}`
-      }));
+      const normalizedFiles = files.map(f => {
+        const safeBasename = f.filePath ? f.filePath.split(/[/\\]/).pop() : '';
+        return {
+          id: f.id,
+          referralId: f.referralId,
+          fileName: f.fileName,
+          fileType: f.fileType,
+          uploadedDate: f.uploadedDate,
+          url: f.url || `/uploads/referrals/${safeBasename}`
+        };
+      });
 
       filesByReferral = normalizedFiles.reduce((acc, f) => {
         acc[f.referralId] = acc[f.referralId] || [];
@@ -93,16 +97,20 @@ router.get('/patient/:patientId', authMiddleware, async (req, res) => {
     const referralIds = referrals.map(r => r.id);
     let filesByReferral = {};
     if (referralIds.length > 0) {
-      const [files] = await pool.query('SELECT id, referralId, fileName, fileType, filePath, uploadedDate FROM referral_files WHERE referralId IN (?)', [referralIds]);
+      // FIX: Added 'url' to SELECT query
+      const [files] = await pool.query('SELECT id, referralId, fileName, fileType, filePath, uploadedDate, url FROM referral_files WHERE referralId IN (?)', [referralIds]);
 
-      const normalizedFiles = files.map(f => ({
-        id: f.id,
-        referralId: f.referralId,
-        fileName: f.fileName,
-        fileType: f.fileType,
-        uploadedDate: f.uploadedDate,
-        url: f.url || `/uploads/referrals/${path.basename(f.filePath || '')}`
-      }));
+      const normalizedFiles = files.map(f => {
+        const safeBasename = f.filePath ? f.filePath.split(/[/\\]/).pop() : '';
+        return {
+          id: f.id,
+          referralId: f.referralId,
+          fileName: f.fileName,
+          fileType: f.fileType,
+          uploadedDate: f.uploadedDate,
+          url: f.url || `/uploads/referrals/${safeBasename}`
+        };
+      });
 
       filesByReferral = normalizedFiles.reduce((acc, f) => {
         acc[f.referralId] = acc[f.referralId] || [];
@@ -136,15 +144,19 @@ router.get('/:id', authMiddleware, async (req, res) => {
     }
     const referral = referrals[0];
 
-    const [files] = await pool.query('SELECT id, fileName, fileType, filePath, uploadedDate FROM referral_files WHERE referralId = ?', [referral.id]);
+    // FIX: Added 'url' to SELECT query
+    const [files] = await pool.query('SELECT id, fileName, fileType, filePath, uploadedDate, url FROM referral_files WHERE referralId = ?', [referral.id]);
 
-    const normalizedFiles = files.map(f => ({
-      id: f.id,
-      fileName: f.fileName,
-      fileType: f.fileType,
-      uploadedDate: f.uploadedDate,
-      url: f.url || `/uploads/referrals/${path.basename(f.filePath || '')}`
-    }));
+    const normalizedFiles = files.map(f => {
+      const safeBasename = f.filePath ? f.filePath.split(/[/\\]/).pop() : '';
+      return {
+        id: f.id,
+        fileName: f.fileName,
+        fileType: f.fileType,
+        uploadedDate: f.uploadedDate,
+        url: f.url || `/uploads/referrals/${safeBasename}`
+      };
+    });
 
     res.json({
       ...referral,
@@ -186,7 +198,8 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 
     // Load attached files to include in the response
-    const [files] = await pool.query('SELECT id, fileName, fileType, filePath, uploadedDate FROM referral_files WHERE referralId = ?', [result.insertId]);
+    // FIX: Added 'url' to SELECT query
+    const [files] = await pool.query('SELECT id, fileName, fileType, filePath, uploadedDate, url FROM referral_files WHERE referralId = ?', [result.insertId]);
 
     const normalizedFiles = files.map(f => ({
       id: f.id,

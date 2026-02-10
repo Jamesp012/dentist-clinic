@@ -25,7 +25,7 @@ import { PesoSign } from './icons/PesoSign';
 import { Dashboard } from "./Dashboard";
 import { PatientManagement } from "./PatientManagement";
 import { AppointmentScheduler } from "./AppointmentScheduler";
-import { InventoryManagement } from "./InventoryManagementEnhanced";
+import { InventoryManagement } from "./InventoryManagementNew";
 import { BracesCharting } from "./BracesCharting";
 import { ReferralGeneration } from "./ReferralGeneration";
 import { ServicesForms } from "./ServicesForms";
@@ -645,15 +645,14 @@ export function AssistantDashboard({
       </motion.div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto flex flex-col bg-gradient-to-br from-slate-50 via-slate-25 to-[#C4FFF9]/20 scrollbar-thin scrollbar-thumb-teal-500 scrollbar-track-slate-100 hover:scrollbar-thumb-teal-600">
+      <div className="flex-1 flex flex-col bg-white">
         {/* Header with Notifications - Premium Design */}
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className={`bg-white/80 backdrop-blur-md border-b border-white/40 px-8 py-6 ${sidebarOpen ? 'min-h-[104px]' : 'min-h-[100px]'} flex justify-between items-center shadow-sm relative`}
+          className={`border-b border-slate-200 bg-white px-6 py-5 ${sidebarOpen ? 'min-h-[104px]' : 'min-h-[100px]'} flex justify-between items-center`}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-[#9CEAEF]/30 via-transparent to-[#68D8D6]/20 pointer-events-none"></div>
-          <div className="relative z-10 flex-1">
+          <div className="flex-1 min-w-0">
             {activeTab === 'patients' && (
               <div>
                 <h2 className="text-xl font-bold text-slate-900 font-poppins">Patient Management</h2>
@@ -739,7 +738,7 @@ export function AssistantDashboard({
               </div>
             )}
           </div>
-          <div className="relative z-10 ml-auto">
+          <div className="ml-auto">
             <Notifications
               patients={patients}
               appointments={appointments}
@@ -750,7 +749,7 @@ export function AssistantDashboard({
         </motion.div>
 
         {/* Main Content Area with Animation */}
-        <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-teal-500 scrollbar-track-slate-100 hover:scrollbar-thumb-teal-600">
+        <div className="flex-1 overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -758,7 +757,7 @@ export function AssistantDashboard({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.2 }}
-              className="h-full"
+              className="h-full overflow-auto"
             >
               {activeTab === "dashboard" && (
                 <Dashboard

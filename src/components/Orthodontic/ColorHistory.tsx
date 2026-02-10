@@ -22,15 +22,15 @@ export const ColorHistory: React.FC<ColorHistoryProps> = ({ history, onSelectIte
     >
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-[10px] font-black text-slate-400 tracking-[0.2em] uppercase">Clinical Application Log</h3>
-        <span className="text-[9px] bg-orange-100 px-2.5 py-1 rounded-full font-black text-orange-700">
+        <span className="text-[9px] bg-cyan-100 px-2.5 py-1 rounded-full font-black text-cyan-700">
           {history.length} RECORDS
         </span>
       </div>
 
       {history.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="w-20 h-20 bg-orange-50/50 rounded-full flex items-center justify-center mb-5 border border-orange-100/50 shadow-inner">
-            <Clock className="w-10 h-10 text-orange-200" />
+          <div className="w-20 h-20 bg-cyan-50/50 rounded-full flex items-center justify-center mb-5 border border-cyan-100/50 shadow-inner">
+            <Clock className="w-10 h-10 text-cyan-200" />
           </div>
           <p className="text-sm font-bold text-slate-400 leading-relaxed italic">
             Patient history is currently empty.<br/>
@@ -45,7 +45,7 @@ export const ColorHistory: React.FC<ColorHistoryProps> = ({ history, onSelectIte
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
               key={index}
-              className={`group bg-white border border-orange-50 p-5 rounded-3xl flex items-center gap-5 hover:border-orange-200 hover:shadow-2xl hover:shadow-orange-100/50 transition-all ${onSelectItem ? 'cursor-pointer' : 'cursor-default'}`}
+              className={`group bg-white border border-cyan-50 p-5 rounded-3xl flex items-center gap-5 hover:border-cyan-200 hover:shadow-2xl hover:shadow-cyan-100/50 transition-all ${onSelectItem ? 'cursor-pointer' : 'cursor-default'}`}
               onClick={onSelectItem ? () => onSelectItem(index) : undefined}
             >
               <div 
@@ -68,14 +68,14 @@ export const ColorHistory: React.FC<ColorHistoryProps> = ({ history, onSelectIte
                   </div>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-slate-200 group-hover:text-orange-400 transition-colors" />
+              <ChevronRight className="w-5 h-5 text-slate-200 group-hover:text-cyan-400 transition-colors" />
             </motion.div>
           ))}
         </div>
       )}
 
       {history.length > 0 && (
-        <button className="w-full py-4 text-[10px] font-black tracking-widest text-orange-700 hover:text-white hover:bg-orange-600 rounded-2xl transition-all border-2 border-orange-100 hover:border-orange-600 uppercase shadow-sm">
+        <button className="w-full py-4 text-[10px] font-black tracking-widest text-cyan-700 hover:text-white hover:bg-cyan-600 rounded-2xl transition-all border-2 border-cyan-100 hover:border-cyan-600 uppercase shadow-sm">
           EXPORT COMPLETE DIAGNOSTIC LOG
         </button>
       )}

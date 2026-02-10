@@ -4,7 +4,7 @@ import { PesoSign } from './icons/PesoSign';
 import { Dashboard } from './Dashboard';
 import { PatientManagement } from './PatientManagement';
 import { AppointmentScheduler } from './AppointmentScheduler';
-import { InventoryManagement } from './InventoryManagementEnhanced';
+import { InventoryManagement } from './InventoryManagementNew';
 import { DentalChartWebsite } from './DentalChartWebsite';
 import { BracesCharting } from './BracesCharting';
 import { ReferralGeneration } from './ReferralGeneration';

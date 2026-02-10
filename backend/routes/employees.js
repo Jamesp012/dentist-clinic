@@ -28,9 +28,121 @@ async function generateUsername(name) {
   return username;
 }
 
+// Fallback roster that keeps the UI populated when the employees table gets wiped.
+const defaultEmployeeSeedData = [
+  {
+    name: 'Dr. Joseph\n\nMaaño',
+    position: 'dentist',
+    phone: '+639987654321',
+    email: 'doctor@clinic.com',
+    address: '123 Medical Plaza, Makati City',
+    dateHired: '2020-01-14',
+    accessLevel: 'Super Admin',
+    isCodeUsed: true,
+    userLookup: 'doctor'
+  },
+  {
+    name: 'Almira\n\nMaaño',
+    position: 'assistant',
+    phone: '+639123456789',
+    email: 'assistant@clinic.com',
+    address: '456 Santos Street, Quezon City',
+    dateHired: '2021-03-19',
+    accessLevel: 'Admin',
+    isCodeUsed: true,
+    userLookup: 'assistant'
+  },
+  {
+    name: 'Peter John\n\nRasay',
+    position: 'assistant_dentist',
+    phone: '+639123456789',
+    email: 'pj@gmail.com',
+    address: 'Potol, Tayabas',
+    dateHired: '2026-02-05',
+    accessLevel: 'Super Admin',
+    isCodeUsed: true,
+    generatedCode: '3FDE48F5'
+  },
+  {
+    name: 'Krista Lyn\nAbella\nGob',
+    position: 'assistant',
+    phone: '+639321654978',
+    email: 'krista@gmail.com',
+    address: 'Tayabas',
+    dateHired: null,
+    accessLevel: 'Default Accounts',
+    isCodeUsed: false
+  },
+  {
+    name: 'Maria Aleli\nZarsadias\nRasay',
+    position: 'assistant_dentist',
+    phone: '+639532173662',
+    email: 'aleli@gmail.com',
+    address: 'Tayabas City',
+    dateHired: '2026-02-04',
+    accessLevel: 'Admin',
+    isCodeUsed: false
+  }
+];
+
+// Rehydrate employees table with defaults whenever it ends up empty.
+async function seedEmployeesIfEmpty() {
+  const [countResult] = await pool.query('SELECT COUNT(*) AS total FROM employees');
+  if (countResult[0].total > 0) {
+    return;
+  }
+
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [lockedCount] = await connection.query('SELECT COUNT(*) AS total FROM employees FOR UPDATE');
+    if (lockedCount[0].total > 0) {
+      await connection.rollback();
+      return;
+    }
+
+    for (const employee of defaultEmployeeSeedData) {
+      let userId = null;
+      if (employee.userLookup) {
+        const [users] = await connection.query('SELECT id FROM users WHERE username = ?', [employee.userLookup]);
+        if (users.length > 0) {
+          userId = users[0].id;
+        }
+      }
+
+      await connection.query(
+        `INSERT INTO employees (user_id, name, position, phone, email, address, dateHired, accessLevel, isCodeUsed, generatedCode)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          userId,
+          employee.name,
+          employee.position,
+          employee.phone,
+          employee.email,
+          employee.address,
+          employee.dateHired,
+          employee.accessLevel,
+          employee.isCodeUsed ? 1 : 0,
+          employee.generatedCode || null
+        ]
+      );
+    }
+
+    await connection.commit();
+    console.log('Seeded default employee records.');
+  } catch (error) {
+    await connection.rollback();
+    console.error('Failed to seed default employees:', error);
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
 // Get all employees
 router.get('/', authMiddleware, async (req, res) => {
   try {
+    await seedEmployeesIfEmpty();
     const [employees] = await pool.query(`
       SELECT e.*, u.username, u.email as userEmail, u.isFirstLogin, u.accountStatus, u.accessLevel
       FROM employees e

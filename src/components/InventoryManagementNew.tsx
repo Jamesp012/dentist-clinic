@@ -291,117 +291,108 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
   const outOfStockItems = inventory.filter(item => item.quantity === 0);
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-6 max-w-[1920px] mx-auto space-y-8">
       {/* Tab Navigation */}
-      <div className="flex gap-2 border-b border-gray-200">
-        <button
-          onClick={() => setActiveTab('overview')}
-          className={`px-6 py-3 font-medium transition-colors flex items-center gap-2 ${
-            activeTab === 'overview'
-              ? 'border-b-2 border-blue-600 text-blue-600'
-              : 'text-gray-600 hover:text-gray-800'
-          }`}
-        >
-          <Eye className="w-4 h-4" />
-          Overview
-        </button>
-        <button
-          onClick={() => setActiveTab('auto-reduction')}
-          className={`px-6 py-3 font-medium transition-colors flex items-center gap-2 ${
-            activeTab === 'auto-reduction'
-              ? 'border-b-2 border-blue-600 text-blue-600'
-              : 'text-gray-600 hover:text-gray-800'
-          }`}
-        >
-          <Zap className="w-4 h-4" />
-          Auto-Reduction Settings
-        </button>
-        <button
-          onClick={() => setActiveTab('history')}
-          className={`px-6 py-3 font-medium transition-colors flex items-center gap-2 ${
-            activeTab === 'history'
-              ? 'border-b-2 border-blue-600 text-blue-600'
-              : 'text-gray-600 hover:text-gray-800'
-          }`}
-        >
-          <History className="w-4 h-4" />
-          Reduction History
-        </button>
+      <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="bg-white p-1.5 rounded-2xl shadow-sm border border-gray-200/60 inline-flex gap-1">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
+              activeTab === 'overview'
+                ? 'bg-gradient-to-r from-cyan-600 to-teal-600 text-white shadow-lg shadow-cyan-500/30'
+                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+            }`}
+          >
+            <Eye className="w-4 h-4" />
+            Overview
+          </button>
+          <button
+            onClick={() => setActiveTab('auto-reduction')}
+            className={`px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
+              activeTab === 'auto-reduction'
+                ? 'bg-gradient-to-r from-cyan-600 to-teal-600 text-white shadow-lg shadow-cyan-500/30'
+                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+            }`}
+          >
+            <Zap className="w-4 h-4" />
+            Auto-Reduction Settings
+          </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
+              activeTab === 'history'
+                ? 'bg-gradient-to-r from-cyan-600 to-teal-600 text-white shadow-lg shadow-cyan-500/30'
+                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+            }`}
+          >
+            <History className="w-4 h-4" />
+            Reduction History
+          </button>
+        </div>
+
+        {activeTab === 'overview' && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="group px-5 py-2.5 bg-gradient-to-r from-cyan-600 to-teal-600 text-white rounded-xl hover:from-cyan-700 hover:to-teal-700 transition-all duration-300 shadow-lg shadow-cyan-500/20 flex items-center gap-2 font-medium"
+          >
+            <div className="bg-white/20 rounded-lg p-1 group-hover:scale-110 transition-transform">
+              <Plus className="w-4 h-4" />
+            </div>
+            Add New Item
+          </button>
+        )}
       </div>
 
       {/* PAGE 1: OVERVIEW */}
       {activeTab === 'overview' && (
-        <div className="space-y-6">
-          {/* Header removed as requested */}
-          <div className="flex justify-between items-center">
-            <div></div>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-            >
-              <Plus className="w-5 h-5" />
-              Add Item
-            </button>
-          </div>
+        <div className="space-y-8 animate-in fade-in duration-500">
+          
+          {/* Inventory Status Bar */}
+          <div className="bg-white rounded-xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] border border-gray-100 p-4 flex flex-wrap items-center gap-6">
+             <div className="flex items-center gap-3 pr-6 border-r border-gray-100">
+               <div className="p-2 bg-cyan-50 rounded-lg">
+                 <Package className="w-5 h-5 text-cyan-600" />
+               </div>
+               <div>
+                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Inventory</p>
+                 <p className="text-xl font-extrabold text-gray-900 leading-none">{inventory.length}</p>
+               </div>
+             </div>
 
-          {/* Statistics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-600 text-sm font-medium">Total Items</p>
-                  <p className="text-3xl font-bold mt-2">{inventory.length}</p>
+             <div className="flex items-center gap-6 flex-1">
+                <div className="flex items-center gap-2">
+                   <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-50"></div>
+                   <span className="text-sm font-medium text-gray-600">In Stock: <strong className="text-gray-900">{inventory.filter(i => i.quantity > 0).length}</strong></span>
                 </div>
-                <Package className="w-8 h-8 text-blue-600 opacity-50" />
-              </div>
-            </div>
-
-            <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-green-600 text-sm font-medium">In Stock</p>
-                  <p className="text-3xl font-bold mt-2">{inventory.filter(i => i.quantity > 0).length}</p>
+                <div className="flex items-center gap-2">
+                   <div className="w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-amber-50"></div>
+                   <span className="text-sm font-medium text-gray-600">Low Stock: <strong className="text-gray-900">{criticalItems.length}</strong></span>
                 </div>
-                <Package className="w-8 h-8 text-green-600 opacity-50" />
-              </div>
-            </div>
-
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-yellow-600 text-sm font-medium">Critical Stock</p>
-                  <p className="text-3xl font-bold mt-2">{criticalItems.length}</p>
+                <div className="flex items-center gap-2">
+                   <div className="w-2.5 h-2.5 rounded-full bg-red-500 ring-4 ring-red-50"></div>
+                   <span className="text-sm font-medium text-gray-600">Out of Stock: <strong className="text-gray-900">{outOfStockItems.length}</strong></span>
                 </div>
-                <AlertCircle className="w-8 h-8 text-yellow-600 opacity-50" />
-              </div>
-            </div>
-
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-red-600 text-sm font-medium">Out of Stock</p>
-                  <p className="text-3xl font-bold mt-2">{outOfStockItems.length}</p>
-                </div>
-                <AlertCircle className="w-8 h-8 text-red-600 opacity-50" />
-              </div>
-            </div>
+             </div>
           </div>
 
           {/* Critical Items Alert */}
           {criticalItems.length > 0 && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-              <h3 className="font-semibold text-yellow-900 mb-3 flex items-center gap-2">
-                <AlertCircle className="w-5 h-5" />
-                Critical Stock Items (Low Inventory)
+            <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-6 backdrop-blur-sm">
+              <h3 className="font-bold text-amber-900 mb-4 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-amber-600" />
+                Restock Required
               </h3>
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {criticalItems.map(item => (
-                  <div key={item.id} className="flex justify-between items-center bg-white p-3 rounded border border-yellow-100">
+                  <div key={item.id} className="flex justify-between items-center bg-white p-4 rounded-xl border border-amber-100 shadow-sm hover:shadow-md transition-shadow">
                     <div>
-                      <p className="font-medium text-gray-900">{item.name}</p>
-                      <p className="text-sm text-gray-600">{item.quantity} {item.unit}</p>
+                      <p className="font-semibold text-gray-900">{item.name}</p>
+                      <p className="text-sm text-gray-500 mt-0.5">{item.quantity} {item.unit} remaining</p>
                     </div>
-                    <span className="text-red-600 font-semibold">Min: {item.minQuantity || 5}</span>
+                    <div className="flex flex-col items-end">
+                      <span className="text-xs font-bold text-amber-600 uppercase tracking-wider bg-amber-50 px-2 py-1 rounded-full">Low Stock</span>
+                      <span className="text-xs text-amber-700/70 mt-1">Min: {item.minQuantity || 5}</span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -410,19 +401,19 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
 
           {/* Out of Stock Alert */}
           {outOfStockItems.length > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-              <h3 className="font-semibold text-red-900 mb-3 flex items-center gap-2">
-                <AlertCircle className="w-5 h-5" />
-                Out of Stock Items
+            <div className="bg-red-50/50 border border-red-100 rounded-2xl p-6 backdrop-blur-sm">
+              <h3 className="font-bold text-red-900 mb-4 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                Depleted Items
               </h3>
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {outOfStockItems.map(item => (
-                  <div key={item.id} className="flex justify-between items-center bg-white p-3 rounded border border-red-100">
+                  <div key={item.id} className="flex justify-between items-center bg-white p-4 rounded-xl border border-red-100 shadow-sm hover:shadow-md transition-shadow">
                     <div>
-                      <p className="font-medium text-gray-900">{item.name}</p>
-                      <p className="text-sm text-gray-600">0 {item.unit} available</p>
+                      <p className="font-semibold text-gray-900">{item.name}</p>
+                      <p className="text-sm text-gray-500 mt-0.5">0 {item.unit} available</p>
                     </div>
-                    <span className="text-red-600 font-semibold text-lg">OUT</span>
+                    <span className="text-xs font-bold text-red-600 uppercase tracking-wider bg-red-50 px-2 py-1 rounded-full">Out of Stock</span>
                   </div>
                 ))}
               </div>
@@ -430,39 +421,50 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
           )}
 
           {/* All Inventory Items */}
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-            <div className="p-6 border-b border-gray-200">
-              <div className="relative">
-                <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                 <div className="bg-cyan-50 p-2 rounded-lg">
+                    <Package className="w-5 h-5 text-cyan-600" />
+                 </div>
+                 <h3 className="text-lg font-bold text-gray-900">Inventory List</h3>
+              </div>
+              <div className="relative max-w-md w-full">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search inventory items..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-transparent focus:bg-white focus:border-cyan-500 rounded-xl focus:ring-4 focus:ring-cyan-500/10 transition-all text-sm font-medium"
                 />
               </div>
             </div>
 
             {filteredInventory.length === 0 ? (
-              <div className="p-12 text-center">
-                <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-600">No inventory items found</p>
+              <div className="p-16 text-center">
+                <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Package className="w-10 h-10 text-gray-300" />
+                </div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-1">No items found</h4>
+                <p className="text-gray-500 max-w-xs mx-auto">
+                  We couldn't find any inventory items matching your search. Try adjusting your filters.
+                </p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
+                  <thead className="bg-gray-50/50 border-b border-gray-100">
                     <tr>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Item Name</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Quantity</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Unit</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Min Level</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Item Name</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Quantity</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Unit</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Min Level</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-gray-100">
                     {filteredInventory.map(item => {
                       const minLevel = item.minQuantity || 5;
                       let status = 'normal';
@@ -470,45 +472,59 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                       else if (item.quantity <= minLevel) status = 'critical';
 
                       return (
-                        <tr key={item.id} className="hover:bg-gray-50">
+                        <tr key={item.id} className="hover:bg-gray-50/50 transition-colors group">
                           <td className="px-6 py-4">
-                            <span className="font-medium text-gray-900">{item.name}</span>
+                            <span className="font-semibold text-gray-900 block">{item.name}</span>
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`font-semibold ${
-                              status === 'out_of_stock' ? 'text-red-600' :
-                              status === 'critical' ? 'text-yellow-600' :
-                              'text-green-600'
-                            }`}>
-                              {item.quantity}
-                            </span>
+                             <div className="flex items-center gap-2">
+                                <span className={`font-bold text-lg ${
+                                  status === 'out_of_stock' ? 'text-red-500' :
+                                  status === 'critical' ? 'text-amber-500' :
+                                  'text-gray-900'
+                                }`}>
+                                  {item.quantity}
+                                </span>
+                                {status === 'critical' && <AlertCircle className="w-4 h-4 text-amber-500" />}
+                             </div>
                           </td>
-                          <td className="px-6 py-4 text-gray-600">{item.unit}</td>
-                          <td className="px-6 py-4 text-gray-600">{minLevel}</td>
                           <td className="px-6 py-4">
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              status === 'out_of_stock' ? 'bg-red-100 text-red-800' :
-                              status === 'critical' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-green-100 text-green-800'
+                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
+                               {item.unit}
+                             </span>
+                          </td>
+                          <td className="px-6 py-4 text-gray-500 text-sm font-medium">{minLevel}</td>
+                          <td className="px-6 py-4">
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm inline-flex items-center gap-1.5 ${
+                              status === 'out_of_stock' ? 'bg-red-50 text-red-700 border border-red-100' :
+                              status === 'critical' ? 'bg-amber-50 text-amber-700 border border-amber-100' :
+                              'bg-emerald-50 text-emerald-700 border border-emerald-100'
                             }`}>
-                              {status === 'out_of_stock' ? 'Out of Stock' :
-                               status === 'critical' ? 'Critical' :
+                              <span className={`w-1.5 h-1.5 rounded-full ${
+                                status === 'out_of_stock' ? 'bg-red-500' :
+                                status === 'critical' ? 'bg-amber-500' :
+                                'bg-emerald-500'
+                              }`}></span>
+                              {status === 'out_of_stock' ? 'Stockout' :
+                               status === 'critical' ? 'Low Stock' :
                                'In Stock'}
                             </span>
                           </td>
-                          <td className="px-6 py-4">
-                            <div className="flex gap-2">
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex justify-end gap-2">
                               <button
                                 onClick={() => setEditingItem(item)}
-                                className="text-blue-600 hover:text-blue-800 p-1"
+                                className="p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg transition-colors"
+                                title="Edit Item"
                               >
                                 <Edit className="w-4 h-4" />
                               </button>
                               <button
                                 onClick={() => deleteItem(item.id)}
-                                className="text-red-600 hover:text-red-800 p-1"
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Delete Item"
                               >
-                                <X className="w-4 h-4" />
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
                           </td>
@@ -525,263 +541,339 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
 
       {/* PAGE 2: AUTO-REDUCTION SETTINGS */}
       {activeTab === 'auto-reduction' && (
-        <div className="space-y-6">
-          {/* Header */}
-          <div>
-            <h2 className="text-3xl font-bold text-gray-900">Auto-Reduction Settings</h2>
-            <p className="text-gray-600 mt-2">Configure automatic inventory reduction for appointment procedures</p>
+        <div className="space-y-8 animate-in fade-in duration-500">
+           {/* Header */}
+          <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+             <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-cyan-50 to-transparent rounded-bl-full opacity-50 -mr-16 -mt-16 pointer-events-none"></div>
+             <div className="flex items-start gap-5 relative z-10">
+               <div className="p-4 bg-teal-50 rounded-2xl shadow-inner">
+                 <Zap className="w-8 h-8 text-teal-600" />
+               </div>
+               <div>
+                  <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Automation Rules</h2>
+                  <p className="text-gray-500 mt-2 max-w-2xl text-lg">Define logic to automatically deduct inventory when specific procedures are performed.</p>
+               </div>
+             </div>
           </div>
 
-          {/* Create New Rule */}
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Zap className="w-5 h-5 text-blue-600" />
-              Create Auto-Reduction Rule
-            </h3>
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+            {/* Create New Rule Form */}
+            <div className="xl:col-span-4">
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sticky top-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2 pb-4 border-b border-gray-100">
+                  <div className="w-8 h-8 rounded-lg bg-cyan-50 flex items-center justify-center">
+                    <Plus className="w-4 h-4 text-cyan-600" />
+                  </div>
+                  New Rule
+                </h3>
 
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Appointment Type</label>
-                  <input
-                    type="text"
-                    value={appointmentType}
-                    onChange={(e) => setAppointmentType(e.target.value)}
-                    placeholder="e.g., Root Canal, Cleaning"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+                <div className="space-y-5">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Appointment Type</label>
+                      <input
+                        type="text"
+                        value={appointmentType}
+                        onChange={(e) => setAppointmentType(e.target.value)}
+                        placeholder="e.g., Root Canal"
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all font-medium"
+                      />
+                    </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">Inventory Item</label>
-                  <select
-                    value={selectedItemId}
-                    onChange={(e) => setSelectedItemId(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Inventory Item</label>
+                      <select
+                        value={selectedItemId}
+                        onChange={(e) => setSelectedItemId(e.target.value)}
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all font-medium"
+                      >
+                        <option value="">Select an item to reduce</option>
+                        {inventory.map(item => (
+                          <option key={item.id} value={item.id}>
+                            {item.name} ({item.quantity} {item.unit})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Quantity to Deduct</label>
+                      <div className="flex items-center">
+                         <button 
+                            onClick={() => setQuantityToReduce(Math.max(1, quantityToReduce - 1))}
+                            className="p-3 bg-gray-100 hover:bg-gray-200 rounded-l-xl border-r border-gray-200 transition-colors"
+                         >
+                            <span className="text-gray-600 font-bold">-</span>
+                         </button>
+                         <input
+                            type="number"
+                            min="1"
+                            value={quantityToReduce}
+                            onChange={(e) => setQuantityToReduce(Math.max(1, parseInt(e.target.value) || 1))}
+                            className="w-full px-4 py-3 bg-gray-50 border-y border-gray-200 text-center font-bold text-gray-900 focus:outline-none"
+                          />
+                         <button 
+                            onClick={() => setQuantityToReduce(quantityToReduce + 1)}
+                            className="p-3 bg-gray-100 hover:bg-gray-200 rounded-r-xl border-l border-gray-200 transition-colors"
+                         >
+                            <span className="text-gray-600 font-bold">+</span>
+                         </button>
+                      </div>
+                    </div>
+
+                  <button
+                    onClick={createAutoReductionRule}
+                    className="w-full py-3.5 bg-gradient-to-r from-cyan-600 to-teal-600 text-white rounded-xl hover:from-cyan-700 hover:to-teal-700 font-semibold shadow-lg shadow-cyan-500/20 transform hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2 mt-4"
                   >
-                    <option value="">Select an item</option>
-                    {inventory.map(item => (
-                      <option key={item.id} value={item.id}>
-                        {item.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Quantity to Reduce</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={quantityToReduce}
-                    onChange={(e) => setQuantityToReduce(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
+                    <Plus className="w-5 h-5" />
+                    Create Automation Rule
+                  </button>
                 </div>
               </div>
-
-              <button
-                onClick={createAutoReductionRule}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
-              >
-                <Plus className="w-4 h-4 inline mr-2" />
-                Create Rule
-              </button>
-            </div>
-          </div>
-
-          {/* Existing Rules */}
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-            <div className="p-6 border-b border-gray-200">
-              <h3 className="text-lg font-semibold">Existing Auto-Reduction Rules</h3>
-              <p className="text-gray-600 text-sm mt-1">
-                {autoReductionRules.length} rule{autoReductionRules.length !== 1 ? 's' : ''} configured
-              </p>
             </div>
 
-            {loading ? (
-              <div className="p-12 text-center">
-                <Loader className="w-8 h-8 text-blue-600 mx-auto animate-spin" />
-                <p className="text-gray-600 mt-3">Loading rules...</p>
-              </div>
-            ) : autoReductionRules.length === 0 ? (
-              <div className="p-12 text-center">
-                <Settings className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-600">No auto-reduction rules configured yet</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Appointment Type</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Inventory Item</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Qty to Reduce</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Current Stock</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {autoReductionRules.map(rule => (
-                      <tr key={rule.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
-                          <span className="font-medium text-gray-900">{rule.appointmentType}</span>
-                        </td>
-                        <td className="px-6 py-4 text-gray-600">{rule.inventoryItemName}</td>
-                        <td className="px-6 py-4">
-                          {editingRuleId === rule.id ? (
-                            <div className="flex gap-2 items-center">
-                              <input
-                                type="number"
-                                min="1"
-                                value={editingQuantity}
-                                onChange={(e) => setEditingQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                                className="w-16 px-2 py-1 border border-gray-300 rounded"
-                              />
-                              <button
-                                onClick={() => updateAutoReductionRule(rule.id)}
-                                className="text-green-600 hover:text-green-800"
-                              >
-                                <Save className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => setEditingRuleId(null)}
-                                className="text-gray-400 hover:text-gray-600"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>
-                          ) : (
-                            <span className="font-semibold text-gray-900">{rule.quantityToReduce}</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 text-gray-600">{rule.currentQuantity} units</td>
-                        <td className="px-6 py-4">
-                          <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            {rule.isActive ? 'Active' : 'Inactive'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => {
-                                setEditingRuleId(rule.id);
-                                setEditingQuantity(rule.quantityToReduce);
-                              }}
-                              className="text-blue-600 hover:text-blue-800 p-1"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => deleteAutoReductionRule(rule.id)}
-                              className="text-red-600 hover:text-red-800 p-1"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+            {/* Existing Rules Table */}
+            <div className="xl:col-span-8">
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden h-full flex flex-col">
+                <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                  <h3 className="font-bold text-gray-900">Active Rules</h3>
+                  <span className="px-3 py-1 bg-teal-100 text-teal-700 text-xs font-bold rounded-full uppercase tracking-wide">
+                    {autoReductionRules.length} Configured
+                  </span>
+                </div>
 
-          {/* Info Box */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <p className="text-blue-900">
-              <strong>How it works:</strong> When a doctor/assistant marks an appointment as completed, the system will automatically reduce the configured items from inventory. These reductions will be recorded in the Reduction History.
-            </p>
+                {loading ? (
+                  <div className="p-12 text-center flex-1 flex flex-col items-center justify-center">
+                    <Loader className="w-8 h-8 text-teal-600 animate-spin" />
+                    <p className="text-gray-500 mt-3 font-medium">Loading details...</p>
+                  </div>
+                ) : autoReductionRules.length === 0 ? (
+                  <div className="p-16 text-center flex-1 flex flex-col items-center justify-center">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Settings className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <p className="text-gray-900 font-semibold text-lg">No rules defined</p>
+                    <p className="text-gray-500 mt-1 max-w-sm">Create your first automation rule using the form.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto flex-1">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                          <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Trigger Event</th>
+                          <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Target Item</th>
+                          <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Action</th>
+                          <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Stock</th>
+                          <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Manage</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {autoReductionRules.map(rule => (
+                          <tr key={rule.id} className="hover:bg-gray-50/50 transition-colors group">
+                            <td className="px-6 py-5">
+                              <div className="font-semibold text-gray-900">{rule.appointmentType}</div>
+                              <div className="text-xs text-gray-500 mt-0.5">When completed</div>
+                            </td>
+                            <td className="px-6 py-5">
+                               <div className="flex items-center gap-2">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-cyan-400"></div>
+                                  <span className="text-gray-700 font-medium">{rule.inventoryItemName}</span>
+                               </div>
+                            </td>
+                            <td className="px-6 py-5">
+                              {editingRuleId === rule.id ? (
+                                <div className="flex gap-2 items-center bg-white p-1 rounded-lg shadow-sm border border-gray-200 w-max">
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    value={editingQuantity}
+                                    onChange={(e) => setEditingQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                                    className="w-16 px-2 py-1 border-none focus:ring-0 text-gray-900 font-bold text-center bg-transparent"
+                                  />
+                                  <button
+                                    onClick={() => updateAutoReductionRule(rule.id)}
+                                    className="p-1.5 bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors"
+                                  >
+                                    <Save className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingRuleId(null)}
+                                    className="p-1.5 text-gray-400 hover:text-gray-600"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-100">
+                                  Reduce by {rule.quantityToReduce}
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-6 py-5 text-gray-500 font-medium text-sm">{rule.currentQuantity} units</td>
+                            <td className="px-6 py-5 text-right">
+                              <div className="flex justify-end gap-2">
+                                <button
+                                  onClick={() => {
+                                    setEditingRuleId(rule.id);
+                                    setEditingQuantity(rule.quantityToReduce);
+                                  }}
+                                  className="p-2 text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
+                                  title="Edit Rule"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => deleteAutoReductionRule(rule.id)}
+                                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                  title="Delete Rule"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-cyan-50/50 border border-cyan-100 rounded-2xl p-4 flex gap-4 items-start text-sm text-cyan-800">
+             <AlertCircle className="w-5 h-5 text-cyan-600 shrink-0 mt-0.5" />
+             <p className="leading-relaxed">
+               <strong>How automation works:</strong> The system monitors completed appointments matching the trigger event types. When a match is found, the specified quantity is immediately deducted from inventory. All actions are logged in the History tab.
+             </p>
           </div>
         </div>
       )}
 
       {/* PAGE 3: REDUCTION HISTORY */}
       {activeTab === 'history' && (
-        <div className="space-y-6">
+        <div className="space-y-8 animate-in fade-in duration-500">
           {/* Header */}
-          <div>
-            <h2 className="text-3xl font-bold text-gray-900">Reduction History</h2>
-            <p className="text-gray-600 mt-2">Track all automatic inventory reductions by appointment</p>
+          <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden">
+             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+               <div className="flex gap-5">
+                   <div className="p-4 bg-purple-50 rounded-2xl">
+                     <History className="w-8 h-8 text-purple-600" />
+                   </div>
+                   <div>
+                     <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Audit Log</h2>
+                     <p className="text-gray-500 mt-2 text-lg">Detailed history of all automated inventory deductions.</p>
+                   </div>
+               </div>
+               
+               {/* Summary Stats in Header */}
+               {filteredHistory.length > 0 && (
+                 <div className="flex gap-6">
+                    <div className="text-center px-4 py-2 border-r border-gray-100 last:border-0">
+                       <p className="text-3xl font-bold text-gray-900">{filteredHistory.length}</p>
+                       <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Events</p>
+                    </div>
+                    <div className="text-center px-4 py-2 border-r border-gray-100 last:border-0">
+                       <p className="text-3xl font-bold text-gray-900">{new Set(filteredHistory.map(r => r.patientId)).size}</p>
+                       <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Patients</p>
+                    </div>
+                    <div className="text-center px-4 py-2">
+                       <p className="text-3xl font-bold text-gray-900">{new Set(filteredHistory.map(r => r.inventoryItemId)).size}</p>
+                       <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Items</p>
+                    </div>
+                 </div>
+               )}
+             </div>
           </div>
 
-          {/* Filters */}
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-            <h3 className="font-semibold mb-4">Filter History</h3>
-            <div className="flex gap-4 flex-wrap">
-              <div className="flex gap-2">
-                {(['all', 'patient', 'item', 'appointment'] as const).map(type => (
-                  <button
-                    key={type}
-                    onClick={() => setHistoryFilter(type)}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                      historyFilter === type
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {type.charAt(0).toUpperCase() + type.slice(1)}
-                  </button>
-                ))}
-              </div>
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+             <div className="p-6 border-b border-gray-100 bg-gray-50/30 flex flex-col md:flex-row gap-6 sticky top-0 z-20">
+               {/* Filter Tabs */}
+               <div className="flex p-1.5 bg-gray-100 rounded-xl self-start">
+                  {(['all', 'patient', 'item', 'appointment'] as const).map(type => (
+                    <button
+                      key={type}
+                      onClick={() => setHistoryFilter(type)}
+                      className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                        historyFilter === type
+                          ? 'bg-white text-gray-900 shadow-md transform scale-105'
+                          : 'text-gray-500 hover:text-gray-900 hover:bg-gray-200/50'
+                      }`}
+                    >
+                      {type.charAt(0).toUpperCase() + type.slice(1)}
+                    </button>
+                  ))}
+               </div>
 
-              {historyFilter !== 'all' && (
-                <input
-                  type="text"
-                  placeholder={`Filter by ${historyFilter}...`}
-                  value={filterValue}
-                  onChange={(e) => setFilterValue(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 flex-1"
-                />
-              )}
-            </div>
-          </div>
+               {/* Search Filter */}
+               {historyFilter !== 'all' && (
+                  <div className="relative flex-1 max-w-md animate-in fade-in slide-in-from-left-4 duration-300">
+                    <Search className="w-4 h-4 absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder={`Filter by ${historyFilter}...`}
+                      value={filterValue}
+                      onChange={(e) => setFilterValue(e.target.value)}
+                      className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 transition-all font-medium"
+                      autoFocus
+                    />
+                  </div>
+                )}
+             </div>
 
-          {/* History Table */}
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+            {/* History Table */}
             {loading ? (
-              <div className="p-12 text-center">
-                <Loader className="w-8 h-8 text-blue-600 mx-auto animate-spin" />
-                <p className="text-gray-600 mt-3">Loading history...</p>
+              <div className="p-20 text-center">
+                <Loader className="w-10 h-10 text-purple-600 mx-auto animate-spin" />
+                <p className="text-gray-500 mt-4 font-medium">Retrieving audit logs...</p>
               </div>
             ) : filteredHistory.length === 0 ? (
-              <div className="p-12 text-center">
-                <History className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-600">No reduction history found</p>
+              <div className="p-20 text-center">
+                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <History className="w-10 h-10 text-gray-300" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900">No records found</h3>
+                <p className="text-gray-500 mt-1">Attempts to reduce inventory will appear here.</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
+                  <thead className="bg-gray-50/50 border-b border-gray-100">
                     <tr>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Patient</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Appointment Type</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Item</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Quantity Reduced</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Before</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">After</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Date/Time</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Patient</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Procedure</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Item Reduced</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Amount</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Stock Levels</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Time</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-gray-100">
                     {filteredHistory.map(record => (
-                      <tr key={record.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
-                          <span className="font-medium text-gray-900">{record.patientName}</span>
+                      <tr key={record.id} className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-6 py-5">
+                          <span className="font-bold text-gray-900 block">{record.patientName}</span>
                         </td>
-                        <td className="px-6 py-4 text-gray-600">{record.appointmentType}</td>
-                        <td className="px-6 py-4 text-gray-600">{record.inventoryItemName}</td>
-                        <td className="px-6 py-4">
-                          <span className="px-3 py-1 rounded-full bg-red-100 text-red-800 font-medium">
-                            -{record.quantityReduced}
+                        <td className="px-6 py-5">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-cyan-50 text-cyan-700">
+                            {record.appointmentType}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-gray-600">{record.quantityBefore}</td>
-                        <td className="px-6 py-4 text-gray-600">{record.quantityAfter}</td>
-                        <td className="px-6 py-4 text-gray-600">
-                          {new Date(record.reducedAt).toLocaleDateString()} {new Date(record.reducedAt).toLocaleTimeString()}
+                        <td className="px-6 py-5 text-gray-700 font-medium">{record.inventoryItemName}</td>
+                        <td className="px-6 py-5">
+                          <span className="px-3 py-1 rounded-full bg-red-50 text-red-700 text-xs font-bold border border-red-100 inline-flex items-center gap-1">
+                            <TrendingDown className="w-3 h-3" />
+                            {record.quantityReduced}
+                          </span>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                             <span className="w-8 text-right font-medium">{record.quantityBefore}</span>
+                             <span className="text-gray-300">→</span>
+                             <span className="w-8 font-bold text-gray-900">{record.quantityAfter}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5 text-gray-500 text-sm">
+                          {new Date(record.reducedAt).toLocaleDateString()} <span className="text-gray-300">|</span> {new Date(record.reducedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                         </td>
                       </tr>
                     ))}
@@ -790,121 +882,197 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
               </div>
             )}
           </div>
-
-          {/* Summary Stats */}
-          {filteredHistory.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                <p className="text-blue-600 text-sm font-medium">Total Reductions</p>
-                <p className="text-3xl font-bold mt-2">{filteredHistory.length}</p>
-              </div>
-
-              <div className="bg-purple-50 border border-purple-200 rounded-lg p-6">
-                <p className="text-purple-600 text-sm font-medium">Unique Patients</p>
-                <p className="text-3xl font-bold mt-2">
-                  {new Set(filteredHistory.map(r => r.patientId)).size}
-                </p>
-              </div>
-
-              <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                <p className="text-green-600 text-sm font-medium">Unique Items Reduced</p>
-                <p className="text-3xl font-bold mt-2">
-                  {new Set(filteredHistory.map(r => r.inventoryItemId)).size}
-                </p>
-              </div>
-            </div>
-          )}
         </div>
       )}
 
       {/* Add Item Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-lg w-full">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-semibold">Add Inventory Item</h2>
-              <button onClick={() => setShowAddModal(false)} className="text-gray-500 hover:text-gray-700">
-                <X className="w-6 h-6" />
+        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <div className="p-2 bg-teal-50 rounded-lg">
+                  <Package className="w-5 h-5 text-teal-600" />
+                </div>
+                Add Inventory Item
+              </h2>
+              <button 
+                onClick={() => setShowAddModal(false)} 
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
+              >
+                <X className="w-5 h-5" />
               </button>
             </div>
-            <form onSubmit={handleAddItem} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Item Name *</label>
-                <input type="text" name="name" required className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Unit *</label>
-                <select name="unit" required className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500">
-                  <option value="piece">Piece</option>
-                  <option value="box">Box</option>
-                  <option value="vial">Vial</option>
-                  <option value="bottle">Bottle</option>
-                  <option value="pack">Pack</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Initial Quantity *</label>
-                <input type="number" name="quantity" required min="0" className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Minimum Level</label>
-                <input type="number" name="minQuantity" min="0" defaultValue="5" className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500" />
-              </div>
-              <div className="flex gap-3 justify-end">
-                <button type="button" onClick={() => setShowAddModal(false)} className="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50">
-                  Cancel
-                </button>
-                <button type="submit" className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                  Add Item
-                </button>
-              </div>
-            </form>
+            
+            <div className="p-6">
+              <form onSubmit={handleAddItem} className="space-y-5">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Item Name *</label>
+                  <input 
+                    type="text" 
+                    name="name" 
+                    required 
+                    placeholder="e.g. Lidocaine 2%"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all" 
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Unit *</label>
+                    <select 
+                      name="unit" 
+                      required 
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all appearance-none"
+                    >
+                      <option value="piece">Piece</option>
+                      <option value="box">Box</option>
+                      <option value="vial">Vial</option>
+                      <option value="bottle">Bottle</option>
+                      <option value="pack">Pack</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Initial Quantity *</label>
+                    <input 
+                      type="number" 
+                      name="quantity" 
+                      required 
+                      min="0" 
+                      placeholder="0"
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all" 
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Minimum Level Alert</label>
+                  <div className="relative">
+                    <input 
+                      type="number" 
+                      name="minQuantity" 
+                      min="0" 
+                      defaultValue="5" 
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all pl-12" 
+                    />
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">Min:</div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1.5">Alert will be triggered when stock falls below this number.</p>
+                </div>
+
+                <div className="flex gap-3 justify-end pt-2">
+                  <button 
+                    type="button" 
+                    onClick={() => setShowAddModal(false)} 
+                    className="px-5 py-2.5 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 font-medium transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="px-5 py-2.5 bg-gradient-to-r from-cyan-600 to-teal-600 text-white rounded-xl hover:from-cyan-700 hover:to-teal-700 font-medium shadow-lg shadow-cyan-500/20 transform hover:-translate-y-0.5 transition-all"
+                  >
+                    Add Item
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
 
       {/* Edit Item Modal */}
       {editingItem && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-lg w-full">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-semibold">Edit Inventory Item</h2>
-              <button onClick={() => setEditingItem(null)} className="text-gray-500 hover:text-gray-700">
-                <X className="w-6 h-6" />
+        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <div className="p-2 bg-teal-50 rounded-lg">
+                  <Edit className="w-5 h-5 text-teal-600" />
+                </div>
+                Edit Inventory Item
+              </h2>
+              <button 
+                onClick={() => setEditingItem(null)} 
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
+              >
+                <X className="w-5 h-5" />
               </button>
             </div>
-            <form onSubmit={handleUpdateItem} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Item Name *</label>
-                <input type="text" name="name" required defaultValue={editingItem.name} className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Unit *</label>
-                <select name="unit" required defaultValue={editingItem.unit} className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500">
-                  <option value="piece">Piece</option>
-                  <option value="box">Box</option>
-                  <option value="vial">Vial</option>
-                  <option value="bottle">Bottle</option>
-                  <option value="pack">Pack</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Quantity *</label>
-                <input type="number" name="quantity" required min="0" defaultValue={editingItem.quantity} className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Minimum Level</label>
-                <input type="number" name="minQuantity" min="0" defaultValue={editingItem.minQuantity || 5} className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500" />
-              </div>
-              <div className="flex gap-3 justify-end">
-                <button type="button" onClick={() => setEditingItem(null)} className="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50">
-                  Cancel
-                </button>
-                <button type="submit" className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                  Update Item
-                </button>
-              </div>
-            </form>
+            
+            <div className="p-6">
+              <form onSubmit={handleUpdateItem} className="space-y-5">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Item Name *</label>
+                  <input 
+                    type="text" 
+                    name="name" 
+                    required 
+                    defaultValue={editingItem.name} 
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all" 
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Unit *</label>
+                    <select 
+                      name="unit" 
+                      required 
+                      defaultValue={editingItem.unit} 
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all appearance-none"
+                    >
+                      <option value="piece">Piece</option>
+                      <option value="box">Box</option>
+                      <option value="vial">Vial</option>
+                      <option value="bottle">Bottle</option>
+                      <option value="pack">Pack</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Quantity *</label>
+                    <input 
+                      type="number" 
+                      name="quantity" 
+                      required 
+                      min="0" 
+                      defaultValue={editingItem.quantity} 
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all" 
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Minimum Level Alert</label>
+                   <div className="relative">
+                    <input 
+                      type="number" 
+                      name="minQuantity" 
+                      min="0" 
+                      defaultValue={editingItem.minQuantity || 5} 
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all pl-12" 
+                    />
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">Min:</div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 justify-end pt-2">
+                  <button 
+                    type="button" 
+                    onClick={() => setEditingItem(null)} 
+                    className="px-5 py-2.5 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 font-medium transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="px-5 py-2.5 bg-gradient-to-r from-cyan-600 to-teal-600 text-white rounded-xl hover:from-cyan-700 hover:to-teal-700 font-medium shadow-lg shadow-cyan-500/20 transform hover:-translate-y-0.5 transition-all"
+                  >
+                    Update Item
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}

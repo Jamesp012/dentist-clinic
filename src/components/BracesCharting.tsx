@@ -64,20 +64,30 @@ type ChartSnapshot = {
   bracketVisibility: boolean[];
 };
 
-// Orthodontic colors
+// Orthodontic colors (updated palette)
 const COLORS = [
-  { name: "Silver", value: "#E2E8F0" },
-  { name: "Midnight Blue", value: "#1E3A8A" },
-  { name: "Royal Blue", value: "#3B82F6" },
-  { name: "Forest Green", value: "#065F46" },
-  { name: "Deep Red", value: "#991B1B" },
-  { name: "Soft Pink", value: "#F472B6" },
-  { name: "Purple", value: "#8B5CF6" },
-  { name: "Gold", value: "#F59E0B" },
-  { name: "Obsidian", value: "#111827" },
-  { name: "Teal", value: "#0D9488" },
-  { name: "Coral", value: "#F43F5E" },
-  { name: "Lavender", value: "#A78BFA" },
+  { name: 'Navy Blue', value: '#001F3F' },
+  { name: 'Royal Blue', value: '#4169E1' },
+  { name: 'Light Blue', value: '#7DD3FC' },
+  { name: 'Teal', value: '#0D9488' },
+  { name: 'Aqua', value: '#00CED1' },
+  { name: 'Green', value: '#16A34A' },
+  { name: 'Lime', value: '#A3E635' },
+  { name: 'Yellow', value: '#FBBF24' },
+  { name: 'Orange', value: '#FB923C' },
+  { name: 'Coral', value: '#FF7F7F' },
+  { name: 'Red', value: '#EF4444' },
+  { name: 'Rose', value: '#F43F5E' },
+  { name: 'Pink', value: '#EC4899' },
+  { name: 'Bubblegum Pink', value: '#FFB6C1' },
+  { name: 'Lilac', value: '#C8A2C8' },
+  { name: 'Lavender', value: '#A78BFA' },
+  { name: 'Purple', value: '#7C3AED' },
+  { name: 'Burgundy', value: '#6B0216' },
+  { name: 'Black', value: '#000000' },
+  { name: 'Grey', value: '#6B7280' },
+  { name: 'White', value: '#FFFFFF' },
+  { name: 'Gold', value: '#FFD700' },
 ];
 
 
@@ -380,11 +390,11 @@ export function BracesCharting({ patients }: BracesChartingProps) {
     setBracketVisibility([...snapshot.bracketVisibility]);
   };
 
-  return (
+    return (
       <div className="p-8 bg-white">
         {/* Patient Selection */}
         <motion.div 
-          className="relative bg-white p-6 rounded-xl shadow-lg border border-purple-100 mb-6 backdrop-blur-sm bg-opacity-90 z-40"
+          className="relative bg-white p-6 rounded-xl shadow-lg border border-cyan-100 mb-6 backdrop-blur-sm bg-opacity-90 z-40"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1 }}
@@ -401,27 +411,20 @@ export function BracesCharting({ patients }: BracesChartingProps) {
           <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-stretch">
             {/* Main Dental Chart Area */}
             <motion.div 
-              className="flex-1 bg-white p-8 rounded-xl shadow-xl border border-purple-100"
+              className="flex-1 bg-white p-8 rounded-xl shadow-xl border border-cyan-100"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <h2 className="text-2xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-                      BRACES MAPPING - {selectedPatient.name}
-                    </h2>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Select brackets to color, remove, or add back.
-                    </p>
-                  </div>
+                  {/* title removed as requested */}
                   
-                  <div className="flex bg-orange-50 p-1.5 rounded-2xl">
+                  <div className="flex bg-cyan-50 p-1.5 rounded-2xl">
                     <button 
                       onClick={() => setSelectionMode("all")}
                       className={`flex items-center gap-2.5 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-                        selectionMode === "all" ? "bg-white text-orange-800 shadow-md" : "text-slate-500 hover:text-slate-700"
+                        selectionMode === "all" ? "bg-white text-cyan-800 shadow-md" : "text-slate-500 hover:text-slate-700"
                       }`}
                     >
                       <LayoutGrid className="w-4 h-4" />
@@ -430,7 +433,7 @@ export function BracesCharting({ patients }: BracesChartingProps) {
                     <button 
                       onClick={() => setSelectionMode("single")}
                       className={`flex items-center gap-2.5 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-                        selectionMode === "single" ? "bg-white text-orange-800 shadow-md" : "text-slate-500 hover:text-slate-700"
+                        selectionMode === "single" ? "bg-white text-cyan-800 shadow-md" : "text-slate-500 hover:text-slate-700"
                       }`}
                     >
                       <MousePointer2 className="w-4 h-4" />
@@ -448,7 +451,7 @@ export function BracesCharting({ patients }: BracesChartingProps) {
                   </button>
                   <button
                     onClick={handleAddBrackets}
-                    className="flex items-center gap-2 px-4 py-2 border-2 border-emerald-200 rounded-lg hover:bg-emerald-50 transition-all text-emerald-600 text-xs font-bold"
+                    className="flex items-center gap-2 px-4 py-2 border-2 border-cyan-200 rounded-lg hover:bg-cyan-50 transition-all text-cyan-600 text-xs font-bold"
                   >
                     ADD BRACKET
                   </button>
@@ -473,7 +476,7 @@ export function BracesCharting({ patients }: BracesChartingProps) {
               <button 
                 onClick={saveChanges}
                 disabled={!hasUnsavedChanges}
-                className={`w-full py-4 px-6 rounded-lg font-bold text-lg transition-all shadow-lg ${hasUnsavedChanges ? 'bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}
+                className={`w-full py-4 px-6 rounded-lg font-bold text-lg transition-all shadow-lg ${hasUnsavedChanges ? 'bg-gradient-to-r from-cyan-600 to-teal-500 hover:from-cyan-700 hover:to-teal-600 text-white' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}
               >
                 <Save className="w-5 h-5 inline mr-2" />
                 SAVE
@@ -481,7 +484,7 @@ export function BracesCharting({ patients }: BracesChartingProps) {
 
               {/* Tips Section */}
               <motion.div 
-                className="mt-6 pt-6 border-t-2 border-purple-100"
+                className="mt-6 pt-6 border-t-2 border-cyan-100"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.8 }}
@@ -490,14 +493,14 @@ export function BracesCharting({ patients }: BracesChartingProps) {
                   💡 Braces Care Tips
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
+                  <div className="p-4 bg-gradient-to-r from-cyan-50 to-teal-50 rounded-lg border border-cyan-200">
                     <p className="text-sm text-gray-700">
-                      <span className="font-semibold text-purple-600">Bracket Control:</span> Use REMOVE and ADD to hide or restore specific brackets.
+                      <span className="font-semibold text-cyan-600">Bracket Control:</span> Use REMOVE and ADD to hide or restore specific brackets.
                     </p>
                   </div>
-                  <div className="p-4 bg-gradient-to-r from-pink-50 to-blue-50 rounded-lg border border-pink-200">
+                  <div className="p-4 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-lg border border-teal-200">
                     <p className="text-sm text-gray-700">
-                      <span className="font-semibold text-pink-600">Color Selection:</span> Apply rubber band colors to all or individual brackets with precision mode.
+                      <span className="font-semibold text-teal-600">Color Selection:</span> Apply rubber band colors to all or individual brackets with precision mode.
                     </p>
                   </div>
                 </div>
@@ -506,16 +509,16 @@ export function BracesCharting({ patients }: BracesChartingProps) {
 
             {/* Color Palette Sidebar */}
             <motion.div 
-              className="lg:w-96 bg-white rounded-xl shadow-lg border border-purple-100 backdrop-blur-sm bg-opacity-90 flex flex-col"
+              className="lg:w-96 bg-white rounded-xl shadow-lg border border-cyan-100 backdrop-blur-sm bg-opacity-90 flex flex-col"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <div className="flex p-3 bg-orange-50/30 border-b border-purple-100 rounded-t-xl">
+              <div className="flex p-3 bg-cyan-50/30 border-b border-cyan-100 rounded-t-xl">
                 <button 
                   onClick={() => setActiveTab("palette")}
                   className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-xs transition-all ${
-                    activeTab === "palette" ? "bg-white text-orange-700 shadow-md" : "text-slate-400 hover:text-slate-600"
+                    activeTab === "palette" ? "bg-white text-cyan-700 shadow-md" : "text-slate-400 hover:text-slate-600"
                   }`}
                 >
                   <Palette className="w-4 h-4" />
@@ -524,7 +527,7 @@ export function BracesCharting({ patients }: BracesChartingProps) {
                 <button 
                   onClick={() => setActiveTab("history")}
                   className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-xs transition-all ${
-                    activeTab === "history" ? "bg-white text-orange-700 shadow-md" : "text-slate-400 hover:text-slate-600"
+                    activeTab === "history" ? "bg-white text-cyan-700 shadow-md" : "text-slate-400 hover:text-slate-600"
                   }`}
                 >
                   <History className="w-4 h-4" />

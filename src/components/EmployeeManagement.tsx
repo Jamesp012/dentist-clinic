@@ -302,35 +302,34 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-cyan-50/40 flex flex-col flex-1">
-      <div className="p-8 space-y-8 flex flex-col flex-1">
-        {/* Search & Add Button */}
-        <div className="relative flex items-center justify-between gap-4 sticky top-0 bg-gradient-to-b from-white/80 via-white/60 to-transparent backdrop-blur-lg z-30 -mx-8 px-8 py-4 mb-2">
-          <div className="relative flex-1 group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-teal-500 transition-colors" />
+    <div className="min-h-screen bg-white flex flex-col flex-1">
+      <div className="sticky top-0 z-20 bg-white border-b border-slate-200 px-4 py-4 md:px-8">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
             <input
               type="text"
               placeholder="Search employees by name, position, or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3.5 bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 placeholder:text-slate-400 text-slate-900 shadow-sm hover:shadow-md group-focus-within:bg-white group-focus-within:shadow-lg"
+              className="w-full pl-12 pr-4 py-3 border border-slate-300 rounded-lg bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
             />
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-teal-400/0 via-teal-400/0 to-cyan-400/0 group-focus-within:from-teal-400/10 group-focus-within:via-cyan-400/10 group-focus-within:to-teal-400/10 pointer-events-none transition-all duration-300"></div>
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="relative group bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-6 py-3.5 rounded-xl hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-teal-500/20 flex items-center gap-2.5 whitespace-nowrap font-semibold text-sm tracking-wide transform hover:scale-105 active:scale-95"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-teal-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-700"
           >
             <Plus className="w-5 h-5" />
             <span>Add Employee</span>
-            <div className="absolute inset-0 rounded-xl bg-white/0 group-hover:bg-white/10 transition-colors duration-300"></div>
           </button>
         </div>
+      </div>
 
+      <div className="flex-1 flex flex-col">
         {/* Employees List */}
         <div className="flex-1 flex flex-col min-h-0">
           {sortedEmployees.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center">
+            <div className="flex-1 flex items-center justify-center px-4">
               <div className="text-center py-16 px-6">
                 <div className="w-20 h-20 rounded-full bg-gradient-to-br from-teal-100 to-cyan-100 flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl font-bold text-teal-600">EM</span>
@@ -346,107 +345,115 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
               </div>
             </div>
           ) : (
-            <div className="space-y-4 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent">
-              {sortedEmployees.map((employee) => (
-                <div
-                  key={employee.id}
-                  className="group relative bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6 hover:bg-white/90 transition-all duration-300 shadow-md hover:shadow-xl hover:shadow-teal-500/10 overflow-hidden"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-transparent to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-teal-400/10 to-transparent rounded-full -translate-y-20 translate-x-20 group-hover:scale-125 transition-transform duration-500 blur-2xl pointer-events-none"></div>
-
-                  <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-10 gap-6 items-center">
-                    <div className="xl:col-span-2">
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Name</p>
-                      <p className="text-lg font-bold text-slate-900">{formatEmployeeName(employee.name)}</p>
-                    </div>
-
-                    <div className="xl:col-span-1">
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Position</p>
-                      <p className="text-sm font-medium text-slate-700">{employee.position}</p>
-                    </div>
-
-                    <div className="xl:col-span-1">
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Access</p>
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide ${
-                        employee.accessLevel === 'Super Admin' ? 'bg-purple-100 text-purple-800' :
-                        employee.accessLevel === 'Admin' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {employee.accessLevel || 'Default Accounts'}
-                      </span>
-                    </div>
-
-                    <div className="xl:col-span-2">
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Email</p>
-                      <p className="text-sm text-slate-700 truncate" title={employee.email}>{employee.email}</p>
-                    </div>
-
-                    <div className="xl:col-span-1">
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Phone</p>
-                      <p className="text-sm font-medium text-slate-700">{employee.phone}</p>
-                    </div>
-
-                    <div className="xl:col-span-1">
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Date Hired</p>
-                      <p className="text-sm font-medium text-slate-700">{formatToDD_MM_YYYY(employee.dateHired)}</p>
-                    </div>
-
-                    <div className="xl:col-span-1">
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Status</p>
-                      {employee.user_id ? (
-                        employee.accountStatus === 'pending' ? (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide bg-yellow-100 text-yellow-800">
-                            Pending
-                          </span>
-                        ) : employee.accountStatus === 'active' ? (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide bg-green-100 text-green-800">
-                            Active
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide bg-red-100 text-red-800">
-                            Inactive
-                          </span>
-                        )
-                      ) : (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide bg-gray-100 text-gray-800">
-                          No Account
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="xl:col-span-1 flex items-center justify-end gap-2">
-                      {(!employee.user_id || employee.accountStatus === 'pending' || !employee.isCodeUsed) && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleGenerateCredentials(employee.id);
-                          }}
-                          className="p-2.5 rounded-lg bg-gradient-to-br from-emerald-50 to-teal-50 text-emerald-600 hover:from-emerald-100 hover:to-teal-100 hover:shadow-lg transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer"
-                          title={employee.accountStatus === 'pending' ? 'Regenerate Login Credentials' : 'Generate Login Credentials'}
-                          type="button"
-                        >
-                          <Key className="w-5 h-5" />
-                        </button>
-                      )}
-                      <button
-                        onClick={() => setEditingEmployee(employee)}
-                        className="p-2.5 rounded-lg bg-gradient-to-br from-blue-50 to-cyan-50 text-blue-600 hover:from-blue-100 hover:to-cyan-100 hover:shadow-lg transition-all duration-300 hover:scale-110 active:scale-95"
-                        title="Edit Employee"
-                      >
-                        <Edit className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => setDeletingEmployee(employee)}
-                        className="p-2.5 rounded-lg bg-gradient-to-br from-red-50 to-pink-50 text-red-600 hover:from-red-100 hover:to-pink-100 hover:shadow-lg transition-all duration-300 hover:scale-110 active:scale-95"
-                        title="Delete Employee"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="flex-1 overflow-hidden">
+              <div className="h-full overflow-auto">
+                <table className="min-w-full table-auto text-left text-sm text-slate-700">
+                  <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <tr>
+                      <th scope="col" className="px-3 py-3 align-middle">Name</th>
+                      <th scope="col" className="px-3 py-3 align-middle">Position</th>
+                      <th scope="col" className="px-3 py-3 align-middle">Email</th>
+                      <th scope="col" className="px-3 py-3 align-middle">Phone</th>
+                      <th scope="col" className="px-3 py-3 align-middle">Date Hired</th>
+                      <th scope="col" className="px-3 py-3 align-middle">Access</th>
+                      <th scope="col" className="px-3 py-3 align-middle">Status</th>
+                      <th scope="col" className="px-3 py-3 align-middle text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {sortedEmployees.map((employee) => (
+                      <tr key={employee.id} className="bg-white hover:bg-slate-50 transition-colors">
+                        <td className="px-3 py-4 align-top">
+                          <p className="text-sm font-semibold text-slate-900 leading-6 break-words">{formatEmployeeName(employee.name)}</p>
+                        </td>
+                        <td className="px-3 py-4 align-top">
+                          <p className="text-sm font-medium text-slate-800 leading-6 break-words">{employee.position}</p>
+                        </td>
+                        <td className="px-3 py-4 align-top">
+                          <p className="text-sm text-slate-700 leading-6 break-words" title={employee.email}>{employee.email}</p>
+                        </td>
+                        <td className="px-3 py-4 align-top">
+                          <p className="text-sm font-medium text-slate-800 leading-6 break-words">{employee.phone}</p>
+                        </td>
+                        <td className="px-3 py-4 align-top whitespace-nowrap">
+                          <p className="text-sm font-medium text-slate-800 leading-6">{formatToDD_MM_YYYY(employee.dateHired)}</p>
+                        </td>
+                        <td className="px-3 py-4 align-top">
+                          <div className="flex flex-wrap gap-1">
+                            <span
+                              className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold leading-5 border ${
+                                employee.accessLevel === 'Super Admin'
+                                  ? 'border-purple-200 bg-purple-50 text-purple-700'
+                                  : employee.accessLevel === 'Admin'
+                                  ? 'border-blue-200 bg-blue-50 text-blue-700'
+                                  : 'border-slate-200 bg-slate-50 text-slate-700'
+                              }`}
+                            >
+                              {employee.accessLevel || 'Default Accounts'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-3 py-4 align-top">
+                          <div className="flex flex-wrap gap-1">
+                            {employee.user_id ? (
+                              employee.accountStatus === 'pending' ? (
+                                <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold leading-5 border border-amber-200 bg-amber-50 text-amber-700">
+                                  Pending
+                                </span>
+                              ) : employee.accountStatus === 'active' ? (
+                                <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold leading-5 border border-emerald-200 bg-emerald-50 text-emerald-700">
+                                  Active
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold leading-5 border border-rose-200 bg-rose-50 text-rose-700">
+                                  Inactive
+                                </span>
+                              )
+                            ) : (
+                              <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold leading-5 border border-slate-200 bg-slate-50 text-slate-600">
+                                No Account
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-3 py-4 align-top">
+                          <div className="flex flex-wrap items-center justify-end gap-2">
+                            {(!employee.user_id || employee.accountStatus === 'pending' || !employee.isCodeUsed) && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleGenerateCredentials(employee.id);
+                                }}
+                                className="inline-flex items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 p-2.5 text-emerald-600 transition-colors hover:border-emerald-300 hover:bg-emerald-100"
+                                title={employee.accountStatus === 'pending' ? 'Regenerate Login Credentials' : 'Generate Login Credentials'}
+                                type="button"
+                              >
+                                <Key className="w-5 h-5" />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => setEditingEmployee(employee)}
+                              className="inline-flex items-center justify-center rounded-lg border border-blue-200 bg-blue-50 p-2.5 text-blue-600 transition-colors hover:border-blue-300 hover:bg-blue-100"
+                              title="Edit Employee"
+                              type="button"
+                            >
+                              <Edit className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={() => setDeletingEmployee(employee)}
+                              className="inline-flex items-center justify-center rounded-lg border border-rose-200 bg-rose-50 p-2.5 text-rose-600 transition-colors hover:border-rose-300 hover:bg-rose-100"
+                              title="Delete Employee"
+                              type="button"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>

@@ -134,31 +134,19 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
 
   async function handleFileClick(file: any) {
     if (!file) return;
+    
+    // Ensure we use the full URL to the backend, not relative to frontend
+    const serverUrl = API_BASE.replace('/api', '');
+    const fileUrl = file.url.startsWith('http') ? file.url : `${serverUrl}${file.url}`;
+
     if (file.fileType === 'image') {
-      setPatientPreviewImage(file.url);
+      setPatientPreviewImage(fileUrl);
       setPatientPreviewExpanded(false);
       return;
     }
-    if (file.fileType === 'pdf') {
-      // Trigger download for PDFs
-      try {
-        const resp = await fetch(file.url);
-        const blob = await resp.blob();
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = file.fileName || 'document.pdf';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        return;
-      } catch (err) {
-        console.error('Failed to download file', err);
-        window.open(file.url, '_blank');
-        return;
-      }
-    }
-    // Other files: open in new tab
-    window.open(file.url, '_blank');
+    
+    // For PDF and other documents, open in new tab to view
+    window.open(fileUrl, '_blank');
   }
 
   const checkUsernameAvailability = async (username: string) => {
@@ -274,9 +262,9 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
     const files = e.target.files;
     if (files) {
       const validFiles = Array.from(files).filter(file => {
-        const isValidType = file.type.startsWith('image/') || file.type === 'application/pdf' || file.type.includes('document') || file.type.includes('word') || file.type.includes('sheet');
+        const isValidType = file.type === 'application/pdf';
         if (!isValidType) {
-          toast.error(`File ${file.name} is not supported. Please upload image or PDF files only.`);
+          toast.error(`File ${file.name} is not supported. Please upload PDF files only.`);
           return false;
         }
         return true;
@@ -287,7 +275,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
 
   const handleReferralFileUpload = async () => {
     if (referralUploadFiles.length === 0) {
-      toast.error('Please select at least one file to upload');
+      toast.error('Please select at least one PDF file to upload');
       return;
     }
 
@@ -298,11 +286,14 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
         'Authorization': `Bearer ${token}`
       };
 
+      const uploadedIds: string[] = [];
+      const uploadedFilesList: any[] = [];
+
       for (const file of referralUploadFiles) {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('patientId', String(patient.id));
-        formData.append('fileType', file.type.startsWith('image/') ? 'image' : 'pdf');
+        formData.append('fileType', 'pdf');
 
         const response = await fetch(`${API_BASE}/referrals/upload`, {
           method: 'POST',
@@ -315,7 +306,46 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
         }
 
         const uploadedFile = await response.json();
-        setReferralFiles(prev => [...prev, uploadedFile]);
+        uploadedIds.push(uploadedFile.id);
+        uploadedFilesList.push(uploadedFile);
+      }
+        
+      if (uploadedIds.length > 0) {
+        // Create ONE incoming referral record for the batch so it appears in Dentist Portal
+        try {
+          const referralBody = {
+            patientId: patient.id,
+            patientName: patient.name,
+            referringDentist: 'Referring Doctor (Unspecified)',
+            referredTo: 'Dr. Joseph Maaño',
+            specialty: 'General',
+            reason: `Patient uploaded ${uploadedIds.length} referral document(s)`,
+            date: new Date().toISOString().split('T')[0],
+            urgency: 'routine',
+            createdByRole: 'patient',
+            referralType: 'incoming',
+            source: 'patient-uploaded',
+            uploadedFileIds: uploadedIds
+          };
+
+          const createRes = await fetch(`${API_BASE}/referrals`, {
+            method: 'POST',
+            headers: {
+               'Content-Type': 'application/json',
+               ...headers
+            },
+            body: JSON.stringify(referralBody)
+          });
+          
+          if (createRes.ok) {
+             const newReferral = await createRes.json();
+             setReferrals(prev => [newReferral, ...prev]);
+          }
+        } catch (err) {
+          console.error('Failed to create referral record for uploaded files', err);
+        }
+
+        setReferralFiles(prev => [...prev, ...uploadedFilesList]);
       }
 
       toast.success('Referral file(s) uploaded successfully!');
@@ -1677,7 +1707,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                   }}
                 >
                 {patientRecords.length > 0 ? (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {patientRecords.map((record, idx) => (
                       <motion.div
                         key={record.id}
@@ -1691,7 +1721,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                           <div className="h-1 w-full bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400" />
                           
                           {/* Card Content */}
-                          <div className="p-7 flex flex-col gap-5 flex-1">
+                          <div className="p-5 flex flex-col gap-4 flex-1">
                             {/* Header: Title, Date, and Status Badge */}
                             <div className="flex items-start justify-between gap-4">
                               <div className="flex-1 min-w-0">
@@ -2151,14 +2181,14 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                                   type="file"
                                   id="referral-file-input"
                                   multiple
-                                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                                  accept=".pdf"
                                   onChange={handleReferralFileSelect}
                                   className="hidden"
                                 />
                                 <label htmlFor="referral-file-input" className="cursor-pointer block">
                                   <Upload className="w-8 h-8 mx-auto mb-3 text-slate-400 group-hover/upload:text-violet-500 transition-colors" />
                                   <p className="text-sm font-bold text-slate-900 group-hover/upload:text-violet-900 transition-colors">Click or drag files here</p>
-                                  <p className="text-xs text-slate-600 mt-1">PNG, JPG, PDF, DOC, DOCX up to 10MB</p>
+                                  <p className="text-xs text-slate-600 mt-1">PDF only (Max 10MB)</p>
                                 </label>
                               </div>
 
@@ -2254,21 +2284,24 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                       <div>
                         <p className="text-sm font-semibold">Files</p>
                         <div className="flex flex-wrap gap-2 mt-2">
-                          {selectedPatientReferral.uploadedFiles.map((file: any) => (
+                          {selectedPatientReferral.uploadedFiles.map((file: any) => {
+                            const serverUrl = API_BASE.replace('/api', '');
+                            const fileUrl = file.url.startsWith('http') ? file.url : `${serverUrl}${file.url}`;
+                            return (
                             <div key={file.id} className="p-2 border rounded flex items-center gap-2">
                               {file.fileType === 'image' ? (
-                                <button onClick={() => { setPatientPreviewImage(file.url); setPatientPreviewExpanded(false); }} className="flex items-center gap-2">
-                                  <img src={file.url} alt={file.fileName} className="w-10 h-10 object-cover rounded" />
+                                <button onClick={() => handleFileClick(file)} className="flex items-center gap-2">
+                                  <img src={fileUrl} alt={file.fileName} className="w-10 h-10 object-cover rounded" />
                                   <span className="text-sm">{file.fileName}</span>
                                 </button>
                               ) : (
-                                <button onClick={() => { const a = document.createElement('a'); a.href = file.url; a.download = file.fileName; document.body.appendChild(a); a.click(); a.remove(); }} className="flex items-center gap-2">
+                                <button onClick={() => handleFileClick(file)} className="flex items-center gap-2">
                                   <FileText className="w-4 h-4" />
                                   <span className="text-sm">{file.fileName}</span>
                                 </button>
                               )}
                             </div>
-                          ))}
+                          )})}
                         </div>
                       </div>
                     )}

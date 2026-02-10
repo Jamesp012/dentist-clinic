@@ -119,7 +119,7 @@ export function PatientSearch({
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="w-full pl-10 pr-10 py-3 border-2 border-purple-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white hover:border-purple-300"
+          className="w-full pl-10 pr-10 py-3 border-2 border-cyan-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-300 bg-white hover:border-cyan-300"
         />
 
         {/* Clear Button */}
@@ -151,15 +151,15 @@ export function PatientSearch({
                 key={patient.id}
                 onClick={() => handleSelectPatient(patient)}
                 onMouseEnter={() => setFocusedIndex(index)}
-                className={`w-full px-4 py-3 text-left hover:bg-purple-50 transition-colors border-b border-gray-100 last:border-b-0 ${
-                  focusedIndex === index ? 'bg-purple-50' : ''
+                className={`w-full px-4 py-3 text-left hover:bg-cyan-50 transition-colors border-b border-gray-100 last:border-b-0 ${
+                  focusedIndex === index ? 'bg-cyan-50' : ''
                 } ${
-                  (selectedPatient && String(selectedPatient.id) === String(patient.id)) ? 'bg-purple-100' : ''
+                  (selectedPatient && String(selectedPatient.id) === String(patient.id)) ? 'bg-cyan-100' : ''
                 }`}
                 whileHover={{ x: 4 }}
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-teal-500 flex items-center justify-center text-white">
                     <User className="w-5 h-5" />
                   </div>
                   
@@ -179,7 +179,7 @@ export function PatientSearch({
                   </div>
 
                   {selectedPatient && String(selectedPatient.id) === String(patient.id) && (
-                    <div className="flex-shrink-0 text-purple-600">
+                    <div className="flex-shrink-0 text-cyan-600">
                       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>

@@ -20,6 +20,7 @@ export const ReferralFormComponent: React.FC<ReferralFormComponentProps> = ({
   currentUser
 }) => {
   const [selectedServices, setSelectedServices] = useState<Record<string, boolean>>({});
+  const [referralType, setReferralType] = useState<'doctor' | 'xray' | ''>('');
   const [formData, setFormData] = useState({
     patientName: '',
     patientId: '',
@@ -62,18 +63,24 @@ export const ReferralFormComponent: React.FC<ReferralFormComponentProps> = ({
   };
 
   const handleSubmit = () => {
-    if (!formData.patientName || !formData.referredTo) {
+    if (!formData.patientName) {
       toast.error('Please fill in all required fields');
       return;
     }
 
-    const newReferral: Referral = {
+    if (!referralType) {
+      toast.error('Please select referral type (Doctor or X-Ray)');
+      return;
+    }
+
+    const newReferral: any = {
       id: `REF-${Date.now()}`,
       patientId: formData.patientId || patients.find(p => p.name === formData.patientName)?.id || '',
       patientName: formData.patientName,
       referringDentist: formData.referredBy || currentUser?.name || 'Dr. Dentist',
-      referredTo: formData.referredTo,
-      specialty: formData.specialty || '',
+      referredTo: formData.referredTo || (referralType === 'xray' ? 'X-Ray Facility' : ''),
+      specialty: referralType === 'xray' ? 'X-Ray Imaging' : (formData.specialty || ''),
+      referralType: referralType,
       reason: formData.reason || '',
       date: formData.date,
       urgency: formData.urgency || 'routine'
@@ -87,6 +94,7 @@ export const ReferralFormComponent: React.FC<ReferralFormComponentProps> = ({
 
   const resetForm = () => {
     setSelectedServices({});
+    setReferralType('');
     setFormData({
       patientName: '',
       patientId: '',
@@ -280,6 +288,33 @@ Generated on: ${new Date().toLocaleString()}
               <h2 className="text-lg font-bold text-slate-900 uppercase">Referral Details</h2>
               
               <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold mb-2">Referral Type</label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="referralType"
+                        value="doctor"
+                        checked={referralType === 'doctor'}
+                        onChange={() => setReferralType('doctor')}
+                        className="w-4 h-4"
+                      />
+                      <span className="capitalize font-semibold">Doctor</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="referralType"
+                        value="xray"
+                        checked={referralType === 'xray'}
+                        onChange={() => setReferralType('xray')}
+                        className="w-4 h-4"
+                      />
+                      <span className="capitalize font-semibold">X-Ray</span>
+                    </label>
+                  </div>
+                </div>
                 <UnderlineInput 
                   label="Referred To:" 
                   value={formData.referredTo}

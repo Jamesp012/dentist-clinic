@@ -27,16 +27,16 @@ export const ColorPalette: React.FC<ColorPaletteProps> = ({
     >
       <div>
         <h3 className="text-[10px] font-black text-slate-400 tracking-[0.2em] mb-5 uppercase">Active Selection</h3>
-        <div className="flex items-center gap-5 bg-orange-50/50 p-5 rounded-3xl border border-orange-100/50 shadow-sm">
+        <div className="flex items-center gap-5 bg-cyan-50/50 p-5 rounded-3xl border border-cyan-100/50 shadow-sm">
           <div 
-            className="w-20 h-20 rounded-2xl shadow-inner border-4 border-white ring-1 ring-orange-100"
+            className="w-20 h-20 rounded-2xl shadow-inner border-4 border-white ring-1 ring-cyan-100"
             style={{ backgroundColor: selectedColor.value }}
           />
           <div>
             <div className="text-xl font-black text-slate-800 tracking-tight">{selectedColor.name}</div>
-            <div className="text-[11px] font-mono text-orange-600 font-bold uppercase tracking-wider mt-0.5">{selectedColor.value}</div>
+            <div className="text-[11px] font-mono text-cyan-600 font-bold uppercase tracking-wider mt-0.5">{selectedColor.value}</div>
             <div className="mt-2 flex items-center gap-2">
-              <span className="text-[9px] bg-white px-2 py-0.5 rounded-full border border-orange-100 text-slate-500 font-bold uppercase">Medical Grade</span>
+              <span className="text-[9px] bg-white px-2 py-0.5 rounded-full border border-cyan-100 text-slate-500 font-bold uppercase">Medical Grade</span>
             </div>
           </div>
         </div>
@@ -51,7 +51,7 @@ export const ColorPalette: React.FC<ColorPaletteProps> = ({
               onClick={() => onColorSelect(color)}
               className={`group relative aspect-square rounded-2xl transition-all duration-300 ${
                 selectedColor.value === color.value 
-                  ? "ring-2 ring-orange-600 ring-offset-4 scale-105" 
+                  ? "ring-2 ring-cyan-600 ring-offset-4 scale-105" 
                   : "hover:scale-110 active:scale-95"
               }`}
             >
@@ -73,7 +73,7 @@ export const ColorPalette: React.FC<ColorPaletteProps> = ({
         </div>
       </div>
 
-      <div className="pt-6 border-t border-orange-50">
+      <div className="pt-6 border-t border-cyan-50">
         <div className="grid grid-cols-2 gap-6">
           <div className="space-y-1.5">
             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Material Specs</span>

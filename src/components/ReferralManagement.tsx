@@ -12,26 +12,79 @@ interface ReferralManagementProps {
 
 type ReferralFilter = 'all' | 'incoming' | 'outgoing';
 
+import { toast } from 'sonner';
+
+const SERVER_URL = 'http://localhost:5000';
+
 export function ReferralManagement({ referrals, patients, currentUserName = 'Doc Maaño' }: ReferralManagementProps) {
-  const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [previewExpanded, setPreviewExpanded] = useState(false);
 
+  // Helper to generate safe backend URL
+  const getSafeFileUrl = (file: any) => {
+    if (!file || (!file.url && !file.filePath)) return '';
+    
+    // Prefer url, fallback to filePath if url is missing
+    let filePath = file.url || file.filePath;
+    
+    // Normalize slashes for consistency
+    filePath = filePath.replace(/\\/g, '/');
+
+    // Case 1: Already a clean URL path (starts with /uploads/)
+    if (filePath.startsWith('/uploads/')) {
+       // Good to go
+    }
+    // Case 2: Contains /uploads/ (e.g. absolute path C:/.../uploads/...) - Extract relative path
+    else if (filePath.includes('/uploads/')) {
+        filePath = filePath.substring(filePath.indexOf('/uploads/'));
+    } 
+    // Case 3: Just a filename (no slashes) - Assume it belongs in referrals folder
+    else if (!filePath.includes('/')) {
+        filePath = `/uploads/referrals/${filePath}`;
+    }
+    // Case 4: Absolute path without /uploads/ keyword -> extract filename as last resort
+    else if (filePath.includes(':')) {
+         const parts = filePath.split('/');
+         const filename = parts[parts.length - 1];
+         filePath = `/uploads/referrals/${filename}`;
+    }
+
+    // Handle full URLs
+    if (filePath.startsWith('http')) {
+      if (!filePath.includes('localhost:5000')) {
+        try {
+          const urlObj = new URL(filePath);
+          filePath = urlObj.pathname;
+        } catch (e) {
+          // If invalid URL, keep original
+        }
+      } else {
+        return filePath;
+      }
+    }
+    
+    // Ensure leading slash
+    if (!filePath.startsWith('http') && !filePath.startsWith('/')) {
+      filePath = `/${filePath}`;
+    }
+
+    const cleanPath = filePath.trim();
+    const finalUrl = cleanPath.startsWith('http') ? cleanPath : `${SERVER_URL}${cleanPath}`;
+    return finalUrl;
+  };
+
   const handleFileClick = (file: any) => {
+    const fileUrl = getSafeFileUrl(file);
+    if (!fileUrl) {
+      toast.error('File URL not found');
+      return;
+    }
+
     if (file.fileType === 'image') {
-      setPreviewImage(file.url);
+      setPreviewImage(fileUrl);
       setPreviewExpanded(false);
-    } else if (file.fileType === 'pdf') {
-      // Trigger download
-      const a = document.createElement('a');
-      a.href = file.url;
-      a.download = file.fileName;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
     } else {
-      // For other files, attempt to open in new tab
-      window.open(file.url, '_blank');
+      window.open(fileUrl, '_blank');
     }
   }
 
@@ -151,12 +204,32 @@ export function ReferralManagement({ referrals, patients, currentUserName = 'Doc
                         >
                           👁 View
                         </button>
-                        <button
-                          onClick={() => generateReferralPDF(referral, patient)}
-                          className="flex items-center gap-2 px-3 py-1.5 text-blue-600 hover:text-blue-700 border border-blue-300 rounded transition-colors text-sm font-medium"
-                        >
-                          ⬇ PDF
-                        </button>
+                        {referral.uploadedFiles && referral.uploadedFiles.length > 0 ? (
+                          referral.uploadedFiles[0].fileType === 'image' ? (
+                            <button
+                              onClick={() => handleFileClick(referral.uploadedFiles![0])}
+                              className="flex items-center gap-2 px-3 py-1.5 text-emerald-600 hover:text-emerald-700 border border-emerald-300 rounded transition-colors text-sm font-medium"
+                            >
+                              🖼 View Image
+                            </button>
+                          ) : (
+                            <a
+                              href={getSafeFileUrl(referral.uploadedFiles[0])}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 px-3 py-1.5 text-emerald-600 hover:text-emerald-700 border border-emerald-300 rounded transition-colors text-sm font-medium no-underline decoration-0"
+                            >
+                              📄 Open Document
+                            </a>
+                          )
+                        ) : (
+                          <button
+                            onClick={() => generateReferralPDF(referral, patient)}
+                            className="flex items-center gap-2 px-3 py-1.5 text-blue-600 hover:text-blue-700 border border-blue-300 rounded transition-colors text-sm font-medium"
+                          >
+                            ⬇ PDF
+                          </button>
+                        )}
                         <button
                           className="flex items-center gap-2 px-3 py-1.5 text-red-600 hover:text-red-700 border border-red-300 rounded transition-colors text-sm font-medium"
                         >
@@ -171,29 +244,30 @@ export function ReferralManagement({ referrals, patients, currentUserName = 'Doc
                             Attached Files ({referral.uploadedFiles.length})
                           </p>
                           <div className="flex flex-wrap gap-2">
-                            {referral.uploadedFiles.map(file => (
-                              <div key={file.id} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-50 rounded-full text-xs border border-gray-200">
-                                {file.fileType === 'image' ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleFileClick(file)}
-                                    className="flex items-center gap-2"
-                                  >
-                                    <img src={file.url} alt={file.fileName} className="w-6 h-6 object-cover rounded" />
-                                    <span className="font-medium text-gray-700">{file.fileName}</span>
-                                  </button>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleFileClick(file)}
-                                    className="flex items-center gap-2"
-                                  >
-                                    <FileText className="w-3.5 h-3.5 text-gray-500" />
-                                    <span className="font-medium text-gray-700">{file.fileName}</span>
-                                  </button>
-                                )}
-                              </div>
-                            ))}
+                            {referral.uploadedFiles.map(file => {
+                              const fileUrl = getSafeFileUrl(file);
+                              return (
+                                <a
+                                  key={file.id}
+                                  href={fileUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 rounded-full text-xs border border-gray-200 transition-colors no-underline decoration-0"
+                                >
+                                  {file.fileType === 'image' ? (
+                                    <>
+                                      <img src={fileUrl} alt={file.fileName} className="w-5 h-5 object-cover rounded" />
+                                      <span className="font-medium text-gray-700">{file.fileName}</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <FileText className="w-4 h-4 text-gray-500" />
+                                      <span className="font-medium text-gray-700">{file.fileName}</span>
+                                    </>
+                                  )}
+                                </a>
+                              );
+                            })}
                           </div>
                         </div>
                       )}
@@ -218,20 +292,20 @@ export function ReferralManagement({ referrals, patients, currentUserName = 'Doc
 
       {/* Image preview modal */}
       {previewImage && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="relative max-w-[90vw] max-h-[90vh]">
+        <div className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4">
+          <div className="relative max-w-[95vw] max-h-[95vh]">
             <button
-              onClick={() => { setPreviewImage(null); setPreviewExpanded(false); }}
-              className="absolute top-2 right-2 z-50 p-2 bg-white rounded-full"
+              onClick={(e) => { e.stopPropagation(); setPreviewImage(null); setPreviewExpanded(false); }}
+              className="absolute -top-4 -right-4 z-[70] p-3 bg-white hover:bg-gray-100 rounded-full shadow-lg transition-colors border border-gray-200"
             >
-              <X className="w-4 h-4" />
+              <X className="w-6 h-6 text-gray-900" />
             </button>
 
             <img
               src={previewImage}
               alt="Preview"
-              className="block max-w-full max-h-[90vh] object-contain"
-              onClick={() => setPreviewExpanded(prev => !prev)}
+              className="block max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl bg-white"
+              onClick={(e) => { e.stopPropagation(); setPreviewExpanded(prev => !prev); }}
               style={previewExpanded ? { width: '95vw', height: '95vh', cursor: 'zoom-out' } : { cursor: 'zoom-in' }}
             />
           </div>

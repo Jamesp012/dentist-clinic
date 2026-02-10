@@ -214,20 +214,19 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50/40 flex flex-col flex-1">
-      <div className="p-8 space-y-8 flex flex-col flex-1">
+    <div className="flex flex-col flex-1 bg-white">
+      <div className="flex flex-col flex-1 min-h-0">
         {/* Search & Add Button */}
-        <div className="relative flex items-center justify-between gap-4 sticky top-0 bg-gradient-to-b from-white/80 via-white/60 to-transparent backdrop-blur-lg z-30 -mx-8 px-8 py-4 mb-2">
-          <div className="relative flex-1 group">
+        <div className="relative flex flex-wrap items-center gap-4 border-b border-slate-200 bg-white px-6 py-4 sticky top-0 z-20">
+          <div className="relative flex-1 min-w-0 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-teal-500 transition-colors" />
             <input
               type="text"
               placeholder="Search patients by name, email, or phone..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3.5 bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 placeholder:text-slate-400 text-slate-900 shadow-sm hover:shadow-md group-focus-within:bg-white group-focus-within:shadow-lg"
+              className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 placeholder:text-slate-400 text-slate-900 shadow-sm hover:shadow-md"
             />
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-teal-400/0 via-teal-400/0 to-cyan-400/0 group-focus-within:from-teal-400/10 group-focus-within:via-cyan-400/10 group-focus-within:to-teal-400/10 pointer-events-none transition-all duration-300"></div>
           </div>
           <button
             onClick={() => setShowAddModal(true)}
@@ -239,8 +238,8 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
           </button>
         </div>
 
-        {/* Patients Grid/List */}
-        <div className="flex-1 flex flex-col min-h-0">
+        {/* Patients Table */}
+        <div className="flex-1 flex flex-col min-h-0 px-6 py-6 gap-6">
           {sortedPatients.length === 0 ? (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center py-16 px-6">
@@ -258,77 +257,86 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
               </div>
             </div>
           ) : (
-            <div className="space-y-4 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent">
-              {sortedPatients.map((patient, idx) => (
-                <div
-                  key={patient.id}
-                  className="group relative bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6 hover:bg-white/90 transition-all duration-300 shadow-md hover:shadow-xl hover:shadow-teal-500/10 overflow-hidden"
-                >
-                  {/* Gradient accent background */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-transparent to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-teal-400/10 to-transparent rounded-full -translate-y-20 translate-x-20 group-hover:scale-125 transition-transform duration-500 blur-2xl pointer-events-none"></div>
-                  
-                  <div className="relative z-10 grid grid-cols-1 md:grid-cols-6 gap-6 items-center">
-                    {/* Name Column */}
-                    <div className="md:col-span-1">
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Name</p>
-                      <p className="text-lg font-bold text-slate-900">{formatPatientName(patient.name)}</p>
-                    </div>
+            <div className="flex-1 min-h-0 overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+              <div className="h-full overflow-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent">
+                <table className="w-full table-auto text-left text-sm">
+                  <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-widest text-slate-500 sticky top-0 z-10">
+                    <tr>
+                      <th scope="col" className="px-4 py-3">Name</th>
+                      <th scope="col" className="px-4 py-3">Age</th>
+                      <th scope="col" className="px-4 py-3">Email</th>
+                      <th scope="col" className="px-4 py-3">Phone</th>
+                      <th scope="col" className="px-4 py-3">Address</th>
+                      <th scope="col" className="px-4 py-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-slate-100">
+                    {sortedPatients.map((patient) => {
+                      const ageValue = patient.dateOfBirth ? calculateAge(patient.dateOfBirth) : NaN;
+                      const hasAge = Number.isFinite(ageValue);
+                      const dobLabel = patient.dateOfBirth ? formatToDD_MM_YYYY(patient.dateOfBirth) : 'N/A';
+                      const sexLabel = patient.sex || 'N/A';
 
-                    {/* Age Column */}
-                    <div className="md:col-span-1">
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Age</p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg font-bold text-slate-900">{calculateAge(patient.dateOfBirth)}</span>
-                        <span className="text-xs text-slate-500">years</span>
-                      </div>
-                    </div>
-
-                    {/* Email Column */}
-                    <div className="md:col-span-2">
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Email</p>
-                      <p className="text-sm text-slate-700 truncate hover:text-teal-600 transition-colors cursor-help" title={patient.email}>{patient.email}</p>
-                    </div>
-
-                    {/* Phone Column */}
-                    <div className="md:col-span-1">
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Phone</p>
-                      <p className="text-sm font-medium text-slate-700">{patient.phone}</p>
-                    </div>
-
-                    {/* Actions Column */}
-                    <div className="md:col-span-1 flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => setViewingPatient(patient)}
-                        className="p-2.5 rounded-lg bg-gradient-to-br from-emerald-50 to-teal-50 text-emerald-600 hover:from-emerald-100 hover:to-teal-100 hover:shadow-lg transition-all duration-300 hover:scale-110 active:scale-95"
-                        title="View Patient"
-                      >
-                        <Eye className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => setEditingPatient(patient)}
-                        className="p-2.5 rounded-lg bg-gradient-to-br from-blue-50 to-cyan-50 text-blue-600 hover:from-blue-100 hover:to-cyan-100 hover:shadow-lg transition-all duration-300 hover:scale-110 active:scale-95"
-                        title="Edit Patient"
-                      >
-                        <Edit className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => setDeletingPatient(patient)}
-                        className="p-2.5 rounded-lg bg-gradient-to-br from-red-50 to-pink-50 text-red-600 hover:from-red-100 hover:to-pink-100 hover:shadow-lg transition-all duration-300 hover:scale-110 active:scale-95"
-                        title="Delete Patient"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Address (hidden on mobile, shown on hover for desktop) */}
-                  <div className="mt-4 pt-4 border-t border-slate-200/40 hidden md:block group-hover:block">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Address</p>
-                    <p className="text-sm text-slate-600 line-clamp-1">{patient.address}</p>
-                  </div>
-                </div>
-              ))}
+                      return (
+                        <tr key={patient.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-4 py-4 align-top">
+                          <div className="text-base font-semibold text-slate-900 break-words">{formatPatientName(patient.name)}</div>
+                          <div className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-1">
+                            <span>{sexLabel}</span>
+                            <span aria-hidden="true">•</span>
+                            <span>DOB {dobLabel}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 align-top whitespace-nowrap">
+                          {hasAge ? (
+                            <>
+                              <span className="text-lg font-semibold text-slate-900">{ageValue}</span>
+                              <span className="text-xs text-slate-500 ml-1">yrs</span>
+                            </>
+                          ) : (
+                            <span className="text-sm text-slate-500">N/A</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4 align-top">
+                          <p className="text-sm text-slate-700 break-words leading-relaxed">{patient.email}</p>
+                        </td>
+                        <td className="px-4 py-4 align-top whitespace-nowrap">
+                          <p className="text-sm font-medium text-slate-900 tracking-wide">{patient.phone}</p>
+                        </td>
+                        <td className="px-4 py-4 align-top">
+                          <p className="text-sm text-slate-600 leading-relaxed break-words">{patient.address}</p>
+                        </td>
+                        <td className="px-4 py-4 align-top">
+                          <div className="flex flex-wrap justify-end gap-2">
+                            <button
+                              onClick={() => setViewingPatient(patient)}
+                              className="p-2.5 rounded-lg bg-gradient-to-br from-emerald-50 to-teal-50 text-emerald-600 hover:from-emerald-100 hover:to-teal-100 hover:shadow-lg transition-all duration-300"
+                              title="View Patient"
+                            >
+                              <Eye className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={() => setEditingPatient(patient)}
+                              className="p-2.5 rounded-lg bg-gradient-to-br from-blue-50 to-cyan-50 text-blue-600 hover:from-blue-100 hover:to-cyan-100 hover:shadow-lg transition-all duration-300"
+                              title="Edit Patient"
+                            >
+                              <Edit className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={() => setDeletingPatient(patient)}
+                              className="p-2.5 rounded-lg bg-gradient-to-br from-red-50 to-pink-50 text-red-600 hover:from-red-100 hover:to-pink-100 hover:shadow-lg transition-all duration-300"
+                              title="Delete Patient"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>

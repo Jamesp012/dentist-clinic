@@ -516,7 +516,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
       {/* Content with padding and relative positioning */}
       <div className="relative z-10 px-8 pt-4 pb-10 space-y-8 flex flex-col flex-1 w-full">
       {/* Type Selection Modal */}
-      {showTypeSelection && referralType === null && (
+      {showTypeSelection && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-10 max-w-2xl w-full shadow-2xl border border-slate-200/60">
             <div className="flex justify-between items-start mb-8">
@@ -530,40 +530,23 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
             </div>
 
                 <div className="grid grid-cols-2 gap-6">
-                  {[
-                    { label: 'Dental consultation', id: 'consultation' },
-                    { label: 'Oral examination', id: 'oral_examination' },
-                    { label: 'Diagnosis', id: 'diagnosis' },
-                    { label: 'Treatment planning', id: 'treatment_planning' },
-                    { label: 'Dental cleaning', id: 'cleaning' },
-                    { label: 'Scaling', id: 'scaling' },
-                    { label: 'Polishing', id: 'polishing' },
-                    { label: 'Stain removal', id: 'stain_removal' },
-                    { label: 'Temporary filling', id: 'temporary_filling' },
-                    { label: 'Permanent filling', id: 'permanent_filling' },
-                    { label: 'Tooth repair', id: 'tooth_repair' },
-                    { label: 'Dental bonding', id: 'bonding' },
-                    { label: 'Simple tooth extraction', id: 'simple_extraction' },
-                    { label: 'Surgical extraction', id: 'surgical_extraction' },
-                    { label: 'Impacted tooth removal', id: 'impacted_tooth_removal' },
-                    { label: 'Braces installation', id: 'braces_installation' },
-                    { label: 'Braces adjustment', id: 'braces_adjustment' },
-                    { label: 'Retainers', id: 'retainers' },
-                    { label: 'Orthodontic consultation', id: 'ortho_consultation' },
-                    { label: 'Complete dentures', id: 'complete_dentures' },
-                    { label: 'Partial dentures', id: 'partial_dentures' },
-                  ].map(item => (
-                    <label key={item.id} className="flex items-center gap-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={!!selectedServices[item.id]}
-                        onChange={() => toggleService(item.id)}
-                        className="w-5 h-5 border-2 border-yellow-400 rounded focus:ring-2 focus:ring-yellow-500"
-                        style={{ zIndex: 10000, pointerEvents: 'auto' }}
-                      />
-                      <span className="font-bold text-sm">{item.label}</span>
-                    </label>
-                  ))}
+                  <button
+                    type="button"
+                    onClick={() => { setReferralType('doctor'); setShowTypeSelection(false); }}
+                    className="p-6 bg-white rounded-2xl border border-slate-200 hover:shadow-lg flex flex-col items-start gap-3 text-left"
+                  >
+                    <div className="text-2xl font-bold">👨‍⚕️ Doctor Referral</div>
+                    <div className="text-sm text-slate-600">Create a referral to another dentist or specialist.</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setReferralType('xray'); setShowTypeSelection(false); }}
+                    className="p-6 bg-white rounded-2xl border border-slate-200 hover:shadow-lg flex flex-col items-start gap-3 text-left"
+                  >
+                    <div className="text-2xl font-bold">🖼️ X-Ray Referral</div>
+                    <div className="text-sm text-slate-600">Create a REDOR-style X-ray referral form.</div>
+                  </button>
                 </div>
           </div>
         </div>
@@ -608,29 +591,78 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                 </div>
               </div>
               <div className="mb-8 py-8 border-t-4 border-yellow-400">
-                <h2 className="font-black text-lg uppercase mb-4">Dental Services:</h2>
-                <div className="grid grid-cols-2 gap-6">
-                  {[
-                    { label: 'Dental consultation', id: 'consultation' },
-                    { label: 'Dental cleaning', id: 'cleaning' },
-                    { label: 'Dental bonding', id: 'bonding' },
-                    { label: 'Simple tooth extraction', id: 'simple_extraction' },
-                    { label: 'Surgical extraction', id: 'surgical_extraction' },
-                    { label: 'Braces installation', id: 'braces_installation' },
-                    { label: 'Braces adjustment', id: 'braces_adjustment' },
-                    { label: 'Orthodontic consultation', id: 'ortho_consultation' },
-                  ].map(item => (
-                    <label key={item.id} className="flex items-center gap-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={!!selectedServices[item.id]}
-                        onChange={() => toggleService(item.id)}
-                        className="w-5 h-5 border-2 border-yellow-400 rounded focus:ring-2 focus:ring-yellow-500"
-                        style={{ zIndex: 10000, pointerEvents: 'auto' }}
-                      />
-                      <span className="font-bold text-sm">{item.label}</span>
-                    </label>
-                  ))}
+                <div className="grid grid-cols-12 gap-8 items-start">
+                  <div className="col-span-7">
+                    <h3 className="font-black text-lg uppercase mb-3">DIAGNOSTIC SERVICES:</h3>
+                    <div className="space-y-3">
+                      {[
+                        { label: 'STANDARD PANORAMIC', id: 'pano' },
+                        { label: 'TMJ (OPEN & CLOSE)', id: 'tmj' },
+                        { label: 'SINUS PA', id: 'sinus' },
+                        { label: 'BITEWING LEFT SIDE', id: 'bite-l' },
+                        { label: 'BITEWING RIGHT SIDE', id: 'bite-r' },
+                      ].map(item => (
+                        <label key={item.id} className="flex items-center gap-3 cursor-pointer select-none">
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => toggleService(item.id)}
+                            className={`w-5 h-5 rounded-full border-2 flex-shrink-0 ${selectedServices[item.id] ? 'bg-yellow-400 border-yellow-400' : 'border-yellow-400 bg-white'}`}
+                            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                          >
+                            {selectedServices[item.id] && <Check className="w-3 h-3 text-white stroke-[4]" />}
+                          </span>
+                          <span className="font-bold text-sm">{item.label}</span>
+                        </label>
+                      ))}
+
+                      <div className="flex items-center gap-3">
+                        <label className="flex items-center gap-3 cursor-pointer select-none">
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => toggleService('peri')}
+                            className={`w-5 h-5 rounded-full border-2 flex-shrink-0 ${selectedServices['peri'] ? 'bg-yellow-400 border-yellow-400' : 'border-yellow-400 bg-white'}`}
+                            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                          >
+                            {selectedServices['peri'] && <Check className="w-3 h-3 text-white stroke-[4]" />}
+                          </span>
+                          <span className="font-bold text-sm">PERIAPICAL XRAY TOOTH#</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={typeof selectedServices['peri'] === 'string' ? String(selectedServices['peri']) : ''}
+                          onChange={(e) => handleServiceInputChange('peri', e.target.value)}
+                          className="border-b border-slate-400 px-2 py-1 w-28 text-sm ml-2"
+                          placeholder="_____"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="col-span-5 flex flex-col justify-center">
+                    <h3 className="font-black text-lg uppercase mb-3">OTHER SERVICES</h3>
+                    <div className="space-y-3">
+                      {[
+                        { label: 'DIAGNOSTIC MODEL CAST', id: 'model' },
+                        { label: 'INTRAORAL PHOTOGRAPH', id: 'intra' },
+                        { label: 'EXTRAORAL PHOTOGRAPH', id: 'extra' },
+                      ].map(item => (
+                        <label key={item.id} className="flex items-center gap-3 cursor-pointer select-none">
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => toggleService(item.id)}
+                            className={`w-5 h-5 rounded-full border-2 flex-shrink-0 ${selectedServices[item.id] ? 'bg-yellow-400 border-yellow-400' : 'border-yellow-400 bg-white'}`}
+                            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                          >
+                            {selectedServices[item.id] && <Check className="w-3 h-3 text-white stroke-[4]" />}
+                          </span>
+                          <span className="font-bold text-sm">{item.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="mt-4 pt-4 pb-8 grid grid-cols-2 gap-8 border-b-4 border-yellow-400">
@@ -1137,11 +1169,58 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
         </div>
       )}
 
-        {/* Premium Header Section */}
-        <div className="relative flex items-center justify-end mb-4 mt-2">
+        {/* Controls Row */}
+        <div className="mt-0 mb-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                if (referralFilter !== 'all') {
+                  setReferralFilter('all');
+                  setAllViewMode('alphabetical');
+                } else {
+                  setAllViewMode(prev => (prev === 'alphabetical' ? 'recent' : 'alphabetical'));
+                }
+              }}
+              className={`px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 border-2 ${
+                referralFilter === 'all'
+                  ? 'bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white border-teal-500 shadow-lg'
+                  : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:shadow-md'
+              }`}
+            >
+              {referralFilter !== 'all'
+                ? 'All Referrals'
+                : allViewMode === 'alphabetical'
+                ? 'View Recent'
+                : 'Alphabetical Order'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setReferralFilter('incoming')}
+              className={`px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 border-2 ${
+                referralFilter === 'incoming'
+                  ? 'bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white border-emerald-500 shadow-lg'
+                  : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:shadow-md'
+              }`}
+            >
+              ↳ Incoming
+            </button>
+            <button
+              type="button"
+              onClick={() => setReferralFilter('outgoing')}
+              className={`px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 border-2 ${
+                referralFilter === 'outgoing'
+                  ? 'bg-gradient-to-br from-violet-500 via-purple-500 to-blue-500 text-white border-violet-500 shadow-lg'
+                  : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:shadow-md'
+              }`}
+            >
+              ↗ Outgoing
+            </button>
+          </div>
+
           <button
             type="button"
-            onClick={() => { setShowTypeSelection(true); setReferralType(null); }}
+            onClick={() => { setShowTypeSelection(true); }}
             className="group relative px-5 py-2.5 bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white rounded-xl hover:shadow-xl hover:shadow-cyan-500/30 hover:scale-[1.02] active:scale-95 transition-all duration-300 flex items-center gap-2 font-semibold overflow-hidden whitespace-nowrap text-sm"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -1150,66 +1229,16 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
           </button>
         </div>
 
-        {/* Filter Pills with Premium Style */}
-        <div className="mb-10 flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              if (referralFilter !== 'all') {
-                setReferralFilter('all');
-                setAllViewMode('alphabetical');
-              } else {
-                setAllViewMode(prev => (prev === 'alphabetical' ? 'recent' : 'alphabetical'));
-              }
-            }}
-            className={`px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 border-2 ${
-              referralFilter === 'all'
-                ? 'bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white border-teal-500 shadow-lg'
-                : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:shadow-md'
-            }`}
-          >
-            {referralFilter !== 'all'
-              ? 'All Referrals'
-              : allViewMode === 'alphabetical'
-              ? 'View Recent'
-              : 'Alphabetical Order'}
-          </button>
-          <button
-            type="button"
-            onClick={() => setReferralFilter('incoming')}
-            className={`px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 border-2 ${
-              referralFilter === 'incoming'
-                ? 'bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white border-emerald-500 shadow-lg'
-                : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:shadow-md'
-            }`}
-          >
-            ↳ Incoming
-          </button>
-          <button
-            type="button"
-            onClick={() => setReferralFilter('outgoing')}
-            className={`px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 border-2 ${
-              referralFilter === 'outgoing'
-                ? 'bg-gradient-to-br from-violet-500 via-purple-500 to-blue-500 text-white border-violet-500 shadow-lg'
-                : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:shadow-md'
-            }`}
-          >
-            ↗ Outgoing
-          </button>
-        </div>
+        {/* Referrals List */}
+        <div className="w-full bg-white px-0 sm:px-4 lg:px-8 pt-2 pb-6 flex flex-col gap-3">
+          <div className="flex justify-end">
+            <span className="px-4 py-1.5 bg-teal-50 text-teal-700 rounded-xl text-xs font-bold">
+              {sortedReferrals?.length || 0} Records
+            </span>
+          </div>
 
-        {/* Referrals List - Premium Card Design */}
-        <div className="relative group w-full">
-          <div className="absolute -inset-1 bg-gradient-to-r from-teal-500 via-cyan-500 to-blue-500 rounded-3xl opacity-20 group-hover:opacity-30 blur transition-all duration-500"></div>
-          <div className="relative w-full bg-white/90 backdrop-blur-xl px-8 pt-4 pb-8 rounded-3xl shadow-xl border border-slate-200/60 hover:shadow-2xl transition-all duration-500 flex flex-col">
-            <div className="flex justify-end mb-4">
-              <span className="px-4 py-1.5 bg-teal-50 text-teal-700 rounded-xl text-xs font-bold">
-                {sortedReferrals?.length || 0} Records
-              </span>
-            </div>
-
-            {/* Referrals Grid */}
-            <div className="space-y-4 flex-1 overflow-y-auto scrollbar-thin pr-3 min-h-[400px]">
+          {/* Referrals Grid */}
+          <div className="space-y-3 flex-1 overflow-y-auto scrollbar-thin pr-3">
               {(sortedReferrals && sortedReferrals.length > 0) ? (
                 sortedReferrals.map((referral) => (
                   <div
@@ -1359,7 +1388,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                   <p className="text-slate-600 mb-8 max-w-md mx-auto">Start creating referrals to manage your patient care coordination efficiently.</p>
                   <button
                     type="button"
-                    onClick={() => { setShowTypeSelection(true); setReferralType(null); }}
+                    onClick={() => { setShowTypeSelection(true); }}
                     className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white rounded-xl hover:shadow-xl hover:shadow-cyan-500/30 hover:scale-105 active:scale-95 transition-all duration-300 font-bold"
                   >
                     <Plus className="w-5 h-5" />
@@ -1367,7 +1396,6 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                   </button>
                 </div>
               )}
-            </div>
           </div>
         </div>
       </div>
