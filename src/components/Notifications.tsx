@@ -10,8 +10,10 @@ export type Notification = {
   type: 'appointment' | 'referral';
   patientId: string;
   patientName: string;
+  title: string;
   message: string;
   date: string;
+  createdAt: string;
   read: boolean;
   details?: any;
 };
@@ -76,6 +78,66 @@ export function Notifications({ patients: _patients, appointments, referrals, cu
       return formatToMonthDayYear(normalized);
     }
     return dateStr ? formatToMonthDayYear(dateStr) : 'Invalid Date';
+  };
+
+  const getTimestampFromSources = ({
+    createdAt,
+    date,
+    time,
+    dateObj
+  }: {
+    createdAt?: string;
+    date?: string;
+    time?: string;
+    dateObj?: Date;
+  }) => {
+    if (createdAt) {
+      const parsed = new Date(createdAt);
+      if (!isNaN(parsed.getTime())) {
+        return parsed.toISOString();
+      }
+    }
+
+    if (dateObj) {
+      const derived = new Date(dateObj);
+      if (!isNaN(derived.getTime())) {
+        if (time) {
+          const [hours, minutes] = time.split(':').map(Number);
+          if (!Number.isNaN(hours) && !Number.isNaN(minutes)) {
+            derived.setHours(hours, minutes, 0, 0);
+          }
+        }
+        return derived.toISOString();
+      }
+    }
+
+    if (date) {
+      const normalized = normalizeDate(String(date));
+      if (normalized) {
+        const candidate = new Date(`${normalized}T${time ?? '09:00'}`);
+        if (!isNaN(candidate.getTime())) {
+          return candidate.toISOString();
+        }
+      }
+    }
+
+    return new Date().toISOString();
+  };
+
+  const formatNotificationTimestamp = (timestamp: string) => {
+    if (!timestamp) return 'Date unavailable';
+    const parsed = new Date(timestamp);
+    if (isNaN(parsed.getTime())) return timestamp;
+    const datePart = parsed.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+    const timePart = parsed.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+    return `${datePart} • ${timePart}`;
   };
 
   // Helper function to get queue number and queue period for an appointment
@@ -144,13 +206,20 @@ export function Notifications({ patients: _patients, appointments, referrals, cu
         const message = `New appointment scheduled for ${displayType} (Queue #${queueNumber} - ${period}) on ${getDisplayDate(normalizedDate)}`;
         const notifId = `apt-new-${appointment.id}`;
         const isRead = readIds.includes(notifId);
+        const createdAt = getTimestampFromSources({
+          createdAt: appointment.createdAt,
+          date: normalizedDate,
+          time: appointment.time
+        });
         generatedNotifications.push({
           id: notifId,
           type: 'appointment',
           patientId: String(appointment.patientId),
           patientName: appointment.patientName,
+          title: 'Appointment Scheduled',
           message,
           date: normalizedDate,
+          createdAt,
           read: isRead,
           details: appointment
         });
@@ -175,13 +244,19 @@ export function Notifications({ patients: _patients, appointments, referrals, cu
 
         const notifId = `apt-${appointment.id}`;
         const isRead = readIds.includes(notifId);
+        const createdAt = getTimestampFromSources({
+          dateObj: twoDaysBefore,
+          time: appointment.time
+        });
         generatedNotifications.push({
           id: notifId,
           type: 'appointment',
           patientId: String(appointment.patientId),
           patientName: appointment.patientName,
+          title: 'Appointment Reminder',
           message,
           date: normalizedDate,
+          createdAt,
           read: isRead,
           details: appointment
         });
@@ -226,13 +301,23 @@ export function Notifications({ patients: _patients, appointments, referrals, cu
 
         const notifId = `ref-${referral.id}`;
         const isRead = readIds.includes(notifId);
+        const createdAt = getTimestampFromSources({
+          createdAt: referral.createdAt,
+          date: referral.date
+        });
+        const title =
+          referral.urgency === 'urgent' || referral.urgency === 'emergency'
+            ? 'Urgent Referral'
+            : 'Referral Update';
         generatedNotifications.push({
           id: notifId,
           type: 'referral',
           patientId: String(referral.patientId),
           patientName: referral.patientName,
+          title,
           message,
           date: referral.date,
+          createdAt,
           read: isRead,
           details: referral
         });
@@ -241,8 +326,8 @@ export function Notifications({ patients: _patients, appointments, referrals, cu
 
     // Sort notifications by date in descending order (most recent first)
     const sortedNotifications = generatedNotifications.sort((a, b) => {
-      const dateA = new Date(a.date).getTime();
-      const dateB = new Date(b.date).getTime();
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
       return dateB - dateA;
     });
 
@@ -278,16 +363,16 @@ export function Notifications({ patients: _patients, appointments, referrals, cu
       {/* Notification Bell Button */}
       <motion.button
         onClick={() => setShowPanel(!showPanel)}
-        className="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
+        className="relative text-emerald-600 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-300 transition-colors"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
       >
-        <Bell className="w-6 h-6 text-gray-700" />
+        <Bell className="w-6 h-6" />
         {unreadCount > 0 && (
           <motion.span
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium"
+            className="absolute -top-2 -right-2 bg-emerald-500 text-white text-xs rounded-full min-w-[1.25rem] h-5 px-1 flex items-center justify-center font-medium shadow pointer-events-none"
           >
             {unreadCount > 9 ? '9+' : unreadCount}
           </motion.span>
@@ -305,7 +390,7 @@ export function Notifications({ patients: _patients, appointments, referrals, cu
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-[2147483646]"
+                  className="fixed inset-0 z-[2147483646] bg-slate-900/10"
                   onClick={() => setShowPanel(false)}
                 />
 
@@ -314,18 +399,20 @@ export function Notifications({ patients: _patients, appointments, referrals, cu
                   initial={{ opacity: 0, y: -10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                  className="fixed right-8 top-20 w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-[2147483647] h-[70vh] max-h-[600px] flex flex-col pointer-events-auto"
+                  className="fixed right-8 top-20 w-96 bg-white rounded-2xl shadow-[0_20px_60px_rgba(15,23,42,0.15)] border border-slate-200 ring-1 ring-emerald-100 z-[2147483647] h-[70vh] max-h-[600px] flex flex-col pointer-events-auto"
                 >
               {/* Header */}
-              <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gradient-to-r from-blue-50 to-purple-50">
+              <div className="px-5 py-4 border-b border-slate-100 bg-emerald-50/80 flex justify-between items-center">
                 <div>
-                  <h3 className="font-semibold text-gray-900">Notifications</h3>
-                  <p className="text-sm text-gray-600">{unreadCount} unread</p>
+                  <h3 className="font-semibold text-slate-900">Notifications</h3>
+                  <p className="text-sm text-slate-600">
+                    {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
+                  </p>
                 </div>
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllAsRead}
-                    className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                    className="inline-flex items-center gap-1.5 text-sm text-emerald-700 hover:text-emerald-900 px-3 py-1.5 rounded-lg border border-transparent hover:border-emerald-200 hover:bg-white transition-colors"
                   >
                     <Check className="w-4 h-4" />
                     Mark all read
@@ -334,21 +421,23 @@ export function Notifications({ patients: _patients, appointments, referrals, cu
               </div>
 
               {/* Notifications List */}
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto px-4 py-3 scrollbar-light">
                 {notifications.length === 0 ? (
-                  <div className="p-8 text-center text-gray-500">
-                    <Bell className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <div className="p-8 text-center text-slate-500">
+                    <Bell className="w-12 h-12 mx-auto mb-3 text-emerald-100" />
                     <p>No notifications</p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-gray-100">
-                    {notifications.map((notification) => (
+                  <div className="space-y-3">
+                    {notifications.map(notification => (
                       <motion.div
                         key={notification.id}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
-                          !notification.read ? 'bg-blue-50' : ''
+                        className={`relative p-4 pl-6 rounded-2xl border cursor-pointer transition-colors ${
+                          !notification.read
+                            ? 'border-emerald-200 bg-emerald-50/80 shadow-[0_10px_30px_rgba(16,185,129,0.18)]'
+                            : 'border-slate-100 bg-white hover:border-emerald-100 hover:bg-emerald-50/40'
                         }`}
                         onClick={() => {
                           if (!notification.read) {
@@ -360,32 +449,42 @@ export function Notifications({ patients: _patients, appointments, referrals, cu
                           }
                         }}
                       >
+                        {!notification.read && (
+                          <span className="absolute left-3 top-4 bottom-4 w-1 rounded-full bg-emerald-500" />
+                        )}
                         <div className="flex gap-3">
                           {/* Icon */}
-                          <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
-                            notification.type === 'appointment' 
-                              ? 'bg-blue-100 text-blue-600'
-                              : 'bg-purple-100 text-purple-600'
-                          }`}>
-                            {notification.type === 'appointment' ? (
-                              <Calendar className="w-5 h-5" />
-                            ) : (
-                              <FileText className="w-5 h-5" />
-                            )}
+                          <div className="flex-shrink-0">
+                            <div
+                              className={`w-10 h-10 rounded-xl border flex items-center justify-center ${
+                                notification.type === 'appointment'
+                                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                  : 'border-emerald-100 bg-emerald-50 text-emerald-700'
+                              }`}
+                            >
+                              {notification.type === 'appointment' ? (
+                                <Calendar className="w-5 h-5" />
+                              ) : (
+                                <FileText className="w-5 h-5" />
+                              )}
+                            </div>
                           </div>
 
                           {/* Content */}
                           <div className="flex-1 min-w-0">
-                            <p className={`text-sm ${!notification.read ? 'font-semibold' : ''}`}>
+                            <p className="text-sm font-semibold text-slate-900">
+                              {notification.title}
+                            </p>
+                            <p className="text-sm text-slate-700 mt-1">
                               {notification.message}
                             </p>
                             {!currentPatientId && notification.patientName && (
-                              <p className="text-xs text-gray-500 mt-1">
+                              <p className="text-xs text-slate-500 mt-2">
                                 Patient: {notification.patientName}
                               </p>
                             )}
-                            <p className="text-xs text-gray-400 mt-1">
-                              {getDisplayDate(notification.date)}
+                            <p className="text-xs text-slate-500 mt-2">
+                              {formatNotificationTimestamp(notification.createdAt)}
                             </p>
                           </div>
                         </div>

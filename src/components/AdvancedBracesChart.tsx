@@ -471,7 +471,7 @@ export const AdvancedBracesChart: React.FC<AdvancedBracesChartProps> = ({ patien
             {activeTab === "palette" ? (
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
                 <div>
-                  <h3 className="text-[10px] font-black text-slate-400 tracking-[0.2em] mb-5 uppercase">Active Selection</h3>
+                  <h3 className="text-[10px] font-black text-slate-400 tracking-[0.2em] mb-5 uppercase">Color Selected</h3>
                   <div className="flex items-center gap-5 bg-orange-50/50 p-5 rounded-3xl border border-orange-100/50 shadow-sm">
                     <div className="w-20 h-20 rounded-2xl shadow-inner border-4 border-white ring-1 ring-orange-100" style={{ backgroundColor: selectedColor.value }} />
                     <div>
@@ -485,7 +485,7 @@ export const AdvancedBracesChart: React.FC<AdvancedBracesChartProps> = ({ patien
                 </div>
 
                 <div>
-                  <h3 className="text-[10px] font-black text-slate-400 tracking-[0.2em] mb-5 uppercase">Available Ligature Shades</h3>
+                  <h3 className="text-[10px] font-black text-slate-400 tracking-[0.2em] mb-5 uppercase">Available Colors</h3>
                   <div className="grid grid-cols-4 gap-4">
                     {ORTHO_COLORS.map((color) => (
                       <button

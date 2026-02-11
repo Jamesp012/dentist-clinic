@@ -13,6 +13,23 @@ CREATE TABLE users (
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE employees (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT UNIQUE,
+  name VARCHAR(100) NOT NULL,
+  position ENUM('dentist', 'assistant_dentist', 'assistant') NOT NULL,
+  phone VARCHAR(20),
+  email VARCHAR(100),
+  address TEXT,
+  dateOfBirth DATE,
+  dateHired DATE,
+  generatedCode VARCHAR(100) UNIQUE,
+  isCodeUsed BOOLEAN DEFAULT FALSE,
+  accessLevel ENUM('Admin', 'Super Admin', 'Default Accounts') DEFAULT 'Default Accounts',
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 CREATE TABLE patients (
   id INT PRIMARY KEY AUTO_INCREMENT,
   user_id INT,

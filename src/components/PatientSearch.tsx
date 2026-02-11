@@ -15,7 +15,8 @@ export function PatientSearch({
   patients, 
   selectedPatient, 
   onSelectPatient,
-  placeholder = "Search for a patient..." 
+  placeholder = "Search for a patient...",
+  inputClassName
 }: PatientSearchProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);

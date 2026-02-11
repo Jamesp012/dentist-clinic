@@ -28,6 +28,33 @@ async function generateUsername(name) {
   return username;
 }
 
+function normalizeDateInput(value) {
+  if (!value) {
+    return { value: null, valid: true };
+  }
+
+  const raw = typeof value === 'string' ? value.trim() : '';
+  if (!raw) {
+    return { value: null, valid: true };
+  }
+
+  let candidate = raw;
+  if (raw.includes('/')) {
+    const [day, month, year] = raw.split('/');
+    if (!day || !month || !year) {
+      return { value: null, valid: false };
+    }
+    candidate = `${year.padStart(4, '0')}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+
+  const parsed = new Date(candidate);
+  if (Number.isNaN(parsed.getTime())) {
+    return { value: null, valid: false };
+  }
+
+  return { value: parsed.toISOString().split('T')[0], valid: true };
+}
+
 // Fallback roster that keeps the UI populated when the employees table gets wiped.
 const defaultEmployeeSeedData = [
   {
@@ -180,11 +207,21 @@ router.get('/:id', authMiddleware, async (req, res) => {
 router.post('/', authMiddleware, async (req, res) => {
   try {
     console.log('Adding new employee:', req.body);
-    const { name, position, phone, email, address, dateHired, accessLevel } = req.body;
+    const { name, position, phone, email, address, dateHired, dateOfBirth, accessLevel } = req.body;
+
+    const normalizedBirthdate = normalizeDateInput(dateOfBirth);
+    if (!normalizedBirthdate.valid) {
+      return res.status(400).json({ error: 'Invalid birthdate provided' });
+    }
+
+    const normalizedHireDate = normalizeDateInput(dateHired);
+    if (!normalizedHireDate.valid || !normalizedHireDate.value) {
+      return res.status(400).json({ error: 'Invalid hire date provided' });
+    }
     
     const [result] = await pool.query(
-      'INSERT INTO employees (name, position, phone, email, address, dateHired, accessLevel) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [name, position, phone, email, address, dateHired, accessLevel || 'Default Accounts']
+      'INSERT INTO employees (name, position, phone, email, address, dateOfBirth, dateHired, accessLevel) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [name, position, phone, email, address, normalizedBirthdate.value, normalizedHireDate.value, accessLevel || 'Default Accounts']
     );
     
     console.log('Employee added successfully with ID:', result.insertId);
@@ -270,11 +307,21 @@ router.post('/:id/generate-credentials', authMiddleware, async (req, res) => {
 // Update employee
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
-    const { name, position, phone, email, address, dateHired, accessLevel } = req.body;
+    const { name, position, phone, email, address, dateHired, dateOfBirth, accessLevel } = req.body;
+
+    const normalizedBirthdate = normalizeDateInput(dateOfBirth);
+    if (!normalizedBirthdate.valid) {
+      return res.status(400).json({ error: 'Invalid birthdate provided' });
+    }
+
+    const normalizedHireDate = normalizeDateInput(dateHired);
+    if (!normalizedHireDate.valid || !normalizedHireDate.value) {
+      return res.status(400).json({ error: 'Invalid hire date provided' });
+    }
     
     await pool.query(
-      'UPDATE employees SET name = ?, position = ?, phone = ?, email = ?, address = ?, dateHired = ?, accessLevel = ? WHERE id = ?',
-      [name, position, phone, email, address, dateHired, accessLevel, req.params.id]
+      'UPDATE employees SET name = ?, position = ?, phone = ?, email = ?, address = ?, dateOfBirth = ?, dateHired = ?, accessLevel = ? WHERE id = ?',
+      [name, position, phone, email, address, normalizedBirthdate.value, normalizedHireDate.value, accessLevel, req.params.id]
     );
     
     // Also update user table if user_id exists

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Plus, X, Edit, Trash2, Key, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { handlePhoneInput, formatPhoneNumber } from '../utils/phoneValidation';
-import { convertToDBDate, formatToDD_MM_YYYY, formatDateInput } from '../utils/dateHelpers';
+import { convertToDBDate, formatToDD_MM_YYYY, formatDateInput, parseDateString } from '../utils/dateHelpers';
 
 type Employee = {
   id: number;
@@ -46,199 +46,179 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
     }
   };
 
-  const currentUser = getStoredUser();
-  const canEditName = currentUser && currentUser.role === 'doctor';
-
-  const splitName = (fullName: string) => {
-    // Split on internal delimiter (newline) to preserve spaces in names
-    // Format: first\nmiddle\nlast (or first\nlast for backward compatibility)
-    const parts = (fullName || '').split('\n').map(p => p || '');
-    
-    if (parts.length >= 3) {
-      // New format: first\nmiddle\nlast
-      return { first: parts[0], middle: parts[1], last: parts[2] };
-    } else if (parts.length === 2) {
-      // Old format: first\nlast (no middle name)
-      return { first: parts[0], middle: '', last: parts[1] };
-    } else {
-      // Fallback for space-separated format
-      const spaceParts = (fullName || '').trim().split(/\s+/).filter(Boolean);
-      const first = spaceParts.length > 0 ? spaceParts[0] : '';
-      const last = spaceParts.length > 1 ? spaceParts.slice(1).join(' ') : '';
-      return { first, middle: '', last };
-    }
+  // Format name for display using splitName
+  const formatEmployeeName = (name: string) => {
+    const parts = splitName(name);
+    return [parts.first, (parts as any).middle, parts.last].filter(Boolean).join(' ');
   };
 
-  const formatEmployeeName = (fullName: string): string => {
-    // Extract first, middle, and last name components
-    const { first, middle, last } = splitName(fullName);
-    
-    // Format: LASTNAME, Firstname Secondname M.I.
-    // Where M.I. is only the first letter of the middle name
-    const lastNameUpper = last.trim().toUpperCase();
-    const firstName = first.trim();
-    const middleInitial = middle.trim() ? middle.trim().charAt(0).toUpperCase() + '.' : '';
-    
-    // Build the formatted name
-    const parts = [firstName];
-    if (middleInitial) {
-      parts.push(middleInitial);
+  const normalizeDateField = (
+    value: FormDataEntryValue | null,
+    label: string,
+    options: { required?: boolean } = {}
+  ): { value: string | null; valid: boolean } => {
+    const raw = typeof value === 'string' ? value.trim() : '';
+
+    if (!raw) {
+      if (options.required) {
+        toast.error(`Please enter ${label}.`);
+        return { value: null, valid: false };
+      }
+      return { value: null, valid: true };
     }
-    const displayName = parts.join(' ');
-    
-    return `${lastNameUpper}, ${displayName}`;
+
+    if (raw.includes('/')) {
+      const parsed = parseDateString(raw);
+      if (!parsed) {
+        toast.error(`Please enter a valid ${label} in DD/MM/YYYY format.`);
+        return { value: null, valid: false };
+      }
+    }
+
+    const isoCandidate = convertToDBDate(raw);
+    const isoValue = isoCandidate || raw;
+    const parsedDate = new Date(isoValue);
+    if (Number.isNaN(parsedDate.getTime())) {
+      toast.error(`Please enter a valid ${label} in DD/MM/YYYY format.`);
+      return { value: null, valid: false };
+    }
+
+    return { value: isoValue, valid: true };
+  };
+
+  const filteredEmployees = employees.filter((employee) => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return true;
+
+    const nameMatch = formatEmployeeName(employee.name).toLowerCase().includes(term);
+    const positionMatch = (employee.position || '').toLowerCase().includes(term);
+    const emailMatch = (employee.email || '').toLowerCase().includes(term);
+    return nameMatch || positionMatch || emailMatch;
+  });
+
+  // Sorted view of employees
+  const sortedEmployees = filteredEmployees.slice().sort((a, b) => a.name.localeCompare(b.name));
+
+  // Fetch employees from API
+  const fetchEmployees = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/employees', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setEmployees(data || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch employees', err);
+    }
   };
 
   useEffect(() => {
-    if (token) {
-      fetchEmployees();
-    }
+    fetchEmployees();
   }, [token]);
 
-  const fetchEmployees = async () => {
-    try {
-      console.log('Fetching employees with token:', token ? 'Present' : 'Missing');
-      const response = await fetch('http://localhost:5000/api/employees', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      console.log('Response status:', response.status);
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Employees fetched:', data);
-        setEmployees(data);
-      } else {
-        const errorData = await response.text();
-        console.error('Failed to fetch employees:', response.status, errorData);
-      }
-    } catch (error) {
-      console.error('Failed to fetch employees:', error);
-    }
-  };
-
-  const filteredEmployees = employees.filter(employee => {
-    const { first, last } = splitName(employee.name);
-    const term = searchTerm.toLowerCase();
-    return (
-      first.toLowerCase().includes(term) ||
-      last.toLowerCase().includes(term) ||
-      employee.email.toLowerCase().includes(term) ||
-      employee.position.toLowerCase().includes(term)
-    );
-  });
-
-  const sortedEmployees = [...filteredEmployees].sort((a, b) => {
-    const aParts = splitName(a.name);
-    const bParts = splitName(b.name);
-    
-    // Sort by last name first
-    const lastNameCompare = aParts.last.toLowerCase().localeCompare(bParts.last.toLowerCase());
-    if (lastNameCompare !== 0) return lastNameCompare;
-    
-    // If last names are equal, sort by first name
-    const firstNameCompare = aParts.first.toLowerCase().localeCompare(bParts.first.toLowerCase());
-    if (firstNameCompare !== 0) return firstNameCompare;
-    
-    // If first names are equal, sort by middle name
-    const middleNameCompare = aParts.middle.toLowerCase().localeCompare(bParts.middle.toLowerCase());
-    return middleNameCompare;
-  });
-
-  const handleAddEmployee = async (e: React.FormEvent<HTMLFormElement>) => {
+  // Add employee handler (basic implementation)
+  const handleAddEmployee = async (e: any) => {
     e.preventDefault();
-    const form = e.currentTarget;
     setIsLoading(true);
     try {
-      const formData = new FormData(form);
-      const first = (formData.get('first_name') as string) || '';
-      const middle = (formData.get('middle_name') as string) || '';
-      const last = (formData.get('last_name') as string) || '';
-      const newEmployee = {
-        name: `${first}\n${middle}\n${last}`,
-        position: formData.get('position') as string,
-        phone: formData.get('phone') as string,
-        email: formData.get('email') as string,
-        address: formData.get('address') as string,
-        dateHired: convertToDBDate(formData.get('dateHired') as string),
-        dateOfBirth: convertToDBDate(formData.get('dateOfBirth') as string),
-        sex: formData.get('sex') as 'Male' | 'Female',
-        accessLevel: formData.get('accessLevel') as string,
+      const form = new FormData(e.currentTarget);
+      const dateOfBirthResult = normalizeDateField(form.get('dateOfBirth'), 'birthdate');
+      const dateHiredResult = normalizeDateField(form.get('dateHired'), 'hire date', { required: true });
+
+      if (!dateOfBirthResult.valid || !dateHiredResult.valid || !dateHiredResult.value) {
+        setIsLoading(false);
+        return;
+      }
+
+      const payload: any = {
+        name: `${form.get('first_name') || ''}\n${form.get('middle_name') || ''}\n${form.get('last_name') || ''}`,
+        position: form.get('position') || '',
+        dateOfBirth: dateOfBirthResult.value,
+        sex: form.get('sex') || '',
+        phone: form.get('phone') || '',
+        email: form.get('email') || '',
+        address: form.get('address') || '',
+        dateHired: dateHiredResult.value
       };
-
-      console.log('Submitting new employee:', newEmployee);
-      const response = await fetch('http://localhost:5000/api/employees', {
+      const res = await fetch('http://localhost:5000/api/employees', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(newEmployee)
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(payload)
       });
-
-      console.log('Add employee response status:', response.status);
-      if (response.ok) {
-        const result = await response.json();
-        console.log('Employee added successfully:', result);
-        form.reset();
+      if (res.ok) {
         await fetchEmployees();
         setShowAddModal(false);
-        toast.success('Employee added successfully!');
+        toast.success('Employee added');
       } else {
-        const errorData = await response.json();
-        console.error('API error response:', errorData);
-        throw new Error(errorData.error || 'Failed to add employee');
+        const err = await res.json();
+        toast.error(err.error || 'Failed to add employee');
       }
-    } catch (error) {
-      console.error('Failed to add employee:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to add employee');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to add employee');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleUpdateEmployee = async (e: React.FormEvent<HTMLFormElement>) => {
+  // Update employee handler
+  const handleUpdateEmployee = async (e: any) => {
     e.preventDefault();
     if (!editingEmployee) return;
-    
     setIsLoading(true);
     try {
-      const formData = new FormData(e.currentTarget);
-      const first = (formData.get('first_name') as string) || '';
-      const middle = (formData.get('middle_name') as string) || '';
-      const last = (formData.get('last_name') as string) || '';
-      const updatedEmployee = {
-        name: `${first}\n${middle}\n${last}`,
-        position: formData.get('position') as string,
-        phone: formData.get('phone') as string,
-        email: formData.get('email') as string,
-        address: formData.get('address') as string,
-        dateHired: convertToDBDate(formData.get('dateHired') as string),
-        dateOfBirth: convertToDBDate(formData.get('dateOfBirth') as string),
-        sex: formData.get('sex') as 'Male' | 'Female',
-        accessLevel: formData.get('accessLevel') as string,
+      const form = new FormData(e.currentTarget);
+      const dateOfBirthResult = normalizeDateField(form.get('dateOfBirth'), 'birthdate');
+      const dateHiredResult = normalizeDateField(form.get('dateHired'), 'hire date', { required: true });
+
+      if (!dateOfBirthResult.valid || !dateHiredResult.valid) {
+        setIsLoading(false);
+        return;
+      }
+
+      const payload: any = {
+        name: `${form.get('first_name') || ''}\n${form.get('middle_name') || ''}\n${form.get('last_name') || ''}`,
+        position: form.get('position') || editingEmployee.position,
+        dateOfBirth: dateOfBirthResult.value ?? editingEmployee.dateOfBirth ?? null,
+        sex: form.get('sex') || editingEmployee.sex,
+        phone: form.get('phone') || editingEmployee.phone,
+        email: form.get('email') || editingEmployee.email,
+        address: form.get('address') || editingEmployee.address,
+        dateHired: dateHiredResult.value ?? editingEmployee.dateHired
       };
-
-      const response = await fetch(`http://localhost:5000/api/employees/${editingEmployee.id}`, {
+      const res = await fetch(`http://localhost:5000/api/employees/${editingEmployee.id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(updatedEmployee)
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(payload)
       });
-
-      if (response.ok) {
+      if (res.ok) {
         await fetchEmployees();
         setEditingEmployee(null);
         toast.success('Employee updated successfully!');
       } else {
-        throw new Error('Failed to update employee');
+        const err = await res.json();
+        toast.error(err.error || 'Failed to update employee');
       }
-    } catch (error) {
-      console.error('Failed to update employee:', error);
+    } catch (err) {
+      console.error(err);
       toast.error('Failed to update employee');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const currentUser = getStoredUser();
+  const canEditName = currentUser && currentUser.role === 'doctor';
+
+  const splitName = (fullName: string) => {
+    const parts = (fullName || '').split('\n').map(p => p || '');
+    if (parts.length >= 3) {
+      return { first: parts[0], middle: parts.slice(1, parts.length - 1).join(' '), last: parts[parts.length - 1] };
+    }
+    const [first = '', last = ''] = parts;
+    return { first, last };
   };
 
   const handleDeleteEmployee = async () => {
@@ -301,35 +281,64 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
     toast.success(`${field === 'username' ? 'Username' : 'Password'} copied to clipboard!`);
   };
 
+  const getAccessConfig = (accessLevel?: Employee['accessLevel']) => {
+    const baseLabel = (accessLevel || 'Default Accounts').toUpperCase();
+    switch (accessLevel) {
+      case 'Super Admin':
+        return { label: baseLabel, className: 'text-purple-700' };
+      case 'Admin':
+        return { label: baseLabel, className: 'text-blue-700' };
+      default:
+        return { label: baseLabel, className: 'text-slate-600' };
+    }
+  };
+
+  const getStatusConfig = (employee: Employee) => {
+    if (!employee.user_id) {
+      return { label: 'No Account', className: 'text-slate-500' };
+    }
+
+    switch (employee.accountStatus) {
+      case 'pending':
+        return { label: 'Pending', className: 'text-amber-600' };
+      case 'inactive':
+        return { label: 'Inactive', className: 'text-rose-600' };
+      case 'active':
+      default:
+        return { label: 'Active', className: 'text-emerald-600' };
+    }
+  };
+
+  const columnWidths = ['25%', '20%', '15%', '12%', '10%', '8%', '120px'];
+
   return (
-    <div className="min-h-screen bg-white flex flex-col flex-1">
-      <div className="sticky top-0 z-20 bg-white border-b border-slate-200 px-4 py-4 md:px-8">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+    <div className="flex flex-col flex-1 min-h-0 bg-transparent overflow-hidden">
+      <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <div className="relative flex flex-wrap items-center gap-4 border-b border-slate-200/70 bg-transparent px-6 py-4">
+          <div className="relative flex-1 min-w-0 group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-teal-500 transition-colors" />
             <input
               type="text"
               placeholder="Search employees by name, position, or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border border-slate-300 rounded-lg bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 placeholder:text-slate-400 text-slate-900 shadow-sm hover:shadow-md"
             />
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-teal-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-700"
+            className="relative group bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-6 py-3.5 rounded-xl hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-teal-500/20 flex items-center gap-2.5 whitespace-nowrap font-semibold text-sm tracking-wide transform hover:scale-105 active:scale-95"
+            type="button"
           >
             <Plus className="w-5 h-5" />
             <span>Add Employee</span>
+            <div className="absolute inset-0 rounded-xl bg-white/0 group-hover:bg-white/10 transition-colors duration-300" aria-hidden="true"></div>
           </button>
         </div>
-      </div>
 
-      <div className="flex-1 flex flex-col">
-        {/* Employees List */}
-        <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 flex flex-col min-h-0 px-6 py-6 gap-6 overflow-hidden">
           {sortedEmployees.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center px-4">
+            <div className="flex-1 flex items-center justify-center border border-dashed border-slate-200 bg-white w-full">
               <div className="text-center py-16 px-6">
                 <div className="w-20 h-20 rounded-full bg-gradient-to-br from-teal-100 to-cyan-100 flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl font-bold text-teal-600">EM</span>
@@ -338,119 +347,130 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                   {searchTerm ? 'No employees found' : 'No employees added yet'}
                 </h3>
                 <p className="text-slate-600 text-sm mb-6">
-                  {searchTerm
-                    ? 'Try adjusting your search criteria'
-                    : 'Add your first team member to get started'}
+                  {searchTerm ? 'Try adjusting your search criteria' : 'Add your first team member to get started'}
                 </p>
               </div>
             </div>
           ) : (
-            <div className="flex-1 overflow-hidden">
-              <div className="h-full overflow-auto">
-                <table className="min-w-full table-auto text-left text-sm text-slate-700">
-                  <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <div className="flex-1 min-h-0 border border-slate-200 bg-white rounded-none flex flex-col overflow-hidden">
+              <div className="bg-white shadow-[0_2px_5px_rgba(0,0,0,0.05)] z-20 flex-none">
+                <table className="w-full table-fixed text-sm">
+                  <colgroup>
+                    {columnWidths.map((width, index) => (
+                      <col key={`col-${index}`} style={{ width }} />
+                    ))}
+                  </colgroup>
+                  <thead className="text-xs font-semibold uppercase tracking-widest text-slate-500">
                     <tr>
-                      <th scope="col" className="px-3 py-3 align-middle">Name</th>
-                      <th scope="col" className="px-3 py-3 align-middle">Position</th>
-                      <th scope="col" className="px-3 py-3 align-middle">Email</th>
-                      <th scope="col" className="px-3 py-3 align-middle">Phone</th>
-                      <th scope="col" className="px-3 py-3 align-middle">Date Hired</th>
-                      <th scope="col" className="px-3 py-3 align-middle">Access</th>
-                      <th scope="col" className="px-3 py-3 align-middle">Status</th>
-                      <th scope="col" className="px-3 py-3 align-middle text-right">Actions</th>
+                      <th scope="col" className="px-5 py-4 text-left align-middle">Name</th>
+                      <th scope="col" className="px-5 py-4 text-left align-middle">Email</th>
+                      <th scope="col" className="px-5 py-4 text-left align-middle">Phone</th>
+                      <th scope="col" className="px-5 py-4 text-left align-middle">Date Hired</th>
+                      <th scope="col" className="px-5 py-4 text-left align-middle">Access</th>
+                      <th scope="col" className="px-5 py-4 text-left align-middle">Status</th>
+                      <th scope="col" className="px-5 py-4 text-center align-middle" style={{ width: '120px' }}>Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-200">
-                    {sortedEmployees.map((employee) => (
-                      <tr key={employee.id} className="bg-white hover:bg-slate-50 transition-colors">
-                        <td className="px-3 py-4 align-top">
-                          <p className="text-sm font-semibold text-slate-900 leading-6 break-words">{formatEmployeeName(employee.name)}</p>
-                        </td>
-                        <td className="px-3 py-4 align-top">
-                          <p className="text-sm font-medium text-slate-800 leading-6 break-words">{employee.position}</p>
-                        </td>
-                        <td className="px-3 py-4 align-top">
-                          <p className="text-sm text-slate-700 leading-6 break-words" title={employee.email}>{employee.email}</p>
-                        </td>
-                        <td className="px-3 py-4 align-top">
-                          <p className="text-sm font-medium text-slate-800 leading-6 break-words">{employee.phone}</p>
-                        </td>
-                        <td className="px-3 py-4 align-top whitespace-nowrap">
-                          <p className="text-sm font-medium text-slate-800 leading-6">{formatToDD_MM_YYYY(employee.dateHired)}</p>
-                        </td>
-                        <td className="px-3 py-4 align-top">
-                          <div className="flex flex-wrap gap-1">
-                            <span
-                              className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold leading-5 border ${
-                                employee.accessLevel === 'Super Admin'
-                                  ? 'border-purple-200 bg-purple-50 text-purple-700'
-                                  : employee.accessLevel === 'Admin'
-                                  ? 'border-blue-200 bg-blue-50 text-blue-700'
-                                  : 'border-slate-200 bg-slate-50 text-slate-700'
-                              }`}
+                </table>
+              </div>
+              <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent">
+                <table className="w-full table-fixed text-sm">
+                  <colgroup>
+                    {columnWidths.map((width, index) => (
+                      <col key={`col-${index}`} style={{ width }} />
+                    ))}
+                  </colgroup>
+                  <tbody className="text-sm text-slate-700">
+                    {sortedEmployees.map((employee) => {
+                      const shouldShowKeyAction = !employee.user_id || employee.accountStatus === 'pending' || !employee.isCodeUsed;
+                      const accessConfig = getAccessConfig(employee.accessLevel);
+                      const statusConfig = getStatusConfig(employee);
+
+                      return (
+                        <tr
+                          key={employee.id}
+                          className="transition-colors border-b border-slate-100 last:border-0 odd:bg-white even:bg-[rgba(26,188,156,0.08)] hover:bg-[rgba(26,188,156,0.18)]"
+                          style={{ minHeight: '60px' }}
+                        >
+                          <td className="px-3 py-3 align-middle text-left">
+                            <div className="leading-tight">
+                              <p className="text-sm font-semibold text-slate-900 whitespace-nowrap overflow-hidden text-ellipsis" title={formatEmployeeName(employee.name)}>
+                                {formatEmployeeName(employee.name)}
+                              </p>
+                              <p className="text-[11px] text-slate-500 whitespace-nowrap overflow-hidden text-ellipsis" title={employee.position}>
+                                {employee.position || '—'}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 align-middle text-left">
+                            <p
+                              className="text-sm text-slate-700 whitespace-nowrap overflow-hidden text-ellipsis"
+                              title={employee.email}
+                              style={{ maxWidth: '220px' }}
                             >
-                              {employee.accessLevel || 'Default Accounts'}
+                              {employee.email}
+                            </p>
+                          </td>
+                          <td className="px-3 py-3 align-middle text-left whitespace-nowrap">
+                            <p className="text-sm font-medium text-slate-900 tracking-wide overflow-hidden text-ellipsis" title={employee.phone}>
+                              {employee.phone}
+                            </p>
+                          </td>
+                          <td className="px-3 py-3 align-middle text-left whitespace-nowrap">
+                            <span className="text-sm font-semibold text-slate-900">{formatToDD_MM_YYYY(employee.dateHired)}</span>
+                          </td>
+                          <td className="px-3 py-3 align-middle text-left">
+                            <div className={`flex flex-col text-[11px] font-semibold uppercase leading-tight ${accessConfig.className}`}>
+                              {accessConfig.label.split(' ').map((word, index) => (
+                                <span key={`${employee.id}-access-${index}`} className="whitespace-nowrap">
+                                  {word}
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 align-middle text-left whitespace-nowrap">
+                            <span className={`text-[11px] font-semibold uppercase ${statusConfig.className}`}>
+                              {statusConfig.label}
                             </span>
-                          </div>
-                        </td>
-                        <td className="px-3 py-4 align-top">
-                          <div className="flex flex-wrap gap-1">
-                            {employee.user_id ? (
-                              employee.accountStatus === 'pending' ? (
-                                <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold leading-5 border border-amber-200 bg-amber-50 text-amber-700">
-                                  Pending
-                                </span>
-                              ) : employee.accountStatus === 'active' ? (
-                                <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold leading-5 border border-emerald-200 bg-emerald-50 text-emerald-700">
-                                  Active
-                                </span>
+                          </td>
+                          <td className="px-3 py-3 align-middle text-center" style={{ width: '120px' }}>
+                            <div className="flex justify-center items-center gap-2">
+                              {shouldShowKeyAction ? (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleGenerateCredentials(employee.id);
+                                  }}
+                                  className="w-8 h-8 flex items-center justify-center rounded-full text-emerald-600 hover:text-emerald-800 hover:bg-slate-100 transition-colors"
+                                  title={employee.accountStatus === 'pending' ? 'Regenerate Login Credentials' : 'Generate Login Credentials'}
+                                  type="button"
+                                >
+                                  <Key className="w-4 h-4" />
+                                </button>
                               ) : (
-                                <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold leading-5 border border-rose-200 bg-rose-50 text-rose-700">
-                                  Inactive
-                                </span>
-                              )
-                            ) : (
-                              <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold leading-5 border border-slate-200 bg-slate-50 text-slate-600">
-                                No Account
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-3 py-4 align-top">
-                          <div className="flex flex-wrap items-center justify-end gap-2">
-                            {(!employee.user_id || employee.accountStatus === 'pending' || !employee.isCodeUsed) && (
+                                <span className="w-8 h-8 inline-flex items-center justify-center" aria-hidden="true"></span>
+                              )}
                               <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleGenerateCredentials(employee.id);
-                                }}
-                                className="inline-flex items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 p-2.5 text-emerald-600 transition-colors hover:border-emerald-300 hover:bg-emerald-100"
-                                title={employee.accountStatus === 'pending' ? 'Regenerate Login Credentials' : 'Generate Login Credentials'}
+                                onClick={() => setEditingEmployee(employee)}
+                                className="w-8 h-8 flex items-center justify-center rounded-full text-blue-600 hover:text-blue-800 hover:bg-slate-100 transition-colors"
+                                title="Edit Employee"
                                 type="button"
                               >
-                                <Key className="w-5 h-5" />
+                                <Edit className="w-4 h-4" />
                               </button>
-                            )}
-                            <button
-                              onClick={() => setEditingEmployee(employee)}
-                              className="inline-flex items-center justify-center rounded-lg border border-blue-200 bg-blue-50 p-2.5 text-blue-600 transition-colors hover:border-blue-300 hover:bg-blue-100"
-                              title="Edit Employee"
-                              type="button"
-                            >
-                              <Edit className="w-5 h-5" />
-                            </button>
-                            <button
-                              onClick={() => setDeletingEmployee(employee)}
-                              className="inline-flex items-center justify-center rounded-lg border border-rose-200 bg-rose-50 p-2.5 text-rose-600 transition-colors hover:border-rose-300 hover:bg-rose-100"
-                              title="Delete Employee"
-                              type="button"
-                            >
-                              <Trash2 className="w-5 h-5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                              <button
+                                onClick={() => setDeletingEmployee(employee)}
+                                className="w-8 h-8 flex items-center justify-center rounded-full text-rose-600 hover:text-rose-800 hover:bg-slate-100 transition-colors"
+                                title="Delete Employee"
+                                type="button"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

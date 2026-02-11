@@ -54,19 +54,10 @@ export const ColorHistory: React.FC<ColorHistoryProps> = ({ history, onSelectIte
               />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-base font-black text-slate-800 truncate tracking-tight">{item.color.name}</span>
-                  <span className="text-[10px] font-mono text-slate-400 font-bold uppercase">{item.color.value}</span>
+                  <span className="text-base font-black text-slate-800 truncate tracking-tight">{item.timestamp.split(',')[0]}</span>
+                  <span className="text-[10px] font-mono text-slate-400 font-bold uppercase">{(item.timestamp.split(',')[1] || '').trim()}</span>
                 </div>
-                <div className="flex items-center gap-4 mt-2">
-                  <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-bold uppercase">
-                    <Calendar className="w-3.5 h-3.5" />
-                    {item.timestamp.split(',')[0]}
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-bold uppercase">
-                    <Clock className="w-3.5 h-3.5" />
-                    {item.timestamp.split(',')[1]}
-                  </div>
-                </div>
+                {/* timestamp details removed as requested */}
               </div>
               <ChevronRight className="w-5 h-5 text-slate-200 group-hover:text-cyan-400 transition-colors" />
             </motion.div>
@@ -74,11 +65,7 @@ export const ColorHistory: React.FC<ColorHistoryProps> = ({ history, onSelectIte
         </div>
       )}
 
-      {history.length > 0 && (
-        <button className="w-full py-4 text-[10px] font-black tracking-widest text-cyan-700 hover:text-white hover:bg-cyan-600 rounded-2xl transition-all border-2 border-cyan-100 hover:border-cyan-600 uppercase shadow-sm">
-          EXPORT COMPLETE DIAGNOSTIC LOG
-        </button>
-      )}
+      {/* Export button removed for braces charting context */}
     </motion.div>
   );
 };

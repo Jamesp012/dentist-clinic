@@ -112,6 +112,7 @@ export type Referral = {
   reason: string;
   selectedServices?: Record<string, boolean | string>;
   date: string;
+  createdAt?: string;
   urgency: 'routine' | 'urgent' | 'emergency';
   createdByRole?: 'patient' | 'staff';
   xrayDiagramSelections?: Record<string, 'black' | 'red'>;

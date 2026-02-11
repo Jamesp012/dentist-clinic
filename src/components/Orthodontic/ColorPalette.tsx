@@ -11,12 +11,14 @@ interface ColorPaletteProps {
   colors: Color[];
   selectedColor: Color;
   onColorSelect: (color: Color) => void;
+  showSpecs?: boolean;
 }
 
 export const ColorPalette: React.FC<ColorPaletteProps> = ({ 
   colors, 
   selectedColor, 
   onColorSelect 
+  , showSpecs = true
 }) => {
   return (
     <motion.div 
@@ -26,7 +28,7 @@ export const ColorPalette: React.FC<ColorPaletteProps> = ({
       className="p-8 space-y-10"
     >
       <div>
-        <h3 className="text-[10px] font-black text-slate-400 tracking-[0.2em] mb-5 uppercase">Active Selection</h3>
+        <h3 className="text-[10px] font-black text-slate-400 tracking-[0.2em] mb-5 uppercase">Color Selected</h3>
         <div className="flex items-center gap-5 bg-cyan-50/50 p-5 rounded-3xl border border-cyan-100/50 shadow-sm">
           <div 
             className="w-20 h-20 rounded-2xl shadow-inner border-4 border-white ring-1 ring-cyan-100"
@@ -43,7 +45,7 @@ export const ColorPalette: React.FC<ColorPaletteProps> = ({
       </div>
 
       <div>
-        <h3 className="text-[10px] font-black text-slate-400 tracking-[0.2em] mb-5 uppercase">Available Ligature Shades</h3>
+        <h3 className="text-[10px] font-black text-slate-400 tracking-[0.2em] mb-5 uppercase">Available Colors</h3>
         <div className="grid grid-cols-4 gap-4">
           {colors.map((color) => (
             <button
@@ -73,18 +75,20 @@ export const ColorPalette: React.FC<ColorPaletteProps> = ({
         </div>
       </div>
 
-      <div className="pt-6 border-t border-cyan-50">
-        <div className="grid grid-cols-2 gap-6">
-          <div className="space-y-1.5">
-            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Material Specs</span>
-            <p className="text-xs font-bold text-slate-700">Clinical Elastomer</p>
-          </div>
-          <div className="space-y-1.5">
-            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Durability</span>
-            <p className="text-xs font-bold text-slate-700">Tear Resistant</p>
+      {showSpecs && (
+        <div className="pt-6 border-t border-cyan-50">
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-1.5">
+              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Material Specs</span>
+              <p className="text-xs font-bold text-slate-700">Clinical Elastomer</p>
+            </div>
+            <div className="space-y-1.5">
+              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Durability</span>
+              <p className="text-xs font-bold text-slate-700">Tear Resistant</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </motion.div>
   );
 };

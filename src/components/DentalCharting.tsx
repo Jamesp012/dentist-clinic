@@ -287,7 +287,7 @@ export function DentalCharting({ patients }: DentalChartingProps) {
               onFocus={() => setShowPatientSuggestions(true)}
               onBlur={() => setTimeout(() => setShowPatientSuggestions(false), 150)}
               placeholder="Search patient..."
-              className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-sm text-slate-600 hover:border-slate-300 transition-colors w-64"
+              className="px-3 py-1.5 bg-slate-50 border border-cyan-200 rounded-md text-sm text-slate-600 hover:border-teal-300 transition-colors w-64 focus:outline-none focus:ring-2 focus:ring-teal-400/40 focus:border-teal-400"
             />
             {showPatientSuggestions && (
               <div className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-md shadow-lg">

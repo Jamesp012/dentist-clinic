@@ -66,6 +66,7 @@ type ChartSnapshot = {
 
 // Orthodontic colors (updated palette)
 const COLORS = [
+  { name: 'No Color', value: 'transparent' },
   { name: 'Navy Blue', value: '#001F3F' },
   { name: 'Royal Blue', value: '#4169E1' },
   { name: 'Light Blue', value: '#7DD3FC' },
@@ -156,8 +157,8 @@ export function BracesCharting({ patients }: BracesChartingProps) {
   const [activeTab, setActiveTab] = useState<"palette" | "history">("palette");
   const [selectionMode, setSelectionMode] = useState<"single" | "all">("all");
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
-  const [previewColors, setPreviewColors] = useState<string[]>(new Array(32).fill("#E2E8F0"));
-  const [bracketColors, setBracketColors] = useState<string[]>(new Array(32).fill("#E2E8F0"));
+  const [previewColors, setPreviewColors] = useState<string[]>(new Array(32).fill(COLORS[0].value));
+  const [bracketColors, setBracketColors] = useState<string[]>(new Array(32).fill(COLORS[0].value));
   // Use static, hard-coded percent positions
   const [upperPositions] = useState(FIXED_UPPER_POSITIONS);
   const [lowerPositions] = useState(FIXED_LOWER_POSITIONS);
@@ -172,8 +173,8 @@ export function BracesCharting({ patients }: BracesChartingProps) {
     const currentData = getPatientBracesData();
     const newHistoryEntry: ColorHistoryEntry = {
       date: new Date().toISOString(),
-      colorName: 'Manual Save',
-      colorValue: '',
+      colorName: selectedColor?.name || 'Manual Save',
+      colorValue: selectedColor?.value || '',
       notes: `Saved current braces chart`
     };
 
@@ -195,6 +196,19 @@ export function BracesCharting({ patients }: BracesChartingProps) {
       }
     });
 
+    // persist to localStorage so saved charts survive navigation / refresh
+    try {
+      const storageObj = {
+        bracketColors: [...previewColors],
+        chartSnapshots: [snapshot, ...(currentData.chartSnapshots || [])],
+        colorHistory: [newHistoryEntry, ...(currentData.colorHistory || [])],
+        currentBracketVisibility: [...bracketVisibility],
+        lastUpdated: new Date().toISOString()
+      };
+      localStorage.setItem(`ortho_chart_${selectedPatient.id}`, JSON.stringify(storageObj));
+    } catch (e) {
+      console.error('Failed to persist braces data to localStorage', e);
+    }
     // reflect that changes are saved
     setBracketColors([...previewColors]);
     setHasUnsavedChanges(false);
@@ -241,6 +255,33 @@ export function BracesCharting({ patients }: BracesChartingProps) {
       setBracketVisibility(new Array(32).fill(true));
     }
   }, [selectedPatient, bracesData]);
+
+  // Load persisted braces data from localStorage when patient selected
+  useEffect(() => {
+    if (!selectedPatient) return;
+    try {
+      const saved = localStorage.getItem(`ortho_chart_${selectedPatient.id}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const entry: BracesData = {
+          patientId: String(selectedPatient.id),
+          rubberBandColors: {},
+          bracketType: 'metal',
+          colorHistory: parsed.colorHistory || [],
+          paymentRecords: [],
+          totalCost: 0,
+          totalPaid: 0,
+          lastUpdated: parsed.lastUpdated || new Date().toISOString(),
+          chartSnapshots: parsed.chartSnapshots || [],
+          currentBracketVisibility: parsed.currentBracketVisibility || new Array(32).fill(true)
+        };
+
+        setBracesData(prev => ({ ...prev, [selectedPatient.id]: entry }));
+      }
+    } catch (e) {
+      console.error('Failed to load persisted braces data', e);
+    }
+  }, [selectedPatient]);
 
   const handleColorSelect = (color: typeof COLORS[0]) => {
     setSelectedColor(color);
@@ -402,6 +443,60 @@ export function BracesCharting({ patients }: BracesChartingProps) {
           inputClassName="pl-9 pr-8 py-1.5 text-sm mt-2 mb-4"
         />
 
+        {/* When no patient selected, show a blurred preview of the main UI */}
+        {!selectedPatient && (
+          <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-stretch mt-4">
+            <div className="flex-1 bg-white p-8 rounded-xl shadow-xl border border-cyan-100 filter blur-sm opacity-60 pointer-events-none select-none">
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex bg-cyan-50 p-1.5 rounded-2xl">
+                    <button className="flex items-center gap-2.5 px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-400">
+                      SELECT ALL
+                    </button>
+                    <button className="flex items-center gap-2.5 px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-400">
+                      PRECISION
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 mt-4">
+                  <div className="flex items-center gap-2 px-4 py-2 border-2 border-red-200 rounded-lg text-red-400 text-xs font-bold">REMOVE BRACKET</div>
+                  <div className="flex items-center gap-2 px-4 py-2 border-2 border-cyan-200 rounded-lg text-cyan-400 text-xs font-bold">ADD BRACKET</div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-gray-200 p-8 mb-6 shadow-xl h-64" />
+
+              <div className="w-full py-2 px-4 rounded-md font-semibold text-sm transition-all shadow-md bg-gray-100 text-gray-400 text-center">SAVE</div>
+
+              <div className="mt-6 bg-white rounded-lg p-4 mb-6 shadow-sm">
+                <h3 className="text-sm mb-3 font-medium text-gray-700">💡 Braces Care Tips</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-gradient-to-r from-cyan-50 to-teal-50 rounded-lg border border-cyan-200">
+                    <p className="text-sm text-gray-700"><span className="font-semibold text-cyan-600">Bracket Control:</span> Use REMOVE and ADD to hide or restore specific brackets.</p>
+                  </div>
+                  <div className="p-4 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-lg border border-teal-200">
+                    <p className="text-sm text-gray-700"><span className="font-semibold text-teal-600">Color Selection:</span> Apply rubber band colors to all or individual brackets with precision mode.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="lg:w-96 bg-white rounded-xl shadow-lg border border-cyan-100 backdrop-blur-sm bg-opacity-90 flex flex-col filter blur-sm opacity-60 pointer-events-none select-none">
+              <div className="flex p-3 bg-cyan-50/30 border-b border-cyan-100 rounded-t-xl">
+                <div className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-xs text-slate-400">PALETTE</div>
+                <div className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-xs text-slate-400">HISTORY</div>
+              </div>
+              <div className="flex-1 min-h-0 overflow-y-auto p-8">
+                <div className="space-y-6">
+                  <div className="p-5 bg-white border border-cyan-50 rounded-3xl h-32" />
+                  <div className="p-5 bg-white border border-cyan-50 rounded-3xl h-32" />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {selectedPatient && (
           <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-stretch mt-4">
             {/* Main Dental Chart Area */}
@@ -468,22 +563,21 @@ export function BracesCharting({ patients }: BracesChartingProps) {
                 </div>
               </div>
 
-              <button 
+              <button
                 onClick={saveChanges}
                 disabled={!hasUnsavedChanges}
-                className={`w-full py-4 px-6 rounded-lg font-bold text-lg transition-all shadow-lg ${hasUnsavedChanges ? 'bg-gradient-to-r from-cyan-600 to-teal-500 hover:from-cyan-700 hover:to-teal-600 text-white' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}
+                className={`w-full py-2 px-4 rounded-md font-semibold text-sm transition-all shadow-md ${hasUnsavedChanges ? 'bg-gradient-to-r from-cyan-600 to-teal-500 hover:from-cyan-700 hover:to-teal-600 text-white' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}
               >
-                <Save className="w-5 h-5 inline mr-2" />
+                <Save className="w-4 h-4 inline mr-2" />
                 SAVE
               </button>
 
-              {/* Tips Section */}
-              <motion.div 
-                className="mt-6 pt-6 border-t-2 border-cyan-100"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.8 }}
-              >
+                {/* grid grid-cols-2 gap-6 section removed as requested */}
+                <motion.div className="mt-6 bg-white rounded-lg p-4 mb-6 shadow-sm"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.8 }}
+                >
                 <h3 className="text-sm mb-3 font-medium text-gray-700">
                   💡 Braces Care Tips
                 </h3>
@@ -538,17 +632,18 @@ export function BracesCharting({ patients }: BracesChartingProps) {
                       colors={COLORS}
                       selectedColor={selectedColor}
                       onColorSelect={handleColorSelect}
+                      showSpecs={false}
                     />
                   ) : (
-                    <ColorHistory 
+                    <ColorHistory
                       key="history"
-                      history={(getPatientBracesData().chartSnapshots || []).map(entry => ({
-                        color: { name: "Chart Snapshot", value: "#E5E7EB" },
-                        timestamp: new Date(entry.timestamp).toLocaleString("en-US", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          month: "short",
-                          day: "numeric"
+                      history={(getPatientBracesData().colorHistory || []).map(entry => ({
+                        color: { name: entry.colorName || 'Chart Snapshot', value: entry.colorValue || '#E5E7EB' },
+                        timestamp: new Date(entry.date).toLocaleString('en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          month: 'short',
+                          day: 'numeric'
                         })
                       }))}
                       onSelectItem={handleSnapshotSelect}

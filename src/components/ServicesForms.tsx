@@ -414,18 +414,18 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
           <div className="flex gap-4">
             <button
               onClick={() => setActiveForm('service')}
-              className="group relative px-8 py-4 bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white rounded-2xl hover:shadow-2xl hover:shadow-cyan-500/30 hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-3 font-bold overflow-hidden"
+              className="group relative px-5 py-2.5 bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white rounded-xl hover:shadow-lg hover:shadow-cyan-500/20 hover:scale-102 active:scale-95 transition-all duration-200 flex items-center gap-2 font-semibold text-sm overflow-hidden"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <Plus className="w-6 h-6 relative z-10" />
+              <Plus className="w-5 h-5 relative z-10" />
               <span className="relative z-10">New Receipt</span>
             </button>
             <button
               onClick={() => setActiveForm('prescription')}
-              className="group relative px-8 py-4 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white rounded-2xl hover:shadow-2xl hover:shadow-emerald-500/30 hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-3 font-bold overflow-hidden"
+              className="group relative px-5 py-2.5 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white rounded-xl hover:shadow-lg hover:shadow-emerald-500/20 hover:scale-102 active:scale-95 transition-all duration-200 flex items-center gap-2 font-semibold text-sm overflow-hidden"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <FileText className="w-6 h-6 relative z-10" />
+              <FileText className="w-5 h-5 relative z-10" />
               <span className="relative z-10">Create Prescription</span>
             </button>
           </div>
@@ -434,48 +434,48 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
         {/* Recent Receipts - Premium Card Design */}
         <div className="relative group">
           <div className="absolute -inset-1 bg-gradient-to-r from-teal-500 via-cyan-500 to-blue-500 rounded-3xl opacity-20 group-hover:opacity-30 blur transition-all duration-500"></div>
-          <div className="relative bg-white/90 backdrop-blur-xl p-10 rounded-3xl shadow-xl border border-slate-200/60 hover:shadow-2xl transition-all duration-500">
+          <div className="relative bg-white/90 backdrop-blur-xl p-6 rounded-3xl shadow-xl border border-slate-200/60 hover:shadow-2xl transition-all duration-500">
             <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
-                  <CreditCard className="w-6 h-6 text-white" />
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-lg flex items-center justify-center shadow">
+                  <CreditCard className="w-4 h-4 text-white" />
                 </div>
-                <h2 className="text-3xl font-bold text-slate-900">Recent Receipts</h2>
+                <h2 className="text-2xl font-semibold text-slate-900">Recent Receipts</h2>
               </div>
               <span className="px-4 py-2 bg-teal-50 text-teal-700 rounded-xl text-sm font-bold">
                 {treatmentRecords.length} Total
               </span>
             </div>
             
-            <div className="space-y-4 max-h-[500px] overflow-y-auto scrollbar-thin pr-2">
+            <div className="space-y-3 max-h-[380px] overflow-y-auto scrollbar-thin pr-2">
               {[...treatmentRecords]
                 .slice()
                 .sort((a, b) => new Date((b as any).createdAt || b.date || 0).getTime() - new Date((a as any).createdAt || a.date || 0).getTime())
                 .map((record) => {
                 const patient = patients.find(p => String(p.id) === String(record.patientId));
                 return (
-                  <div key={record.id} className="group/item relative p-6 border-2 border-slate-100 rounded-2xl hover:border-cyan-300/60 transition-all duration-300 bg-gradient-to-br from-white via-slate-50/30 to-cyan-50/20 hover:shadow-xl hover:scale-[1.01]">
+                  <div key={record.id} className="group/item relative p-4 border border-slate-100 rounded-xl hover:border-cyan-300/60 transition-all duration-300 bg-gradient-to-br from-white via-slate-50/30 to-cyan-50/20 hover:shadow-md hover:scale-[1.01]">
                     <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-teal-500/5 rounded-2xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-300"></div>
                     
                     <div className="relative flex justify-between items-start gap-6">
                       <div className="flex-1 space-y-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-xl flex items-center justify-center font-bold text-cyan-700 text-sm">
+                          <div className="w-8 h-8 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-md flex items-center justify-center font-bold text-cyan-700 text-xs">
                             {patient?.name?.charAt(0)}
                           </div>
                           <div>
-                            <p className="text-xl font-bold text-slate-900">{patient?.name}</p>
-                            <p className="text-sm text-slate-500 mt-0.5">{formatToDD_MM_YYYY((record as any).createdAt || record.date)} • Dr. {record.dentist}</p>
+                            <p className="text-lg font-semibold text-slate-900">{patient?.name}</p>
+                            <p className="text-xs text-slate-500 mt-0.5">{formatToDD_MM_YYYY((record as any).createdAt || record.date)} • Dr. {record.dentist}</p>
                           </div>
                         </div>
                         
                         <div className="flex items-center gap-2 pl-1">
                           <span className="w-1.5 h-1.5 bg-cyan-500 rounded-full"></span>
-                          <p className="text-base text-slate-700 font-medium">{record.treatment} {record.tooth ? `- Tooth ${record.tooth}` : ''}</p>
+                          <p className="text-sm text-slate-700 font-medium">{record.treatment} {record.tooth ? `- Tooth ${record.tooth}` : ''}</p>
                         </div>
                         
                         <div className="flex gap-3 flex-wrap items-center">
-                          <span className="text-2xl font-extrabold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
+                          <span className="text-xl font-extrabold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
                             ₱{Number(record.cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </span>
                           {record.paymentType && (
@@ -498,15 +498,15 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                         </div>
                       </div>
                       
-                      <div className="flex gap-3">
+                      <div className="flex gap-2">
                         <button
                           onClick={() => {
                             setViewingReceipt(record);
                           }}
-                          className="group/btn px-6 py-3 bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white rounded-xl hover:shadow-xl hover:shadow-cyan-500/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 font-bold duration-300"
+                          className="group/btn px-4 py-2 bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white rounded-lg hover:shadow-md hover:shadow-cyan-500/30 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 font-semibold text-xs duration-300"
                         >
-                          <CreditCard className="w-5 h-5" />
-                          View Receipt
+                          <CreditCard className="w-4 h-4" />
+                          View
                         </button>
                       </div>
                     </div>
@@ -529,59 +529,59 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
         {/* Recent Prescriptions - Premium Card Design */}
         <div className="relative group">
           <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-3xl opacity-20 group-hover:opacity-30 blur transition-all duration-500"></div>
-          <div className="relative bg-white/90 backdrop-blur-xl p-10 rounded-3xl shadow-xl border border-slate-200/60 hover:shadow-2xl transition-all duration-500">
+          <div className="relative bg-white/90 backdrop-blur-xl p-6 rounded-3xl shadow-xl border border-slate-200/60 hover:shadow-2xl transition-all duration-500">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center shadow-lg">
-                  <FileText className="w-6 h-6 text-white" />
+                <div className="w-9 h-9 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center shadow">
+                  <FileText className="w-4 h-4 text-white" />
                 </div>
-                <h2 className="text-3xl font-bold text-slate-900">Recent Prescriptions</h2>
+                <h2 className="text-2xl font-semibold text-slate-900">Recent Prescriptions</h2>
               </div>
               <span className="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-xl text-sm font-bold">
                 {prescriptions.length} Total
               </span>
             </div>
             
-            <div className="space-y-4 max-h-[500px] overflow-y-auto scrollbar-thin pr-2">
+            <div className="space-y-3 max-h-[380px] overflow-y-auto scrollbar-thin pr-2">
               {[...prescriptions]
                 .slice()
                 .sort((a, b) => new Date((b as any).createdAt || b.date || 0).getTime() - new Date((a as any).createdAt || a.date || 0).getTime())
                 .map((prescription) => (
-                <div key={prescription.id} className="group/item relative p-6 border-2 border-slate-100 rounded-2xl hover:border-emerald-300/60 transition-all duration-300 bg-gradient-to-br from-white via-slate-50/30 to-emerald-50/20 hover:shadow-xl hover:scale-[1.01]">
+                <div key={prescription.id} className="group/item relative p-4 border border-slate-100 rounded-xl hover:border-emerald-300/60 transition-all duration-300 bg-gradient-to-br from-white via-slate-50/30 to-emerald-50/20 hover:shadow-md hover:scale-[1.01]">
                   <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-teal-500/5 rounded-2xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-300"></div>
                   
                   <div className="relative flex justify-between items-start gap-6">
                     <div className="flex-1 space-y-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-xl flex items-center justify-center font-bold text-emerald-700 text-sm">
+                        <div className="w-8 h-8 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-md flex items-center justify-center font-bold text-emerald-700 text-xs">
                           {prescription.patientName?.charAt(0)}
                         </div>
                         <div>
-                          <p className="text-xl font-bold text-slate-900">{prescription.patientName}</p>
-                          <p className="text-sm text-slate-500 mt-0.5">{formatToDD_MM_YYYY((prescription as any).createdAt || prescription.date)} • Dr. {prescription.dentist}</p>
+                          <p className="text-lg font-semibold text-slate-900">{prescription.patientName}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">{formatToDD_MM_YYYY((prescription as any).createdAt || prescription.date)} • Dr. {prescription.dentist}</p>
                         </div>
                       </div>
                       
                       <div className="flex items-center gap-2 pl-1">
                         <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
-                        <p className="text-base text-slate-700 font-medium">{prescription.medications.length} medication(s) prescribed</p>
+                        <p className="text-sm text-slate-700 font-medium">{prescription.medications.length} medication(s) prescribed</p>
                       </div>
                     </div>
                     
                     <div className="flex gap-3">
                       <button
                         onClick={() => setViewingPrescription(prescription)}
-                        className="group/btn px-6 py-3 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white rounded-xl hover:shadow-xl hover:shadow-emerald-500/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 font-bold duration-300"
+                        className="group/btn px-4 py-2 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white rounded-lg hover:shadow-md hover:shadow-emerald-500/30 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 font-semibold text-xs duration-300"
                       >
-                        <FileText className="w-5 h-5" />
+                        <FileText className="w-4 h-4" />
                         View
                       </button>
                       <button
                         onClick={() => printPrescription(prescription)}
-                        className="px-5 py-3 bg-gradient-to-br from-slate-600 to-slate-700 text-white rounded-xl hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 font-bold duration-300"
+                        className="px-3 py-2 bg-gradient-to-br from-slate-600 to-slate-700 text-white rounded-lg hover:shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-2 font-semibold text-xs duration-300"
                         title="Print Prescription"
                       >
-                        <Download className="w-5 h-5" />
+                        <Download className="w-4 h-4" />
                       </button>
                     </div>
                   </div>

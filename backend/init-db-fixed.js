@@ -108,9 +108,11 @@ async function initializeDatabase() {
         phone VARCHAR(20),
         email VARCHAR(100),
         address TEXT,
+        dateOfBirth DATE,
         dateHired DATE,
         generatedCode VARCHAR(100) UNIQUE,
         isCodeUsed BOOLEAN DEFAULT FALSE,
+        accessLevel ENUM('Admin', 'Super Admin', 'Default Accounts') DEFAULT 'Default Accounts',
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
