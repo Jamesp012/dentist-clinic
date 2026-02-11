@@ -8,6 +8,7 @@ type PatientSearchProps = {
   selectedPatient: Patient | null;
   onSelectPatient: (patient: Patient | null) => void;
   placeholder?: string;
+  inputClassName?: string;
 };
 
 export function PatientSearch({ 
@@ -23,11 +24,13 @@ export function PatientSearch({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Filter patients based on search query
-  const filteredPatients = patients.filter(patient => 
-    patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    patient.phone.includes(searchQuery) ||
-    patient.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredPatients = searchQuery.trim() === ''
+    ? []
+    : patients.filter(patient => 
+        patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        patient.phone.includes(searchQuery) ||
+        patient.email.toLowerCase().includes(searchQuery.toLowerCase())
+      );
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -107,8 +110,8 @@ export function PatientSearch({
     <div className="relative w-full">
       {/* Search Input */}
       <div className="relative">
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-          <Search className="w-5 h-5" />
+        <div className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400">
+          <Search className="w-4 h-4" />
         </div>
         
         <input
@@ -119,7 +122,7 @@ export function PatientSearch({
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="w-full pl-10 pr-10 py-3 border-2 border-cyan-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-300 bg-white hover:border-cyan-300"
+          className={`w-full pl-9 pr-8 py-1.5 border-2 border-cyan-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-300 bg-white hover:border-cyan-300 text-sm ${inputClassName || ''}`}
         />
 
         {/* Clear Button */}
@@ -128,7 +131,8 @@ export function PatientSearch({
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             onClick={handleClearSelection}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+            className="absolute right-3 inset-y-0 my-auto flex items-center text-gray-400 hover:text-gray-600 transition-colors h-6"
+            style={{ top: '0', bottom: '0' }}
           >
             <X className="w-5 h-5" />
           </motion.button>

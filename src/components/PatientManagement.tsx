@@ -214,10 +214,10 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
   };
 
   return (
-    <div className="flex flex-col flex-1 bg-white">
-      <div className="flex flex-col flex-1 min-h-0">
+    <div className="flex flex-col flex-1 min-h-0 bg-white overflow-hidden">
+      <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
         {/* Search & Add Button */}
-        <div className="relative flex flex-wrap items-center gap-4 border-b border-slate-200 bg-white px-6 py-4 sticky top-0 z-20">
+        <div className="relative flex flex-wrap items-center gap-4 border-b border-slate-200 bg-white px-6 py-4">
           <div className="relative flex-1 min-w-0 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-teal-500 transition-colors" />
             <input
@@ -239,7 +239,7 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
         </div>
 
         {/* Patients Table */}
-        <div className="flex-1 flex flex-col min-h-0 px-6 py-6 gap-6">
+        <div className="flex-1 flex flex-col min-h-0 px-6 py-6 gap-6 overflow-hidden">
           {sortedPatients.length === 0 ? (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center py-16 px-6">
@@ -257,20 +257,28 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
               </div>
             </div>
           ) : (
-            <div className="flex-1 min-h-0 overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
-              <div className="h-full overflow-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent">
-                <table className="w-full table-auto text-left text-sm">
-                  <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-widest text-slate-500 sticky top-0 z-10">
+            <div className="flex-1 min-h-0 border border-slate-200 bg-white rounded-none flex flex-col overflow-hidden">
+              <div className="bg-white shadow-[0_2px_5px_rgba(0,0,0,0.05)] z-20 flex-none">
+                <table className="w-full table-fixed text-sm">
+                  <thead className="text-xs font-semibold uppercase tracking-widest text-slate-500">
                     <tr>
-                      <th scope="col" className="px-4 py-3">Name</th>
-                      <th scope="col" className="px-4 py-3">Age</th>
-                      <th scope="col" className="px-4 py-3">Email</th>
-                      <th scope="col" className="px-4 py-3">Phone</th>
-                      <th scope="col" className="px-4 py-3">Address</th>
-                      <th scope="col" className="px-4 py-3 text-right">Actions</th>
+                      <th scope="col" className="px-5 py-4 text-left align-middle">Name</th>
+                      <th scope="col" className="px-5 py-4 text-center align-middle w-20">Age</th>
+                      <th scope="col" className="px-5 py-4 text-left align-middle w-32">Birthdate</th>
+                      <th scope="col" className="px-5 py-4 text-left align-middle w-64">Email</th>
+                      <th scope="col" className="px-5 py-4 text-left align-middle w-40">Phone</th>
+                      <th scope="col" className="px-5 py-4 text-left align-middle w-[240px]">Address</th>
+                      <th scope="col" className="px-5 py-4 text-center align-middle w-[120px]">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-slate-100">
+                </table>
+              </div>
+              <div
+                className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent"
+                style={{ maxHeight: 'calc(100vh - 300px)' }}
+              >
+                <table className="w-full table-fixed text-sm">
+                  <tbody className="text-sm text-slate-700">
                     {sortedPatients.map((patient) => {
                       const ageValue = patient.dateOfBirth ? calculateAge(patient.dateOfBirth) : NaN;
                       const hasAge = Number.isFinite(ageValue);
@@ -278,59 +286,75 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
                       const sexLabel = patient.sex || 'N/A';
 
                       return (
-                        <tr key={patient.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-4 py-4 align-top">
-                          <div className="text-base font-semibold text-slate-900 break-words">{formatPatientName(patient.name)}</div>
-                          <div className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-1">
-                            <span>{sexLabel}</span>
-                            <span aria-hidden="true">•</span>
-                            <span>DOB {dobLabel}</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-4 align-top whitespace-nowrap">
-                          {hasAge ? (
-                            <>
-                              <span className="text-lg font-semibold text-slate-900">{ageValue}</span>
-                              <span className="text-xs text-slate-500 ml-1">yrs</span>
-                            </>
-                          ) : (
-                            <span className="text-sm text-slate-500">N/A</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-4 align-top">
-                          <p className="text-sm text-slate-700 break-words leading-relaxed">{patient.email}</p>
-                        </td>
-                        <td className="px-4 py-4 align-top whitespace-nowrap">
-                          <p className="text-sm font-medium text-slate-900 tracking-wide">{patient.phone}</p>
-                        </td>
-                        <td className="px-4 py-4 align-top">
-                          <p className="text-sm text-slate-600 leading-relaxed break-words">{patient.address}</p>
-                        </td>
-                        <td className="px-4 py-4 align-top">
-                          <div className="flex flex-wrap justify-end gap-2">
-                            <button
-                              onClick={() => setViewingPatient(patient)}
-                              className="p-2.5 rounded-lg bg-gradient-to-br from-emerald-50 to-teal-50 text-emerald-600 hover:from-emerald-100 hover:to-teal-100 hover:shadow-lg transition-all duration-300"
-                              title="View Patient"
+                        <tr
+                          key={patient.id}
+                          className="transition-colors border-b border-slate-100 last:border-0 odd:bg-white even:bg-[rgba(26,188,156,0.08)] hover:bg-[rgba(26,188,156,0.18)]"
+                          style={{ minHeight: '60px' }}
+                        >
+                          <td className="px-5 py-4 align-middle text-left">
+                            <div className="text-base font-semibold text-slate-900 break-words">{formatPatientName(patient.name)}</div>
+                            <div className="text-xs text-slate-500 mt-1">{sexLabel}</div>
+                          </td>
+                          <td className="px-5 py-4 align-middle text-center whitespace-nowrap">
+                            {hasAge ? (
+                              <>
+                                <span className="text-lg font-semibold text-slate-900">{ageValue}</span>
+                                <span className="text-xs text-slate-500 ml-1">yrs</span>
+                              </>
+                            ) : (
+                              <span className="text-sm text-slate-500">N/A</span>
+                            )}
+                          </td>
+                          <td className="px-5 py-4 align-middle whitespace-nowrap text-left">
+                            <span className="text-sm font-medium text-slate-900">{dobLabel}</span>
+                          </td>
+                          <td className="px-5 py-4 align-middle text-left whitespace-nowrap">
+                            <p className="text-sm text-slate-700 break-words leading-relaxed">{patient.email}</p>
+                          </td>
+                          <td className="px-5 py-4 align-middle whitespace-nowrap text-left">
+                            <p className="text-sm font-medium text-slate-900 tracking-wide">{patient.phone}</p>
+                          </td>
+                          <td className="px-5 py-4 align-middle text-left" style={{ width: '240px' }}>
+                            <p
+                              className="text-sm text-slate-600 leading-relaxed"
+                              style={{
+                                whiteSpace: 'normal',
+                                wordBreak: 'break-word',
+                                overflowWrap: 'break-word',
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden',
+                              }}
                             >
-                              <Eye className="w-5 h-5" />
-                            </button>
-                            <button
-                              onClick={() => setEditingPatient(patient)}
-                              className="p-2.5 rounded-lg bg-gradient-to-br from-blue-50 to-cyan-50 text-blue-600 hover:from-blue-100 hover:to-cyan-100 hover:shadow-lg transition-all duration-300"
-                              title="Edit Patient"
-                            >
-                              <Edit className="w-5 h-5" />
-                            </button>
-                            <button
-                              onClick={() => setDeletingPatient(patient)}
-                              className="p-2.5 rounded-lg bg-gradient-to-br from-red-50 to-pink-50 text-red-600 hover:from-red-100 hover:to-pink-100 hover:shadow-lg transition-all duration-300"
-                              title="Delete Patient"
-                            >
-                              <Trash2 className="w-5 h-5" />
-                            </button>
-                          </div>
-                        </td>
+                              {patient.address}
+                            </p>
+                          </td>
+                          <td className="px-5 py-4 align-middle text-center whitespace-nowrap" style={{ width: '120px' }}>
+                            <div className="flex justify-center items-center gap-[10px] flex-nowrap" style={{ whiteSpace: 'nowrap' }}>
+                              <button
+                                onClick={() => setViewingPatient(patient)}
+                                className="w-9 h-9 flex items-center justify-center text-emerald-600 hover:text-emerald-800 transition-colors"
+                                title="View Patient"
+                              >
+                                <Eye className="w-5 h-5" />
+                              </button>
+                              <button
+                                onClick={() => setEditingPatient(patient)}
+                                className="w-9 h-9 flex items-center justify-center text-blue-600 hover:text-blue-800 transition-colors"
+                                title="Edit Patient"
+                              >
+                                <Edit className="w-5 h-5" />
+                              </button>
+                              <button
+                                onClick={() => setDeletingPatient(patient)}
+                                className="w-9 h-9 flex items-center justify-center text-red-600 hover:text-red-800 transition-colors"
+                                title="Delete Patient"
+                              >
+                                <Trash2 className="w-5 h-5" />
+                              </button>
+                            </div>
+                          </td>
                         </tr>
                       );
                     })}

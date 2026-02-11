@@ -391,24 +391,19 @@ export function BracesCharting({ patients }: BracesChartingProps) {
   };
 
     return (
-      <div className="p-8 bg-white">
+      <div className="p-6 bg-white">
         {/* Patient Selection */}
-        <motion.div 
-          className="relative bg-white p-6 rounded-xl shadow-lg border border-cyan-100 mb-6 backdrop-blur-sm bg-opacity-90 z-40"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.1 }}
-        >
-          <label className="block text-sm mb-2 font-medium text-gray-700">Select Patient</label>
-          <PatientSearch
-            patients={patients}
-            selectedPatient={selectedPatient}
-            onSelectPatient={setSelectedPatient}
-          />
-        </motion.div>
+        <label className="block text-xs mb-1 font-medium text-gray-700">Select Patient</label>
+        <PatientSearch
+          patients={patients}
+          selectedPatient={selectedPatient}
+          onSelectPatient={setSelectedPatient}
+          placeholder="Search for a patient..."
+          inputClassName="pl-9 pr-8 py-1.5 text-sm mt-2 mb-4"
+        />
 
         {selectedPatient && (
-          <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-stretch">
+          <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-stretch mt-4">
             {/* Main Dental Chart Area */}
             <motion.div 
               className="flex-1 bg-white p-8 rounded-xl shadow-xl border border-cyan-100"
