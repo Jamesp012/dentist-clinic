@@ -3,7 +3,7 @@ import { Referral, Patient } from '../App';
 import { toast } from 'sonner';
 
 // Import image assets
-import { clinicLogo, clinicMap, xrayClinic } from '../assets';
+import { clinicLogo, clinicMap, redorLogo, xrayClinic } from '../assets';
 
 const formatFullName = (fullName: string | undefined | null) => {
   if (!fullName) return '';
@@ -203,10 +203,10 @@ export const generateReferralPDF = (referral: Referral, patient?: Patient) => {
       
       // Right column - Clinic Map (Bigger and to the RIGHT)
       try {
-        const mapWidth = 100;
-        const mapHeight = 70;
-        const mapX = pageWidth - mapWidth - 10;
-        const mapY = clinicInfoStartY;
+        const mapWidth = 120;
+        const mapHeight = 85;
+        const mapX = pageWidth - mapWidth - 5;
+        const mapY = clinicInfoStartY - 5;
         doc.addImage(clinicMap, 'JPEG', mapX, mapY, mapWidth, mapHeight);
       } catch (error) {
         console.error('Failed to add clinic map to Doctor Referral PDF:', error);
@@ -218,8 +218,8 @@ export const generateReferralPDF = (referral: Referral, patient?: Patient) => {
         const logoWidth = 60;
         const logoHeight = 20;
         // Positioned slightly lower in the info section
-        doc.addImage(clinicLogo, 'PNG', 15, yPosition + 10, logoWidth, logoHeight);
-        yPosition += logoHeight + 14;
+        doc.addImage(clinicLogo, 'PNG', 15, yPosition + 15, logoWidth, logoHeight);
+        yPosition += logoHeight + 18;
       } catch (error) {
         console.error('Failed to add clinic logo to PDF:', error);
       }
@@ -255,7 +255,7 @@ export const generateReferralPDF = (referral: Referral, patient?: Patient) => {
       doc.text('0938-171-7695', 40, yPosition);
       
       // Ensure yPosition is below the tallest element (map or text)
-      yPosition = Math.max(yPosition, clinicInfoStartY + 70) + 10;
+      yPosition = Math.max(yPosition, clinicInfoStartY + 85) + 10;
 
       // Yellow line before thank you message
       doc.setDrawColor(234, 179, 8);
@@ -285,12 +285,12 @@ export const generateReferralPDF = (referral: Referral, patient?: Patient) => {
 
       // Clinic Logo/Branding
       const headerTopY = 15;
-      const logoWidth = 120; // Increased from 100
-      const logoHeight = 60; // Increased from 50
+      const logoWidth = 60;
+      const logoHeight = 30;
       try {
-        doc.addImage(clinicMap, 'JPEG', 15, headerTopY, logoWidth, logoHeight);
+        doc.addImage(redorLogo, 'PNG', 15, headerTopY, logoWidth, logoHeight);
       } catch (error) {
-        console.error('Failed to add clinic map to PDF:', error);
+        console.error('Failed to add Redor logo to PDF:', error);
       }
 
       // Contact Information (right aligned) with vertical line
@@ -531,7 +531,8 @@ export const generateReferralPDF = (referral: Referral, patient?: Patient) => {
               doc.setDrawColor(0, 0, 0); // Black
             }
             // Draw circle around the tooth (radius 1.8mm to fit around text)
-            doc.circle(coords.x, coords.y - 0.5, 1.8, 'S');
+            // Centered by adding offset to x and y relative to text baseline
+            doc.circle(coords.x + 0.8, coords.y - 1.2, 1.8, 'S');
           }
         });
       }

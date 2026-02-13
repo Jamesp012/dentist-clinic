@@ -10,7 +10,7 @@ import { getSafeFileUrl } from '../utils/fileUtils';
 import { motion, AnimatePresence } from 'motion/react';
 
 // Import image assets
-import { clinicLogo, clinicMap, xrayClinic } from '../assets';
+import { clinicLogo, clinicMap, redorLogo, xrayClinic } from '../assets';
 
 type ReferralType = 'doctor' | 'xray' | null;
 
@@ -401,7 +401,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
       setFormData(prev => ({
         ...prev,
         patientId,
-        patientName: patient.name,
+        patientName: formatFullName(patient.name),
         contactNo: patient.phone,
         dateOfBirth: patient.dateOfBirth,
         age: String(age),
@@ -807,7 +807,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
               {/* REDOR Header */}
               <div className="flex justify-between items-start border-b-2 pb-4">
                 <div>
-                  <img src={clinicMap} alt="Clinic Map" className="h-60 object-contain" />
+                  <img src={redorLogo} alt="Redor Logo" className="h-32 object-contain" />
                 </div>
                 <div className="text-right text-xs text-[#105397] border-l border-[#105397] pl-3">
                   <p>37 Quezon Ave., Lucena City</p>
@@ -1770,7 +1770,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                   {/* REDOR Header */}
                   <div className="flex items-center justify-between mb-6">
                     <div>
-                      <img src={clinicMap} alt="Clinic Map" className="h-40 object-contain" />
+                      <img src={redorLogo} alt="Redor Logo" className="h-24 object-contain" />
                     </div>
                     <div className="text-right text-xs text-[#105397] pl-3 border-l border-[#105397]">
                       <p>37 Quezon Ave., Lucena City</p>
