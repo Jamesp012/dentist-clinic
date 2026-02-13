@@ -353,10 +353,41 @@ export function DentalChartWebsite() {
     return key;
   };
 
-  // Render SVG overlays for a tooth. Each condition uses its own SVG layer and
-  // is clipped/masked to the tooth image so visuals exactly match the visible tooth.
-  const renderConditionOverlays = (toothId: string, conditionRaw?: string) => {
-    const condition = normalizeCondition(conditionRaw);
+  // Render SVG overlays for a tooth. Accepts a single condition or an array of conditions.
+  // When multiple conditions are provided, each is rendered in order and masked to the tooth image.
+  const renderConditionOverlays = (toothId: string, conditionRaw?: string | string[]) => {
+    // If multiple conditions provided, compose them in order. "missing" overrides everything.
+    if (Array.isArray(conditionRaw)) {
+      const normalized = conditionRaw.map((c) => normalizeCondition(c));
+      if (normalized.includes('missing')) {
+        // Render missing override (same as single-case missing)
+        return (
+          <div
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            style={{
+              WebkitMaskImage: `url(/all-teeth/${toothId}.png)`,
+              WebkitMaskRepeat: 'no-repeat',
+              WebkitMaskPosition: 'center',
+              WebkitMaskSize: '100% 100%',
+              maskImage: `url(/all-teeth/${toothId}.png)`,
+              maskRepeat: 'no-repeat',
+              maskPosition: 'center',
+              maskSize: '100% 100%',
+            }}
+          >
+            <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <rect x="0" y="0" width="100" height="100" fill="#fb6a72" opacity={1} />
+              <rect x="2" y="2" width="96" height="96" fill="none" stroke="#fb6a72" strokeWidth={1.25} strokeDasharray="2 3" opacity={1} />
+            </svg>
+          </div>
+        );
+      }
+
+      // Otherwise compose each normalized condition by recursing into the single-case renderer
+      return <>{normalized.map((c) => renderConditionOverlays(toothId, c))}</>;
+    }
+
+    const condition = normalizeCondition(conditionRaw as string | undefined);
     const maskId = `mask-tooth-${toothId}`;
     const patternCaries = `pat-caries-${toothId}`;
     const patternCavity = `pat-cavity-${toothId}`;
@@ -633,7 +664,7 @@ export function DentalChartWebsite() {
               placeholder="Search patient..."
               className="px-3 py-2 border border-slate-200 rounded-md w-64 bg-white text-slate-700"
             />
-            {patientQuery.length > 0 && filteredPatients.length > 0 && (
+            {patientQuery.length > 0 && filteredPatients.length > 0 && !(selectedPatientObj && selectedPatientObj.name.toLowerCase() === patientQuery.toLowerCase()) && (
               <div className="absolute mt-1 bg-white border border-slate-200 rounded-md w-64 max-h-48 overflow-auto z-50 shadow-sm">
                 {filteredPatients.map((p) => (
                   <div
@@ -691,11 +722,16 @@ export function DentalChartWebsite() {
             {layout.map((tooth) => {
             const numericId = getToothNumericId(tooth.id);
             const toothData = numericId ? teeth[numericId] : undefined;
-            const condition = toothData?.generalCondition ?? 'healthy';
-            const isMissing = condition === 'missing';
-            const color = condition !== 'healthy' ? CONDITION_COLORS[condition] : undefined;
+            const conditions: string[] = toothData?.conditions && toothData.conditions.length > 0
+              ? toothData.conditions
+              : toothData?.generalCondition
+                ? [toothData.generalCondition]
+                : [];
+            const primaryCondition = conditions[0] ?? 'healthy';
+            const isMissing = conditions.includes('missing');
+            const color = primaryCondition !== 'healthy' ? CONDITION_COLORS[primaryCondition as any] : undefined;
 
-            const zIndex = 10 + (Math.round(tooth.topPct) % 30) + (condition === 'loose' ? 50 : 0); // raise loose teeth above others
+            const zIndex = 10 + (Math.round(tooth.topPct) % 30) + (conditions.includes('loose') ? 50 : 0); // raise loose teeth above others
             return (
               <div
                 key={tooth.id}
@@ -704,12 +740,12 @@ export function DentalChartWebsite() {
                   left: `${tooth.leftPct}%`,
                   top: `${tooth.topPct}%`,
                   width: `${tooth.widthPct}%`,
-                  transform: `translate(-50%, ${condition === 'loose' ? '-60%' : '-50%'})`,
+                  transform: `translate(-50%, ${conditions.includes('loose') ? '-60%' : '-50%'})`,
                   zIndex,
                 }}
                 // Clicks are handled at container level to avoid overlap/hitbox issues
               >
-                {condition === 'loose' && (
+                {conditions.includes('loose') && (
                   <div
                     style={{
                       position: 'absolute',
@@ -730,15 +766,15 @@ export function DentalChartWebsite() {
                 <img
                   src={`/all-teeth/${tooth.id}.png`}
                   alt={`Tooth ${tooth.id}`}
-                  className={`w-full select-none pointer-events-none ${condition === 'loose' ? 'floatLooseAnim' : ''}`}
-                  style={condition === 'loose' ? { zIndex: 2, transition: 'transform 180ms ease' } : undefined}
+                  className={`w-full select-none pointer-events-none ${conditions.includes('loose') ? 'floatLooseAnim' : ''}`}
+                  style={conditions.includes('loose') ? { zIndex: 2, transition: 'transform 180ms ease' } : undefined}
                   draggable={false}
                 />
 
                 {/* Per-condition SVG overlays (exact size/mask, preserves layout and click behaviour) */}
-                {renderConditionOverlays(tooth.id, condition)}
+                {renderConditionOverlays(tooth.id, conditions.length ? conditions : primaryCondition)}
                   {/* Always-visible corner badges for important markers */}
-                  {condition === 'abscess' && (
+                  {conditions.includes('abscess') && (
                     <div style={{ position: 'absolute', right: '-6%', top: '-6%', width: '18%', height: '18%', pointerEvents: 'none', zIndex: 90 }}>
                       <svg viewBox="0 0 24 24" className="w-full h-full">
                         <circle cx="12" cy="12" r="10" fill="#8DB600" />
@@ -747,7 +783,7 @@ export function DentalChartWebsite() {
                       </svg>
                     </div>
                   )}
-                  {condition === 'broken' && (
+                  {conditions.includes('broken') && (
                     <div style={{ position: 'absolute', left: '-6%', top: '-6%', width: '18%', height: '18%', pointerEvents: 'none', zIndex: 90 }}>
                       <svg viewBox="0 0 24 24" className="w-full h-full">
                         <circle cx="12" cy="12" r="10" fill="#fff5f5" />
