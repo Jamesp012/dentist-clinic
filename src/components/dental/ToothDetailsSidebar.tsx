@@ -54,18 +54,22 @@ export function ToothDetailsSidebar({
   };
 
   const handleSetCondition = (condition: ToothData['generalCondition'], label: string) => {
-    // Toggle if clicking same
-    const isSame = toothData.generalCondition === condition;
-    const newCondition = isSame ? 'healthy' : condition;
-    
-    // Update condition AND notes
-    // If setting a new condition, set notes to label.
-    // If clearing (toggle off), maybe clear notes or set to 'Healthy'?
-    const newNotes = isSame ? 'Healthy' : label;
-    
-    onUpdateTooth(selectedTooth, { 
-      generalCondition: newCondition,
-      notes: newNotes
+    // Toggle membership in the `conditions` array (multi-select). Maintain `generalCondition` as a fallback.
+    const existing = toothData.conditions && toothData.conditions.length > 0 ? toothData.conditions.slice() : [toothData.generalCondition];
+    const idx = existing.indexOf(condition as any);
+    if (idx >= 0) {
+      existing.splice(idx, 1);
+    } else {
+      existing.push(condition as any);
+    }
+
+    const normalized = existing.length > 0 ? existing : ['healthy' as ToothData['generalCondition']];
+    const notes = idx >= 0 ? toothData.notes : label;
+
+    onUpdateTooth(selectedTooth, {
+      conditions: normalized as any,
+      generalCondition: (normalized[0] as any) || 'healthy',
+      notes,
     });
   };
 
@@ -250,20 +254,23 @@ export function ToothDetailsSidebar({
                      <h3 className="text-2xl font-light text-slate-600 mb-6">Tooth Conditions</h3>
                      
                      <div className="grid grid-cols-3 gap-4">
-                        {allConditions.map((condition, index) => (
-                          <button
-                            key={index}
-                            onClick={() => handleSetCondition(condition.value, condition.label)}
-                            className={cn(
-                              "p-4 rounded-lg border-2 text-center transition-all font-medium",
-                              toothData.generalCondition === condition.value
-                                ? "border-sky-500 bg-sky-50 text-sky-700"
-                                : "border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700"
-                            )}
-                          >
-                            {condition.label}
-                          </button>
-                        ))}
+                        {allConditions.map((condition, index) => {
+                          const isActive = (toothData.conditions && toothData.conditions.includes(condition.value as any)) || toothData.generalCondition === condition.value;
+                          return (
+                            <button
+                              key={index}
+                              onClick={() => handleSetCondition(condition.value, condition.label)}
+                              className={cn(
+                                "p-4 rounded-lg border-2 text-center transition-all font-medium",
+                                isActive
+                                  ? "border-sky-500 bg-sky-50 text-sky-700"
+                                  : "border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700"
+                              )}
+                            >
+                              {condition.label}
+                            </button>
+                          );
+                        })}
                      </div>
                   </div>
 
