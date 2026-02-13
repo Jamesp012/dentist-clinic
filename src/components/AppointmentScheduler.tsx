@@ -178,19 +178,6 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
       ));
       toast.success('Appointment updated successfully!');
 
-      // If appointment is marked as completed, trigger auto-reduction
-      if (status === 'completed') {
-        try {
-          const inventoryManagementAPI = await import('../api').then(m => m.inventoryManagementAPI);
-          const result = await inventoryManagementAPI.autoReduceForAppointment(id);
-          if (result.reductionsApplied > 0) {
-            toast.success(`Inventory reduced! ${result.reductionsApplied} item(s) deducted.`);
-          }
-        } catch (error) {
-          console.log('No auto-reduction rules for this appointment type or error:', error);
-        }
-      }
-
       // Sync data across all users
       if (onDataChanged) {
         await onDataChanged();

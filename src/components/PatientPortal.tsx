@@ -9,6 +9,7 @@ import { appointmentAPI } from '../api';
 import { Notifications } from './Notifications';
 import { generateReferralPDF } from '../utils/referralPdfGenerator';
 import { SearchableSelect } from './SearchableSelect';
+import SERVICE_TYPES from '../data/serviceTypes';
 import PatientReferralModal from './PatientReferralModal';
 
 // Helper function to extract date string without timezone conversion
@@ -41,6 +42,37 @@ type PatientPortalProps = {
 };
 
 const API_BASE = 'http://localhost:5000/api';
+
+const INCLUDED_BILLING_STATUSES = new Set(
+  [
+    'completed',
+    'approved',
+    'finalized',
+    'paid',
+    'ongoing',
+    'in-progress',
+    'in progress',
+    'billed',
+    'for billing',
+    'ready for billing',
+    'awaiting payment'
+  ].map(status => status.toLowerCase())
+);
+
+const EXCLUDED_BILLING_STATUSES = new Set(
+  [
+    'cancelled',
+    'canceled',
+    'cancelled by patient',
+    'cancelled by clinic',
+    'draft',
+    'pending approval',
+    'pending-approval',
+    'pending',
+    'unapproved',
+    'rejected'
+  ].map(status => status.toLowerCase())
+);
 
 // Helper function to display user name (first and last only, no middle name)
 const getDisplayName = (fullName: string | undefined): string => {
@@ -109,6 +141,60 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
 
   // Patient Add Referral modal
   const [showPatientReferralModal, setShowPatientReferralModal] = useState(false);
+  // Local announcements state so we can sort and append new items locally
+  const [localAnnouncements, setLocalAnnouncements] = useState<Announcement[]>(announcements || []);
+  useEffect(() => { setLocalAnnouncements(announcements || []); }, [announcements]);
+
+  // Create announcement form state
+  const [newAnnTitle, setNewAnnTitle] = useState('');
+  const [newAnnDate, setNewAnnDate] = useState(getDateString(new Date()));
+  const [newAnnType, setNewAnnType] = useState<'general'|'important'|'promo'|'closure'>('general');
+  const [newAnnMessage, setNewAnnMessage] = useState('');
+  const [isSubmittingAnn, setIsSubmittingAnn] = useState(false);
+
+  // Sorted announcements (most recent first)
+  const sortedAnnouncements = (localAnnouncements || []).slice().sort((a, b) => {
+    try { return new Date(b.date).getTime() - new Date(a.date).getTime(); } catch (e) { return 0; }
+  });
+
+  const handleCreateAnnouncement = async () => {
+    if (!newAnnTitle.trim() || !newAnnMessage.trim()) {
+      toast.error('Please provide a title and message');
+      return;
+    }
+    setIsSubmittingAnn(true);
+    const payload = {
+      title: newAnnTitle.trim(),
+      date: newAnnDate,
+      type: newAnnType,
+      message: newAnnMessage.trim(),
+      createdBy: getDisplayName(patient.name) || patient.name || 'You',
+    } as any;
+
+    // Optimistic update
+    const tempAnn: Announcement = { id: `local-${Date.now()}`, ...payload } as Announcement;
+    setLocalAnnouncements(prev => [tempAnn, ...prev]);
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/announcements`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error(await res.text());
+      const saved = await res.json();
+      // Replace temp with saved (match by temp id)
+      setLocalAnnouncements(prev => [saved, ...prev.filter(a => a.id !== tempAnn.id)]);
+      toast.success('Announcement published');
+      setNewAnnTitle(''); setNewAnnMessage(''); setNewAnnDate(getDateString(new Date())); setNewAnnType('general');
+    } catch (err) {
+      console.error('Failed to save announcement', err);
+      toast.error('Failed to publish announcement — saved locally');
+    }
+    setIsSubmittingAnn(false);
+  };
 
   // Patient Referral detail and image preview
   const [selectedPatientReferral, setSelectedPatientReferral] = useState<any | null>(null);
@@ -414,7 +500,34 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
   const patientAppointments = appointments.filter(apt => String(apt.patientId) === String(patient.id));
   // treatmentRecords are already filtered in App.tsx for this patient, so use directly
   const patientRecords = treatmentRecords;
+  const billingEligibleRecords = patientRecords.filter(record => {
+    if (!record) return false;
+    const rawStatus = typeof (record as any).status === 'string' ? (record as any).status.trim().toLowerCase() : '';
+    const billingStatusValue = typeof (record as any).billingStatus === 'string' ? (record as any).billingStatus.trim().toLowerCase() : '';
+    const isExplicitlyExcluded = (rawStatus && EXCLUDED_BILLING_STATUSES.has(rawStatus)) || (billingStatusValue && EXCLUDED_BILLING_STATUSES.has(billingStatusValue));
+    if (isExplicitlyExcluded) return false;
+    const isExplicitlyIncluded = (rawStatus && INCLUDED_BILLING_STATUSES.has(rawStatus)) || (billingStatusValue && INCLUDED_BILLING_STATUSES.has(billingStatusValue));
+    const isMarkedBillable = Boolean(
+      (record as any).isBillable === true ||
+      (record as any).billable === true ||
+      billingStatusValue === 'billable'
+    );
+    const includeByDefault = !rawStatus && !billingStatusValue && !isExplicitlyExcluded;
+    return isExplicitlyIncluded || isMarkedBillable || includeByDefault;
+  });
   const patientPhotos = photos.filter(photo => String(photo.patientId) === String(patient.id));
+  const toComparableDate = (value?: string) => {
+    if (!value) return 0;
+    const normalized = getDateString(value);
+    const timestamp = new Date(normalized).getTime();
+    return Number.isFinite(timestamp) ? timestamp : 0;
+  };
+  const latestRecordEntry = patientRecords.length
+    ? [...patientRecords].sort((a, b) => toComparableDate(b.date) - toComparableDate(a.date))[0]
+    : null;
+  const latestRecordDateLabel = latestRecordEntry?.date
+    ? formatToWordedDate(getDateString(latestRecordEntry.date))
+    : null;
 
   const menuItems = [
     { id: 'home', label: 'Home', icon: Home, color: 'from-teal-500 to-cyan-600' },
@@ -438,6 +551,15 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
     today.setHours(0, 0, 0, 0);
     return aptDate >= today;
   });
+
+  const toLocalDate = (value: string) => {
+    const [year, month, day] = getDateString(value).split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  const nextAppointment = upcomingAppointments
+    .slice()
+    .sort((a, b) => toLocalDate(a.date).getTime() - toLocalDate(b.date).getTime())[0];
 
   const pastAppointments = patientAppointments.filter(apt => {
     if (apt.status === 'completed') return true;
@@ -480,9 +602,33 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
     ...serviceOverrides.filter(service => !defaultServices.some(defaultService => defaultService.id === service.id))
   ];
 
-  const totalSpent = patientRecords.reduce((sum, record) => sum + Number(record.cost || 0), 0);
-  const totalPaid = patientRecords.reduce((sum, record) => sum + Number(record.amountPaid || 0), 0);
-  const currentBalance = patient.totalBalance !== undefined ? Number(patient.totalBalance) : (totalSpent - totalPaid);
+  const totalBilled = billingEligibleRecords.reduce((sum, record) => sum + Number(record?.cost ?? 0), 0);
+  const totalPaidFromRecords = patientRecords.reduce((sum, record) => sum + Number(record?.amountPaid ?? 0), 0);
+  const patientPayments = Array.isArray(payments)
+    ? payments.filter(payment => String(payment.patientId) === String(patient.id))
+    : [];
+  const sortedPatientPayments = patientPayments
+    .slice()
+    .sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime());
+  const recentPayments = sortedPatientPayments.slice(0, 10);
+  const totalPaidFromPayments = patientPayments.reduce((sum, payment) => sum + Number(payment?.amount ?? 0), 0);
+  const totalPaid = totalPaidFromPayments > 0 ? totalPaidFromPayments : totalPaidFromRecords;
+
+  const advancePayments = patientPayments.filter(payment => {
+    if ((payment as any)?.isAdvance) return true;
+    const note = (payment.notes || '').toLowerCase();
+    return note.includes('advance') || note.includes('prepay') || note.includes('pre-pay') || note.includes('downpayment') || note.includes('down payment');
+  });
+  const advancePaymentAmount = advancePayments.reduce((sum, payment) => sum + Number(payment?.amount ?? 0), 0);
+  const regularPaymentAmount = Math.max(totalPaid - advancePaymentAmount, 0);
+  const appliedPayments = Math.min(regularPaymentAmount, totalBilled);
+  const outstandingBalance = Math.max(totalBilled - appliedPayments, 0);
+  const advancePaymentBalance = advancePaymentAmount + Math.max(regularPaymentAmount - totalBilled, 0);
+  const hasAdvancePayment = advancePaymentBalance > 0;
+  const hasOutstandingBalance = outstandingBalance > 0;
+  const nextAppointmentDateLabel = nextAppointment ? formatToWordedDate(getDateString(nextAppointment.date)) : null;
+  const nextAppointmentTimeLabel = nextAppointment ? formatTime(nextAppointment.time) : null;
+
 
   // Debug logging - warn when patientRecords contain unexpected values
   useEffect(() => {
@@ -506,6 +652,26 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
       console.error('PatientPortal debug check failed', err);
     }
   }, [patientRecords, patient.id]);
+
+  // Temporary billing computation debug logs
+  useEffect(() => {
+    try {
+      const includedRecordsDebug = billingEligibleRecords.map(record => ({
+        id: record.id,
+        status: (record as any)?.status ?? 'N/A',
+        cost: Number(record?.cost ?? 0)
+      }));
+      const debugTotal = includedRecordsDebug.reduce((sum, record) => sum + record.cost, 0);
+      console.groupCollapsed(`Billing Debug :: Patient ${patient.id ?? 'unknown'}`);
+      console.table(includedRecordsDebug);
+      console.log('Included treatment IDs:', includedRecordsDebug.map(record => record.id));
+      console.log('Computed Total Billed:', debugTotal);
+      console.log('Total Paid from payments:', totalPaidFromPayments);
+      console.groupEnd();
+    } catch (err) {
+      console.error('Billing debug logging failed', err);
+    }
+  }, [billingEligibleRecords, totalBilled, totalPaidFromPayments, patient.id]);
 
   const handleSaveProfile = () => {
     if (onUpdatePatient) {
@@ -979,34 +1145,86 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.2 }}
-              className="h-full"
+              className="h-screen flex flex-col"
             >
               {activeTab === 'home' && (
-                <div className="p-8 space-y-6 overflow-y-auto scrollbar-visible" style={{ maxHeight: 'calc(100vh - 200px)' }}>
-                  {/* Greeting Section */}
+                <div className="p-6 space-y-4 flex-1">
+                  {/* Hero Banner */}
                   <motion.div
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
+                    transition={{ duration: 0.35 }}
+                    className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-cyan-600 via-teal-500 to-emerald-500 p-6 text-white shadow-xl"
                   >
-                    <h2 className="text-3xl font-bold text-slate-900">Hello, {getDisplayName(patient.name)}! 👋</h2>
+                    <div className="absolute inset-0 pointer-events-none">
+                      <div className="absolute -right-16 -top-12 h-56 w-56 rounded-full bg-white/20 blur-3xl opacity-60"></div>
+                      <div className="absolute -left-12 bottom-0 h-48 w-48 rounded-full bg-emerald-300/30 blur-2xl opacity-50"></div>
+                    </div>
+                    <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                      <div className="max-w-2xl space-y-3">
+                        <h3 className="text-2xl font-semibold leading-tight">Personalized care brief</h3>
+                        <p className="text-sm text-white/80 md:text-base">
+                          Track appointments, monitor balances, and jump into care resources without leaving this view.
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-2 text-sm text-white/90">
+                        <span className="rounded-full border border-white/30 bg-white/10 px-4 py-2 text-center font-semibold backdrop-blur">
+                          {getDisplayName(patient.name)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="relative z-10 mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                      <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-white/70">Next visit</p>
+                        <p className="mt-1 text-lg font-semibold">
+                          {nextAppointmentDateLabel || 'No visit booked'}
+                        </p>
+                        <p className="text-sm text-white/80">
+                          {nextAppointmentTimeLabel || 'Tap Appointments to schedule'}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-white/70">Balance</p>
+                        <p className="mt-1 text-2xl font-bold">
+                          {hasOutstandingBalance && `₱${outstandingBalance.toLocaleString()}`}
+                          {!hasOutstandingBalance && hasAdvancePayment && `₱${advancePaymentBalance.toLocaleString()}`}
+                          {!hasOutstandingBalance && !hasAdvancePayment && '₱0'}
+                        </p>
+                        <p className="text-sm text-white/80">
+                          {hasOutstandingBalance && 'Review from the Balance tab'}
+                          {!hasOutstandingBalance && hasAdvancePayment && 'Funds ready for future services'}
+                          {!hasOutstandingBalance && !hasAdvancePayment && 'You are fully paid'}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-white/70">Care history</p>
+                        <p className="mt-1 text-lg font-semibold">
+                          {patientRecords.length} treatment {patientRecords.length === 1 ? 'entry' : 'entries'}
+                        </p>
+                        <p className="text-sm text-white/80">
+                          {patientPhotos.length} photo{patientPhotos.length === 1 ? '' : 's'} archived
+                        </p>
+                      </div>
+                    </div>
                   </motion.div>
 
                   {/* Two-Column Layout for TODAY'S SCHEDULE and APPOINTMENT STATUS */}
-                  <div className="grid grid-cols-2 gap-8">
+                  <div className="grid grid-cols-2 gap-4">
                     {/* TODAY'S SCHEDULE Card */}
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, delay: 0.1 }}
-                      className="group relative rounded-2xl bg-white border border-slate-200 p-6 hover:shadow-lg transition-all duration-300"
+                      className="group relative rounded-2xl bg-white border border-slate-200 p-4 hover:shadow-lg transition-all duration-300"
                     >
                       <div className="absolute inset-0 bg-gradient-to-br from-rose-50 to-orange-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
                       
                       {/* Card Header with Accent */}
-                      <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-bold text-slate-900 uppercase tracking-wide">TODAY'S SCHEDULE</h3>
-                        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-rose-200 to-orange-200"></div>
+                      <div className="flex items-center justify-center mb-6 relative">
+                        <div className="absolute inset-0 flex justify-center -z-10">
+                          <div className="w-56 h-10 rounded-full bg-gradient-to-br from-white to-slate-50 opacity-60 blur-sm"></div>
+                        </div>
+                        <h3 className="text-lg font-bold uppercase tracking-wide z-10" style={{ color: 'var(--dental-primary-dark)' }}>TODAY'S SCHEDULE</h3>
                       </div>
 
                       {/* Content */}
@@ -1039,13 +1257,15 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                               <div className="flex gap-3 pt-2">
                                 <button
                                   onClick={() => setActiveTab('appointments')}
-                                  className="flex-1 px-4 py-2.5 rounded-lg bg-slate-800 text-white text-sm font-semibold hover:bg-slate-900 transition-colors"
+                                  className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                                  style={{ background: 'var(--primary)', color: 'var(--primary-foreground)' }}
                                 >
                                   View Clinic Map
                                 </button>
                                 <button
                                   onClick={() => toast.success('Attendance confirmed!')}
-                                  className="flex-1 px-4 py-2.5 rounded-lg bg-slate-800 text-white text-sm font-semibold hover:bg-slate-900 transition-colors"
+                                  className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                                  style={{ background: 'var(--primary)', color: 'var(--primary-foreground)' }}
                                 >
                                   Confirm Attendance
                                 </button>
@@ -1059,7 +1279,8 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                               <p className="text-slate-600 font-medium">No appointment scheduled for today</p>
                               <button
                                 onClick={() => setActiveTab('appointments')}
-                                className="mt-4 px-6 py-2 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 text-sm font-semibold"
+                                className="mt-4 px-6 py-2 rounded-lg hover:shadow-lg transition-all duration-300 text-sm font-semibold"
+                                style={{ background: 'linear-gradient(90deg, var(--dental-primary-light), var(--dental-primary))', color: 'var(--primary-foreground)' }}
                               >
                                 Book Now
                               </button>
@@ -1074,26 +1295,37 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, delay: 0.15 }}
-                      className="group relative rounded-2xl bg-white border border-slate-200 p-6 hover:shadow-lg transition-all duration-300"
+                      className="group relative rounded-2xl bg-white border border-slate-200 p-4 hover:shadow-lg transition-all duration-300"
                     >
                       <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
                       
                       {/* Card Header with Accent */}
-                      <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-bold text-slate-900 uppercase tracking-wide">CLINIC NEWS</h3>
-                        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-cyan-200 to-blue-200"></div>
+                      <div className="flex items-center justify-center mb-6 relative">
+                        <div className="absolute inset-0 flex justify-center -z-10">
+                          <div className="w-56 h-10 rounded-full bg-gradient-to-br from-white to-slate-50 opacity-60 blur-sm"></div>
+                        </div>
+                        <h3 className="text-lg font-bold uppercase tracking-wide z-10" style={{ color: 'var(--dental-primary-dark)' }}>CLINIC NEWS</h3>
                       </div>
 
                       {/* Content */}
                       {(() => {
-                        const latestAnnouncement = announcements && announcements.length > 0 ? announcements[announcements.length - 1] : null;
-                        
+                        // Use the sorted list (most recent first)
+                        const latestAnnouncement = sortedAnnouncements && sortedAnnouncements.length > 0 ? sortedAnnouncements[0] : null;
+
                         if (latestAnnouncement) {
                           return (
                             <div className="space-y-4">
                               {/* Title Section */}
                               <div className="pb-4 border-b border-slate-200">
-                                <p className="text-sm text-slate-500 uppercase tracking-wide font-semibold mb-1">Latest Update</p>
+                                <div className="flex items-center justify-between mb-1">
+                                  <p className="text-sm text-slate-500 uppercase tracking-wide font-semibold">Latest Update</p>
+                                  <p className="text-xs font-semibold" style={{ color: 'var(--primary)' }}>
+                                    {latestAnnouncement.date
+                                      ? new Date(latestAnnouncement.date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
+                                      : 'Recently posted'
+                                    }
+                                  </p>
+                                </div>
                                 <p className="font-semibold text-slate-900 line-clamp-2">{latestAnnouncement.title}</p>
                               </div>
 
@@ -1102,17 +1334,11 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                                 <p className="text-sm text-slate-700 line-clamp-3">{latestAnnouncement.message}</p>
                               </div>
 
-                              {/* Date */}
-                              <div className="bg-blue-50 rounded-lg p-3">
-                                <p className="text-xs text-blue-700 font-semibold">
-                                  {latestAnnouncement.date ? formatToDD_MM_YYYY(latestAnnouncement.date) : 'Recently posted'}
-                                </p>
-                              </div>
-
-                              {/* Action Button */}
+                              {/* (date moved into title header) */}
                               <button
                                 onClick={() => setActiveTab('announcements')}
-                                className="w-full px-4 py-2.5 rounded-lg bg-slate-800 text-white text-sm font-semibold hover:bg-slate-900 transition-colors"
+                                className="w-full px-4 py-2.5 rounded-lg text-sm font-semibold"
+                                style={{ background: 'var(--primary)', color: 'var(--primary-foreground)' }}
                               >
                                 View All News
                               </button>
@@ -1131,108 +1357,52 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                     </motion.div>
                   </div>
 
-                  {/* Quick Stats Section */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.2 }}
-                    className="grid grid-cols-3 gap-4"
-                  >
-                    {/* Upcoming Count */}
-                    <div className="group relative rounded-2xl bg-white border border-slate-200 p-5 hover:shadow-lg transition-all duration-300 cursor-pointer" onClick={() => setActiveTab('appointments')}>
-                      <div className="absolute inset-0 bg-gradient-to-br from-cyan-50 to-teal-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
-                      <p className="text-xs font-semibold text-slate-600 uppercase mb-1">Upcoming</p>
-                      <p className="text-2xl font-bold text-slate-900">{upcomingAppointments.length}</p>
-                    </div>
-
-                    {/* Records Count */}
-                    <div className="group relative rounded-2xl bg-white border border-slate-200 p-5 hover:shadow-lg transition-all duration-300 cursor-pointer" onClick={() => setActiveTab('records')}>
-                      <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
-                      <p className="text-xs font-semibold text-slate-600 uppercase mb-1">Records</p>
-                      <p className="text-2xl font-bold text-slate-900">{patientRecords.length}</p>
-                    </div>
-
-                    {/* Balance */}
-                    <div className="group relative rounded-2xl bg-white border border-slate-200 p-5 hover:shadow-lg transition-all duration-300 cursor-pointer" onClick={() => setActiveTab('balance')}>
-                      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
-                      <p className="text-xs font-semibold text-slate-600 uppercase mb-1">Balance</p>
-                      <p className="text-xl font-bold text-slate-900">₱{(() => {
-                        const currentBalance = treatmentRecords.reduce((sum, treatment) => sum + (treatment.remainingBalance !== undefined ? Number(treatment.remainingBalance) : Number(treatment.cost || 0)), 0);
-                        return currentBalance.toLocaleString();
-                      })()}</p>
-                    </div>
-                  </motion.div>
-
-                  {/* Quick Actions */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.25 }}
-                    className="grid grid-cols-2 gap-4"
-                  >
-                    <button
-                      onClick={() => setActiveTab('announcements')}
-                      className="group relative rounded-xl bg-gradient-to-br from-cyan-50 to-teal-50 border border-cyan-200 p-4 hover:shadow-lg transition-all duration-300 text-left"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-100 to-teal-100 rounded-xl opacity-0 group-hover:opacity-50 transition-opacity duration-300 -z-10"></div>
-                      <Megaphone className="w-5 h-5 text-cyan-600 mb-2" />
-                      <p className="font-semibold text-slate-900 text-sm">News & Services</p>
-                    </button>
-
-                    <button
-                      onClick={() => setActiveTab('care-guide')}
-                      className="group relative rounded-xl bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-200 p-4 hover:shadow-lg transition-all duration-300 text-left"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-100 to-green-100 rounded-xl opacity-0 group-hover:opacity-50 transition-opacity duration-300 -z-10"></div>
-                      <Sparkles className="w-5 h-5 text-emerald-600 mb-2" />
-                      <p className="font-semibold text-slate-900 text-sm">Care Guide</p>
-                    </button>
-                  </motion.div>
                 </div>
               )}
               {activeTab === 'profile' && (
-                <div className="p-8 space-y-8 overflow-y-auto scrollbar-visible" style={{ maxHeight: 'calc(100vh - 200px)' }}>
-                    {/* Edit Button - Top Right */}
-                    <div className="flex justify-end">
-                      {!isEditing ? (
-                        <button
-                          onClick={() => setIsEditing(true)}
-                          className="px-6 py-3 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 font-semibold text-sm"
-                        >
-                          <Edit className="w-4 h-4" />
-                          Edit Profile
-                        </button>
-                      ) : (
-                        <div className="flex gap-3">
-                          <button
-                            onClick={handleSaveProfile}
-                            className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 font-semibold text-sm"
-                          >
-                            <Save className="w-4 h-4" />
-                            Save Changes
-                          </button>
-                          <button
-                            onClick={handleCancelEdit}
-                            className="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl hover:bg-slate-300 transition-colors flex items-center gap-2 font-semibold text-sm"
-                          >
-                            <XCircle className="w-4 h-4" />
-                            Cancel
-                          </button>
+                <div className="p-8">
+                  <div className="relative overflow-hidden rounded-[32px] border border-emerald-100/80 bg-gradient-to-br from-emerald-50/80 via-white to-slate-50/80 p-6 shadow-[0_35px_70px_rgba(16,185,129,0.16)] space-y-6 backdrop-blur">
+                    <div className="absolute -right-16 -top-10 h-48 w-48 rounded-full bg-emerald-200/40 blur-3xl"></div>
+                    <div className="absolute -left-8 bottom-0 h-64 w-64 rounded-full bg-teal-100/40 blur-[120px]"></div>
+                    <div className="relative z-10 space-y-8">
+                      <div className="flex justify-end">
+                        <div className="flex flex-wrap gap-3 justify-end">
+                          {!isEditing ? (
+                            <button
+                              onClick={() => setIsEditing(true)}
+                              className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl shadow-md hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 font-semibold text-sm"
+                            >
+                              <Edit className="w-4 h-4" />
+                              Edit Profile
+                            </button>
+                          ) : (
+                            <>
+                              <button
+                                onClick={handleSaveProfile}
+                                className="px-6 py-3 bg-white text-emerald-600 rounded-2xl font-semibold text-sm shadow-md hover:-translate-y-0.5 transition-all flex items-center gap-2"
+                              >
+                                <Save className="w-4 h-4" />
+                                Save Changes
+                              </button>
+                              <button
+                                onClick={handleCancelEdit}
+                                className="px-6 py-3 border border-emerald-200 text-emerald-700 rounded-2xl font-semibold text-sm hover:bg-white/70 transition-all flex items-center gap-2"
+                              >
+                                <XCircle className="w-4 h-4" />
+                                Cancel
+                              </button>
+                            </>
+                          )}
                         </div>
-                      )}
-                    </div>
-                    
-                    {/* Personal Details Section */}
-                  <div className="space-y-4">
-                    <div className="pb-3 border-b-2 border-slate-200">
+                      </div>
+
+                  <div className="rounded-[28px] border border-emerald-100/70 bg-gradient-to-br from-emerald-50/70 via-white to-slate-50/70 p-6 shadow-[0_30px_60px_rgba(15,23,42,0.12)] space-y-6 backdrop-blur">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
                       <h4 className="text-lg font-bold text-slate-900">Personal Details</h4>
                     </div>
-                    
-                    {/* Grid Layout for Personal Information */}
                     <div className="grid grid-cols-2 gap-6">
-                      {/* Full Name Card */}
-                      <div className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                        <div className="absolute inset-0 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                      <div className="group relative overflow-hidden rounded-3xl border border-slate-100/80 bg-white/95 p-6 shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_25px_55px_rgba(15,23,42,0.12)]">
+                        <div className="absolute inset-0 -z-10 pointer-events-none bg-gradient-to-br from-teal-50 to-cyan-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Full Name</label>
                         {isEditing ? (
                           <input
@@ -1246,16 +1416,14 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                         )}
                       </div>
 
-                      {/* Age Card */}
-                      <div className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                      <div className="group relative overflow-hidden rounded-3xl border border-slate-100/80 bg-white/95 p-6 shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_25px_55px_rgba(15,23,42,0.12)]">
+                        <div className="absolute inset-0 -z-10 pointer-events-none bg-gradient-to-br from-blue-50 to-indigo-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Age</label>
                         <p className="text-lg font-semibold text-slate-900">{isEditing ? calculateAge(editedPatient.dateOfBirth) : calculateAge(patient.dateOfBirth)} years old</p>
                       </div>
 
-                      {/* Sex Card */}
-                      <div className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                        <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                      <div className="group relative overflow-hidden rounded-3xl border border-slate-100/80 bg-white/95 p-6 shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_25px_55px_rgba(15,23,42,0.12)]">
+                        <div className="absolute inset-0 -z-10 pointer-events-none bg-gradient-to-br from-green-50 to-emerald-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Sex</label>
                         {isEditing ? (
                           <select
@@ -1271,9 +1439,8 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                         )}
                       </div>
 
-                      {/* Date of Birth Card */}
-                      <div className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                        <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                      <div className="group relative overflow-hidden rounded-3xl border border-slate-100/80 bg-white/95 p-6 shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_25px_55px_rgba(15,23,42,0.12)]">
+                        <div className="absolute inset-0 -z-10 pointer-events-none bg-gradient-to-br from-purple-50 to-pink-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Date of Birth</label>
                         {isEditing ? (
                           <div className="relative">
@@ -1317,16 +1484,13 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                     </div>
                   </div>
 
-                  {/* Contact Information Section */}
-                  <div className="space-y-4">
-                    <div className="pb-3 border-b-2 border-slate-200">
+                  <div className="rounded-[28px] border border-emerald-100/70 bg-gradient-to-br from-emerald-50/70 via-white to-slate-50/70 p-6 shadow-[0_30px_60px_rgba(15,23,42,0.12)] space-y-6 backdrop-blur">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
                       <h4 className="text-lg font-bold text-slate-900">Contact Information</h4>
                     </div>
-
                     <div className="grid grid-cols-2 gap-6">
-                      {/* Phone Card */}
-                      <div className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                        <div className="absolute inset-0 bg-gradient-to-br from-cyan-50 to-sky-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                      <div className="group relative overflow-hidden rounded-3xl border border-slate-100/80 bg-white/95 p-6 shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_25px_55px_rgba(15,23,42,0.12)]">
+                        <div className="absolute inset-0 -z-10 pointer-events-none bg-gradient-to-br from-cyan-50 to-sky-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Phone Number</label>
                         {isEditing ? (
                           <input
@@ -1343,13 +1507,12 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                             className="w-full px-4 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
                           />
                         ) : (
-                          <p className="text-lg font-semibold text-slate-900">{patient.phone}</p>
+                          <p className="text-lg font-semibold text-slate-900">{patient.phone || 'No phone on file'}</p>
                         )}
                       </div>
 
-                      {/* Email Card */}
-                      <div className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                        <div className="absolute inset-0 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                      <div className="group relative overflow-hidden rounded-3xl border border-slate-100/80 bg-white/95 p-6 shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_25px_55px_rgba(15,23,42,0.12)]">
+                        <div className="absolute inset-0 -z-10 pointer-events-none bg-gradient-to-br from-amber-50 to-orange-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Email Address</label>
                         {isEditing ? (
                           <input
@@ -1359,13 +1522,12 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                             className="w-full px-4 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
                           />
                         ) : (
-                          <p className="text-lg font-semibold text-slate-900">{patient.email}</p>
+                          <p className="text-lg font-semibold text-slate-900">{patient.email || 'No email on file'}</p>
                         )}
                       </div>
 
-                      {/* Address Card - Full Width */}
-                      <div className="col-span-2 group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                        <div className="absolute inset-0 bg-gradient-to-br from-rose-50 to-red-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                      <div className="col-span-2 group relative overflow-hidden rounded-3xl border border-slate-100/80 bg-white/95 p-6 shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_25px_55px_rgba(15,23,42,0.12)]">
+                        <div className="absolute inset-0 -z-10 pointer-events-none bg-gradient-to-br from-rose-50 to-red-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Address</label>
                         {isEditing ? (
                           <input
@@ -1375,22 +1537,19 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                             className="w-full px-4 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
                           />
                         ) : (
-                          <p className="text-lg font-semibold text-slate-900">{patient.address}</p>
+                          <p className="text-lg font-semibold text-slate-900">{patient.address || 'No address on file'}</p>
                         )}
                       </div>
                     </div>
                   </div>
 
-                  {/* Medical Information Section */}
-                  <div className="space-y-4">
-                    <div className="pb-3 border-b-2 border-slate-200">
+                  <div className="rounded-[28px] border border-emerald-100/70 bg-gradient-to-br from-emerald-50/70 via-white to-slate-50/70 p-6 shadow-[0_30px_60px_rgba(15,23,42,0.12)] space-y-6 backdrop-blur">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
                       <h4 className="text-lg font-bold text-slate-900">Medical Information</h4>
                     </div>
-                    
                     <div className="grid grid-cols-2 gap-6">
-                      {/* Medical History Card */}
-                      <div className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                        <div className="absolute inset-0 bg-gradient-to-br from-teal-50 to-emerald-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                      <div className="group relative overflow-hidden rounded-3xl border border-slate-100/80 bg-white/95 p-6 shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_25px_55px_rgba(15,23,42,0.12)]">
+                        <div className="absolute inset-0 -z-10 pointer-events-none bg-gradient-to-br from-teal-50 to-emerald-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block">Medical History</label>
                         {isEditing ? (
                           <textarea
@@ -1404,9 +1563,8 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                         )}
                       </div>
 
-                      {/* Allergies Card */}
-                      <div className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                        <div className="absolute inset-0 bg-gradient-to-br from-red-50 to-rose-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                      <div className="group relative overflow-hidden rounded-3xl border border-slate-100/80 bg-white/95 p-6 shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_25px_55px_rgba(15,23,42,0.12)]">
+                        <div className="absolute inset-0 -z-10 pointer-events-none bg-gradient-to-br from-red-50 to-rose-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block">Allergies</label>
                         {isEditing ? (
                           <textarea
@@ -1423,12 +1581,14 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                       </div>
                     </div>
                   </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
             {/* Appointments Tab */}
             {activeTab === 'appointments' && (
-              <div className="p-8 space-y-6 overflow-y-auto scrollbar-visible" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+              <div className="p-6 space-y-4 flex-1">
                 {/* Book New Appointment Form */}
                 <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200 shadow-lg">
                   <h2 className="text-xl mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-2">
@@ -1511,29 +1671,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                       </label>
                       {showServiceChecklist && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
-                          {[
-                            'Dental consultation',
-                            'Oral examination',
-                            'Diagnosis',
-                            'Treatment planning',
-                            'Dental cleaning',
-                            'Scaling',
-                            'Polishing',
-                            'Stain removal',
-                            'Temporary filling',
-                            'Permanent filling',
-                            'Tooth repair',
-                            'Dental bonding',
-                            'Simple tooth extraction',
-                            'Surgical extraction',
-                            'Impacted tooth removal',
-                            'Braces installation',
-                            'Braces adjustment',
-                            'Retainers',
-                            'Orthodontic consultation',
-                            'Complete dentures',
-                            'Partial dentures'
-                          ].map(service => (
+                          {SERVICE_TYPES.map(service => (
                             <label key={service} className="flex items-center gap-2 bg-white border border-purple-200 rounded px-2 py-1 cursor-pointer hover:bg-purple-50 transition">
                               <input
                                 type="checkbox"
@@ -1700,7 +1838,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
             {activeTab === 'records' && (
               <>
                 <div 
-                  className="p-8 bg-white/95 overflow-y-auto scrollbar-accent"
+                  className="p-6 bg-white/95"
                   style={{
                     maxHeight: 'calc(100vh - 200px)',
                     scrollBehavior: 'smooth',
@@ -1821,7 +1959,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
 
             {/* Forms Tab */}
             {activeTab === 'forms' && (
-              <div className="p-8 space-y-8 overflow-y-auto scrollbar-visible no-hover-translate" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+              <div className="p-6 space-y-6 no-hover-translate">
                 <style>{`.no-hover-translate .group:hover{transform:none !important} .no-hover-translate button:hover{transform:none !important}`}</style>
                 {isLoadingForms ? (
                   <div className="col-span-full flex items-center justify-center py-16">
@@ -1840,10 +1978,10 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                         role="tab"
                         aria-selected={formsTab === 'doctor'}
                         onClick={() => setFormsTab('doctor')}
-                        className={`px-4 py-2 -mb-px rounded-t-lg font-semibold transition-colors ${formsTab === 'doctor' ? 'text-slate-900 border-b-2 border-emerald-400' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`flex-1 text-center px-4 py-2 rounded-t-lg font-semibold transition-colors ${formsTab === 'doctor' ? 'bg-teal-500 text-white -mb-px border-b-2 border-teal-300' : 'bg-teal-50 text-teal-600 hover:bg-teal-50/90'}`}
                       >
                         Doctor’s Referral
-                        <span className="ml-2 inline-flex items-center justify-center text-xs px-2 py-0.5 bg-emerald-50 text-emerald-500 rounded-full border border-emerald-100">
+                        <span className="ml-2 inline-flex items-center justify-center text-xs px-2 py-0.5 bg-teal-50 text-teal-500 rounded-full border border-teal-100">
                           {referrals.filter(r => r.specialty !== 'X-Ray Imaging' && r.referredTo !== 'X-Ray Facility').length}
                         </span>
                       </button>
@@ -1852,10 +1990,10 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                         role="tab"
                         aria-selected={formsTab === 'xray'}
                         onClick={() => setFormsTab('xray')}
-                        className={`px-4 py-2 -mb-px rounded-t-lg font-semibold transition-colors ${formsTab === 'xray' ? 'text-slate-900 border-b-2 border-emerald-400' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`flex-1 text-center px-4 py-2 rounded-t-lg font-semibold transition-colors ${formsTab === 'xray' ? 'bg-teal-500 text-white -mb-px border-b-2 border-teal-300' : 'bg-teal-50 text-teal-600 hover:bg-teal-50/90'}`}
                       >
                         X-ray Referral
-                        <span className="ml-2 inline-flex items-center justify-center text-xs px-2 py-0.5 bg-emerald-50 text-emerald-500 rounded-full border border-emerald-100">
+                        <span className="ml-2 inline-flex items-center justify-center text-xs px-2 py-0.5 bg-teal-50 text-teal-500 rounded-full border border-teal-100">
                           {referrals.filter(r => r.specialty === 'X-Ray Imaging' || r.referredTo === 'X-Ray Facility').length}
                         </span>
                       </button>
@@ -1864,10 +2002,10 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                         role="tab"
                         aria-selected={formsTab === 'patient'}
                         onClick={() => setFormsTab('patient')}
-                        className={`px-4 py-2 -mb-px rounded-t-lg font-semibold transition-colors ${formsTab === 'patient' ? 'text-slate-900 border-b-2 border-emerald-400' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`flex-1 text-center px-4 py-2 rounded-t-lg font-semibold transition-colors ${formsTab === 'patient' ? 'bg-teal-500 text-white -mb-px border-b-2 border-teal-300' : 'bg-teal-50 text-teal-600 hover:bg-teal-50/90'}`}
                       >
                         Your Referrals
-                        <span className="ml-2 inline-flex items-center justify-center text-xs px-2 py-0.5 bg-emerald-50 text-emerald-500 rounded-full border border-emerald-100">
+                        <span className="ml-2 inline-flex items-center justify-center text-xs px-2 py-0.5 bg-teal-50 text-teal-500 rounded-full border border-teal-100">
                           {referrals.filter(r => r.createdByRole === 'patient' && String(r.patientId) === String(patient.id)).length}
                         </span>
                       </button>
@@ -1875,7 +2013,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                       {/* Add button shown to patient when viewing their referrals */}
                       <div className="ml-auto">
                         {formsTab === 'patient' && (
-                          <button onClick={() => setShowPatientReferralModal(true)} className="px-4 py-2 bg-emerald-600 text-white rounded-lg">Add</button>
+                          <button onClick={() => setShowPatientReferralModal(true)} className="px-4 py-2 bg-teal-500 text-white rounded-lg">Add</button>
                         )}
                       </div>
                     </div>
@@ -1913,29 +2051,26 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                             .map(referral => (
                               <div
                                 key={referral.id}
-                                className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 overflow-hidden"
+                                className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 overflow-hidden ring-0 hover:ring-2 hover:ring-teal-200/60"
                               >
-                                <div className="absolute -right-12 -top-12 w-32 h-32 bg-emerald-50 rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-                                <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                <div className="absolute -right-12 -top-12 w-32 h-32 bg-teal-50 rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+                                <div className="absolute inset-0 bg-gradient-to-br from-teal-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
                                 <div className="relative flex justify-between items-start gap-4">
                                   <div className="flex-1">
                                     <div className="flex items-start gap-3 mb-3">
-                                      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-emerald-50 to-emerald-50 border border-emerald-100 rounded-xl flex items-center justify-center">
-                                        <FileText className="w-5 h-5 text-emerald-500" />
+                                      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-teal-50 to-teal-50 border border-teal-100 rounded-xl flex items-center justify-center">
+                                        <FileText className="w-5 h-5 text-teal-500" />
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                        <h4 className="font-bold text-slate-900 text-base">Referred to: {referral.referredTo || referral.specialty}</h4>
+                                        <h4 className="font-bold text-slate-900 text-base">Referred to: {referral.referredTo}</h4>
                                         <p className="text-sm font-medium text-slate-500 mt-0.5">Dr. {referral.referringDentist}</p>
                                       </div>
                                     </div>
 
                                     <div className="space-y-2 mt-4">
-                                      <div className="flex items-center justify-between">
-                                        <span className="text-sm text-slate-600 font-medium">Specialty:</span>
-                                        <span className="text-sm font-semibold text-slate-900">{referral.specialty || 'General'}</span>
-                                      </div>
-                                      <div className="flex items-center justify-between">
+                                      {/* Specialty removed per design request */}
+                                      <div className="flex items-center gap-2">
                                         <span className="text-sm text-slate-600 font-medium">Date:</span>
                                         <span className="text-sm font-semibold text-slate-900">
                                           {new Date(referral.createdAt || referral.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
@@ -1953,7 +2088,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
 
                                   <button
                                     onClick={() => generateReferralPDF(referral, patient)}
-                                    className="flex-shrink-0 px-4 py-2.5 bg-gradient-to-r from-emerald-400 to-emerald-500 text-white font-semibold rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 text-sm"
+                                    className="flex-shrink-0 px-4 py-2.5 bg-gradient-to-r from-teal-300 to-teal-400 text-white font-semibold rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 text-sm"
                                   >
                                     <Download size={16} />
                                     <span>PDF</span>
@@ -1980,16 +2115,16 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                             .map(referral => (
                               <div
                                 key={referral.id}
-                                className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 overflow-hidden"
+                                className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 overflow-hidden ring-0 hover:ring-2 hover:ring-teal-200/60"
                               >
-                                <div className="absolute -right-12 -top-12 w-32 h-32 bg-emerald-50 rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-                                <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                <div className="absolute -right-12 -top-12 w-32 h-32 bg-teal-50 rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+                                <div className="absolute inset-0 bg-gradient-to-br from-teal-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
                                 <div className="relative flex justify-between items-start gap-4">
                                   <div className="flex-1">
                                     <div className="flex items-start gap-3 mb-3">
-                                      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-emerald-50 to-emerald-50 border border-emerald-100 rounded-xl flex items-center justify-center">
-                                        <FileText className="w-5 h-5 text-emerald-500" />
+                                      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-teal-50 to-teal-50 border border-teal-100 rounded-xl flex items-center justify-center">
+                                        <FileText className="w-5 h-5 text-teal-500" />
                                       </div>
                                       <div className="flex-1 min-w-0">
                                         <h4 className="font-bold text-slate-900 text-base">X-Ray Referral</h4>
@@ -2002,7 +2137,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                                         <span className="text-sm text-slate-600 font-medium">Facility:</span>
                                         <span className="text-sm font-semibold text-slate-900">{referral.referredTo}</span>
                                       </div>
-                                      <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-2">
                                         <span className="text-sm text-slate-600 font-medium">Date:</span>
                                         <span className="text-sm font-semibold text-slate-900">
                                           {new Date(referral.createdAt || referral.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
@@ -2020,7 +2155,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
 
                                   <button
                                     onClick={() => generateReferralPDF(referral, patient)}
-                                    className="flex-shrink-0 px-4 py-2.5 bg-gradient-to-r from-emerald-400 to-emerald-500 text-white font-semibold rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 text-sm"
+                                    className="flex-shrink-0 px-4 py-2.5 bg-gradient-to-r from-teal-300 to-teal-400 text-white font-semibold rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 text-sm"
                                   >
                                     <Download size={16} />
                                     <span>PDF</span>
@@ -2045,22 +2180,26 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                             .filter(r => r.createdByRole === 'patient' && String(r.patientId) === String(patient.id))
                             .sort((a, b) => new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime())
                             .map(referral => (
-                              <div key={referral.id} className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 overflow-hidden">
+                              <div key={referral.id} className="group relative bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 overflow-hidden ring-0 hover:ring-2 hover:ring-teal-200/60">
+                                <div className="absolute -right-12 -top-12 w-32 h-32 bg-teal-50 rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+                                <div className="absolute inset-0 bg-gradient-to-br from-teal-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                 <div className="relative flex justify-between items-start gap-4">
                                   <div className="flex-1">
                                     <div className="flex items-start gap-3 mb-3">
-                                      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-emerald-50 to-emerald-50 border border-emerald-100 rounded-xl flex items-center justify-center">
-                                        <FileText className="w-5 h-5 text-emerald-500" />
+                                      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-teal-50 to-teal-50 border border-teal-100 rounded-xl flex items-center justify-center">
+                                        <FileText className="w-5 h-5 text-teal-500" />
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                        <h4 className="font-bold text-slate-900 text-base">{referral.referredTo || referral.specialty || 'Referral'}</h4>
+                                        <h4 className="font-bold text-slate-900 text-base">{referral.referredTo || 'Referral'}</h4>
                                         <p className="text-sm font-medium text-slate-500 mt-0.5">{referral.referringDentist}</p>
                                       </div>
                                     </div>
 
                                     <div className="mt-4 pt-4 border-t border-slate-100">
-                                      <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">Date</p>
-                                      <p className="text-sm text-slate-700 leading-relaxed">{new Date(referral.createdAt || referral.date).toLocaleDateString()}</p>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-xs font-semibold text-slate-600 uppercase">Date</span>
+                                        <span className="text-sm text-slate-700">{new Date(referral.createdAt || referral.date).toLocaleDateString()}</span>
+                                      </div>
                                     </div>
 
                                     {referral.reason && (
@@ -2272,7 +2411,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
 
                     <div>
                       <p className="text-sm font-semibold">Referred By</p>
-                      <p className="font-medium">{selectedPatientReferral.referringDentist}</p>
+                      <p className="font-medium">By: {selectedPatientReferral.referringDentist}</p>
                     </div>
 
                     <div>
@@ -2323,7 +2462,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
 
             {/* Photos Tab */}
             {activeTab === 'photos' && (
-              <div className="p-8 space-y-6 flex flex-col h-full overflow-hidden">
+              <div className="p-6 space-y-4 flex flex-col h-full overflow-hidden">
                 <div className="flex-shrink-0">
                   <h2 className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-cyan-500 bg-clip-text text-transparent mb-2">
                     Treatment Photos & X-Rays
@@ -2382,7 +2521,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
 
             {/* Billing Balance Tab */}
             {activeTab === 'balance' && (
-              <div className="p-8 space-y-6 overflow-y-auto scrollbar-visible bg-gradient-to-b from-slate-50 to-slate-100/50" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+              <div className="p-6 space-y-4 bg-gradient-to-b from-slate-50 to-slate-100/50 flex-1">
                 {/* Premium Header */}
                 <div className="mb-8">
                   <h2 className="text-4xl font-bold text-slate-900 tracking-tight mb-2">Billing & Payments</h2>
@@ -2403,25 +2542,27 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                     <div className="flex justify-between items-start mb-6">
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Current Balance</p>
-                        <p className={`text-5xl font-bold tracking-tight mb-1 ${currentBalance > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-                          ₱{currentBalance.toLocaleString()}
+                        <p className={`text-5xl font-bold tracking-tight mb-1 ${hasOutstandingBalance ? 'text-red-600' : hasAdvancePayment ? 'text-emerald-600' : 'text-emerald-600'}`}>
+                          {hasOutstandingBalance && `₱${outstandingBalance.toLocaleString()}`}
+                          {!hasOutstandingBalance && hasAdvancePayment && `₱${advancePaymentBalance.toLocaleString()}`}
+                          {!hasOutstandingBalance && !hasAdvancePayment && '₱0'}
                         </p>
                         <p className="text-sm text-slate-500">As of {formatToDD_MM_YYYY(new Date())}</p>
                       </div>
                       <div className="flex-shrink-0">
                         <div className={`w-20 h-20 rounded-2xl flex items-center justify-center transition-all duration-300 ${
-                          currentBalance > 0 
+                          hasOutstandingBalance 
                             ? 'bg-gradient-to-br from-red-100 to-red-50 group-hover:from-red-200 group-hover:to-red-100' 
                             : 'bg-gradient-to-br from-emerald-100 to-emerald-50 group-hover:from-emerald-200 group-hover:to-emerald-100'
                         }`}>
                           <CreditCard className={`w-10 h-10 transition-transform duration-300 group-hover:scale-110 ${
-                            currentBalance > 0 ? 'text-red-600' : 'text-emerald-600'
+                            hasOutstandingBalance ? 'text-red-600' : 'text-emerald-600'
                           }`} />
                         </div>
                       </div>
                     </div>
 
-                    {currentBalance > 0 && (
+                    {hasOutstandingBalance && (
                       <div className="mt-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 rounded-xl flex items-start gap-3 backdrop-blur-sm hover:shadow-md transition-all duration-300">
                         <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                         <p className="text-sm text-amber-900 font-medium">
@@ -2429,11 +2570,20 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                         </p>
                       </div>
                     )}
+
+                    {!hasOutstandingBalance && hasAdvancePayment && (
+                      <div className="mt-6 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/60 rounded-xl flex items-start gap-3 backdrop-blur-sm hover:shadow-md transition-all duration-300">
+                        <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm text-emerald-900 font-medium">
+                          Balance on file: ₱{advancePaymentBalance.toLocaleString()}. We will apply this once new treatment charges are created.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
 
                 {/* Payment Breakdown - Premium Cards */}
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
                   <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -2444,7 +2594,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                     <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-100 to-purple-100 opacity-10 rounded-full -z-10 group-hover:opacity-20 transition-opacity duration-300"></div>
                     
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Total Billed</p>
-                    <p className="text-3xl font-bold text-slate-900 mb-4">₱{totalSpent.toLocaleString()}</p>
+                    <p className="text-3xl font-bold text-slate-900 mb-4">₱{totalBilled.toLocaleString()}</p>
                     <div className="w-12 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
                   </motion.div>
 
@@ -2457,8 +2607,13 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                     <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-white to-teal-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
                     <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-100 to-teal-100 opacity-10 rounded-full -z-10 group-hover:opacity-20 transition-opacity duration-300"></div>
                     
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Total Paid</p>
-                    <p className="text-3xl font-bold text-emerald-600 mb-4">₱{totalPaid.toLocaleString()}</p>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Total Paid</p>
+                    <p className="text-3xl font-bold text-emerald-600 mb-2">₱{appliedPayments.toLocaleString()}</p>
+                    <p className="text-xs font-medium text-slate-500">
+                      {patientPayments.length > 0
+                        ? `Payments applied to your billed services. Recent ${recentPayments.length === 1 ? 'payment' : `${recentPayments.length} payments`} shown below${hasAdvancePayment ? ` · ₱${advancePaymentBalance.toLocaleString()}` : ''}`
+                        : 'No recorded payments yet'}
+                    </p>
                     <div className="w-12 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"></div>
                   </motion.div>
                 </div>
@@ -2478,11 +2633,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                   </div>
 
                   <div className="space-y-3">
-                    {payments
-                      .filter(p => String(p.patientId) === String(patient.id))
-                      .sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime())
-                      .slice(0, 10)
-                      .map(payment => (
+                    {recentPayments.map(payment => (
                         <motion.div 
                           key={payment.id} 
                           initial={{ opacity: 0, x: -20 }}
@@ -2503,11 +2654,11 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                                 {payment.notes && <p className="text-xs text-slate-400 mt-1.5 truncate">{payment.notes}</p>}
                               </div>
                             </div>
-                            <p className="text-xl font-bold text-emerald-600 flex-shrink-0 ml-4">₱{payment.amount}</p>
+                            <p className="text-xl font-bold text-emerald-600 flex-shrink-0 ml-4">₱{Number(payment.amount ?? 0).toLocaleString()}</p>
                           </div>
                         </motion.div>
                       ))}
-                    {payments.filter(p => String(p.patientId) === String(patient.id)).length === 0 && (
+                    {patientPayments.length === 0 && (
                       <div className="text-center py-12 bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl border border-dashed border-slate-300">
                         <History className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                         <p className="text-slate-500 font-medium">No payment records found</p>
@@ -2547,7 +2698,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
 
                     {/* Table Body */}
                     <div className="divide-y divide-slate-100">
-                      {patientRecords.slice().reverse().map((record, idx) => (
+                      {billingEligibleRecords.slice().reverse().map((record, idx) => (
                         <motion.div 
                           key={record.id}
                           initial={{ opacity: 0 }}
@@ -2569,7 +2720,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                     </div>
 
                     {/* Empty State */}
-                    {patientRecords.length === 0 && (
+                    {billingEligibleRecords.length === 0 && (
                       <div className="text-center py-12 px-6">
                         <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                         <p className="text-slate-500 font-medium">No treatment charges found</p>
@@ -2583,7 +2734,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
 
             {/* Care Guide Tab */}
             {activeTab === 'care-guide' && (
-              <div className="p-8 space-y-6 overflow-y-auto scrollbar-visible" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+              <div className="p-6 space-y-4 flex-1">
                 {/* Before Treatment */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -2788,7 +2939,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
 
             {/* Announcements Tab */}
             {activeTab === 'announcements' && (
-              <div className="p-8 space-y-8 overflow-y-auto scrollbar-visible" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+              <div className="p-6 space-y-6" >
                 {/* Sub-Tab Navigation */}
                 <div className="flex gap-4 border-b-2 border-gray-200/50">
                   <button
@@ -2816,9 +2967,9 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                 {/* Announcements Sub-Section */}
                 {announcementSubTab === 'announcements' && (
                   <div>
-                    {announcements && announcements.length > 0 ? (
+                    {sortedAnnouncements && sortedAnnouncements.length > 0 ? (
                       <div className="space-y-3">
-                        {announcements.map(ann => (
+                        {sortedAnnouncements.map(ann => (
                           <motion.div
                             key={ann.id}
                             initial={{ opacity: 0, y: 20 }}

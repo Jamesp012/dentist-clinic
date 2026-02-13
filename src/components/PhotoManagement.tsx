@@ -215,14 +215,14 @@ export function PhotoManagement({ photos, patients, onDataChanged }: PhotoManage
                             <Camera className="w-5 h-5" />
                           </button>
                           <button
-                            onClick={() => setShowReplaceModal(photo.id)}
+                            onClick={() => setShowReplaceModal(String(photo.id))}
                             className="p-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
                             title="Replace"
                           >
                             <RotateCcw className="w-5 h-5" />
                           </button>
                           <button
-                            onClick={() => setShowDeleteConfirm(photo.id)}
+                            onClick={() => setShowDeleteConfirm(String(photo.id))}
                             className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                             title="Delete"
                           >
@@ -291,14 +291,14 @@ export function PhotoManagement({ photos, patients, onDataChanged }: PhotoManage
                 {/* Action Buttons */}
                 <div className="absolute top-4 left-4 flex gap-2 z-10">
                   <button
-                    onClick={() => setShowReplaceModal(selectedPhoto.id)}
+                    onClick={() => setShowReplaceModal(String(selectedPhoto.id))}
                     className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors flex items-center gap-2"
                   >
                     <RotateCcw className="w-4 h-4" />
                     Replace
                   </button>
                   <button
-                    onClick={() => setShowDeleteConfirm(selectedPhoto.id)}
+                    onClick={() => setShowDeleteConfirm(String(selectedPhoto.id))}
                     className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -361,7 +361,12 @@ export function PhotoManagement({ photos, patients, onDataChanged }: PhotoManage
                     Cancel
                   </button>
                   <button
-                    onClick={() => handleDeletePhoto(showDeleteConfirm)}
+                    onClick={() => {
+                      if (!showDeleteConfirm) {
+                        return;
+                      }
+                      void handleDeletePhoto(showDeleteConfirm);
+                    }}
                     disabled={isDeletingPhotoId === showDeleteConfirm}
                     className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -397,7 +402,12 @@ export function PhotoManagement({ photos, patients, onDataChanged }: PhotoManage
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => handleReplacePhoto(showReplaceModal, e)}
+                    onChange={(e) => {
+                      if (!showReplaceModal) {
+                        return;
+                      }
+                      void handleReplacePhoto(showReplaceModal, e);
+                    }}
                     disabled={isUploading}
                     className="hidden"
                   />

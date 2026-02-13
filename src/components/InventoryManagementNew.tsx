@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { InventoryItem } from '../App';
 import { Package, Plus, X, Edit, Search, Zap, AlertCircle, TrendingDown, History, Settings, Eye, Trash2, Save, Loader } from 'lucide-react';
+import SERVICE_TYPES from '../data/serviceTypes';
 import { toast } from 'sonner';
 import { inventoryAPI } from '../api';
+import { getBaseQuantity, getQuantityBreakdown, formatQuantityDisplay, getBaseUnitLabel, getMainUnitLabel, getConversionValue } from '../utils/inventoryUnits';
 
 type InventoryManagementProps = {
   inventory: InventoryItem[];
@@ -48,13 +50,21 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
   // Auto-reduction state
   const [appointmentType, setAppointmentType] = useState('');
   const [selectedItemId, setSelectedItemId] = useState<number | string>('');
-  const [quantityToReduce, setQuantityToReduce] = useState(1);
+  const [quantityToReduce, setQuantityToReduce] = useState<string>('');
   const [editingRuleId, setEditingRuleId] = useState<number | null>(null);
   const [editingQuantity, setEditingQuantity] = useState(1);
 
   // History filters
   const [historyFilter, setHistoryFilter] = useState<'all' | 'patient' | 'item' | 'appointment'>('all');
   const [filterValue, setFilterValue] = useState('');
+
+  const getMinLevel = (item: InventoryItem) => Math.max(0, item.minQuantity || 0);
+  const getStockStatus = (item: InventoryItem) => {
+    const baseQty = getBaseQuantity(item);
+    if (baseQty === 0) return 'out_of_stock';
+    if (baseQty <= getMinLevel(item)) return 'critical';
+    return 'normal';
+  };
 
   // Load auto-reduction rules
   const loadAutoReductionRules = async () => {
@@ -189,6 +199,11 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
       return;
     }
 
+    if (!quantityToReduce || String(quantityToReduce).trim() === '') {
+      toast.error('Please enter quantity to deduct');
+      return;
+    }
+
     try {
       const response = await fetch('http://localhost:5000/api/inventory-management/auto-reduction/rules', {
         method: 'POST',
@@ -199,7 +214,7 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
         body: JSON.stringify({
           appointmentType,
           inventoryItemId: parseInt(selectedItemId.toString()),
-          quantityToReduce,
+          quantityToReduce: Math.max(0, parseInt(String(quantityToReduce) || '0', 10)),
         }),
       });
 
@@ -207,7 +222,7 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
         toast.success('Auto-reduction rule created successfully!');
         setAppointmentType('');
         setSelectedItemId('');
-        setQuantityToReduce(1);
+        setQuantityToReduce('');
         await loadAutoReductionRules();
       } else {
         const error = await response.json();
@@ -287,8 +302,11 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const criticalItems = inventory.filter(item => item.quantity > 0 && item.quantity <= (item.minQuantity || 5));
-  const outOfStockItems = inventory.filter(item => item.quantity === 0);
+  const criticalItems = inventory.filter(item => {
+    const baseQty = getBaseQuantity(item);
+    return baseQty > 0 && baseQty <= getMinLevel(item);
+  });
+  const outOfStockItems = inventory.filter(item => getBaseQuantity(item) === 0);
 
   return (
     <div className="p-6 max-w-[1920px] mx-auto space-y-8">
@@ -362,7 +380,7 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
              <div className="flex items-center gap-6 flex-1">
                 <div className="flex items-center gap-2">
                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-50"></div>
-                   <span className="text-sm font-medium text-gray-600">In Stock: <strong className="text-gray-900">{inventory.filter(i => i.quantity > 0).length}</strong></span>
+                   <span className="text-sm font-medium text-gray-600">In Stock: <strong className="text-gray-900">{inventory.filter(i => getBaseQuantity(i) > 0).length}</strong></span>
                 </div>
                 <div className="flex items-center gap-2">
                    <div className="w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-amber-50"></div>
@@ -387,7 +405,7 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                   <div key={item.id} className="flex justify-between items-center bg-white p-4 rounded-xl border border-amber-100 shadow-sm hover:shadow-md transition-shadow">
                     <div>
                       <p className="font-semibold text-gray-900">{item.name}</p>
-                      <p className="text-sm text-gray-500 mt-0.5">{item.quantity} {item.unit} remaining</p>
+                      <p className="text-sm text-gray-500 mt-0.5">{formatQuantityDisplay(item)}</p>
                     </div>
                     <div className="flex flex-col items-end">
                       <span className="text-xs font-bold text-amber-600 uppercase tracking-wider bg-amber-50 px-2 py-1 rounded-full">Low Stock</span>
@@ -458,6 +476,7 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                     <tr>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Item Name</th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Quantity</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Pieces</th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Unit</th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Min Level</th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
@@ -467,9 +486,10 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                   <tbody className="divide-y divide-gray-100">
                     {filteredInventory.map(item => {
                       const minLevel = item.minQuantity || 5;
+                      const basePieces = getBaseQuantity(item);
                       let status = 'normal';
-                      if (item.quantity === 0) status = 'out_of_stock';
-                      else if (item.quantity <= minLevel) status = 'critical';
+                      if (basePieces === 0) status = 'out_of_stock';
+                      else if (basePieces <= minLevel) status = 'critical';
 
                       return (
                         <tr key={item.id} className="hover:bg-gray-50/50 transition-colors group">
@@ -483,10 +503,18 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                                   status === 'critical' ? 'text-amber-500' :
                                   'text-gray-900'
                                 }`}>
-                                  {item.quantity}
+                                  {formatQuantityDisplay(item)}
                                 </span>
                                 {status === 'critical' && <AlertCircle className="w-4 h-4 text-amber-500" />}
                              </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-sm font-semibold text-gray-900">
+                              {basePieces.toLocaleString('en-US')}
+                              <span className="ml-1 text-xs font-medium text-gray-500 uppercase">
+                                {getBaseUnitLabel(item)}
+                              </span>
+                            </div>
                           </td>
                           <td className="px-6 py-4">
                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
@@ -570,13 +598,16 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                 <div className="space-y-5">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Appointment Type</label>
-                      <input
-                        type="text"
+                      <select
                         value={appointmentType}
                         onChange={(e) => setAppointmentType(e.target.value)}
-                        placeholder="e.g., Root Canal"
                         className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all font-medium"
-                      />
+                      >
+                        <option value="">Select appointment type</option>
+                        {SERVICE_TYPES.map(s => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
                     </div>
 
                     <div>
@@ -589,36 +620,27 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                         <option value="">Select an item to reduce</option>
                         {inventory.map(item => (
                           <option key={item.id} value={item.id}>
-                            {item.name} ({item.quantity} {item.unit})
+                            {item.name} ({formatQuantityDisplay(item)})
                           </option>
                         ))}
                       </select>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Quantity to Deduct</label>
-                      <div className="flex items-center">
-                         <button 
-                            onClick={() => setQuantityToReduce(Math.max(1, quantityToReduce - 1))}
-                            className="p-3 bg-gray-100 hover:bg-gray-200 rounded-l-xl border-r border-gray-200 transition-colors"
-                         >
-                            <span className="text-gray-600 font-bold">-</span>
-                         </button>
-                         <input
-                            type="number"
-                            min="1"
-                            value={quantityToReduce}
-                            onChange={(e) => setQuantityToReduce(Math.max(1, parseInt(e.target.value) || 1))}
-                            className="w-full px-4 py-3 bg-gray-50 border-y border-gray-200 text-center font-bold text-gray-900 focus:outline-none"
-                          />
-                         <button 
-                            onClick={() => setQuantityToReduce(quantityToReduce + 1)}
-                            className="p-3 bg-gray-100 hover:bg-gray-200 rounded-r-xl border-l border-gray-200 transition-colors"
-                         >
-                            <span className="text-gray-600 font-bold">+</span>
-                         </button>
+                      <div>
+                       <label className="block text-sm font-semibold text-gray-700 mb-2">Quantity to Deduct</label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="\d*"
+                        aria-valuemin={1}
+                        value={quantityToReduce}
+                        onChange={(e) => {
+                          const v = e.target.value.replace(/[^0-9]/g, '');
+                          setQuantityToReduce(v);
+                        }}
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-center font-bold text-gray-900 focus:outline-none no-spinner"
+                      />
                       </div>
-                    </div>
 
                   <button
                     onClick={createAutoReductionRule}
@@ -862,14 +884,14 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                         <td className="px-6 py-5">
                           <span className="px-3 py-1 rounded-full bg-red-50 text-red-700 text-xs font-bold border border-red-100 inline-flex items-center gap-1">
                             <TrendingDown className="w-3 h-3" />
-                            {record.quantityReduced}
+                            {record.quantityReduced} pcs
                           </span>
                         </td>
                         <td className="px-6 py-5">
                           <div className="flex items-center gap-2 text-sm text-gray-500">
-                             <span className="w-8 text-right font-medium">{record.quantityBefore}</span>
+                             <span className="w-8 text-right font-medium">{record.quantityBefore} pcs</span>
                              <span className="text-gray-300">→</span>
-                             <span className="w-8 font-bold text-gray-900">{record.quantityAfter}</span>
+                             <span className="w-8 font-bold text-gray-900">{record.quantityAfter} pcs</span>
                           </div>
                         </td>
                         <td className="px-6 py-5 text-gray-500 text-sm">

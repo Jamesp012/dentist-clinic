@@ -5,6 +5,31 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dental Management System</title>
+    <style>
+      /* Subtle hover for gradient buttons (applies to buttons with inline linear-gradient)
+         and a helper `.book-now` class. */
+      /* Target helper class, gradient buttons, and buttons using the primary CSS variable */
+      button.book-now,
+      button[style*="linear-gradient(90deg"],
+      button[style*="var(--primary)"] {
+        transition: transform .25s ease, box-shadow .25s ease, filter .25s ease;
+        will-change: transform, box-shadow, filter;
+      }
+
+      button.book-now:hover,
+      button[style*="linear-gradient(90deg"]:hover,
+      button[style*="var(--primary)"]:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(48,64,59,0.12);
+        filter: brightness(1.04);
+      }
+
+      button.book-now:active,
+      button[style*="linear-gradient(90deg"]:active,
+      button[style*="var(--primary)"]:active {
+        transform: translateY(-1px);
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

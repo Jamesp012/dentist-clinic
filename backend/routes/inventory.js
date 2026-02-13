@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('../config/database');
 const authMiddleware = require('../middleware/auth');
+const { normalizeInventoryPayload, toNumber } = require('../utils/inventoryUnits');
 
 const router = express.Router();
 
@@ -17,34 +18,41 @@ router.get('/', authMiddleware, async (req, res) => {
 // Create inventory item
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const {
-      name,
-      category,
-      quantity,
-      minQuantity,
-      unit,
-      unit_type,
-      pieces_per_box,
-      remaining_pieces,
-      supplier,
-      cost
-    } = req.body;
+    const normalized = normalizeInventoryPayload(req.body || {});
+    const name = req.body.name?.trim();
+    if (!name) {
+      return res.status(400).json({ error: 'Item name is required' });
+    }
+
+    const minQuantity = Math.max(0, Math.floor(toNumber(req.body.minQuantity, 0)));
+    const category = req.body.category || 'General';
+    const supplier = req.body.supplier || '';
+    const cost = toNumber(req.body.cost, 0);
+
     const [result] = await pool.query(
-      'INSERT INTO inventory (name, category, quantity, minQuantity, unit, unit_type, pieces_per_box, remaining_pieces, supplier, cost) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      `INSERT INTO inventory 
+        (name, category, quantity, minQuantity, unit, unit_type, pieces_per_box, remaining_pieces, supplier, cost, base_unit, main_unit, conversion_value, base_quantity)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         name,
         category,
-        quantity,
+        normalized.quantity,
         minQuantity,
-        unit,
-        unit_type || 'piece',
-        pieces_per_box ?? null,
-        remaining_pieces ?? null,
+        normalized.baseUnit,
+        normalized.unitType,
+        normalized.hasConversion ? normalized.conversionValue : null,
+        normalized.hasConversion ? normalized.remainingPieces : null,
         supplier,
-        cost
+        cost,
+        normalized.baseUnit,
+        normalized.hasConversion ? normalized.mainUnit : null,
+        normalized.hasConversion ? normalized.conversionValue : null,
+        normalized.baseQuantity,
       ]
     );
-    res.status(201).json({ id: result.insertId, ...req.body });
+
+    const [rows] = await pool.query('SELECT * FROM inventory WHERE id = ?', [result.insertId]);
+    res.status(201).json(rows[0]);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -53,35 +61,55 @@ router.post('/', authMiddleware, async (req, res) => {
 // Update inventory
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
-    const {
-      name,
-      category,
-      quantity,
-      minQuantity,
-      unit,
-      unit_type,
-      pieces_per_box,
-      remaining_pieces,
-      supplier,
-      cost
-    } = req.body;
+    const normalized = normalizeInventoryPayload(req.body || {});
+    const name = req.body.name?.trim();
+    if (!name) {
+      return res.status(400).json({ error: 'Item name is required' });
+    }
+
+    const minQuantity = Math.max(0, Math.floor(toNumber(req.body.minQuantity, 0)));
+    const category = req.body.category || 'General';
+    const supplier = req.body.supplier || '';
+    const cost = toNumber(req.body.cost, 0);
+
     await pool.query(
-      'UPDATE inventory SET name=?, category=?, quantity=?, minQuantity=?, unit=?, unit_type=?, pieces_per_box=?, remaining_pieces=?, supplier=?, cost=? WHERE id=?',
+      `UPDATE inventory SET 
+        name=?,
+        category=?,
+        quantity=?,
+        minQuantity=?,
+        unit=?,
+        unit_type=?,
+        pieces_per_box=?,
+        remaining_pieces=?,
+        supplier=?,
+        cost=?,
+        base_unit=?,
+        main_unit=?,
+        conversion_value=?,
+        base_quantity=?
+      WHERE id=?`,
       [
         name,
         category,
-        quantity,
+        normalized.quantity,
         minQuantity,
-        unit,
-        unit_type || 'piece',
-        pieces_per_box ?? null,
-        remaining_pieces ?? null,
+        normalized.baseUnit,
+        normalized.unitType,
+        normalized.hasConversion ? normalized.conversionValue : null,
+        normalized.hasConversion ? normalized.remainingPieces : null,
         supplier,
         cost,
-        req.params.id
+        normalized.baseUnit,
+        normalized.hasConversion ? normalized.mainUnit : null,
+        normalized.hasConversion ? normalized.conversionValue : null,
+        normalized.baseQuantity,
+        req.params.id,
       ]
     );
-    res.json({ id: req.params.id, ...req.body });
+
+    const [rows] = await pool.query('SELECT * FROM inventory WHERE id = ?', [req.params.id]);
+    res.json(rows[0]);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -3,32 +3,48 @@ import { cn } from '../lib/utils';
 
 export type Surface = 'occlusal' | 'mesial' | 'distal' | 'buccal' | 'lingual';
 export type Condition = 
-  | 'healthy' 
-  | 'caries' 
-  | 'amalgam' 
-  | 'composite' 
-  | 'crown' 
-  | 'missing' 
+  | 'healthy'
+  | 'caries'
+  | 'dental_caries'
+  | 'cavity'
+  | 'tooth_decay'
+  | 'amalgam'
+  | 'composite'
+  | 'crown'
+  | 'missing'
+  | 'missing_tooth'
   | 'extraction'
   | 'broken'
+  | 'broken_tooth'
   | 'cracked'
+  | 'cracked_tooth'
   | 'chipped'
+  | 'chipped_tooth'
   | 'loose'
+  | 'loose_tooth'
   | 'impacted'
+  | 'impacted_tooth'
   | 'retained_root'
   | 'abscess'
+  | 'tooth_abscess'
   | 'non_vital'
+  | 'non_vital_tooth'
   | 'erosion'
+  | 'tooth_erosion'
   | 'discolored'
+  | 'discolored_tooth'
   | 'stained'
+  | 'stained_tooth'
   | 'needs_filling'
   | 'needs_root_canal'
+  | 'needs_root_canal_treatment'
   | 'needs_extraction';
 
 export interface ToothData {
   id: number;
   surfaces: Record<Surface, Condition>;
   generalCondition: Condition;
+  conditions?: Condition[];
   isPermanent: boolean; // true = permanent (black outline), false = temporary (light grey outline)
   notes?: string;
 }
@@ -43,12 +59,41 @@ interface ToothProps {
 
 const CONDITION_COLORS: Record<Condition, string> = {
   healthy: 'fill-white',
-  caries: 'fill-red-400',
+  caries: 'fill-rose-300',
+  dental_caries: 'fill-rose-300',
+  cavity: 'fill-amber-200',
+  tooth_decay: 'fill-slate-500',
   amalgam: 'fill-slate-400',
   composite: 'fill-amber-100',
   crown: 'fill-yellow-400',
   missing: 'fill-transparent opacity-20',
-  extraction: 'fill-slate-200'
+  missing_tooth: 'fill-transparent opacity-20',
+  extraction: 'fill-slate-200',
+  broken: 'fill-orange-200',
+  broken_tooth: 'fill-orange-200',
+  cracked: 'fill-sky-200',
+  cracked_tooth: 'fill-sky-200',
+  chipped: 'fill-amber-300',
+  chipped_tooth: 'fill-amber-300',
+  loose: 'fill-cyan-200',
+  loose_tooth: 'fill-cyan-200',
+  impacted: 'fill-indigo-200',
+  impacted_tooth: 'fill-indigo-200',
+  retained_root: 'fill-orange-300',
+  abscess: 'fill-red-500',
+  tooth_abscess: 'fill-red-500',
+  non_vital: 'fill-purple-200',
+  non_vital_tooth: 'fill-purple-200',
+  erosion: 'fill-amber-100',
+  tooth_erosion: 'fill-amber-100',
+  discolored: 'fill-yellow-200',
+  discolored_tooth: 'fill-yellow-200',
+  stained: 'fill-stone-400',
+  stained_tooth: 'fill-stone-400',
+  needs_filling: 'fill-emerald-200',
+  needs_root_canal: 'fill-red-200',
+  needs_root_canal_treatment: 'fill-red-200',
+  needs_extraction: 'fill-rose-200'
 };
 
 export function Tooth({ id, data, isSelected, onSurfaceClick, onToothClick }: ToothProps) {
@@ -75,7 +120,7 @@ export function Tooth({ id, data, isSelected, onSurfaceClick, onToothClick }: To
   // Right: Mesial (Right side of mouth), Distal (Left side of mouth)
   
   const getSurfaceColor = (surface: Surface) => {
-    if (data.generalCondition === 'missing') return 'fill-slate-100';
+    if (data.generalCondition === 'missing' || data.generalCondition === 'missing_tooth') return 'fill-slate-100';
     return CONDITION_COLORS[data.surfaces[surface]] || 'fill-white hover:fill-blue-50';
   };
 
@@ -162,7 +207,7 @@ export function Tooth({ id, data, isSelected, onSurfaceClick, onToothClick }: To
           onClick={(e) => handleZoneClick(e, 'center')}
         />
         
-        {data.generalCondition === 'missing' && (
+        {(data.generalCondition === 'missing' || data.generalCondition === 'missing_tooth') && (
            <path d="M0,0 L100,100 M100,0 L0,100" stroke="red" strokeWidth="2" />
         )}
       </svg>

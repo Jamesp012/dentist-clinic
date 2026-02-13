@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('../config/database');
 const authMiddleware = require('../middleware/auth');
+const { applyInventoryAutoDeduction } = require('../utils/inventoryAutoDeduction');
 
 const router = express.Router();
 
@@ -15,17 +16,21 @@ router.get('/overview', authMiddleware, async (req, res) => {
         name,
         category,
         quantity,
+        base_quantity,
         minQuantity,
         unit,
+        base_unit,
+        main_unit,
+        conversion_value,
         supplier,
         cost,
         CASE 
-          WHEN quantity = 0 THEN 'out_of_stock'
-          WHEN quantity <= minQuantity THEN 'critical'
+          WHEN base_quantity = 0 THEN 'out_of_stock'
+          WHEN base_quantity <= minQuantity THEN 'critical'
           ELSE 'normal'
         END as status
       FROM inventory
-      ORDER BY status DESC, quantity ASC
+      ORDER BY status DESC, base_quantity ASC
     `);
 
     const overview = {
@@ -52,16 +57,20 @@ router.get('/alerts', authMiddleware, async (req, res) => {
         name,
         category,
         quantity,
+        base_quantity,
         minQuantity,
         unit,
+        base_unit,
+        main_unit,
+        conversion_value,
         CASE 
-          WHEN quantity = 0 THEN 'out_of_stock'
-          WHEN quantity <= minQuantity THEN 'critical'
+          WHEN base_quantity = 0 THEN 'out_of_stock'
+          WHEN base_quantity <= minQuantity THEN 'critical'
           ELSE 'normal'
         END as status
       FROM inventory
-      WHERE quantity = 0 OR quantity <= minQuantity
-      ORDER BY quantity ASC
+      WHERE base_quantity = 0 OR base_quantity <= minQuantity
+      ORDER BY base_quantity ASC
     `);
 
     res.json({ alerts: items });
@@ -147,7 +156,7 @@ router.get('/auto-reduction/rules/:appointmentType', authMiddleware, async (req,
         ri.inventoryItemId,
         i.name as inventoryItemName,
         ri.quantityToReduce,
-        i.quantity as currentQuantity,
+        i.base_quantity as currentQuantity,
         r.isActive
       FROM inventory_auto_reduction_rules_v2 r
       LEFT JOIN inventory_auto_reduction_rule_items ri ON r.id = ri.ruleId
@@ -470,21 +479,23 @@ router.get('/history/item/:itemId', authMiddleware, async (req, res) => {
 router.post('/auto-reduce/appointment/:appointmentId', authMiddleware, async (req, res) => {
   const connection = await pool.getConnection();
   try {
+    await connection.beginTransaction();
     const { appointmentId } = req.params;
+    const { treatmentRecordId = null } = req.body || {};
 
-    // Get appointment details
-    const [appointments] = await connection.query(`
-      SELECT id, patientId, patientName, type FROM appointments WHERE id = ?
-    `, [appointmentId]);
+    const [appointments] = await connection.query(
+      'SELECT id, patientId, patientName, type FROM appointments WHERE id = ?',
+      [appointmentId]
+    );
 
     if (appointments.length === 0) {
+      await connection.rollback();
       return res.status(404).json({ error: 'Appointment not found' });
     }
 
     const appointment = appointments[0];
     let appointmentTypes = [];
 
-    // appointment.type may be stored as JSON array, comma-separated string, or single value
     try {
       if (Array.isArray(appointment.type)) appointmentTypes = appointment.type;
       else if (typeof appointment.type === 'string') {
@@ -501,156 +512,30 @@ router.post('/auto-reduce/appointment/:appointmentId', authMiddleware, async (re
       appointmentTypes = [appointment.type];
     }
 
-    if (!appointmentTypes || appointmentTypes.length === 0) appointmentTypes = [appointment.type];
-
-    // Query rules for any of the appointment types
-    const [rules] = await connection.query(`
-      SELECT ri.inventoryItemId, ri.quantityToReduce, i.name as itemName
-      FROM inventory_auto_reduction_rules_v2 r
-      JOIN inventory_auto_reduction_rule_items ri ON r.id = ri.ruleId
-      JOIN inventory i ON ri.inventoryItemId = i.id
-      WHERE r.appointmentType IN (?) AND r.isActive = TRUE
-    `, [appointmentTypes]);
-
-    // Aggregate reductions by inventory item (sum pieces across rules)
-    // Procedure rules are PIECE-level: quantityToReduce is interpreted as pieces.
-    const reductionsMap = new Map(); // itemId -> { itemName, totalPieces: number }
-
-    for (const rule of rules) {
-      const itemId = rule.inventoryItemId;
-      const pieces = Number(rule.quantityToReduce || 0);
-      const existing = reductionsMap.get(itemId) || { itemName: rule.itemName, totalPieces: 0 };
-      existing.itemName = rule.itemName;
-      existing.totalPieces += pieces;
-      reductionsMap.set(itemId, existing);
+    if (!appointmentTypes || appointmentTypes.length === 0) {
+      appointmentTypes = appointment.type ? [appointment.type] : [];
     }
 
-    const reductionRecords = [];
+    const deduction = await applyInventoryAutoDeduction(
+      connection,
+      {
+        services: appointmentTypes,
+        appointmentId: appointment.id,
+        treatmentRecordId,
+        patientId: appointment.patientId,
+        patientName: appointment.patientName,
+      },
+      { strict: false }
+    );
 
-    const applyBoxPieceReductionStrict = ({ quantity, pieces_per_box, remaining_pieces }, piecesToReduce) => {
-      const piecesPerBox = Math.max(0, Number(pieces_per_box || 0));
-      let boxes = Math.max(0, Number(quantity || 0));
+    await connection.commit();
 
-      if (boxes === 0 || piecesPerBox === 0) {
-        return { quantity: 0, remaining_pieces: 0, ok: piecesToReduce <= 0 };
-      }
-
-      let remaining = remaining_pieces == null ? piecesPerBox : Number(remaining_pieces);
-      if (!Number.isFinite(remaining) || remaining < 0) remaining = piecesPerBox;
-      if (remaining > piecesPerBox) remaining = piecesPerBox;
-
-      const totalAvailablePieces = (boxes - 1) * piecesPerBox + remaining;
-      if (totalAvailablePieces < piecesToReduce) {
-        return { quantity: boxes, remaining_pieces: remaining, ok: false, totalAvailablePieces };
-      }
-
-      let piecesLeftToReduce = piecesToReduce;
-      while (piecesLeftToReduce > 0 && boxes > 0) {
-        const used = Math.min(remaining, piecesLeftToReduce);
-        remaining -= used;
-        piecesLeftToReduce -= used;
-
-        if (remaining === 0) {
-          boxes -= 1;
-          if (boxes > 0) {
-            remaining = piecesPerBox;
-          }
-        }
-      }
-
-      if (boxes === 0) remaining = 0;
-      return { quantity: boxes, remaining_pieces: remaining, ok: true, totalAvailablePieces };
-    };
-
-    // Apply aggregated reductions
-    for (const [itemId, data] of reductionsMap.entries()) {
-      const [items] = await connection.query(
-        `SELECT id, quantity, unit_type, pieces_per_box, remaining_pieces, unit FROM inventory WHERE id = ?`,
-        [itemId]
-      );
-      if (items.length === 0) continue;
-      const inv = items[0];
-
-      const unitType = inv.unit_type || (inv.unit === 'box' ? 'box' : 'piece');
-      const totalPiecesToReduce = Math.max(0, Number(data.totalPieces || 0));
-
-      if (unitType === 'box') {
-        const beforeBoxes = Math.max(0, Number(inv.quantity || 0));
-        const beforePiecesPerBox = Math.max(0, Number(inv.pieces_per_box || 0));
-        const beforeRemaining = inv.remaining_pieces == null ? beforePiecesPerBox : Math.max(0, Number(inv.remaining_pieces || 0));
-
-        const result = applyBoxPieceReductionStrict(
-          { quantity: beforeBoxes, pieces_per_box: beforePiecesPerBox, remaining_pieces: beforeRemaining },
-          totalPiecesToReduce
-        );
-
-        if (!result.ok) {
-          // Not enough stock; skip reduction for this item
-          reductionRecords.push({ itemId, itemName: data.itemName, quantityReduced: 0, error: 'insufficient_stock', availablePieces: result.totalAvailablePieces, neededPieces: totalPiecesToReduce });
-          continue;
-        }
-
-        await connection.query(
-          `UPDATE inventory SET quantity = ?, remaining_pieces = ? WHERE id = ?`,
-          [result.quantity, result.remaining_pieces, itemId]
-        );
-
-        // Record history (store quantityBefore/After as box counts)
-        await connection.query(`
-          INSERT INTO inventory_reduction_history 
-          (appointmentId, patientId, patientName, appointmentType, inventoryItemId, inventoryItemName, quantityReduced, quantityBefore, quantityAfter)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [
-          appointmentId,
-          appointment.patientId,
-          appointment.patientName,
-          JSON.stringify(appointmentTypes),
-          itemId,
-          data.itemName,
-          totalPiecesToReduce,
-          beforeBoxes,
-          result.quantity
-        ]);
-
-        reductionRecords.push({
-          itemId,
-          itemName: data.itemName,
-          quantityReduced: totalPiecesToReduce,
-          beforeBoxes,
-          afterBoxes: result.quantity,
-          pieces_per_box: beforePiecesPerBox,
-          beforeRemainingPieces: beforeRemaining,
-          afterRemainingPieces: result.remaining_pieces
-        });
-      } else {
-        // Non-boxed item: quantity likely represents piece count
-        const currentQty = Number(inv.quantity) || 0;
-        const newQty = Math.max(0, currentQty - totalPiecesToReduce);
-
-        await connection.query(`UPDATE inventory SET quantity = ? WHERE id = ?`, [newQty, itemId]);
-
-        await connection.query(`
-          INSERT INTO inventory_reduction_history 
-          (appointmentId, patientId, patientName, appointmentType, inventoryItemId, inventoryItemName, quantityReduced, quantityBefore, quantityAfter)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [
-          appointmentId,
-          appointment.patientId,
-          appointment.patientName,
-          JSON.stringify(appointmentTypes),
-          itemId,
-          data.itemName,
-          totalPiecesToReduce,
-          currentQty,
-          newQty
-        ]);
-
-        reductionRecords.push({ itemId, itemName: data.itemName, quantityReduced: totalPiecesToReduce, before: currentQty, after: newQty });
-      }
-    }
-
-    res.json({ appointmentId, reductionsApplied: reductionRecords.length, reductions: reductionRecords });
+    res.json({
+      appointmentId,
+      ...deduction,
+    });
   } catch (error) {
+    await connection.rollback();
     console.error('Error processing inventory auto-reduction:', error);
     res.status(500).json({ error: error.message });
   } finally {

@@ -1,18 +1,40 @@
-function sanitizeTreatmentInput(body) {
-  const {
-    cost, amountPaid, remainingBalance, paymentType, installmentPlan
-  } = body || {};
+function sanitizeTreatmentInput(body, defaults = {}) {
+  const deriveNumber = (value, fallback = 0) => {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+    const parsedFallback = Number(fallback);
+    return Number.isFinite(parsedFallback) ? parsedFallback : 0;
+  };
 
-  const safeCost = Number(cost);
-  const safeAmountPaid = Number(amountPaid);
-  const safeRemainingBalance = Number(remainingBalance);
+  const normalizedCost = body?.cost ?? defaults.cost;
+  const normalizedAmountPaid = body?.amountPaid ?? defaults.amountPaid;
+  const normalizedRemainingBalance = body?.remainingBalance ?? defaults.remainingBalance;
+  const normalizedPaymentType = body?.paymentType ?? defaults.paymentType;
+  const normalizedInstallmentPlan = body?.installmentPlan ?? defaults.installmentPlan;
+
+  const serializeInstallmentPlan = (plan) => {
+    if (!plan) {
+      return null;
+    }
+    if (typeof plan === 'string') {
+      return plan;
+    }
+    try {
+      return JSON.stringify(plan);
+    } catch (error) {
+      console.error('Failed to serialize installment plan:', error);
+      return null;
+    }
+  };
 
   return {
-    cost: Number.isFinite(safeCost) ? safeCost : 0,
-    amountPaid: Number.isFinite(safeAmountPaid) ? safeAmountPaid : 0,
-    remainingBalance: Number.isFinite(safeRemainingBalance) ? safeRemainingBalance : 0,
-    paymentType: paymentType || 'full',
-    installmentPlan: installmentPlan ? JSON.stringify(installmentPlan) : null,
+    cost: deriveNumber(normalizedCost, defaults.cost),
+    amountPaid: deriveNumber(normalizedAmountPaid, defaults.amountPaid),
+    remainingBalance: deriveNumber(normalizedRemainingBalance, defaults.remainingBalance),
+    paymentType: normalizedPaymentType || 'full',
+    installmentPlan: serializeInstallmentPlan(normalizedInstallmentPlan),
   };
 }
 

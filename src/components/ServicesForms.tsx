@@ -2,7 +2,6 @@ import { treatmentRecordAPI, paymentAPI, prescriptionAPI, appointmentAPI } from 
 import { useState, useEffect } from 'react';
 import { Patient, TreatmentRecord, Payment } from '../App';
 import { FileText, Printer, Download, Plus, X, CreditCard } from 'lucide-react';
-import { reduceInventoryForServices } from './InventoryManagement';
 import { toast } from 'sonner';
 import { formatToDD_MM_YYYY } from '../utils/dateHelpers';
 import { generatePrescriptionPDF, generateDetailedReceiptPDF } from '../utils/pdfGenerator';
@@ -168,8 +167,6 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
       }
     };
   const [activeForm, setActiveForm] = useState<'service' | 'prescription' | 'receipt' | null>(prefilledAppointment ? 'service' : null);
-  // Inventory context (assume passed as prop or via context, or fetch from App)
-  const [inventory, setInventory] = useState([]);
   const dentalServices = [
     'Dental consultation',
     'Oral examination',
@@ -269,16 +266,23 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
       // Convert FormDataEntryValue[] to string[]
       const serviceList = services.map(s => typeof s === 'string' ? s : '').filter(Boolean);
 
+      if (serviceList.length === 0) {
+        toast.error('Please select at least one service.');
+        return;
+      }
+
       // Create a single combined treatment record representing all selected services
       const combinedTreatment = serviceList.join(', ');
       const newRecordData = {
         patientId,
+        appointmentId: prefilledAppointment?.appointmentId || undefined,
         date,
         description: combinedTreatment,
         treatment: combinedTreatment,
         // preserve legacy and new formats for backend compatibility
         type: combinedTreatment,
         types: serviceList,
+        selectedServices: serviceList,
         tooth: formData.get('tooth') as string || undefined,
         notes: formData.get('notes') as string,
         cost: totalCost,
@@ -310,20 +314,28 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
 
       setTreatmentRecords([...treatmentRecords, savedRecord]);
       setLastCreatedService(savedRecord);
+
+      if (savedRecord.inventoryDeduction) {
+        if (savedRecord.inventoryDeduction.applied && savedRecord.inventoryDeduction.reductions?.length) {
+          const summary = savedRecord.inventoryDeduction.reductions
+            .map((reduction) => {
+              const unitType = (reduction.unitType || 'piece').toLowerCase();
+              if (unitType === 'box') {
+                return `${reduction.itemName} (-${reduction.unitsDeducted} box${reduction.unitsDeducted === 1 ? '' : 'es'})`;
+              }
+              return `${reduction.itemName} (-${reduction.piecesDeducted} pc${reduction.piecesDeducted === 1 ? '' : 's'})`;
+            })
+            .join(', ');
+          toast.success(`Inventory deducted: ${summary}`);
+        } else if (savedRecord.inventoryDeduction.missingRules?.length) {
+          toast.warning(`No inventory rules configured for: ${savedRecord.inventoryDeduction.missingRules.join(', ')}`);
+        }
+      }
       setPaymentType('full');
       setAmountPaid(0);
       setNumberOfInstallments(3);
       setSelectedPatient('');
       setPatientSearch('');
-      // Auto-reduce inventory for all services.
-      // If this receipt is created from an appointment, let the backend apply all rules
-      // for each service when we mark the appointment completed (avoid double-reduction).
-      if (!isFromAppointment || !prefilledAppointment?.appointmentId) {
-        const reductionCount = await reduceInventoryForServices(serviceList, inventory, setInventory, onDataChanged);
-        if (reductionCount > 0) {
-          toast.success(`Inventory reduced for ${reductionCount} item(s).`);
-        }
-      }
       toast.success('Service records saved successfully');
       if (onDataChanged) {
         await onDataChanged();
@@ -335,23 +347,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
           if (appointmentId) {
             await appointmentAPI.update(appointmentId, { status: 'completed' });
             toast.success('Appointment marked completed');
-            try {
-              const inventoryManagementAPI = await import('../api').then(m => m.inventoryManagementAPI);
-              console.log('Calling server auto-reduce for appointment:', appointmentId);
-              const result = await inventoryManagementAPI.autoReduceForAppointment(appointmentId);
-              console.log('Server auto-reduce response:', result);
-              if (result && result.reductionsApplied > 0) {
-                toast.success(`Inventory reduced by server policies: ${result.reductionsApplied} item(s).`);
-              } else {
-                console.log('Server auto-reduce applied 0 reductions for appointment', appointmentId);
-              }
-              // Refresh data regardless of whether reductions were applied to ensure UI stays in sync
-              if (onDataChanged) await onDataChanged();
-            } catch (err) {
-              console.warn('Server auto-reduction not applied or failed:', err);
-              // Still attempt to refresh data
-              if (onDataChanged) await onDataChanged();
-            }
+            if (onDataChanged) await onDataChanged();
           }
         } catch (err) {
           console.error('Failed to mark appointment completed:', err);
@@ -367,9 +363,21 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
       if (onServiceCreated) {
         onServiceCreated(patientId, savedRecord);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to save service:', err);
-      toast.error('Failed to save service record');
+      const shortages = err?.details?.shortages;
+      if (Array.isArray(shortages) && shortages.length > 0) {
+        const detail = shortages
+          .map((item: any) => {
+            const required = item.requestedPieces ?? item.requiredPieces;
+            const available = item.availablePieces ?? item.available;
+            return `${item.itemName || 'Item'} (need ${required}, available ${available})`;
+          })
+          .join('; ');
+        toast.warning(`Insufficient inventory: ${detail}`);
+      } else {
+        toast.error(err?.message || 'Failed to save service record');
+      }
     }
   }
 

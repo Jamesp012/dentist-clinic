@@ -1,8 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { Plus, History, Save } from 'lucide-react';
-import { toast } from 'sonner';
-import type { Patient } from '../App';
+import React, { useRef, useState, useCallback } from 'react';
 import { ToothData } from './Tooth';
 import { ToothDetailsSidebar } from './dental/ToothDetailsSidebar';
 
@@ -69,17 +65,6 @@ const createInitialTeethData = (): Record<number, ToothData> => {
   }
 
   return data;
-};
-
-type ChartRecord = {
-  id: string;
-  date: string;
-  patientId?: string | number;
-  data: Record<number, ToothData>;
-};
-
-type DentalChartWebsiteProps = {
-  patients?: Patient[];
 };
 
 // Simple color map for general tooth conditions, used to decorate icons
@@ -158,142 +143,15 @@ const INITIAL_LAYOUT: ToothLayout[] = [
   { id: 'T', leftPct: 28.636363636363637, topPct: 71.9899425407962, widthPct: 18.590909090909093 },
 ];
 
-export function DentalChartWebsite({ patients = [] }: DentalChartWebsiteProps) {
+export function DentalChartWebsite() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [layout, setLayout] = useState<ToothLayout[]>(INITIAL_LAYOUT);
   const [hovered, setHovered] = useState(false);
 
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [patientSearch, setPatientSearch] = useState('');
-  const [showPatientSuggestions, setShowPatientSuggestions] = useState(false);
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const [suggestionPortalNode, setSuggestionPortalNode] = useState<HTMLElement | null>(null);
-  const [suggestionPos, setSuggestionPos] = useState<{
-    left: number;
-    top: number;
-    width: number;
-  } | null>(null);
-  const [showSelectPatientModal, setShowSelectPatientModal] = useState(false);
-
-  // Create a detached portal node for suggestions so they render above stacking contexts
-  useEffect(() => {
-    const node = document.createElement('div');
-    document.body.appendChild(node);
-    setSuggestionPortalNode(node);
-    return () => {
-      try {
-        document.body.removeChild(node);
-      } catch (_) {
-        /* ignore */
-      }
-      setSuggestionPortalNode(null);
-    };
-  }, []);
-
-  const updateSuggestionPos = () => {
-    const el = inputRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    setSuggestionPos({ left: rect.left, top: rect.bottom + 6, width: rect.width });
-  };
-
-  useEffect(() => {
-    if (showPatientSuggestions) updateSuggestionPos();
-    const onResize = () => updateSuggestionPos();
-    window.addEventListener('resize', onResize);
-    window.addEventListener('scroll', onResize, true);
-    return () => {
-      window.removeEventListener('resize', onResize);
-      window.removeEventListener('scroll', onResize, true);
-    };
-  }, [showPatientSuggestions, patientSearch]);
-
-  const [charts, setCharts] = useState<ChartRecord[]>([
-    {
-      id: '1',
-      date: new Date().toLocaleString(),
-      data: createInitialTeethData(),
-    },
-  ]);
-  const [activeChartId, setActiveChartId] = useState<string>('1');
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-
-  const activeChart = charts.find((c) => c.id === activeChartId) || charts[0];
-  const teeth = activeChart.data;
-
   // Tooth data and sidebar state
+  const [teeth, setTeeth] = useState<Record<number, ToothData>>(() => createInitialTeethData());
   const [selectedTooth, setSelectedTooth] = useState<number | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  // Save dental chart to localStorage for the selected patient
-  const saveDentalChartToStorage = (chart: ChartRecord) => {
-    if (!selectedPatient) return;
-
-    const storageKey = `dentalChart_patient_${selectedPatient.id}_chart_${chart.id}`;
-    localStorage.setItem(
-      storageKey,
-      JSON.stringify({
-        id: chart.id,
-        date: chart.date,
-        patientId: selectedPatient.id,
-        data: chart.data,
-      }),
-    );
-
-    const chartsListKey = `dentalCharts_patient_${selectedPatient.id}`;
-    const existingCharts = JSON.parse(localStorage.getItem(chartsListKey) || '[]');
-    if (!existingCharts.includes(chart.id)) {
-      existingCharts.push(chart.id);
-      localStorage.setItem(chartsListKey, JSON.stringify(existingCharts));
-    }
-  };
-
-  // Load charts whenever the selected patient changes
-  useEffect(() => {
-    if (!selectedPatient) {
-      setCharts([
-        {
-          id: '1',
-          date: new Date().toLocaleString(),
-          data: createInitialTeethData(),
-        },
-      ]);
-      setActiveChartId('1');
-      setSelectedTooth(null);
-      setIsSidebarOpen(false);
-      setIsHistoryOpen(false);
-      return;
-    }
-
-    const chartsListKey = `dentalCharts_patient_${selectedPatient.id}`;
-    const chartIds = JSON.parse(localStorage.getItem(chartsListKey) || '[]');
-
-    if (chartIds.length === 0) {
-      const initialChart: ChartRecord = {
-        id: '1',
-        date: new Date().toLocaleString(),
-        patientId: selectedPatient.id,
-        data: createInitialTeethData(),
-      };
-      setCharts([initialChart]);
-      setActiveChartId('1');
-      saveDentalChartToStorage(initialChart);
-    } else {
-      const loadedCharts: ChartRecord[] = [];
-      chartIds.forEach((chartId: string) => {
-        const storageKey = `dentalChart_patient_${selectedPatient.id}_chart_${chartId}`;
-        const savedChart = localStorage.getItem(storageKey);
-        if (savedChart) {
-          loadedCharts.push(JSON.parse(savedChart));
-        }
-      });
-
-      if (loadedCharts.length > 0) {
-        setCharts(loadedCharts);
-        setActiveChartId(loadedCharts[loadedCharts.length - 1].id);
-      }
-    }
-  }, [selectedPatient]);
 
   const getToothNumericId = (iconId: string): number | null => {
     const numeric = parseInt(iconId, 10);
@@ -310,26 +168,10 @@ export function DentalChartWebsite({ patients = [] }: DentalChartWebsiteProps) {
   };
 
   const handleUpdateTooth = (id: number, updates: Partial<ToothData>) => {
-    setCharts((prevCharts) =>
-      prevCharts.map((chart) => {
-        if (chart.id === activeChartId) {
-          const updatedChart: ChartRecord = {
-            ...chart,
-            data: {
-              ...chart.data,
-              [id]: { ...chart.data[id], ...updates },
-            },
-          };
-
-          if (selectedPatient) {
-            saveDentalChartToStorage(updatedChart);
-          }
-
-          return updatedChart;
-        }
-        return chart;
-      }),
-    );
+    setTeeth((prev) => ({
+      ...prev,
+      [id]: { ...prev[id], ...updates },
+    }));
   };
 
   const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
@@ -353,52 +195,8 @@ export function DentalChartWebsite({ patients = [] }: DentalChartWebsiteProps) {
     URL.revokeObjectURL(url);
   };
 
-  const handleNewChart = () => {
-    if (!selectedPatient) {
-      toast.info('Please select a patient first.');
-      return;
-    }
-
-    if (window.confirm('Create a new chart for this patient? Previous charts will be saved.')) {
-      const newId = (charts.length + 1).toString();
-      const newChart: ChartRecord = {
-        id: newId,
-        date: new Date().toLocaleString(),
-        patientId: selectedPatient.id,
-        data: createInitialTeethData(),
-      };
-
-      setCharts((prev) => [...prev, newChart]);
-      setActiveChartId(newId);
-      setSelectedTooth(null);
-      setIsSidebarOpen(false);
-
-      saveDentalChartToStorage(newChart);
-      toast.success('New chart created and saved');
-    }
-  };
-
-  const handleSaveChart = () => {
-    if (!selectedPatient) {
-      toast.info('Please select a patient first.');
-      return;
-    }
-
-    if (!activeChart) {
-      toast.error('No chart available to save.');
-      return;
-    }
-
-    saveDentalChartToStorage(activeChart);
-    toast.success('Dental chart saved');
-  };
-
   const handleIconClick = (event: React.MouseEvent, iconId: string) => {
     event.stopPropagation();
-    if (!selectedPatient) {
-      setShowSelectPatientModal(true);
-      return;
-    }
     const numericId = getToothNumericId(iconId);
     if (!numericId) return;
 
@@ -419,10 +217,6 @@ export function DentalChartWebsite({ patients = [] }: DentalChartWebsiteProps) {
 
   // Fallback: when icons overlap, determine clicked tooth by nearest center to click point
   const handleContainerClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (!selectedPatient) {
-      setShowSelectPatientModal(true);
-      return;
-    }
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
     const clickX = ((event.clientX - rect.left) / rect.width) * 100;
@@ -444,285 +238,290 @@ export function DentalChartWebsite({ patients = [] }: DentalChartWebsiteProps) {
       const numericId = getToothNumericId(nearest.id);
       if (numericId) {
         // Ensure missing state is explicitly applied in teeth state so color renders
-        setCharts((prevCharts) =>
-          prevCharts.map((chart) => {
-            if (chart.id !== activeChartId) return chart;
-            const current = chart.data[numericId];
-            if (!current || current.generalCondition !== 'missing') return chart;
-            return {
-              ...chart,
-              data: {
-                ...chart.data,
-                [numericId]: { ...current, generalCondition: 'missing' },
-              },
-            };
-          }),
-        );
+        setTeeth((prev) => {
+          const current = prev[numericId];
+          if (!current) return prev;
+          if (current.generalCondition === 'missing') {
+            // re-assign to force update (no-op change)
+            return { ...prev, [numericId]: { ...current, generalCondition: 'missing' } };
+          }
+          return prev;
+        });
         handleToothClick(numericId);
       }
     }
   };
 
-  const filteredPatients = patients.filter((patient) =>
-    patient.name.toLowerCase().includes(patientSearch.trim().toLowerCase()),
-  );
+  // Normalize various possible condition names to canonical keys used by the renderer
+  const normalizeCondition = (raw?: string) => {
+    if (!raw) return 'healthy';
+    const key = raw.toLowerCase();
+    if (key === 'dental_caries' || key === 'caries') return 'caries';
+    if (key === 'cavity') return 'cavity';
+    if (key === 'tooth_decay' || key === 'decay' || key === 'tooth_decay') return 'decay';
+    if (key === 'tooth_abscess' || key === 'abscess') return 'abscess';
+    if (key === 'non_vital_tooth' || key === 'non_vital' || key === 'non_vital_tooth') return 'non_vital';
+    if (key === 'broken_tooth' || key === 'broken') return 'broken';
+    if (key === 'cracked_tooth' || key === 'cracked') return 'cracked';
+    if (key === 'chipped_tooth' || key === 'chipped') return 'chipped';
+    if (key === 'missing_tooth' || key === 'missing') return 'missing';
+    if (key === 'retained_root') return 'retained_root';
+    if (key === 'impacted_tooth' || key === 'impacted') return 'impacted';
+    if (key === 'loose_tooth' || key === 'loose') return 'loose';
+    if (key === 'tooth_erosion' || key === 'erosion') return 'erosion';
+    if (key === 'discolored_tooth' || key === 'discolored') return 'discolored';
+    if (key === 'stained_tooth' || key === 'stained') return 'stained';
+    if (key === 'needs_filling') return 'needs_filling';
+    if (key === 'needs_root_canal_treatment' || key === 'needs_root_canal' || key === 'needs_root_canal_treatment') return 'needs_root_canal';
+    if (key === 'needs_extraction' || key === 'extraction') return 'needs_extraction';
+    return key;
+  };
 
-  const recentPatientIds: Array<string | number> = JSON.parse(
-    localStorage.getItem('dentalChart_recentPatients') || '[]',
-  );
+  // Render SVG overlays for a tooth. Each condition uses its own SVG layer and
+  // is clipped/masked to the tooth image so visuals exactly match the visible tooth.
+  const renderConditionOverlays = (toothId: string, conditionRaw?: string) => {
+    const condition = normalizeCondition(conditionRaw);
+    const maskId = `mask-tooth-${toothId}`;
+    const patternCaries = `pat-caries-${toothId}`;
+    const patternCavity = `pat-cavity-${toothId}`;
+    const speckleId = `pat-speckle-${toothId}`;
 
-  const recentPatients = recentPatientIds
-    .map((id) => patients.find((patient) => String(patient.id) === String(id)))
-    .filter((patient): patient is Patient => Boolean(patient));
+    // helper to produce deterministic speckle positions based on tooth id
+    const specklePositions = Array.from({ length: 8 }, (_, i) => ({
+      cx: 15 + ((i * 37 + toothId.length * 13) % 60),
+      cy: 10 + ((i * 29 + toothId.length * 7) % 70),
+      r: 1 + ((i * 17 + toothId.length) % 3),
+    }));
 
-  const recentlyAddedPatients = [...patients].slice(-5).reverse();
+    // missing_tooth overrides all others: render ghost silhouette with dotted outline
+    if (condition === 'missing') {
+      return (
+        <div
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          style={{
+            WebkitMaskImage: `url(/all-teeth/${toothId}.png)`,
+            WebkitMaskRepeat: 'no-repeat',
+            WebkitMaskPosition: 'center',
+            WebkitMaskSize: '100% 100%',
+            maskImage: `url(/all-teeth/${toothId}.png)`,
+            maskRepeat: 'no-repeat',
+            maskPosition: 'center',
+            maskSize: '100% 100%',
+          }}
+        >
+          <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <rect x="0" y="0" width="100" height="100" fill="#ffffff" opacity={0.06} />
+            <rect x="2" y="2" width="96" height="96" fill="none" stroke="#6b7280" strokeWidth={1.5} strokeDasharray="2 3" opacity={0.9} />
+          </svg>
+        </div>
+      );
+    }
 
-  const suggestionPatients = patientSearch.trim()
-    ? filteredPatients
-    : [
-        ...recentPatients,
-        ...recentlyAddedPatients.filter(
-          (patient) => !recentPatients.some((recent) => String(recent.id) === String(patient.id)),
-        ),
-      ];
+    // Otherwise, build layered SVG: disease/structural first, cosmetic above.
+    return (
+      <div
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        style={{
+          WebkitMaskImage: `url(/all-teeth/${toothId}.png)`,
+          WebkitMaskRepeat: 'no-repeat',
+          WebkitMaskPosition: 'center',
+          WebkitMaskSize: '100% 100%',
+          maskImage: `url(/all-teeth/${toothId}.png)`,
+          maskRepeat: 'no-repeat',
+          maskPosition: 'center',
+          maskSize: '100% 100%',
+        }}
+      >
+        <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <defs>
+            {/* patterns */}
+            <pattern id={patternCaries} patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+              <rect width="2" height="6" fill="#9ca3af" />
+            </pattern>
+            <pattern id={patternCavity} patternUnits="userSpaceOnUse" width="8" height="8">
+              <circle cx="2" cy="2" r="1.2" fill="#f59e0b" />
+              <circle cx="6" cy="6" r="1.2" fill="#f59e0b" />
+            </pattern>
+
+            <pattern id={speckleId} patternUnits="userSpaceOnUse" width="10" height="10">
+              <circle cx="2" cy="3" r="1" fill="#7c3f00" />
+            </pattern>
+
+            <radialGradient id={`rad-decay-${toothId}`} cx="50%" cy="50%" r="60%">
+              <stop offset="0%" stopColor="#000000" stopOpacity="0.65" />
+              <stop offset="100%" stopColor="#000000" stopOpacity="0.0" />
+            </radialGradient>
+
+            <linearGradient id={`grad-erosion-${toothId}`} x1="50%" x2="50%" y1="0%" y2="100%">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
+              <stop offset="100%" stopColor="#ffffff" stopOpacity="0.65" />
+            </linearGradient>
+
+            <linearGradient id={`grad-discolor-${toothId}`} x1="0%" x2="0%" y1="0%" y2="100%">
+              <stop offset="0%" stopColor="#fff7ed" stopOpacity="0" />
+              <stop offset="100%" stopColor="#facc15" stopOpacity="0.7" />
+            </linearGradient>
+          </defs>
+
+          {/* Disease / structural layers (below cosmetic) */}
+          {condition === 'caries' && (
+            <rect x="0" y="0" width="100" height="100" fill={`url(#${patternCaries})`} opacity={0.65} />
+          )}
+
+          {condition === 'cavity' && (
+            <rect x="0" y="0" width="100" height="100" fill={`url(#${patternCavity})`} opacity={0.7} />
+          )}
+
+          {condition === 'decay' && (
+            <rect x="0" y="0" width="100" height="100" fill={`url(#rad-decay-${toothId})`} opacity={0.7} />
+          )}
+
+          {condition === 'abscess' && (
+            <g opacity={0.75}>
+              <circle cx="50" cy="82" r="6" fill="#8b0000" />
+            </g>
+          )}
+
+          {condition === 'non_vital' && (
+            <rect x="0" y="0" width="100" height="100" fill="#6b5b95" opacity={0.35} />
+          )}
+
+          {condition === 'broken' && (
+            <g opacity={0.7}>
+              <path d="M65 30 L78 26 L72 40 L86 48 L70 50 L78 60 L60 56 L66 44 L54 36 Z" fill="#ffffff" opacity={0.95} />
+              <path d="M58 36 L72 34 L68 46" stroke="#b91c1c" strokeWidth={1.6} fill="none" />
+            </g>
+          )}
+
+          {condition === 'cracked' && (
+            <g opacity={0.75}>
+              <path d="M52 12 L48 36 L60 36 L44 72" stroke="#2563eb" strokeWidth={1.8} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            </g>
+          )}
+
+          {condition === 'chipped' && (
+            <g opacity={0.75}>
+              <path d="M20 28 C28 22, 34 24, 40 30 C36 28, 30 30, 24 34 C22 32, 20 30, 20 28 Z" fill="#ffffff" />
+            </g>
+          )}
+
+          {condition === 'retained_root' && (
+            <g opacity={0.85}>
+              <rect x="0" y="55" width="100" height="45" fill="#ffffff" />
+            </g>
+          )}
+
+          {condition === 'impacted' && (
+            <g opacity={0.95}>
+              <rect x="0" y="55" width="100" height="45" fill="#312E81" opacity={0.95} />
+              <g transform="rotate(-20 50 50)" opacity={0.9}>
+                <rect x="-10" y="40" width="30" height="8" fill="#2d2b5f" />
+                <rect x="20" y="40" width="30" height="8" fill="#2d2b5f" />
+              </g>
+            </g>
+          )}
+
+          {condition === 'erosion' && (
+            <rect x="0" y="0" width="100" height="100" fill={`url(#grad-erosion-${toothId})`} opacity={0.7} />
+          )}
+
+          {condition === 'discolored' && (
+            <rect x="0" y="0" width="100" height="100" fill={`url(#grad-discolor-${toothId})`} opacity={0.7} />
+          )}
+
+          {condition === 'stained' && (
+            <g opacity={0.7}>
+              {specklePositions.map((p, i) => (
+                <circle key={i} cx={`${p.cx}%`} cy={`${p.cy}%`} r={p.r} fill="#6b3f00" />
+              ))}
+            </g>
+          )}
+
+          {condition === 'needs_filling' && (
+            <g opacity={0.75}>
+              <circle cx="50" cy="50" r="8" fill="none" stroke="#10b981" strokeWidth={2} />
+            </g>
+          )}
+
+          {condition === 'needs_root_canal' && (
+            <g opacity={0.85} stroke="#ef4444" strokeWidth={2} strokeLinecap="round" fill="none">
+              <path d="M50 12 L50 88" />
+            </g>
+          )}
+
+          {condition === 'loose' && (
+            <g opacity={0.9} fill="none">
+              <path d="M10 10 C30 5,70 5,90 10 C80 30,80 70,90 90 C70 85,30 85,10 90 Z" stroke="#374151" strokeWidth={1.6} />
+              <g transform="translate(2,0)">
+                <path d="M10 10 C30 5,70 5,90 10 C80 30,80 70,90 90 C70 85,30 85,10 90 Z" stroke="#374151" strokeWidth={1.6} opacity={0.6} />
+              </g>
+            </g>
+          )}
+
+          {condition === 'needs_extraction' && (
+            <g opacity={0.95} pointerEvents="none">
+              <line x1="20" y1="20" x2="80" y2="80" stroke="#111827" strokeWidth={4} strokeLinecap="round" />
+              <line x1="80" y1="20" x2="20" y2="80" stroke="#111827" strokeWidth={4} strokeLinecap="round" />
+            </g>
+          )}
+        </svg>
+      </div>
+    );
+  };
 
   return (
     <div className="flex flex-col h-full bg-transparent font-sans">
-      {/* Header with patient search and actions */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-slate-200 bg-white/60 backdrop-blur-sm">
-        <div className="flex items-center gap-6">
-          <div className="text-base font-medium text-slate-600">
-            {selectedPatient?.name || 'Select Patient'}
-          </div>
+      <div className="flex-1 flex flex-col items-center justify-center p-2 gap-3">
+        <div
+          ref={containerRef}
+          className={`relative inline-block overflow-hidden transition-shadow duration-150 ${
+            hovered ? 'shadow-[0_0_0_2px_rgba(59,130,246,0.8)]' : 'shadow-[0_0_0_1px_rgba(148,163,184,0.6)]'
+          }`}
+          onMouseLeave={() => setHovered(false)}
+          onMouseEnter={() => setHovered(true)}
+          onClick={handleContainerClick}
+        >
+          {/* Background image defines the exact field size */}
+          <img
+            src="/backgroundngipin.png"
+            alt="Dental chart background"
+            className="block w-[550px] max-w-full h-auto select-none pointer-events-none"
+            draggable={false}
+          />
+          {layout.map((tooth) => {
+            const numericId = getToothNumericId(tooth.id);
+            const toothData = numericId ? teeth[numericId] : undefined;
+            const condition = toothData?.generalCondition ?? 'healthy';
+            const isMissing = condition === 'missing';
+            const color = condition !== 'healthy' ? CONDITION_COLORS[condition] : undefined;
 
-          {patients.length > 0 && (
-            <div className="relative">
-              <input
-                ref={inputRef}
-                type="text"
-                value={patientSearch}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setPatientSearch(value);
-                  setShowPatientSuggestions(true);
-                  if (!value.trim()) {
-                    setSelectedPatient(null);
-                  }
+            const zIndex = 10 + (Math.round(tooth.topPct) % 30); // keep teeth under sidebar z-50
+            return (
+              <div
+                key={tooth.id}
+                className="absolute cursor-pointer group"
+                style={{
+                  left: `${tooth.leftPct}%`,
+                  top: `${tooth.topPct}%`,
+                  width: `${tooth.widthPct}%`,
+                  transform: 'translate(-50%, -50%)',
+                  zIndex,
                 }}
-                onFocus={() => setShowPatientSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowPatientSuggestions(false), 150)}
-                placeholder="Search patient..."
-                className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-sm text-slate-600 hover:border-slate-300 transition-colors w-64"
-              />
-              {/* Suggestions are rendered into a fixed portal so they always appear above the chart */}
-              {showPatientSuggestions && patientSearch.trim().length > 0 && suggestionPortalNode && (
-                createPortal(
-                  <div
-                    style={{ left: suggestionPos?.left ?? 0, top: suggestionPos?.top ?? 0, width: suggestionPos?.width ?? 240 }}
-                    className="fixed z-[9999] mt-1 max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-md shadow-lg"
-                  >
-                    {suggestionPatients.length > 0 ? (
-                      suggestionPatients.map((patient) => (
-                        <button
-                          key={patient.id}
-                          type="button"
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            setSelectedPatient(patient);
-                            setPatientSearch(patient.name);
-                            setShowPatientSuggestions(false);
-                            const nextRecent = [
-                              patient.id,
-                              ...recentPatientIds.filter((id) => String(id) !== String(patient.id)),
-                            ].slice(0, 5);
-                            localStorage.setItem('dentalChart_recentPatients', JSON.stringify(nextRecent));
-                          }}
-                          className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
-                        >
-                          {patient.name}
-                        </button>
-                      ))
-                    ) : (
-                      <div className="px-3 py-2 text-sm text-slate-400">No matching patients</div>
-                    )}
-                  </div>,
-                  suggestionPortalNode,
-                )
-              )}
-            </div>
-          )}
-        </div>
+                // Clicks are handled at container level to avoid overlap/hitbox issues
+              >
+                <img
+                  src={`/all-teeth/${tooth.id}.png`}
+                  alt={`Tooth ${tooth.id}`}
+                  className="w-full select-none drop-shadow-sm pointer-events-none"
+                  draggable={false}
+                />
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleSaveChart}
-            className="flex items-center gap-2 px-4 py-2 bg-teal-200 hover:bg-teal-300 text-teal-900 rounded-lg shadow-sm transition-colors font-medium text-sm"
-          >
-            <Save className="w-4 h-4" />
-            Save Chart
-          </button>
-
-          <button
-            onClick={handleNewChart}
-            className="flex items-center gap-2 px-4 py-2 bg-cyan-200 hover:bg-cyan-300 text-cyan-900 rounded-lg shadow-sm transition-colors font-medium text-sm"
-          >
-            <Plus className="w-4 h-4" />
-            Add New Chart
-          </button>
-        </div>
-      </div>
-
-      {/* Select-patient modal (rendered into portal if available) */}
-      {showSelectPatientModal && (
-        createPortal(
-          <div className="fixed inset-0 z-[10000] flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/40" onClick={() => setShowSelectPatientModal(false)} />
-            <div className="relative bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
-              <h3 className="text-lg font-semibold mb-2">Select patient first</h3>
-              <p className="text-sm text-slate-600 mb-4">Please select a patient before editing the dental chart.</p>
-              <div className="flex gap-3 justify-end">
-                <button
-                  type="button"
-                  onClick={() => setShowSelectPatientModal(false)}
-                  className="px-4 py-2 rounded-lg bg-slate-100 text-slate-700"
-                >
-                  Close
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowSelectPatientModal(false);
-                    inputRef.current?.focus();
-                  }}
-                  className="px-4 py-2 rounded-lg bg-teal-500 text-white"
-                >
-                  Select Patient
-                </button>
+                {/* Per-condition SVG overlays (exact size/mask, preserves layout and click behaviour) */}
+                {renderConditionOverlays(tooth.id, condition)}
+                {/* Icons are fixed size and position (non-draggable, non-resizable) */}
               </div>
-            </div>
-          </div>,
-          suggestionPortalNode || document.body,
-        )
-      )}
-
-      <div className="flex-1 p-2">
-        <div className="flex h-full gap-2 items-start">
-          {/* Left: History / charts list */}
-          <aside className="w-64 flex-shrink-0">
-            {selectedPatient ? (
-              <div className="border border-slate-200 bg-white/60 rounded-md overflow-hidden">
-                <div className="border-b border-slate-200 px-4 py-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsHistoryOpen((open) => !open)}
-                    className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-800"
-                  >
-                    <History className="w-4 h-4" />
-                    <span>{isHistoryOpen ? 'Hide Chart History' : `View ${selectedPatient.name}'s Charts (${charts.length})`}</span>
-                  </button>
-                </div>
-
-                {isHistoryOpen && (
-                  <div className="p-4">
-                    <div className="flex flex-col gap-2">
-                      {charts.map((chart) => (
-                        <button
-                          key={chart.id}
-                          type="button"
-                          onClick={() => {
-                            setActiveChartId(chart.id);
-                            setSelectedTooth(null);
-                            setIsSidebarOpen(false);
-                          }}
-                          className={`w-full text-left px-3 py-2 rounded-lg border text-xs transition-all ${
-                            activeChartId === chart.id
-                              ? 'bg-sky-500 text-white border-sky-600 shadow-sm'
-                              : 'bg-white text-slate-700 border-slate-200 hover:border-sky-300'
-                          }`}
-                        >
-                          <div className="font-medium">{chart.date}</div>
-                          <div className="opacity-75">Chart ID: {chart.id}</div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="border border-slate-200 bg-white/60 rounded-md p-4 text-sm text-slate-600">
-                <div className="font-medium mb-1">No patient selected</div>
-                <div className="text-xs opacity-75">Select a patient to view saved charts.</div>
-              </div>
-            )}
-          </aside>
-
-          {/* Right: Chart area */}
-          <main className="flex-1 flex flex-col items-start justify-start">
-            <div
-              ref={containerRef}
-              className={`relative inline-block overflow-hidden transition-shadow duration-150 ${
-                hovered ? 'shadow-[0_0_0_2px_rgba(59,130,246,0.8)]' : 'shadow-[0_0_0_1px_rgba(148,163,184,0.6)]'
-              }`}
-              onMouseLeave={() => setHovered(false)}
-              onMouseEnter={() => setHovered(true)}
-              onClick={handleContainerClick}
-            >
-              {/* Background image defines the exact field size */}
-              <img
-                src="/backgroundngipin.png"
-                alt="Dental chart background"
-                className="block w-[550px] max-w-full h-auto select-none pointer-events-none"
-                draggable={false}
-              />
-              {layout.map((tooth) => {
-                const numericId = getToothNumericId(tooth.id);
-                const toothData = numericId ? teeth[numericId] : undefined;
-                const condition = toothData?.generalCondition ?? 'healthy';
-                const color = condition !== 'healthy' ? CONDITION_COLORS[condition] : undefined;
-
-                const zIndex = 10 + (Math.round(tooth.topPct) % 30); // keep teeth under sidebar z-50
-                return (
-                  <div
-                    key={tooth.id}
-                    className="absolute cursor-pointer group"
-                    style={{
-                      left: `${tooth.leftPct}%`,
-                      top: `${tooth.topPct}%`,
-                      width: `${tooth.widthPct}%`,
-                      transform: 'translate(-50%, -50%)',
-                      zIndex,
-                    }}
-                  >
-                    <img
-                      src={`/all-teeth/${tooth.id}.png`}
-                      alt={`Tooth ${tooth.id}`}
-                      className="w-full select-none drop-shadow-sm pointer-events-none"
-                      draggable={false}
-                    />
-
-                    {condition !== 'healthy' && (
-                      <div
-                        aria-hidden
-                        className="absolute inset-0 pointer-events-none"
-                        style={{
-                          backgroundColor: color ?? '#e8545c',
-                          opacity: 0.5,
-                          WebkitMaskImage: `url(/all-teeth/${tooth.id}.png)`,
-                          WebkitMaskRepeat: 'no-repeat',
-                          WebkitMaskPosition: 'center',
-                          WebkitMaskSize: '100% 100%',
-                          maskImage: `url(/all-teeth/${tooth.id}.png)`,
-                          maskRepeat: 'no-repeat',
-                          maskPosition: 'center',
-                          maskSize: '100% 100%',
-                        }}
-                      />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </main>
+            );
+          })}
         </div>
       </div>
 

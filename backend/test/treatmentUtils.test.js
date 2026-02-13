@@ -28,4 +28,20 @@ describe('sanitizeTreatmentInput', () => {
     expect(result.amountPaid).to.equal(0);
     expect(result.remainingBalance).to.equal(0);
   });
+
+  it('reuses existing defaults when fields are omitted', () => {
+    const defaults = {
+      cost: 20000,
+      amountPaid: 8000,
+      remainingBalance: 12000,
+      paymentType: 'installment',
+      installmentPlan: '{"terms":6}'
+    };
+    const result = sanitizeTreatmentInput({}, defaults);
+    expect(result.cost).to.equal(20000);
+    expect(result.amountPaid).to.equal(8000);
+    expect(result.remainingBalance).to.equal(12000);
+    expect(result.paymentType).to.equal('installment');
+    expect(result.installmentPlan).to.equal('{"terms":6}');
+  });
 });

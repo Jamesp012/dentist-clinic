@@ -33,7 +33,10 @@ const fetchWithAuth = async (url, options = {}) => {
       }
       const errorData = await response.json().catch(() => ({}));
       const errorMessage = errorData.error || `API Error: ${response.status}`;
-      throw new Error(errorMessage);
+      const err = new Error(errorMessage);
+      err.status = response.status;
+      err.details = errorData;
+      throw err;
     }
     return await response.json();
   } catch (error) {

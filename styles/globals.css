@@ -403,6 +403,54 @@ html, body {
   background-clip: content-box;
 }
 
+
+/* Remove native spinner controls from number inputs */
+input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none; /* Chrome, Safari, Edge */
+  margin: 0;
+}
+
+/* Stronger rules to ensure removal across browsers and overrides */
+input[type="number"] {
+  -webkit-appearance: none !important;
+  -moz-appearance: textfield !important;
+  appearance: textfield !important;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  margin: 0 !important;
+}
+
+/* Strongly hide spinner only for inputs marked .no-spinner (highest specificity) */
+input.no-spinner,
+input.no-spinner[type="number"] {
+  -webkit-appearance: none !important;
+  -moz-appearance: textfield !important;
+  appearance: none !important;
+}
+
+input.no-spinner::-webkit-outer-spin-button,
+input.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  margin: 0 !important;
+}
+
+/* IE/Edge legacy */
+input.no-spinner::-ms-clear,
+input.no-spinner::-ms-expand {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
 /* Tables, Cards, Sections with overflow */
 .card,
 [data-slot="card"],

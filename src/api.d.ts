@@ -51,6 +51,16 @@ export interface InventoryItem {
   unit_type?: 'box' | 'piece';
   pieces_per_box?: number;
   remaining_pieces?: number;
+  base_unit?: string;
+  main_unit?: string | null;
+  conversion_value?: number | null;
+  base_quantity?: number;
+  baseUnit?: string;
+  mainUnit?: string | null;
+  conversionValue?: number | null;
+  baseQuantity?: number;
+  piecesPerBox?: number;
+  remainingPieces?: number;
 }
 
 export interface Referral {
@@ -102,12 +112,40 @@ export interface TreatmentRecord {
   treatment?: string;
   tooth?: string;
   notes?: string;
+  appointmentId?: string | number | null;
   cost: number;
   dentist?: string;
   paymentType?: 'full' | 'installment';
   amountPaid?: number;
   remainingBalance?: number;
   installmentPlan?: any;
+  selectedServices?: string[];
+  types?: string[];
+  inventoryDeduction?: {
+    applied: boolean;
+    reductions?: Array<{
+      itemId: string | number;
+      itemName: string;
+      unitType: 'box' | 'piece' | string;
+      unitsDeducted: number;
+      piecesDeducted: number;
+      baseUnit?: string;
+      mainUnit?: string | null;
+      conversionValue?: number | null;
+      quantityBefore?: number;
+      quantityAfter?: number;
+    }>;
+    shortages?: Array<{
+      itemId: string | number;
+      itemName: string;
+      unitType: string;
+      requestedPieces: number;
+      availablePieces: number;
+      baseUnit?: string;
+      mainUnit?: string | null;
+    }>;
+    missingRules?: string[];
+  };
 }
 
 export interface Payment {
