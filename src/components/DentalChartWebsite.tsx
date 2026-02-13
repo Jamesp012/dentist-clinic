@@ -1,5 +1,4 @@
-import React, { useRef, useState, useCallback } from 'react';
-import type { Patient } from '../App';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { ToothData } from './Tooth';
 import { ToothDetailsSidebar } from './dental/ToothDetailsSidebar';
 
@@ -144,11 +143,7 @@ const INITIAL_LAYOUT: ToothLayout[] = [
   { id: 'T', leftPct: 28.636363636363637, topPct: 71.9899425407962, widthPct: 18.590909090909093 },
 ];
 
-type DentalChartWebsiteProps = {
-  patients?: Patient[];
-};
-
-export function DentalChartWebsite({ patients = [] }: DentalChartWebsiteProps) {
+export function DentalChartWebsite() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [layout, setLayout] = useState<ToothLayout[]>(INITIAL_LAYOUT);
   const [hovered, setHovered] = useState(false);
@@ -157,14 +152,82 @@ export function DentalChartWebsite({ patients = [] }: DentalChartWebsiteProps) {
   const [teeth, setTeeth] = useState<Record<number, ToothData>>(() => createInitialTeethData());
   const [selectedTooth, setSelectedTooth] = useState<number | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  // Header / patient selection state
-  const [patientName, setPatientName] = useState<string>('');
-  const [selectedPatientId, setSelectedPatientId] = useState<string>('');
-  const [patientHistory, setPatientHistory] = useState<string[]>([
-    'Exam: 2025-01-10 - Routine check',
-    'Filling: 2024-11-02 - #14 composite',
-  ]);
-  const [historyOpen, setHistoryOpen] = useState(false);
+
+  // Patient selector + chart history (persisted to localStorage)
+  type ChartSnapshot = {
+    id: string;
+    patientId: string;
+    patientName: string;
+    createdAt: string; // ISO
+    teeth: Record<number, ToothData>;
+  };
+
+  const [patients, setPatients] = useState<{ id: string; name: string }[]>(() => {
+    try {
+      const raw = localStorage.getItem('patients');
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [patientQuery, setPatientQuery] = useState('');
+  const [selectedPatientObj, setSelectedPatientObj] = useState<{ id: string; name: string } | null>(
+    null
+  );
+
+  const [chartHistory, setChartHistory] = useState<ChartSnapshot[]>(() => {
+    try {
+      const raw = localStorage.getItem('dentalChartHistory');
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('dentalChartHistory', JSON.stringify(chartHistory));
+    } catch (e) {
+      // ignore
+    }
+  }, [chartHistory]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('patients', JSON.stringify(patients));
+    } catch (e) {}
+  }, [patients]);
+
+  const filteredPatients = patients.filter((p) => p.name.toLowerCase().includes(patientQuery.toLowerCase()));
+
+  const saveChartSnapshot = () => {
+    if (!selectedPatientObj) {
+      alert('Select a patient before saving the chart');
+      return;
+    }
+
+    const snapshot: ChartSnapshot = {
+      id: Date.now().toString(),
+      patientId: selectedPatientObj.id,
+      patientName: selectedPatientObj.name,
+      createdAt: new Date().toISOString(),
+      teeth: teeth,
+    };
+
+    setChartHistory((prev) => [snapshot, ...prev]);
+  };
+
+  const loadChartSnapshot = (snapshot: ChartSnapshot) => {
+    if (!snapshot) return;
+    setTeeth(snapshot.teeth);
+    // set selected patient to match snapshot
+    setSelectedPatientObj({ id: snapshot.patientId, name: snapshot.patientName });
+  };
+
+  const handleNewChart = () => {
+    if (!confirm('Create a new empty chart? Unsaved changes will be lost.')) return;
+    setTeeth(createInitialTeethData());
+  };
 
   const getToothNumericId = (iconId: string): number | null => {
     const numeric = parseInt(iconId, 10);
@@ -202,36 +265,6 @@ export function DentalChartWebsite({ patients = [] }: DentalChartWebsiteProps) {
     const a = document.createElement('a');
     a.href = url;
     a.download = 'dental-chart-layout.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  const toggleHistory = () => setHistoryOpen(v => !v);
-
-  const handleSelectPatient = (id: string) => {
-    const p = patients.find(pt => String(pt.id) === String(id));
-    if (p) {
-      setPatientName(p.name);
-      try {
-        const key = 'dentalChart_recentPatients';
-        const existing = JSON.parse(localStorage.getItem(key) || '[]');
-        const next = [p.id, ...existing.filter((x: any) => String(x) !== String(p.id))].slice(0,5);
-        localStorage.setItem(key, JSON.stringify(next));
-      } catch {}
-    }
-  };
-
-  const handleAddChart = () => {
-    const name = window.prompt('Enter new chart name', `chart-${Date.now()}`);
-    if (!name) return;
-    const data = { name, layout };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${name}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -515,48 +548,85 @@ export function DentalChartWebsite({ patients = [] }: DentalChartWebsiteProps) {
   return (
     <div className="flex flex-col h-full bg-transparent font-sans">
       {/* Header: patient selector + actions */}
-      <div className="w-full px-6 py-3 flex items-center justify-center gap-4">
-        <div className="flex items-center gap-3">
-          <label className="text-sm text-slate-600">Patient:</label>
-          <select
-            value={selectedPatientId}
-            onChange={(e) => {
-              setSelectedPatientId(e.target.value);
-              handleSelectPatient(e.target.value);
-            }}
-            className="px-3 py-1.5 bg-white border border-slate-200 rounded-md text-sm text-slate-700"
-          >
-            <option value="">Select patient</option>
-            {patients.map(p => (
-              <option key={p.id} value={String(p.id)}>{p.name}</option>
-            ))}
-          </select>
+      <div className="p-2 flex items-center gap-2 border-b bg-white/60">
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-700">Patient</label>
+          <div className="relative">
+            <input
+              value={patientQuery}
+              onChange={(e) => setPatientQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  // if exact match not found, create new patient
+                  if (patientQuery.trim().length === 0) return;
+                  const existing = patients.find((p) => p.name.toLowerCase() === patientQuery.toLowerCase());
+                  if (existing) setSelectedPatientObj(existing);
+                  else {
+                    const np = { id: Date.now().toString(), name: patientQuery.trim() };
+                    setPatients((s) => [np, ...s]);
+                    setSelectedPatientObj(np);
+                  }
+                }
+              }}
+              placeholder="Search patient..."
+              className="px-2 py-1 border rounded w-56"
+            />
+            {patientQuery.length > 0 && filteredPatients.length > 0 && (
+              <div className="absolute mt-1 bg-white border rounded w-56 max-h-40 overflow-auto z-50">
+                {filteredPatients.map((p) => (
+                  <div
+                    key={p.id}
+                    className="px-2 py-1 hover:bg-slate-100 cursor-pointer"
+                    onClick={() => {
+                      setSelectedPatientObj(p);
+                      setPatientQuery(p.name);
+                    }}
+                  >
+                    {p.name}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          {selectedPatientObj && <div className="ml-2 text-sm text-gray-600">Selected: {selectedPatientObj.name}</div>}
         </div>
 
-        <div className="flex items-center gap-3 ml-6">
-          <button onClick={handleDownload} className="px-3 py-1.5 bg-sky-500 text-white rounded-md text-sm">Save Chart</button>
-          <button onClick={handleAddChart} className="px-3 py-1.5 bg-emerald-500 text-white rounded-md text-sm">Add Chart</button>
-          <button onClick={toggleHistory} className="px-3 py-1.5 bg-slate-100 border border-slate-200 rounded-md text-sm">Patient History</button>
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={saveChartSnapshot}
+            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+          >
+            Save Chart
+          </button>
+          <button
+            onClick={handleNewChart}
+            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            New Chart
+          </button>
         </div>
       </div>
-      <div className="flex-1 flex flex-col items-center justify-center p-2 gap-3">
-        <div
-          ref={containerRef}
-          className={`relative inline-block overflow-hidden transition-shadow duration-150 ${
-            hovered ? 'shadow-[0_0_0_2px_rgba(59,130,246,0.8)]' : 'shadow-[0_0_0_1px_rgba(148,163,184,0.6)]'
-          }`}
-          onMouseLeave={() => setHovered(false)}
-          onMouseEnter={() => setHovered(true)}
-          onClick={handleContainerClick}
-        >
-          {/* Background image defines the exact field size */}
-          <img
-            src="/backgroundngipin.png"
-            alt="Dental chart background"
-            className="block w-[550px] max-w-full h-auto select-none pointer-events-none"
-            draggable={false}
-          />
-          {layout.map((tooth) => {
+
+      <div className="flex-1 flex items-start gap-3 p-2">
+        {/* Chart area */}
+        <div className="flex-1 flex flex-col items-center justify-center p-2 gap-3">
+          <div
+            ref={containerRef}
+            className={`relative inline-block overflow-hidden transition-shadow duration-150 ${
+              hovered ? 'shadow-[0_0_0_2px_rgba(59,130,246,0.8)]' : 'shadow-[0_0_0_1px_rgba(148,163,184,0.6)]'
+            }`}
+            onMouseLeave={() => setHovered(false)}
+            onMouseEnter={() => setHovered(true)}
+            onClick={handleContainerClick}
+          >
+            {/* Background image defines the exact field size */}
+            <img
+              src="/backgroundngipin.png"
+              alt="Dental chart background"
+              className="block w-[550px] max-w-full h-auto select-none pointer-events-none"
+              draggable={false}
+            />
+            {layout.map((tooth) => {
             const numericId = getToothNumericId(tooth.id);
             const toothData = numericId ? teeth[numericId] : undefined;
             const condition = toothData?.generalCondition ?? 'healthy';
@@ -590,24 +660,47 @@ export function DentalChartWebsite({ patients = [] }: DentalChartWebsiteProps) {
               </div>
             );
           })}
+          </div>
+        </div>
+
+        {/* History side panel */}
+        <div className="w-80 border-l pl-3">
+          <h3 className="text-sm font-medium mb-2">Chart History</h3>
+          {selectedPatientObj ? (
+            <div>
+              {chartHistory.filter(c => c.patientId === selectedPatientObj.id).length === 0 && (
+                <div className="text-sm text-gray-500">No history for this patient</div>
+              )}
+
+              {chartHistory
+                .filter((c) => c.patientId === selectedPatientObj.id)
+                .map((c) => {
+                  const date = new Date(c.createdAt);
+                  return (
+                    <div key={c.id} className="mb-2 p-2 border rounded hover:bg-slate-50 cursor-pointer">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-sm font-medium">{c.patientName}</div>
+                          <div className="text-xs text-gray-500">{date.toLocaleString()}</div>
+                        </div>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => loadChartSnapshot(c)}
+                            className="text-xs px-2 py-1 bg-slate-200 rounded"
+                          >
+                            Load
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          ) : (
+            <div className="text-sm text-gray-500">Select a patient to view history</div>
+          )}
         </div>
       </div>
-
-      {historyOpen && (
-        <div className="fixed right-6 top-28 w-80 bg-white border p-4 rounded shadow-lg z-50">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-slate-700">Patient History</h3>
-            <button onClick={() => setHistoryOpen(false)} className="text-slate-400 hover:text-slate-600">Close</button>
-          </div>
-          <div className="mt-3 text-sm text-slate-600">
-            <ul className="space-y-2">
-              {patientHistory.map((h, idx) => (
-                <li key={idx} className="border-b border-slate-100 pb-2">{h}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
 
       <ToothDetailsSidebar
         isOpen={isSidebarOpen}
