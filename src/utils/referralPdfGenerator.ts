@@ -1,11 +1,20 @@
 import { jsPDF } from 'jspdf';
 import { Referral, Patient } from '../App';
 import { toast } from 'sonner';
-// Use image paths directly to avoid TS image import issues
-const redorLogo = '/redor-logo.png';
-const clinicLogo = '/jclinic-logo.png';
-const xrayClinic = '/xray-clinic.jpg';
-const clinicMap = '/clinic-map.jpg';
+
+// Import image assets
+import { clinicLogo, clinicMap, xrayClinic } from '../assets';
+
+const formatFullName = (fullName: string | undefined | null) => {
+  if (!fullName) return '';
+  // Force single line by replacing any newlines or multiple spaces
+  const trimmed = fullName.trim().replace(/\s+/g, ' ');
+  if (trimmed.includes(',')) {
+    const [last, ...given] = trimmed.split(',').map(s => s.trim());
+    return `${given.join(' ')} ${last}`.trim();
+  }
+  return trimmed;
+};
 
 export const generateReferralPDF = (referral: Referral, patient?: Patient) => {
   try {
@@ -27,56 +36,55 @@ export const generateReferralPDF = (referral: Referral, patient?: Patient) => {
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(0, 0, 0);
 
-      // Patient's Name
-      doc.text("Patient's Name:", 15, yPosition);
+      // Patient's Name, Age, Sex on one line (Strict Straight line row)
+      const formattedName = formatFullName(referral.patientName);
+      const age = patient ? String(new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear()) : '';
+      
+      doc.setFont('helvetica', 'bold');
+      doc.text("NAME:", 15, yPosition);
       doc.setFont('helvetica', 'normal');
-      doc.setDrawColor(150, 150, 150);
-      doc.setLineWidth(0.5);
-      doc.line(50, yPosition + 1, pageWidth - 15, yPosition + 1);
-      doc.text(referral.patientName, 52, yPosition);
+      doc.text(formattedName, 30, yPosition);
+      doc.line(29, yPosition + 1, 130, yPosition + 1);
+
+      doc.setFont('helvetica', 'bold');
+      doc.text("AGE:", 135, yPosition);
+      doc.setFont('helvetica', 'normal');
+      doc.text(age, 148, yPosition);
+      doc.line(147, yPosition + 1, 168, yPosition + 1);
+
+      doc.setFont('helvetica', 'bold');
+      doc.text("SEX:", 172, yPosition);
+      doc.setFont('helvetica', 'normal');
+      doc.text(patient?.sex || '', 184, yPosition);
+      doc.line(183, yPosition + 1, pageWidth - 15, yPosition + 1);
       yPosition += 10;
 
-      // Date, Contact No, Age (3 columns)
+      // Date and Contact No
       doc.setFont('helvetica', 'bold');
       doc.text("Date:", 15, yPosition);
       doc.setFont('helvetica', 'normal');
-      doc.line(30, yPosition + 1, 65, yPosition + 1);
+      doc.line(30, yPosition + 1, 85, yPosition + 1);
       doc.text(new Date(referral.date).toLocaleDateString('en-US'), 32, yPosition);
 
       doc.setFont('helvetica', 'bold');
-      doc.text("Contact No.:", 70, yPosition);
+      doc.text("Contact No.:", 90, yPosition);
       doc.setFont('helvetica', 'normal');
-      doc.line(95, yPosition + 1, 130, yPosition + 1);
-      doc.text(patient?.phone || '', 97, yPosition);
-
-      doc.setFont('helvetica', 'bold');
-      doc.text("Age:", 135, yPosition);
-      doc.setFont('helvetica', 'normal');
-      doc.line(148, yPosition + 1, pageWidth - 15, yPosition + 1);
-      const age = patient ? String(new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear()) : '';
-      doc.text(age, 150, yPosition);
+      doc.line(115, yPosition + 1, pageWidth - 15, yPosition + 1);
+      doc.text(patient?.phone || '', 117, yPosition);
       yPosition += 10;
 
-      // Sex and Date of Birth
+      // Date of Birth and Referred by
       doc.setFont('helvetica', 'bold');
-      doc.text("Sex:", 15, yPosition);
+      doc.text("Date Of Birth:", 15, yPosition);
       doc.setFont('helvetica', 'normal');
-      doc.line(28, yPosition + 1, 90, yPosition + 1);
-      doc.text(patient?.sex || '', 30, yPosition);
+      doc.line(42, yPosition + 1, 95, yPosition + 1);
+      doc.text(patient?.dateOfBirth || '', 44, yPosition);
 
       doc.setFont('helvetica', 'bold');
-      doc.text("Date Of Birth:", 95, yPosition);
+      doc.text("Referred by:", 100, yPosition);
       doc.setFont('helvetica', 'normal');
       doc.line(125, yPosition + 1, pageWidth - 15, yPosition + 1);
-      doc.text(patient?.dateOfBirth || '', 127, yPosition);
-      yPosition += 10;
-
-      // Referred by
-      doc.setFont('helvetica', 'bold');
-      doc.text("Referred by:", 15, yPosition);
-      doc.setFont('helvetica', 'normal');
-      doc.line(42, yPosition + 1, pageWidth - 15, yPosition + 1);
-      doc.text(referral.referringDentist, 44, yPosition);
+      doc.text(referral.referringDentist, 127, yPosition);
       yPosition += 10;
 
       // Contact No and Clinic Email Address
@@ -193,13 +201,25 @@ export const generateReferralPDF = (referral: Referral, patient?: Patient) => {
       // Clinic information with map - Two column layout
       const clinicInfoStartY = yPosition;
       
+      // Right column - Clinic Map (Bigger and to the RIGHT)
+      try {
+        const mapWidth = 100;
+        const mapHeight = 70;
+        const mapX = pageWidth - mapWidth - 10;
+        const mapY = clinicInfoStartY;
+        doc.addImage(clinicMap, 'JPEG', mapX, mapY, mapWidth, mapHeight);
+      } catch (error) {
+        console.error('Failed to add clinic map to Doctor Referral PDF:', error);
+      }
+
       // Left column - Clinic Logo and information
       // Add clinic logo
       try {
         const logoWidth = 60;
         const logoHeight = 20;
-        doc.addImage(clinicLogo, 'PNG', 15, yPosition, logoWidth, logoHeight);
-        yPosition += logoHeight + 4;
+        // Positioned slightly lower in the info section
+        doc.addImage(clinicLogo, 'PNG', 15, yPosition + 10, logoWidth, logoHeight);
+        yPosition += logoHeight + 14;
       } catch (error) {
         console.error('Failed to add clinic logo to PDF:', error);
       }
@@ -233,8 +253,9 @@ export const generateReferralPDF = (referral: Referral, patient?: Patient) => {
       doc.text('Contact No.:', 15, yPosition);
       doc.setFont('helvetica', 'normal');
       doc.text('0938-171-7695', 40, yPosition);
-
-      yPosition += 50;
+      
+      // Ensure yPosition is below the tallest element (map or text)
+      yPosition = Math.max(yPosition, clinicInfoStartY + 70) + 10;
 
       // Yellow line before thank you message
       doc.setDrawColor(234, 179, 8);
@@ -264,12 +285,12 @@ export const generateReferralPDF = (referral: Referral, patient?: Patient) => {
 
       // Clinic Logo/Branding
       const headerTopY = 15;
-      const logoWidth = 45;
-      const logoHeight = 20;
+      const logoWidth = 120; // Increased from 100
+      const logoHeight = 60; // Increased from 50
       try {
-        doc.addImage(redorLogo, 'PNG', 15, headerTopY, logoWidth, logoHeight);
+        doc.addImage(clinicMap, 'JPEG', 15, headerTopY, logoWidth, logoHeight);
       } catch (error) {
-        console.error('Failed to add REDOR logo to PDF:', error);
+        console.error('Failed to add clinic map to PDF:', error);
       }
 
       // Contact Information (right aligned) with vertical line
@@ -285,7 +306,7 @@ export const generateReferralPDF = (referral: Referral, patient?: Patient) => {
       doc.text('www.redordentalcenter.com', contactX, contactY + 12, { align: 'right' });
 
       // Vertical line before contact info
-      const lineX = pageWidth - 80;
+      const lineX = pageWidth - 70;
       doc.setDrawColor(...brandColor);
       doc.setLineWidth(0.5);
       doc.line(lineX, headerTopY, lineX, headerTopY + logoHeight);
@@ -303,26 +324,31 @@ export const generateReferralPDF = (referral: Referral, patient?: Patient) => {
       doc.text(new Date(referral.date).toLocaleDateString('en-US'), 32, yPosition);
       yPosition += 8;
 
-      // Patient's Name with sex checkboxes
-      doc.text("Patient's Name:", 15, yPosition);
-      doc.line(45, yPosition + 1, 120, yPosition + 1);
-      doc.text(referral.patientName, 47, yPosition);
+      // Patient's Name, Age, Sex on one line
+      const age = patient ? String(new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear()) : '';
+      doc.text("NAME:", 15, yPosition);
+      doc.line(28, yPosition + 1, 115, yPosition + 1);
+      doc.text(formatFullName(referral.patientName), 30, yPosition);
+
+      doc.text("AGE:", 120, yPosition);
+      doc.line(132, yPosition + 1, 150, yPosition + 1);
+      doc.text(age, 134, yPosition);
 
       // Sex checkboxes
-      const sexX = 125;
+      const sexX = 155;
       doc.rect(sexX, yPosition - 3, 3, 3);
       if (patient?.sex === 'Male') {
         doc.setFillColor(0, 0, 0);
         doc.rect(sexX + 0.5, yPosition - 2.5, 2, 2, 'F');
       }
-      doc.text("Male", sexX + 5, yPosition);
+      doc.text("M", sexX + 5, yPosition);
 
-      doc.rect(sexX + 18, yPosition - 3, 3, 3);
+      doc.rect(sexX + 10, yPosition - 3, 3, 3);
       if (patient?.sex === 'Female') {
         doc.setFillColor(0, 0, 0);
-        doc.rect(sexX + 18.5, yPosition - 2.5, 2, 2, 'F');
+        doc.rect(sexX + 10.5, yPosition - 2.5, 2, 2, 'F');
       }
-      doc.text("Female", sexX + 23, yPosition);
+      doc.text("F", sexX + 15, yPosition);
       yPosition += 8;
 
       // Birthday

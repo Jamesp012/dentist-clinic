@@ -126,8 +126,30 @@ CREATE TABLE IF NOT EXISTS referrals (
   date DATE,
   urgency ENUM('routine', 'urgent', 'emergency') DEFAULT 'routine',
   createdByRole ENUM('patient', 'staff') DEFAULT 'staff',
+  referralType ENUM('incoming', 'outgoing') DEFAULT 'outgoing',
+  source ENUM('patient-uploaded', 'staff-upload', 'external') DEFAULT 'staff-upload',
+  xrayDiagramSelections JSON NULL,
+  xrayNotes TEXT CHARACTER SET utf8mb4 NULL,
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (patientId) REFERENCES patients(id) ON DELETE SET NULL
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Referral files table
+CREATE TABLE IF NOT EXISTS referral_files (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  referralId INT,
+  patientId INT,
+  fileName VARCHAR(255) NOT NULL,
+  fileType ENUM('image', 'pdf', 'document') NOT NULL,
+  filePath VARCHAR(500) NOT NULL,
+  fileSize INT,
+  url VARCHAR(500) DEFAULT NULL,
+  uploadedDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  uploadedBy INT,
+  FOREIGN KEY (referralId) REFERENCES referrals(id) ON DELETE CASCADE,
+  FOREIGN KEY (patientId) REFERENCES patients(id) ON DELETE CASCADE,
+  FOREIGN KEY (uploadedBy) REFERENCES users(id) ON DELETE SET NULL,
+  INDEX idx_patient_date (patientId, uploadedDate)
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Photos table

@@ -8,12 +8,9 @@ import { generateReferralPDF } from '../utils/referralPdfGenerator';
 import { PatientSearchInput } from './PatientSearchInput';
 import { getSafeFileUrl } from '../utils/fileUtils';
 import { motion, AnimatePresence } from 'motion/react';
-// NOTE: Image assets referenced by path to avoid TypeScript image import issues
-const redorLogo = '/redor-logo.png';
-const clinicLogo = '/jclinic-logo.png';
-const xrayClinic = '/xray-clinic.jpg';
-const clinicMap = '/clinic-map.jpg';
 
+// Import image assets
+import { clinicLogo, clinicMap, xrayClinic } from '../assets';
 
 type ReferralType = 'doctor' | 'xray' | null;
 
@@ -55,12 +52,28 @@ const UnderlineInput = ({ label, value, onChange, disabled }: UnderlineInputProp
   </div>
 );
 
+const formatFullName = (fullName: string | undefined | null) => {
+  if (!fullName) return '';
+  // Force single line by replacing any newlines or multiple spaces
+  const trimmed = fullName.trim().replace(/\s+/g, ' ');
+  if (trimmed.includes(',')) {
+    const [last, ...given] = trimmed.split(',').map(s => s.trim());
+    return `${given.join(' ')} ${last}`.trim();
+  }
+  return trimmed;
+};
+
 // Helpers moved outside component for better performance and structure
 const getNameParts = (fullName: string | undefined | null) => {
   if (!fullName) {
     return { lastName: '', givenNames: '' };
   }
-  const parts = fullName.trim().split(/\s+/);
+  const trimmed = fullName.trim();
+  if (trimmed.includes(',')) {
+    const [last, ...given] = trimmed.split(',').map(s => s.trim());
+    return { lastName: last, givenNames: given.join(' ') };
+  }
+  const parts = trimmed.split(/\s+/);
   if (parts.length === 1) {
     return { lastName: parts[0], givenNames: '' };
   }
@@ -70,10 +83,7 @@ const getNameParts = (fullName: string | undefined | null) => {
 };
 
 const formatPatientName = (fullName: string | undefined | null) => {
-  const { lastName, givenNames } = getNameParts(fullName);
-  if (!lastName && !givenNames) return '';
-  if (!givenNames) return lastName;
-  return `${lastName}, ${givenNames}`;
+  return formatFullName(fullName);
 };
 
 const getReferralPatientName = (referral: Referral, patients: Patient[]) => {
@@ -131,37 +141,37 @@ const IncomingReferralView = ({ referral, patient, onClose }: { referral: Referr
           </button>
         </div>
 
-        <div className="p-8 space-y-8 overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200">
-          {/* Top: Patient Details (read-only) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-6">
-              <div className="group">
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">Patient Name</label>
-                <div className="text-base font-bold text-slate-900 bg-slate-50/80 px-4 py-3 rounded-xl border border-slate-100 group-hover:border-blue-200 transition-colors">{patientName}</div>
-              </div>
-              <div className="group">
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">Referring Clinic</label>
-                <div className="text-base font-bold text-slate-900 bg-slate-50/80 px-4 py-3 rounded-xl border border-slate-100 group-hover:border-blue-200 transition-colors">{clinicName || 'Not specified'}</div>
-              </div>
-              <div className="group">
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">Contact Information</label>
-                <div className="text-base font-bold text-slate-900 bg-slate-50/80 px-4 py-3 rounded-xl border border-slate-100 group-hover:border-blue-200 transition-colors">{referral.referredByContact || patient?.phone || '-'}</div>
-              </div>
+        <div className="p-8 space-y-4 overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200">
+          {/* Top: Patient Details (read-only row layout) */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-4 p-3 bg-slate-50/80 rounded-xl border border-slate-100 group">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider w-32 shrink-0">Patient Name</label>
+              <div className="text-base font-bold text-slate-900 flex-1">{formatFullName(patientName)}</div>
             </div>
             
-            <div className="space-y-6">
-              <div className="group">
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">Date Referred</label>
-                <div className="text-base font-bold text-slate-900 bg-slate-50/80 px-4 py-3 rounded-xl border border-slate-100 group-hover:border-blue-200 transition-colors">{dateReferred}</div>
-              </div>
-              <div className="group">
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">Referring Doctor</label>
-                <div className="text-base font-bold text-slate-900 bg-slate-50/80 px-4 py-3 rounded-xl border border-slate-100 group-hover:border-blue-200 transition-colors">{referringDoctor || 'Not specified'}</div>
-              </div>
-              <div className="group">
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">Email Address</label>
-                <div className="text-base font-bold text-slate-900 bg-slate-50/80 px-4 py-3 rounded-xl border border-slate-100 group-hover:border-blue-200 transition-colors">{referral.referredByEmail || patient?.email || '-'}</div>
-              </div>
+            <div className="flex items-center gap-4 p-3 bg-slate-50/80 rounded-xl border border-slate-100 group">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider w-32 shrink-0">Date Referred</label>
+              <div className="text-base font-bold text-slate-900 flex-1">{dateReferred}</div>
+            </div>
+
+            <div className="flex items-center gap-4 p-3 bg-slate-50/80 rounded-xl border border-slate-100 group">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider w-32 shrink-0">Referring Clinic</label>
+              <div className="text-base font-bold text-slate-900 flex-1">{clinicName || 'Not specified'}</div>
+            </div>
+
+            <div className="flex items-center gap-4 p-3 bg-slate-50/80 rounded-xl border border-slate-100 group">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider w-32 shrink-0">Referring Doctor</label>
+              <div className="text-base font-bold text-slate-900 flex-1">{referringDoctor || 'Not specified'}</div>
+            </div>
+
+            <div className="flex items-center gap-4 p-3 bg-slate-50/80 rounded-xl border border-slate-100 group">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider w-32 shrink-0">Contact Number</label>
+              <div className="text-base font-bold text-slate-900 flex-1">{referral.referredByContact || patient?.phone || '-'}</div>
+            </div>
+
+            <div className="flex items-center gap-4 p-3 bg-slate-50/80 rounded-xl border border-slate-100 group">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider w-32 shrink-0">Email Address</label>
+              <div className="text-base font-bold text-slate-900 flex-1">{referral.referredByEmail || patient?.email || '-'}</div>
             </div>
           </div>
 
@@ -768,7 +778,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                   </div>
                 </div>
                 <div className="flex items-center justify-center">
-                  <img src={redorLogo} alt="Redor Logo" className="w-32 h-32 object-contain" />
+                  <img src={clinicMap} alt="Clinic Map" className="w-full h-auto max-h-80 object-contain rounded-lg shadow-md border border-gray-200" />
                 </div>
               </div>
               <div className="mt-6 pt-6 text-left space-y-2">
@@ -797,7 +807,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
               {/* REDOR Header */}
               <div className="flex justify-between items-start border-b-2 pb-4">
                 <div>
-                  <img src={redorLogo} alt="REDOR Logo" className="h-24 object-contain" />
+                  <img src={clinicMap} alt="Clinic Map" className="h-60 object-contain" />
                 </div>
                 <div className="text-right text-xs text-[#105397] border-l border-[#105397] pl-3">
                   <p>37 Quezon Ave., Lucena City</p>
@@ -1335,10 +1345,15 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                             {getReferralPatientName(referral, patients)?.charAt(0)?.toUpperCase() || 'P'}
                           </div>
                           <div>
-                            <p className="text-lg font-bold text-slate-900">{formatPatientName(getReferralPatientName(referral, patients))}</p>
-                            <p className="text-sm text-slate-500 mt-0.5">
-                              {new Date(referral.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                            </p>
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                              <p className="text-lg font-bold text-slate-900">{formatPatientName(getReferralPatientName(referral, patients))}</p>
+                              <div className="flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 bg-slate-300 rounded-full hidden sm:block"></span>
+                                <p className="text-sm font-semibold text-slate-500">
+                                  {new Date(referral.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                </p>
+                              </div>
+                            </div>
                           </div>
                           <div className="ml-auto">
                             {referral.specialty === 'X-Ray Imaging' || referral.referredTo === 'X-Ray Facility' ? (
@@ -1532,91 +1547,50 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
               {!isSelectedXrayReferral ? (
                 <div className="space-y-6">
                   <div className="space-y-4 mb-6">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm whitespace-nowrap font-semibold">Patient's Name:</span>
-                      <input
-                        type="text"
-                        value={selectedReferral.patientName}
-                        disabled
-                        className="flex-1 border-b-2 border-slate-400 bg-slate-50 px-2 py-2 text-sm font-medium cursor-not-allowed"
-                      />
+                    <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                      <span className="text-sm font-bold text-slate-500 uppercase tracking-wider w-32 shrink-0">Patient's Name:</span>
+                      <div className="text-base font-bold text-slate-900 flex-1">{formatFullName(selectedReferral.patientName)}</div>
                     </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm whitespace-nowrap font-semibold">Date:</span>
-                        <input
-                          type="text"
-                          value={formatToDD_MM_YYYY(selectedReferral.date)}
-                          disabled
-                          className="w-full border-b-2 border-slate-400 bg-slate-50 px-2 py-2 text-sm font-medium cursor-not-allowed"
-                        />
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <span className="text-sm font-bold text-slate-500 uppercase tracking-wider w-20 shrink-0">Date:</span>
+                        <div className="text-base font-bold text-slate-900">{formatToDD_MM_YYYY(selectedReferral.date)}</div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm whitespace-nowrap font-semibold">Contact No.:</span>
-                        <input
-                          type="text"
-                          value={selectedPatient?.phone || ''}
-                          disabled
-                          className="w-full border-b-2 border-slate-400 bg-slate-50 px-2 py-2 text-sm font-medium cursor-not-allowed"
-                        />
+                      <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <span className="text-sm font-bold text-slate-500 uppercase tracking-wider w-20 shrink-0">Contact:</span>
+                        <div className="text-base font-bold text-slate-900">{selectedPatient?.phone || ''}</div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm whitespace-nowrap font-semibold">Age:</span>
-                        <input
-                          type="text"
-                          value={selectedPatientAge}
-                          disabled
-                          className="w-full border-b-2 border-slate-400 bg-slate-50 px-2 py-2 text-sm font-medium cursor-not-allowed"
-                        />
+                      <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <span className="text-sm font-bold text-slate-500 uppercase tracking-wider w-16 shrink-0">Age:</span>
+                        <div className="text-base font-bold text-slate-900">{selectedPatientAge}</div>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm whitespace-nowrap font-semibold">Sex:</span>
-                        <input
-                          type="text"
-                          value={selectedPatient?.sex || ''}
-                          disabled
-                          className="w-full border-b-2 border-slate-400 bg-slate-50 px-2 py-2 text-sm font-medium cursor-not-allowed"
-                        />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <span className="text-sm font-bold text-slate-500 uppercase tracking-wider w-20 shrink-0">Sex:</span>
+                        <div className="text-base font-bold text-slate-900">{selectedPatient?.sex || ''}</div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm whitespace-nowrap font-semibold">Date Of Birth:</span>
-                        <input
-                          type="text"
-                          value={selectedPatient?.dateOfBirth || ''}
-                          disabled
-                          className="w-full border-b-2 border-slate-400 bg-slate-50 px-2 py-2 text-sm font-medium cursor-not-allowed"
-                        />
+                      <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <span className="text-sm font-bold text-slate-500 uppercase tracking-wider w-20 shrink-0">DOB:</span>
+                        <div className="text-base font-bold text-slate-900">{selectedPatient?.dateOfBirth || ''}</div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm whitespace-nowrap font-semibold">Referred by:</span>
-                      <input
-                        type="text"
-                        value={selectedReferral.referringDentist}
-                        disabled
-                        className="flex-1 border-b-2 border-slate-400 bg-slate-50 px-2 py-2 text-sm font-medium cursor-not-allowed"
-                      />
+
+                    <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                      <span className="text-sm font-bold text-slate-500 uppercase tracking-wider w-32 shrink-0">Referred by:</span>
+                      <div className="text-base font-bold text-slate-900 flex-1">{selectedReferral.referringDentist}</div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm whitespace-nowrap font-semibold">Contact No.:</span>
-                        <input
-                          type="text"
-                          value={selectedReferral.referredByContact || ''}
-                          disabled
-                          className="w-full border-b-2 border-slate-400 bg-slate-50 px-2 py-2 text-sm font-medium cursor-not-allowed"
-                        />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <span className="text-sm font-bold text-slate-500 uppercase tracking-wider w-20 shrink-0">Contact:</span>
+                        <div className="text-base font-bold text-slate-900">{selectedReferral.referredByContact || ''}</div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm whitespace-nowrap font-semibold">Clinic Email Address:</span>
-                        <input
-                          type="text"
-                          value={selectedReferral.referredByEmail || ''}
-                          disabled
-                          className="w-full border-b-2 border-slate-400 bg-slate-50 px-2 py-2 text-sm font-medium cursor-not-allowed"
-                        />
+                      <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <span className="text-sm font-bold text-slate-500 uppercase tracking-wider w-20 shrink-0">Email:</span>
+                        <div className="text-base font-bold text-slate-900 truncate flex-1">{selectedReferral.referredByEmail || ''}</div>
                       </div>
                     </div>
                   </div>
@@ -1796,7 +1770,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                   {/* REDOR Header */}
                   <div className="flex items-center justify-between mb-6">
                     <div>
-                      <img src={redorLogo} alt="REDOR Logo" className="h-24 object-contain" />
+                      <img src={clinicMap} alt="Clinic Map" className="h-40 object-contain" />
                     </div>
                     <div className="text-right text-xs text-[#105397] pl-3 border-l border-[#105397]">
                       <p>37 Quezon Ave., Lucena City</p>
@@ -1808,86 +1782,51 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
 
                   {/* Patient Information */}
                   <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold">Date:</span>
-                      <input
-                        type="text"
-                        value={formatToDD_MM_YYYY(selectedReferral.date)}
-                        disabled
-                        className="flex-1 border-b-2 border-gray-400 bg-white px-2 py-1 text-sm font-medium cursor-not-allowed"
-                      />
+                    <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                      <span className="text-sm font-bold text-slate-500 uppercase tracking-wider w-20 shrink-0">Date:</span>
+                      <div className="text-base font-bold text-slate-900">{formatToDD_MM_YYYY(selectedReferral.date)}</div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold">Patient's Name:</span>
-                      <input
-                        type="text"
-                        value={selectedReferral.patientName}
-                        disabled
-                        className="flex-1 border-b-2 border-gray-400 bg-white px-2 py-1 text-sm font-medium cursor-not-allowed"
-                      />
+                    <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                      <span className="text-sm font-bold text-slate-500 uppercase tracking-wider w-32 shrink-0">Patient Name:</span>
+                      <div className="text-base font-bold text-slate-900 flex-1">{formatFullName(selectedReferral.patientName)}</div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold">Birthday:</span>
-                        <input
-                          type="text"
-                          value={selectedPatient?.dateOfBirth || ''}
-                          disabled
-                          className="w-full border-b-2 border-gray-400 bg-white px-2 py-1 text-sm font-medium cursor-not-allowed"
-                        />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <span className="text-sm font-bold text-slate-500 uppercase tracking-wider w-24 shrink-0">Birthday:</span>
+                        <div className="text-base font-bold text-slate-900">{selectedPatient?.dateOfBirth || ''}</div>
                       </div>
-                      <div className="flex items-center gap-8">
+                      <div className="flex items-center gap-8 px-4 py-3 bg-slate-50 rounded-xl border border-slate-200">
                         {['Male', 'Female'].map(sex => (
                           <label key={sex} className="flex items-center gap-2 cursor-pointer">
                             <input
                               type="checkbox"
                               checked={selectedPatient?.sex === sex}
                               disabled
-                              className="w-4 h-4"
+                              className="w-4 h-4 rounded-full border-slate-300 text-teal-600 focus:ring-teal-500"
                             />
-                            <span className="text-sm font-semibold">{sex}</span>
+                            <span className="text-sm font-bold text-slate-700">{sex}</span>
                           </label>
                         ))}
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold">Referred by Dr.:</span>
-                        <input
-                          type="text"
-                          value={selectedReferral.referringDentist}
-                          disabled
-                          className="w-full border-b-2 border-gray-400 bg-white px-2 py-1 text-sm font-medium cursor-not-allowed"
-                        />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <span className="text-sm font-bold text-slate-500 uppercase tracking-wider w-24 shrink-0">Referred by:</span>
+                        <div className="text-base font-bold text-slate-900 flex-1">{selectedReferral.referringDentist}</div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold">Dentist's Contact #:</span>
-                        <input
-                          type="text"
-                          value={selectedReferral.referredByContact || ''}
-                          disabled
-                          className="w-full border-b-2 border-gray-400 bg-white px-2 py-1 text-sm font-medium cursor-not-allowed"
-                        />
+                      <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <span className="text-sm font-bold text-slate-500 uppercase tracking-wider w-24 shrink-0">Contact:</span>
+                        <div className="text-base font-bold text-slate-900 flex-1">{selectedReferral.referredByContact || ''}</div>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold">Patient's Address:</span>
-                        <input
-                          type="text"
-                          value={selectedPatient?.address || ''}
-                          disabled
-                          className="w-full border-b-2 border-gray-400 bg-white px-2 py-1 text-sm font-medium cursor-not-allowed"
-                        />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <span className="text-sm font-bold text-slate-500 uppercase tracking-wider w-32 shrink-0">Patient Address:</span>
+                        <div className="text-base font-bold text-slate-900 flex-1 truncate">{selectedPatient?.address || ''}</div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold">Patient's Contact #:</span>
-                        <input
-                          type="text"
-                          value={selectedPatient?.phone || ''}
-                          disabled
-                          className="w-full border-b-2 border-gray-400 bg-white px-2 py-1 text-sm font-medium cursor-not-allowed"
-                        />
+                      <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <span className="text-sm font-bold text-slate-500 uppercase tracking-wider w-32 shrink-0">Patient Contact:</span>
+                        <div className="text-base font-bold text-slate-900 flex-1">{selectedPatient?.phone || ''}</div>
                       </div>
                     </div>
                   </div>
@@ -2146,6 +2085,6 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
       </AnimatePresence>
     </div>
     </div>
-    </div>
+  </div>
   );
 }
