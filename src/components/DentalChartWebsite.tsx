@@ -76,7 +76,7 @@ const CONDITION_COLORS: Record<string, string> = {
   loose: '#38bdf8',
   impacted: '#a855f7',
   retained_root: '#f97316',
-  abscess: '#ef4444',
+  abscess: '#8DB600',
   non_vital: '#6366f1',
   erosion: '#fde68a',
   discolored: '#a3a3a3',
@@ -386,8 +386,8 @@ export function DentalChartWebsite() {
           }}
         >
           <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <rect x="0" y="0" width="100" height="100" fill="#ffffff" opacity={0.06} />
-            <rect x="2" y="2" width="96" height="96" fill="none" stroke="#6b7280" strokeWidth={1.5} strokeDasharray="2 3" opacity={0.9} />
+            <rect x="0" y="0" width="100" height="100" fill="#fb6a72" opacity={1} />
+            <rect x="2" y="2" width="96" height="96" fill="none" stroke="#fb6a72" strokeWidth={1.25} strokeDasharray="2 3" opacity={1} />
           </svg>
         </div>
       );
@@ -418,6 +418,14 @@ export function DentalChartWebsite() {
               <circle cx="2" cy="2" r="1.2" fill="#f59e0b" />
               <circle cx="6" cy="6" r="1.2" fill="#f59e0b" />
             </pattern>
+            <filter id={`dropShadow-${toothId}`} x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blur" />
+              <feOffset in="blur" dx="0" dy="4" result="offset" />
+              <feMerge>
+                <feMergeNode in="offset" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
 
             <pattern id={speckleId} patternUnits="userSpaceOnUse" width="10" height="10">
               <circle cx="2" cy="3" r="1" fill="#7c3f00" />
@@ -453,19 +461,47 @@ export function DentalChartWebsite() {
           )}
 
           {condition === 'abscess' && (
-            <g opacity={0.75}>
-              <circle cx="50" cy="82" r="6" fill="#8b0000" />
+            // Fill the whole tooth with an apple-green tone to indicate abscess
+            <g>
+              <rect x="0" y="0" width="100" height="100" fill="#8DB600" opacity={0.5} />
+              <rect x="2" y="2" width="96" height="96" fill="none" stroke="#5b8a00" strokeWidth={0.9} opacity={0.9} />
             </g>
           )}
 
+
           {condition === 'non_vital' && (
-            <rect x="0" y="0" width="100" height="100" fill="#6b5b95" opacity={0.35} />
+            <g>
+              <rect x="0" y="0" width="100" height="100" fill="#6b5b95" opacity={0.35} />
+              <rect x="1" y="1" width="98" height="98" fill="none" stroke="#000000" strokeWidth={2} opacity={0.9} />
+            </g>
           )}
 
           {condition === 'broken' && (
             <g opacity={0.7}>
               <path d="M65 30 L78 26 L72 40 L86 48 L70 50 L78 60 L60 56 L66 44 L54 36 Z" fill="#ffffff" opacity={0.95} />
               <path d="M58 36 L72 34 L68 46" stroke="#b91c1c" strokeWidth={1.6} fill="none" />
+            </g>
+          )}
+
+          {condition === 'loose' && (
+            <g opacity={0.98} fill="none">
+              <g filter={`url(#dropShadow-${toothId})`}>
+                <ellipse cx="50" cy="52" rx="28" ry="30" fill="#000000" opacity={0.08} />
+              </g>
+              <path d="M10 10 C30 5,70 5,90 10 C80 30,80 70,90 90 C70 85,30 85,10 90 Z" stroke="#374151" strokeWidth={1.6} />
+              <g transform="translate(2,0)">
+                <path d="M10 10 C30 5,70 5,90 10 C80 30,80 70,90 90 C70 85,30 85,10 90 Z" stroke="#374151" strokeWidth={1.6} opacity={0.6} />
+              </g>
+              <circle cx="50" cy="50" r="24" stroke="#60a5fa" strokeWidth={1.4} opacity={0.25} strokeDasharray="3 4" />
+            </g>
+          )}
+
+          {condition === 'loose' && (
+            // Wave-like dark pattern inside the tooth for loose teeth
+            <g opacity={0.95}>
+              <path d="M0 62 C18 46, 36 78, 54 62 C72 46, 90 66, 100 62 L100 100 L0 100 Z" fill="rgba(0,0,0,0.78)" />
+              <path d="M0 52 C18 36, 36 68, 54 52 C72 36, 90 56, 100 52 L100 100 L0 100 Z" fill="rgba(255,255,255,0.06)" />
+              <path d="M0 70 C22 56, 40 88, 60 70 C78 54, 96 72, 100 70 L100 100 L0 100 Z" fill="rgba(0,0,0,0.5)" opacity={0.6} />
             </g>
           )}
 
@@ -476,14 +512,19 @@ export function DentalChartWebsite() {
           )}
 
           {condition === 'chipped' && (
-            <g opacity={0.75}>
+            <g opacity={0.98}>
               <path d="M20 28 C28 22, 34 24, 40 30 C36 28, 30 30, 24 34 C22 32, 20 30, 20 28 Z" fill="#ffffff" />
+              {/* jagged missing piece */}
+              <path d="M34 26 L38 22 L42 26 L40 30 L36 28 Z" fill="#f3f4f6" stroke="#d1d5db" strokeWidth={0.8} />
+              <path d="M36 28 L44 32" stroke="#f97316" strokeWidth={1.4} opacity={0.9} />
+              <path d="M42 26 L48 28 L44 34" stroke="#d1d5db" strokeWidth={0.6} opacity={0.6} />
             </g>
           )}
 
           {condition === 'retained_root' && (
-            <g opacity={0.85}>
-              <rect x="0" y="55" width="100" height="45" fill="#ffffff" />
+            <g opacity={0.95}>
+              <rect x="0" y="55" width="100" height="45" fill="#fff7ed" stroke="#f59e0b" strokeWidth={1} opacity={0.95} />
+              <path d="M10 60 L30 70" stroke="#f59e0b" strokeWidth={1.2} opacity={0.7} />
             </g>
           )}
 
@@ -498,17 +539,30 @@ export function DentalChartWebsite() {
           )}
 
           {condition === 'erosion' && (
-            <rect x="0" y="0" width="100" height="100" fill={`url(#grad-erosion-${toothId})`} opacity={0.7} />
+            <g>
+              <rect x="0" y="0" width="100" height="100" fill={`url(#grad-erosion-${toothId})`} opacity={0.9} />
+              <g opacity={0.9} fill="#f59e0b">
+                <circle cx="26" cy="34" r="3" />
+                <circle cx="38" cy="40" r="2.6" />
+                <circle cx="62" cy="52" r="3.4" />
+                <circle cx="74" cy="58" r="2.8" />
+              </g>
+              <rect x="6" y="66" width="18" height="4" fill="#f59e0b" opacity={0.4} transform="rotate(-12 15 68)" />
+            </g>
           )}
 
           {condition === 'discolored' && (
-            <rect x="0" y="0" width="100" height="100" fill={`url(#grad-discolor-${toothId})`} opacity={0.7} />
+            <rect x="0" y="0" width="100" height="100" fill={`url(#grad-discolor-${toothId})`} opacity={1} />
           )}
 
           {condition === 'stained' && (
-            <g opacity={0.7}>
-              {specklePositions.map((p, i) => (
-                <circle key={i} cx={`${p.cx}%`} cy={`${p.cy}%`} r={p.r} fill="#6b3f00" />
+            <g opacity={0.98}>
+              {Array.from({ length: 16 }, (_, i) => ({
+                cx: 8 + ((i * 31 + toothId.length * 13) % 74),
+                cy: 6 + ((i * 21 + toothId.length * 11) % 82),
+                r: 1.8 + ((i * 11 + toothId.length) % 3.2),
+              })).map((p, i) => (
+                <ellipse key={i} cx={`${p.cx}%`} cy={`${p.cy}%`} rx={p.r + 0.6} ry={p.r - 0.4} fill="#6b3f00" opacity={0.98} />
               ))}
             </g>
           )}
@@ -547,10 +601,18 @@ export function DentalChartWebsite() {
 
   return (
     <div className="flex flex-col h-full bg-transparent font-sans">
+      <style>{`
+        .floatLooseAnim { animation: floatLoose 2.6s ease-in-out infinite; }
+        @keyframes floatLoose {
+          0% { transform: translateY(-8%); }
+          50% { transform: translateY(-20%); }
+          100% { transform: translateY(-8%); }
+        }
+      `}</style>
       {/* Header: patient selector + actions */}
-      <div className="p-2 flex items-center gap-2 border-b bg-white/60">
+      <div className="p-3 flex items-center gap-3 border-b bg-slate-50">
         <div className="flex items-center gap-2">
-          <label className="text-sm text-gray-700">Patient</label>
+          <label className="text-sm text-slate-700 font-medium">Patient</label>
           <div className="relative">
             <input
               value={patientQuery}
@@ -569,14 +631,14 @@ export function DentalChartWebsite() {
                 }
               }}
               placeholder="Search patient..."
-              className="px-2 py-1 border rounded w-56"
+              className="px-3 py-2 border border-slate-200 rounded-md w-64 bg-white text-slate-700"
             />
             {patientQuery.length > 0 && filteredPatients.length > 0 && (
-              <div className="absolute mt-1 bg-white border rounded w-56 max-h-40 overflow-auto z-50">
+              <div className="absolute mt-1 bg-white border border-slate-200 rounded-md w-64 max-h-48 overflow-auto z-50 shadow-sm">
                 {filteredPatients.map((p) => (
                   <div
                     key={p.id}
-                    className="px-2 py-1 hover:bg-slate-100 cursor-pointer"
+                    className="px-3 py-2 hover:bg-slate-100 cursor-pointer text-slate-700"
                     onClick={() => {
                       setSelectedPatientObj(p);
                       setPatientQuery(p.name);
@@ -588,19 +650,19 @@ export function DentalChartWebsite() {
               </div>
             )}
           </div>
-          {selectedPatientObj && <div className="ml-2 text-sm text-gray-600">Selected: {selectedPatientObj.name}</div>}
+          {selectedPatientObj && <div className="ml-3 text-sm text-slate-600">Selected: {selectedPatientObj.name}</div>}
         </div>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-3">
           <button
             onClick={saveChartSnapshot}
-            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+            className="px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 shadow-sm"
           >
             Save Chart
           </button>
           <button
             onClick={handleNewChart}
-            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+            className="px-3 py-2 bg-white text-indigo-700 border border-indigo-200 rounded-md hover:bg-indigo-50"
           >
             New Chart
           </button>
@@ -633,7 +695,7 @@ export function DentalChartWebsite() {
             const isMissing = condition === 'missing';
             const color = condition !== 'healthy' ? CONDITION_COLORS[condition] : undefined;
 
-            const zIndex = 10 + (Math.round(tooth.topPct) % 30); // keep teeth under sidebar z-50
+            const zIndex = 10 + (Math.round(tooth.topPct) % 30) + (condition === 'loose' ? 50 : 0); // raise loose teeth above others
             return (
               <div
                 key={tooth.id}
@@ -642,34 +704,105 @@ export function DentalChartWebsite() {
                   left: `${tooth.leftPct}%`,
                   top: `${tooth.topPct}%`,
                   width: `${tooth.widthPct}%`,
-                  transform: 'translate(-50%, -50%)',
+                  transform: `translate(-50%, ${condition === 'loose' ? '-60%' : '-50%'})`,
                   zIndex,
                 }}
                 // Clicks are handled at container level to avoid overlap/hitbox issues
               >
+                {condition === 'loose' && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: '50%',
+                      top: '78%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '60%',
+                      height: '18%',
+                      background: 'rgba(0,0,0,0.36)',
+                      borderRadius: '50%',
+                      filter: 'blur(8px)',
+                      zIndex: 1,
+                      pointerEvents: 'none',
+                    }}
+                  />
+                )}
+
                 <img
                   src={`/all-teeth/${tooth.id}.png`}
                   alt={`Tooth ${tooth.id}`}
-                  className="w-full select-none drop-shadow-sm pointer-events-none"
+                  className={`w-full select-none pointer-events-none ${condition === 'loose' ? 'floatLooseAnim' : ''}`}
+                  style={condition === 'loose' ? { zIndex: 2, transition: 'transform 180ms ease' } : undefined}
                   draggable={false}
                 />
 
                 {/* Per-condition SVG overlays (exact size/mask, preserves layout and click behaviour) */}
                 {renderConditionOverlays(tooth.id, condition)}
+                  {/* Always-visible corner badges for important markers */}
+                  {condition === 'abscess' && (
+                    <div style={{ position: 'absolute', right: '-6%', top: '-6%', width: '18%', height: '18%', pointerEvents: 'none', zIndex: 90 }}>
+                      <svg viewBox="0 0 24 24" className="w-full h-full">
+                        <circle cx="12" cy="12" r="10" fill="#8DB600" />
+                        <circle cx="12" cy="12" r="6" fill="#5b8a00" />
+                        <circle cx="12" cy="12" r="11" fill="none" stroke="#d1f39a" strokeWidth="0.8" opacity="0.45" />
+                      </svg>
+                    </div>
+                  )}
+                  {condition === 'broken' && (
+                    <div style={{ position: 'absolute', left: '-6%', top: '-6%', width: '18%', height: '18%', pointerEvents: 'none', zIndex: 90 }}>
+                      <svg viewBox="0 0 24 24" className="w-full h-full">
+                        <circle cx="12" cy="12" r="10" fill="#fff5f5" />
+                        <circle cx="16" cy="12" r="5" fill="#ef4444" />
+                        <path d="M10 8 L14 16" stroke="#7f1d1d" strokeWidth="1.2" strokeLinecap="round" />
+                      </svg>
+                    </div>
+                  )}
                 {/* Icons are fixed size and position (non-draggable, non-resizable) */}
               </div>
             );
           })}
+            {/* Unmasked badges rendered after tooth images so they are always visible */}
+            {layout.map((tooth) => {
+              const numericId = getToothNumericId(tooth.id);
+              const toothData = numericId ? teeth[numericId] : undefined;
+              const condition = toothData?.generalCondition ?? 'healthy';
+              if (condition !== 'abscess' && condition !== 'broken') return null;
+
+              const left = `${tooth.leftPct}%`;
+              const top = `${tooth.topPct}%`;
+              const size = Math.max(22, tooth.widthPct * 0.9);
+
+              return (
+                <div
+                  key={`badge-${tooth.id}`}
+                  style={{ position: 'absolute', left, top, transform: 'translate(-50%, -50%)', width: `${size}px`, height: `${size}px`, pointerEvents: 'none', zIndex: 999 }}
+                >
+                  {condition === 'abscess' && (
+                    <svg viewBox="0 0 24 24" className="w-full h-full">
+                      <circle cx="12" cy="12" r="10" fill="#8DB600" />
+                      <circle cx="12" cy="12" r="6" fill="#5b8a00" />
+                      <circle cx="12" cy="12" r="11" fill="none" stroke="#d1f39a" strokeWidth="0.6" opacity="0.45" />
+                    </svg>
+                  )}
+                  {condition === 'broken' && (
+                    <svg viewBox="0 0 24 24" className="w-full h-full">
+                      <circle cx="12" cy="12" r="10" fill="#fff5f5" />
+                      <circle cx="16" cy="12" r="6" fill="#ef4444" />
+                      <path d="M10 8 L14 16" stroke="#7f1d1d" strokeWidth="1.4" strokeLinecap="round" />
+                    </svg>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 
         {/* History side panel */}
-        <div className="w-80 border-l pl-3">
-          <h3 className="text-sm font-medium mb-2">Chart History</h3>
+        <div className="w-80 border-l pl-4">
+          <h3 className="text-sm font-semibold mb-3 text-slate-700">Chart History</h3>
           {selectedPatientObj ? (
-            <div>
-              {chartHistory.filter(c => c.patientId === selectedPatientObj.id).length === 0 && (
-                <div className="text-sm text-gray-500">No history for this patient</div>
+            <div className="space-y-2">
+              {chartHistory.filter((c) => c.patientId === selectedPatientObj.id).length === 0 && (
+                <div className="text-sm text-slate-500">No history for this patient</div>
               )}
 
               {chartHistory
@@ -677,16 +810,16 @@ export function DentalChartWebsite() {
                 .map((c) => {
                   const date = new Date(c.createdAt);
                   return (
-                    <div key={c.id} className="mb-2 p-2 border rounded hover:bg-slate-50 cursor-pointer">
+                    <div key={c.id} className="mb-2 p-3 bg-white border border-slate-100 rounded-md hover:shadow-sm cursor-pointer">
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="text-sm font-medium">{c.patientName}</div>
-                          <div className="text-xs text-gray-500">{date.toLocaleString()}</div>
+                          <div className="text-sm font-medium text-slate-800">{c.patientName}</div>
+                          <div className="text-xs text-slate-400">{date.toLocaleString()}</div>
                         </div>
                         <div className="flex gap-1">
                           <button
                             onClick={() => loadChartSnapshot(c)}
-                            className="text-xs px-2 py-1 bg-slate-200 rounded"
+                            className="text-xs px-2 py-1 bg-slate-100 text-slate-700 rounded"
                           >
                             Load
                           </button>
@@ -697,7 +830,7 @@ export function DentalChartWebsite() {
                 })}
             </div>
           ) : (
-            <div className="text-sm text-gray-500">Select a patient to view history</div>
+            <div className="text-sm text-slate-500">Select a patient to view history</div>
           )}
         </div>
       </div>

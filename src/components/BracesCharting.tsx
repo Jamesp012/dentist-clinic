@@ -469,17 +469,6 @@ export function BracesCharting({ patients }: BracesChartingProps) {
 
               <div className="w-full py-2 px-4 rounded-md font-semibold text-sm transition-all shadow-md bg-gray-100 text-gray-400 text-center">SAVE</div>
 
-              <div className="mt-6 bg-white rounded-lg p-4 mb-6 shadow-sm">
-                <h3 className="text-sm mb-3 font-medium text-gray-700">💡 Braces Care Tips</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 bg-gradient-to-r from-cyan-50 to-teal-50 rounded-lg border border-cyan-200">
-                    <p className="text-sm text-gray-700"><span className="font-semibold text-cyan-600">Bracket Control:</span> Use REMOVE and ADD to hide or restore specific brackets.</p>
-                  </div>
-                  <div className="p-4 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-lg border border-teal-200">
-                    <p className="text-sm text-gray-700"><span className="font-semibold text-teal-600">Color Selection:</span> Apply rubber band colors to all or individual brackets with precision mode.</p>
-                  </div>
-                </div>
-              </div>
             </div>
 
             <div className="lg:w-96 bg-white rounded-xl shadow-lg border border-cyan-100 backdrop-blur-sm bg-opacity-90 flex flex-col filter blur-sm opacity-60 pointer-events-none select-none">
@@ -572,28 +561,6 @@ export function BracesCharting({ patients }: BracesChartingProps) {
                 SAVE
               </button>
 
-                {/* grid grid-cols-2 gap-6 section removed as requested */}
-                <motion.div className="mt-6 bg-white rounded-lg p-4 mb-6 shadow-sm"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.8 }}
-                >
-                <h3 className="text-sm mb-3 font-medium text-gray-700">
-                  💡 Braces Care Tips
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 bg-gradient-to-r from-cyan-50 to-teal-50 rounded-lg border border-cyan-200">
-                    <p className="text-sm text-gray-700">
-                      <span className="font-semibold text-cyan-600">Bracket Control:</span> Use REMOVE and ADD to hide or restore specific brackets.
-                    </p>
-                  </div>
-                  <div className="p-4 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-lg border border-teal-200">
-                    <p className="text-sm text-gray-700">
-                      <span className="font-semibold text-teal-600">Color Selection:</span> Apply rubber band colors to all or individual brackets with precision mode.
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
             </motion.div>
 
             {/* Color Palette Sidebar */}
