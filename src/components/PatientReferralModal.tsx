@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
-import { referralAPI } from '../api';
-
-const API_BASE = 'http://localhost:5000/api';
+import { referralAPI, API_BASE } from '../api';
 
 interface Props {
   isOpen: boolean;
@@ -42,11 +40,8 @@ export const PatientReferralModal: React.FC<Props> = ({ isOpen, onClose, patient
         const fd = new FormData();
         fd.append('file', file);
         fd.append('patientId', String(patientId));
-        // client side fileType is not required; backend will detect
-        const token = localStorage.getItem('token');
-        const resp = await fetch(`${API_BASE}/referrals/upload`, { method: 'POST', headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: fd });
-        if (!resp.ok) throw new Error('Failed to upload file');
-        uploadedFile = await resp.json();
+        
+        uploadedFile = await referralAPI.uploadFile(fd);
       }
 
       const createBody: any = {

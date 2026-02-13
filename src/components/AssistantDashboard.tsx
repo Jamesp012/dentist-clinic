@@ -71,7 +71,7 @@ type AssistantDashboardProps = {
   onDataChanged?: () => Promise<void>;
 };
 
-const API_BASE = 'http://localhost:5000/api';
+import { API_BASE } from '../api';
 
 // Helper function to split patient names
 const splitPatientName = (fullName: string) => {

@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Plus, X, Check, Eye, Trash2, Download } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Plus, X, Check, Eye, Trash2, Download, FileText, Camera } from 'lucide-react';
 import { Referral, Patient } from '../App';
 import { toast } from 'sonner';
 import { referralAPI } from '../api';
 import { generateReferralPDF } from '../utils/referralPdfGenerator';
 import { PatientSearchInput } from './PatientSearchInput';
+import { getSafeFileUrl } from '../utils/fileUtils';
 import { motion, AnimatePresence } from 'motion/react';
 // NOTE: Image assets referenced by path to avoid TypeScript image import issues
 const redorLogo = '/redor-logo.png';
@@ -53,6 +55,248 @@ const UnderlineInput = ({ label, value, onChange, disabled }: UnderlineInputProp
   </div>
 );
 
+// Helpers moved outside component for better performance and structure
+const getNameParts = (fullName: string | undefined | null) => {
+  if (!fullName) {
+    return { lastName: '', givenNames: '' };
+  }
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 1) {
+    return { lastName: parts[0], givenNames: '' };
+  }
+  const lastName = parts[parts.length - 1];
+  const givenNames = parts.slice(0, -1).join(' ');
+  return { lastName, givenNames };
+};
+
+const formatPatientName = (fullName: string | undefined | null) => {
+  const { lastName, givenNames } = getNameParts(fullName);
+  if (!lastName && !givenNames) return '';
+  if (!givenNames) return lastName;
+  return `${lastName}, ${givenNames}`;
+};
+
+const getReferralPatientName = (referral: Referral, patients: Patient[]) => {
+  const patient = patients.find(p => String(p.id) === String(referral.patientId));
+  return patient?.name || referral.patientName;
+};
+
+const isSelectedIncomingPatientReferral = (referral: Referral | null): boolean => {
+  if (!referral) return false;
+  return (referral.referralType === 'incoming' && referral.source === 'patient-uploaded') || 
+         referral.createdByRole === 'patient';
+};
+
+const formatToDD_MM_YYYY = (date: string | Date): string => {
+  if (!date) return '-';
+  const d = new Date(date);
+  return d.toLocaleDateString('en-GB').replace(/\//g, '-'); // DD-MM-YYYY
+};
+
+// Incoming referral read-only view component
+const IncomingReferralView = ({ referral, patient, onClose }: { referral: Referral; patient?: Patient; onClose: () => void }) => {
+  const files = referral.uploadedFiles || [];
+  
+  const patientName = referral.patientName || patient?.name || '';
+  const clinicName = referral.referredBy || referral.referringDentist || '';
+  const referringDoctor = referral.referringDentist || '';
+  const dateReferred = formatToDD_MM_YYYY(referral.date);
+
+  return (
+    <div 
+      className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl my-8 border border-slate-200/60 relative z-[10001] flex flex-col max-h-[90vh]"
+      onClick={(e) => e.stopPropagation()}
+      style={{ pointerEvents: 'auto' }}
+    >
+      <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50 rounded-t-3xl">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+              <FileText className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">Incoming Referral</h2>
+              <p className="text-sm text-slate-500 font-medium">Patient-uploaded referral document</p>
+            </div>
+          </div>
+          <button 
+            type="button" 
+            className="p-2.5 hover:bg-slate-200 text-slate-400 hover:text-slate-600 rounded-full transition-all duration-200" 
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+            title="Close modal"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="p-8 space-y-8 overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200">
+          {/* Top: Patient Details (read-only) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-6">
+              <div className="group">
+                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">Patient Name</label>
+                <div className="text-base font-bold text-slate-900 bg-slate-50/80 px-4 py-3 rounded-xl border border-slate-100 group-hover:border-blue-200 transition-colors">{patientName}</div>
+              </div>
+              <div className="group">
+                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">Referring Clinic</label>
+                <div className="text-base font-bold text-slate-900 bg-slate-50/80 px-4 py-3 rounded-xl border border-slate-100 group-hover:border-blue-200 transition-colors">{clinicName || 'Not specified'}</div>
+              </div>
+              <div className="group">
+                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">Contact Information</label>
+                <div className="text-base font-bold text-slate-900 bg-slate-50/80 px-4 py-3 rounded-xl border border-slate-100 group-hover:border-blue-200 transition-colors">{referral.referredByContact || patient?.phone || '-'}</div>
+              </div>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="group">
+                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">Date Referred</label>
+                <div className="text-base font-bold text-slate-900 bg-slate-50/80 px-4 py-3 rounded-xl border border-slate-100 group-hover:border-blue-200 transition-colors">{dateReferred}</div>
+              </div>
+              <div className="group">
+                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">Referring Doctor</label>
+                <div className="text-base font-bold text-slate-900 bg-slate-50/80 px-4 py-3 rounded-xl border border-slate-100 group-hover:border-blue-200 transition-colors">{referringDoctor || 'Not specified'}</div>
+              </div>
+              <div className="group">
+                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">Email Address</label>
+                <div className="text-base font-bold text-slate-900 bg-slate-50/80 px-4 py-3 rounded-xl border border-slate-100 group-hover:border-blue-200 transition-colors">{referral.referredByEmail || patient?.email || '-'}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom: Uploaded file */}
+          <div className="pt-6 border-t border-slate-100">
+            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-4 block">Uploaded Referral Document</label>
+            <div className="space-y-4">
+              {files.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-12 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+                  <FileText className="w-12 h-12 text-slate-300 mb-2" />
+                  <p className="text-sm text-slate-500 font-medium">No uploaded document available</p>
+                </div>
+              )}
+              {files.length > 0 && files.map((f, idx) => {
+                const isImg = f.fileType?.startsWith?.('image/') || /\.(jpg|jpeg|png|gif|bmp)$/i.test(String(f.fileName));
+                const isPdf = f.fileType === 'application/pdf' || /\.pdf$/i.test(String(f.fileName)) || f.fileType === 'pdf';
+                const fileUrl = getSafeFileUrl(f);
+                return (
+                  <div key={idx} className="space-y-4">
+                    {isImg && (
+                      <div className="relative group/img overflow-hidden rounded-2xl border-2 border-slate-200 hover:border-blue-400 transition-all shadow-sm hover:shadow-md">
+                        <img
+                          src={fileUrl}
+                          alt={String(f.fileName)}
+                          className="w-full max-h-[500px] object-contain bg-slate-50"
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                          <button 
+                            onClick={() => window.open(fileUrl, '_blank')}
+                            className="px-4 py-2 bg-white text-slate-900 rounded-lg font-bold text-sm shadow-xl hover:scale-105 transition-transform"
+                          >
+                            Open Full Size
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-slate-200 shadow-sm">
+                          {isPdf ? <FileText className="w-5 h-5 text-red-500" /> : <Camera className="w-5 h-5 text-blue-500" />}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-slate-900 truncate max-w-[200px]">{f.fileName}</p>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase">{f.fileType || (isPdf ? 'PDF Document' : 'Image')}</p>
+                        </div>
+                      </div>
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          const pdfUrl = getSafeFileUrl(f);
+                          if (!pdfUrl) return;
+                          const a = document.createElement('a');
+                          a.href = pdfUrl;
+                          a.download = String(f.fileName || 'referral.pdf');
+                          a.target = '_blank';
+                          document.body.appendChild(a);
+                          a.click();
+                          a.remove();
+                        }}
+                        className="px-4 py-2 bg-gradient-to-br from-teal-500 to-emerald-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-teal-500/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                      >
+                        <Download size={16} />
+                        Download
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6 border-t border-slate-100 bg-slate-50/50 rounded-b-3xl">
+          <button
+            onClick={onClose}
+            className="w-full px-6 py-3.5 bg-white border-2 border-slate-200 text-slate-700 rounded-2xl hover:bg-slate-50 hover:border-slate-300 transition-all font-bold shadow-sm"
+          >
+            Close Document View
+          </button>
+        </div>
+    </div>
+  );
+};
+
+const ServiceItem = ({ 
+  label, 
+  id, 
+  showInput, 
+  onInputChange, 
+  selectedServices, 
+  toggleService 
+}: { 
+  label: string; 
+  id: string; 
+  showInput?: boolean; 
+  onInputChange?: (id: string, value: string) => void;
+  selectedServices: Record<string, boolean | string>;
+  toggleService: (id: string) => void;
+}) => {
+  const inputValue = typeof selectedServices[id] === 'string' ? selectedServices[id] as string : '';
+  return (
+    <div className="flex items-center gap-3 relative z-50" style={{ pointerEvents: 'auto' }}>
+      <label className="flex items-center cursor-pointer relative">
+        <input
+          type="checkbox"
+          checked={!!selectedServices[id]}
+          onChange={() => toggleService(id)}
+          className="w-5 h-5 rounded-full border-2 border-yellow-400 transition-colors flex-shrink-0 checked:bg-yellow-400 checked:border-yellow-400 focus:ring-2 focus:ring-yellow-500"
+        />
+        {selectedServices[id] && (
+          <span className="absolute left-1 top-1 pointer-events-none">
+            <Check className="text-white w-3.5 h-3.5 stroke-[4]" />
+          </span>
+        )}
+        <span className="ml-2 text-sm font-bold tracking-tight text-left select-none">{label}</span>
+      </label>
+      {showInput && (
+        <input
+          id={`service-${id}`}
+          name={`service-${id}`}
+          type="text"
+          value={inputValue}
+          onChange={(e) => {
+            e.stopPropagation();
+            onInputChange?.(id, e.target.value);
+          }}
+          onClick={(e) => e.stopPropagation()}
+          className="w-16 border-b border-slate-400 focus:outline-none focus:border-yellow-500 bg-transparent text-sm px-1 font-normal"
+        />
+      )}
+    </div>
+  );
+};
+
 export function ReferralGeneration({ referrals, setReferrals, patients }: ReferralGenerationProps) {
   const [referralType, setReferralType] = useState<ReferralType>(null);
   const [referralFilter, setReferralFilter] = useState<ReferralFilter>('all');
@@ -67,6 +311,24 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
   const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [referralToDelete, setReferralToDelete] = useState<string | number | null>(null);
+
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [previewExpanded, setPreviewExpanded] = useState(false);
+
+  const handleFileClick = (file: any) => {
+    const fileUrl = getSafeFileUrl(file);
+    if (!fileUrl) {
+      toast.error('File URL not found');
+      return;
+    }
+
+    if (file.fileType === 'image') {
+      setPreviewImage(fileUrl);
+      setPreviewExpanded(false);
+    } else {
+      window.open(fileUrl, '_blank');
+    }
+  };
   const [formData, setFormData] = useState({
     patientName: '',
     patientId: '',
@@ -212,11 +474,6 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
     setXrayNotes('');
   };
 
-  const formatToDD_MM_YYYY = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }).split('/').reverse().join('/');
-  };
-
   const handleDownloadReferralPDF = (referral: Referral) => {
     const patient = patients.find(p => String(p.id) === String(referral.patientId));
 
@@ -227,22 +484,25 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
     if (isIncomingPatient) {
       // If patient uploaded original files, prefer downloading original PDF
       const files = referral.uploadedFiles || [];
-      const pdfFile = files.find(f => f.fileType === 'application/pdf' || /\.pdf$/i.test(String(f.fileName)));
-      if (pdfFile && pdfFile.url) {
-        // trigger download of original PDF
-        try {
-          const a = document.createElement('a');
-          a.href = String(pdfFile.url);
-          a.download = String(pdfFile.fileName || 'referral.pdf');
-          a.target = '_blank';
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          return;
-        } catch (e) {
-          // fallback: open in new tab
-          window.open(String(pdfFile.url), '_blank');
-          return;
+      const pdfFile = files.find(f => f.fileType === 'application/pdf' || /\.pdf$/i.test(String(f.fileName)) || f.fileType === 'pdf');
+      if (pdfFile) {
+        const fileUrl = getSafeFileUrl(pdfFile);
+        if (fileUrl) {
+          // trigger download of original PDF
+          try {
+            const a = document.createElement('a');
+            a.href = fileUrl;
+            a.download = String(pdfFile.fileName || 'referral.pdf');
+            a.target = '_blank';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            return;
+          } catch (e) {
+            // fallback: open in new tab
+            window.open(fileUrl, '_blank');
+            return;
+          }
         }
       }
       // If no original PDF found, fall back to generator to provide a PDF
@@ -295,132 +555,13 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
     ? selectedReferral.specialty === 'X-Ray Imaging' || selectedReferral.referredTo === 'X-Ray Facility'
     : false;
 
-  // Helper: determine if selected referral is an incoming referral uploaded by patient
-  const isSelectedIncomingPatientReferral = (ref?: Referral | null) => {
-    if (!ref) return false;
-    return (
-      (ref.referralType === 'incoming' && ref.source === 'patient-uploaded') ||
-      ref.createdByRole === 'patient'
-    );
-  };
-
-  // Incoming referral read-only view component
-  const IncomingReferralView = ({ referral, patient, onClose }: { referral: Referral; patient?: Patient; onClose: () => void }) => {
-    const [expandedImageIndex, setExpandedImageIndex] = useState<number | null>(null);
-    const files = referral.uploadedFiles || [];
-    const file = files.length > 0 ? files[0] : null;
-
-    const patientName = referral.patientName || patient?.name || '';
-    const clinicName = referral.referredBy || referral.referringDentist || '';
-    const referringDoctor = referral.referringDentist || '';
-    const dateReferred = formatToDD_MM_YYYY(referral.date);
-
-    const isImage = file && (file.fileType?.startsWith?.('image/') || /\.(jpg|jpeg|png|gif|bmp)$/i.test(String(file.fileName)));
-    const isPDF = file && (file.fileType === 'application/pdf' || /\.pdf$/i.test(String(file.fileName)));
-
-    return (
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-        <div className="bg-white/95 w-full max-w-3xl rounded-2xl shadow-2xl my-8 border border-slate-200/60">
-          <div className="flex items-center justify-between p-6 border-b">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center text-white font-bold">📨</div>
-              <div>
-                <h2 className="text-xl font-bold">Incoming Referral</h2>
-                <p className="text-sm text-slate-600">Patient-uploaded referral (read-only)</p>
-              </div>
-            </div>
-            <button type="button" className="p-2" onClick={onClose}><X className="w-5 h-5" /></button>
-          </div>
-
-          <div className="p-6 space-y-6 max-h-[calc(100vh-220px)] overflow-y-auto">
-            {/* Top: Patient Details (read-only) */}
-            <div className="space-y-3 border-b pb-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold">Patient Name</label>
-                  <div className="mt-1 text-sm text-slate-800">{patientName}</div>
-                </div>
-                <div>
-                  <label className="text-xs font-semibold">Date Referred</label>
-                  <div className="mt-1 text-sm text-slate-800">{dateReferred}</div>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold">Referring Clinic</label>
-                  <div className="mt-1 text-sm text-slate-800">{clinicName}</div>
-                </div>
-                <div>
-                  <label className="text-xs font-semibold">Referring Doctor</label>
-                  <div className="mt-1 text-sm text-slate-800">{referringDoctor}</div>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold">Contact</label>
-                  <div className="mt-1 text-sm text-slate-800">{referral.referredByContact || patient?.phone || '-'}</div>
-                </div>
-                <div>
-                  <label className="text-xs font-semibold">Email</label>
-                  <div className="mt-1 text-sm text-slate-800">{referral.referredByEmail || patient?.email || '-'}</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Bottom: Uploaded file */}
-            <div className="pt-4">
-              <label className="text-sm font-semibold">Uploaded Referral File</label>
-              <div className="mt-3">
-                {files.length === 0 && <div className="text-sm text-slate-600">No uploaded file available.</div>}
-                {files.length > 0 && files.map((f, idx) => {
-                  const isImg = f.fileType?.startsWith?.('image/') || /\.(jpg|jpeg|png|gif|bmp)$/i.test(String(f.fileName));
-                  const isPdf = f.fileType === 'application/pdf' || /\.pdf$/i.test(String(f.fileName));
-                  return (
-                    <div key={idx} className="mb-4">
-                      {isImg && (
-                        <>
-                          {expandedImageIndex !== idx && (
-                            <img
-                              src={String(f.url)}
-                              alt={String(f.fileName)}
-                              className="max-h-64 object-contain rounded-lg cursor-pointer border"
-                              onClick={() => setExpandedImageIndex(idx)}
-                            />
-                          )}
-                          {expandedImageIndex === idx && (
-                            <div className="relative mt-2">
-                              <button onClick={() => setExpandedImageIndex(null)} className="absolute right-2 top-2 z-40 p-2 bg-black/40 rounded-full text-white">
-                                <X className="w-5 h-5" />
-                              </button>
-                              <img src={String(f.url)} alt={String(f.fileName)} className="w-full h-[60vh] object-contain rounded-md" />
-                            </div>
-                          )}
-                        </>
-                      )}
-                      {isPdf && (
-                        <div className="flex items-center gap-3">
-                          <a href={String(f.url)} download className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg">Download PDF</a>
-                          <span className="text-sm text-slate-600">{f.fileName}</span>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   // Referral filtering helpers
-  const incomingReferrals = referrals.filter(
-    r => r.referralType === 'incoming' || (r.createdByRole === 'patient' && r.referredByContact)
+  const incomingReferrals = referrals.filter(r => 
+    r.referralType === 'incoming' || (r.createdByRole === 'patient' && r.referredByContact)
   );
 
-  const outgoingReferrals = referrals.filter(
-    r => r.referralType === 'outgoing' || r.createdByRole === 'staff'
+  const outgoingReferrals = referrals.filter(r => 
+    r.referralType === 'outgoing' || r.createdByRole === 'staff'
   );
 
   const filteredReferrals =
@@ -430,35 +571,10 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
       ? outgoingReferrals
       : referrals;
 
-  const getReferralPatientName = (referral: Referral) => {
-    const patient = patients.find(p => String(p.id) === String(referral.patientId));
-    return patient?.name || referral.patientName;
-  };
-
-  const getNameParts = (fullName: string | undefined | null) => {
-    if (!fullName) {
-      return { lastName: '', givenNames: '' };
-    }
-    const parts = fullName.trim().split(/\s+/);
-    if (parts.length === 1) {
-      return { lastName: parts[0], givenNames: '' };
-    }
-    const lastName = parts[parts.length - 1];
-    const givenNames = parts.slice(0, -1).join(' ');
-    return { lastName, givenNames };
-  };
-
-  const formatPatientName = (fullName: string | undefined | null) => {
-    const { lastName, givenNames } = getNameParts(fullName);
-    if (!lastName && !givenNames) return '';
-    if (!givenNames) return lastName;
-    return `${lastName}, ${givenNames}`;
-  };
-
   const sortedReferrals = [...filteredReferrals].sort((a, b) => {
     if (referralFilter === 'all' && allViewMode === 'alphabetical') {
-      const aParts = getNameParts(getReferralPatientName(a));
-      const bParts = getNameParts(getReferralPatientName(b));
+      const aParts = getNameParts(getReferralPatientName(a, patients));
+      const bParts = getNameParts(getReferralPatientName(b, patients));
       const aLast = aParts.lastName.toLowerCase();
       const bLast = bParts.lastName.toLowerCase();
 
@@ -474,42 +590,6 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
     if (dateDiff !== 0) return dateDiff;
     return Number(b.id) - Number(a.id);
   });
-
-  const ServiceItem = ({ label, id, showInput, onInputChange }: { label: string; id: string; showInput?: boolean; onInputChange?: (id: string, value: string) => void }) => {
-    const inputValue = typeof selectedServices[id] === 'string' ? selectedServices[id] : '';
-    return (
-      <div className="flex items-center gap-3 relative z-50" style={{ pointerEvents: 'auto' }}>
-        <label className="flex items-center cursor-pointer relative">
-          <input
-            type="checkbox"
-            checked={!!selectedServices[id]}
-            onChange={() => toggleService(id)}
-            className="w-5 h-5 rounded-full border-2 border-yellow-400 transition-colors flex-shrink-0 checked:bg-yellow-400 checked:border-yellow-400 focus:ring-2 focus:ring-yellow-500"
-          />
-          {selectedServices[id] && (
-            <span className="absolute left-1 top-1 pointer-events-none">
-              <Check className="text-white w-3.5 h-3.5 stroke-[4]" />
-            </span>
-          )}
-          <span className="ml-2 text-sm font-bold tracking-tight text-left select-none">{label}</span>
-        </label>
-        {showInput && (
-          <input
-            id={`service-${id}`}
-            name={`service-${id}`}
-            type="text"
-            value={inputValue}
-            onChange={(e) => {
-              e.stopPropagation();
-              onInputChange?.(id, e.target.value);
-            }}
-            onClick={(e) => e.stopPropagation()}
-            className="w-16 border-b border-slate-400 focus:outline-none focus:border-yellow-500 bg-transparent text-sm px-1 font-normal"
-          />
-        )}
-      </div>
-    );
-  };
 
   return (
     <div className="min-h-screen bg-white flex flex-col flex-1">
@@ -1252,10 +1332,10 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                         {/* Patient Info */}
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-xl flex items-center justify-center font-bold text-cyan-700 text-sm shadow-sm">
-                            {getReferralPatientName(referral)?.charAt(0)?.toUpperCase() || 'P'}
+                            {getReferralPatientName(referral, patients)?.charAt(0)?.toUpperCase() || 'P'}
                           </div>
                           <div>
-                            <p className="text-lg font-bold text-slate-900">{formatPatientName(getReferralPatientName(referral))}</p>
+                            <p className="text-lg font-bold text-slate-900">{formatPatientName(getReferralPatientName(referral, patients))}</p>
                             <p className="text-sm text-slate-500 mt-0.5">
                               {new Date(referral.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                             </p>
@@ -1363,8 +1443,8 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                       </div>
                     </div>
                   </div>
-                ))
-              ) : referrals && referrals.length > 0 ? (
+                )))
+              : referrals && referrals.length > 0 ? (
                 <div className="text-center py-12">
                   <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
                     <Eye className="w-8 h-8 text-slate-400" />
@@ -1397,25 +1477,32 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                 </div>
               )}
           </div>
-        </div>
-      </div>
 
       {/* Referral Detail Modal */}
-      {showDetailModal && selectedReferral && isSelectedIncomingPatientReferral(selectedReferral) && (
-        <IncomingReferralView
-          referral={selectedReferral}
-          patient={selectedPatient}
-          onClose={() => {
+      {showDetailModal && selectedReferral && createPortal(
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[10000] p-4 overflow-y-auto"
+          style={{ pointerEvents: 'auto' }}
+          onClick={() => {
             setShowDetailModal(false);
             setSelectedReferral(null);
           }}
-        />
-      )}
-
-      {showDetailModal && selectedReferral && !isSelectedIncomingPatientReferral(selectedReferral) && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-white/90 backdrop-blur-xl w-full max-w-4xl rounded-3xl shadow-2xl my-8 border border-slate-200/60">
-            {/* Header */}
+        >
+          {isSelectedIncomingPatientReferral(selectedReferral) ? (
+            <IncomingReferralView
+              referral={selectedReferral}
+              patient={selectedPatient}
+              onClose={() => {
+                setShowDetailModal(false);
+                setSelectedReferral(null);
+              }}
+            />
+          ) : (
+            <div 
+              className="bg-white/90 backdrop-blur-xl w-full max-w-4xl rounded-3xl shadow-2xl my-8 border border-slate-200/60"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
             <div className="flex items-center justify-between p-8 border-b border-slate-200/60 bg-gradient-to-r from-teal-50/80 via-white to-cyan-50/80">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
@@ -1647,6 +1734,62 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                     <p className="font-bold text-gray-800 text-lg">THANK YOU FOR YOUR REFERRAL!</p>
                     <p className="text-gray-700 text-sm leading-relaxed">It is our policy to decline performing procedures that are not indicated in the referral form.<br />This is based on our strict observance of the Dental Code of Ethics.</p>
                   </div>
+
+                  {/* Attached Files Section for Doctor Referral */}
+                  {selectedReferral.uploadedFiles && selectedReferral.uploadedFiles.length > 0 && (
+                    <div className="mt-8 pt-6 border-t border-slate-200">
+                      <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <Download size={20} className="text-blue-600" />
+                        Attached Patient Documents ({selectedReferral.uploadedFiles.length})
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {selectedReferral.uploadedFiles.map((file) => {
+                          const fileUrl = getSafeFileUrl(file);
+                          return (
+                            <div 
+                              key={file.id}
+                              className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 transition-colors"
+                            >
+                              <div className="flex items-center gap-3 overflow-hidden">
+                                <div className="p-2 bg-white rounded-lg border border-slate-200 flex-shrink-0">
+                                  {file.fileType === 'image' ? (
+                                    <img src={fileUrl} alt={file.fileName} className="w-8 h-8 object-cover rounded shadow-sm" />
+                                  ) : (
+                                    <FileText className="w-8 h-8 text-blue-500" />
+                                  )}
+                                </div>
+                                <div className="overflow-hidden">
+                                  <p className="text-sm font-bold text-slate-900 truncate">{file.fileName}</p>
+                                  <p className="text-[10px] text-slate-500 uppercase tracking-wider">{file.fileType}</p>
+                                </div>
+                              </div>
+                              <div className="flex gap-2 ml-2">
+                                {file.fileType === 'image' && (
+                                  <button
+                                    onClick={() => handleFileClick(file)}
+                                    className="p-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:text-blue-600 hover:border-blue-200 transition-colors"
+                                    title="Preview"
+                                  >
+                                    <Eye size={18} />
+                                  </button>
+                                )}
+                                <a
+                                  href={fileUrl}
+                                  download={file.fileName}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:text-green-600 hover:border-green-200 transition-colors"
+                                  title="Download"
+                                >
+                                  <Download size={18} />
+                                </a>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-6">
@@ -1849,6 +1992,62 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                       ))}
                     </div>
                   </div>
+
+                  {/* Attached Files Section for X-Ray Referral */}
+                  {selectedReferral.uploadedFiles && selectedReferral.uploadedFiles.length > 0 && (
+                    <div className="mt-8 pt-6 border-t border-slate-200">
+                      <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <Download size={20} className="text-blue-600" />
+                        Attached Patient Documents ({selectedReferral.uploadedFiles.length})
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {selectedReferral.uploadedFiles.map((file) => {
+                          const fileUrl = getSafeFileUrl(file);
+                          return (
+                            <div 
+                              key={file.id}
+                              className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 transition-colors"
+                            >
+                              <div className="flex items-center gap-3 overflow-hidden">
+                                <div className="p-2 bg-white rounded-lg border border-slate-200 flex-shrink-0">
+                                  {file.fileType === 'image' ? (
+                                    <img src={fileUrl} alt={file.fileName} className="w-8 h-8 object-cover rounded shadow-sm" />
+                                  ) : (
+                                    <FileText className="w-8 h-8 text-blue-500" />
+                                  )}
+                                </div>
+                                <div className="overflow-hidden">
+                                  <p className="text-sm font-bold text-slate-900 truncate">{file.fileName}</p>
+                                  <p className="text-[10px] text-slate-500 uppercase tracking-wider">{file.fileType}</p>
+                                </div>
+                              </div>
+                              <div className="flex gap-2 ml-2">
+                                {file.fileType === 'image' && (
+                                  <button
+                                    onClick={() => handleFileClick(file)}
+                                    className="p-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:text-blue-600 hover:border-blue-200 transition-colors"
+                                    title="Preview"
+                                  >
+                                    <Eye size={18} />
+                                  </button>
+                                )}
+                                <a
+                                  href={fileUrl}
+                                  download={file.fileName}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:text-green-600 hover:border-green-200 transition-colors"
+                                  title="Download"
+                                >
+                                  <Download size={18} />
+                                </a>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1890,17 +2089,19 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
               </button>
             </div>
           </div>
-        </div>
+          )}
+        </div>,
+        document.body
       )}
 
       {/* Delete Confirmation Modal */}
       <AnimatePresence>
-        {showDeleteConfirm && (
+        {showDeleteConfirm && createPortal(
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[10001] p-4"
             onClick={cancelDelete}
           >
             <motion.div
@@ -1939,9 +2140,12 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                 </button>
               </div>
             </motion.div>
-          </motion.div>
+          </motion.div>,
+          document.body
         )}
       </AnimatePresence>
+    </div>
+    </div>
     </div>
   );
 }

@@ -43,7 +43,7 @@ type DoctorDashboardProps = {
   onDataChanged?: () => Promise<void>;
 };
 
-const API_BASE = 'http://localhost:5000/api';
+import { API_BASE } from '../api';
 
 // Display name for user (first and last only, no middle name)
 const getUserDisplayName = (fullName: string | undefined): string => {

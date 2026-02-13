@@ -13,65 +13,11 @@ interface ReferralManagementProps {
 type ReferralFilter = 'all' | 'incoming' | 'outgoing';
 
 import { toast } from 'sonner';
-
-const SERVER_URL = 'http://localhost:5000';
+import { getSafeFileUrl } from '../utils/fileUtils';
 
 export function ReferralManagement({ referrals, patients, currentUserName = 'Doc Maaño' }: ReferralManagementProps) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [previewExpanded, setPreviewExpanded] = useState(false);
-
-  // Helper to generate safe backend URL
-  const getSafeFileUrl = (file: any) => {
-    if (!file || (!file.url && !file.filePath)) return '';
-    
-    // Prefer url, fallback to filePath if url is missing
-    let filePath = file.url || file.filePath;
-    
-    // Normalize slashes for consistency
-    filePath = filePath.replace(/\\/g, '/');
-
-    // Case 1: Already a clean URL path (starts with /uploads/)
-    if (filePath.startsWith('/uploads/')) {
-       // Good to go
-    }
-    // Case 2: Contains /uploads/ (e.g. absolute path C:/.../uploads/...) - Extract relative path
-    else if (filePath.includes('/uploads/')) {
-        filePath = filePath.substring(filePath.indexOf('/uploads/'));
-    } 
-    // Case 3: Just a filename (no slashes) - Assume it belongs in referrals folder
-    else if (!filePath.includes('/')) {
-        filePath = `/uploads/referrals/${filePath}`;
-    }
-    // Case 4: Absolute path without /uploads/ keyword -> extract filename as last resort
-    else if (filePath.includes(':')) {
-         const parts = filePath.split('/');
-         const filename = parts[parts.length - 1];
-         filePath = `/uploads/referrals/${filename}`;
-    }
-
-    // Handle full URLs
-    if (filePath.startsWith('http')) {
-      if (!filePath.includes('localhost:5000')) {
-        try {
-          const urlObj = new URL(filePath);
-          filePath = urlObj.pathname;
-        } catch (e) {
-          // If invalid URL, keep original
-        }
-      } else {
-        return filePath;
-      }
-    }
-    
-    // Ensure leading slash
-    if (!filePath.startsWith('http') && !filePath.startsWith('/')) {
-      filePath = `/${filePath}`;
-    }
-
-    const cleanPath = filePath.trim();
-    const finalUrl = cleanPath.startsWith('http') ? cleanPath : `${SERVER_URL}${cleanPath}`;
-    return finalUrl;
-  };
 
   const handleFileClick = (file: any) => {
     const fileUrl = getSafeFileUrl(file);

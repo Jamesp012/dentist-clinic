@@ -7,11 +7,8 @@ const router = express.Router();
 // Get all patients
 router.get('/', authMiddleware, async (req, res) => {
   try {
-    const [patients] = await pool.query('SELECT * FROM patients');
-    console.log('Fetching all patients - Count:', patients.length);
-    if (patients.length > 0) {
-      console.log('First patient has profilePhoto:', !!patients[0].profilePhoto);
-    }
+    // Optimization: Don't fetch profilePhoto in the list view as it can be very large
+    const [patients] = await pool.query('SELECT id, name, dateOfBirth, phone, email, address, sex, medicalHistory, allergies, patientType, hasExistingRecord, lastVisit, nextAppointment, totalBalance FROM patients');
     res.json(patients);
   } catch (error) {
     console.error('Error fetching patients:', error);

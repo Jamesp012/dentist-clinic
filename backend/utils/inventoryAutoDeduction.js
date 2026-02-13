@@ -1,529 +1,9 @@
-const {const {const DEFAULT_BOX_PIECES = 1;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      continue;      });        services: Array.from(requirement.services),        availablePieces,        requestedPieces: requirement.totalPiecesRequested,        unitType: inventoryItem.unit_type || requirement.unitType,        itemName: inventoryItem.name || requirement.itemName,        itemId: requirement.itemId,      shortages.push({    if (availablePieces < requirement.totalPiecesRequested) {    const availablePieces = computeAvailablePieces(inventoryItem);    const inventoryItem = rows[0];    }      continue;      });        services: Array.from(requirement.services),        reason: 'MISSING_INVENTORY_ITEM',        itemName: requirement.itemName,        itemId: requirement.itemId,      shortages.push({    if (rows.length === 0) {    );      [requirement.itemId]      FOR UPDATE`,      WHERE id = ?      FROM inventory        total_pieces        base_quantity,        conversion_value,        pieces_per_unit,        pieces_per_box,        remaining_pieces,        main_quantity,        quantity,        base_unit,        main_unit,        unit_type,        unit,        name,        id,      `SELECT     const [rows] = await connection.query(  for (const requirement of aggregated) {  const candidates = [];  const shortages = [];  const strictMode = options.strict !== false;  }    return { applied: false, message: 'NO_VALID_RULE_ITEMS' };  if (aggregated.length === 0) {  const aggregated = aggregateRuleItems(rules);  }    return { applied: false, missingRules: normalizedServices };  if (!rules || rules.length === 0) {  `, normalizedServices);    WHERE r.appointmentType IN (${placeholders}) AND r.isActive = TRUE    JOIN inventory i ON i.id = ri.inventoryItemId    JOIN inventory_auto_reduction_rule_items ri ON r.id = ri.ruleId    FROM inventory_auto_reduction_rules_v2 r      i.conversion_value      i.pieces_per_box,      i.pieces_per_unit,      i.unit_type,      i.name AS inventoryItemName,      ri.quantityToReduce,      ri.inventoryItemId,      r.appointmentType,    SELECT   const [rules] = await connection.query(`  const placeholders = normalizedServices.map(() => '?').join(',');  }    return { applied: false, message: 'NO_SERVICES' };  if (normalizedServices.length === 0) {  const normalizedServices = normalizeServiceList(services);} = {}, options = {}) {  patientName,  patientId,  treatmentRecordId = null,  appointmentId = null,  services,async function applyInventoryAutoDeduction(connection, {};  };    pieces_per_box: conversionValue || null,    pieces_per_unit: conversionValue || null,    conversion_value: conversionValue || null,    remaining_pieces: remainder,    main_quantity: mainUnits,    quantity: mainUnits,    base_quantity: newTotalPieces,    total_pieces: newTotalPieces,  return {  const mainUnits = breakdown.quantity;  const remainder = conversionValue > 1 ? breakdown.remaining_pieces : null;  const breakdown = deriveQuantitiesFromBase(newTotalPieces, conversionValue);const buildInventoryUpdatePayload = (inventoryItem, newTotalPieces, conversionValue) => {};  return getBaseQuantity(inventoryItem);  }    return Math.max(0, Math.floor(toNumber(stored, 0)));  if (stored != null) {  const stored = inventoryItem.total_pieces ?? inventoryItem.totalPieces;const computeAvailablePieces = (inventoryItem) => {};  return 0;  if (fallback > 1) return fallback;  const fallback = Math.floor(toNumber(fallbackPiecesPerUnit, 0));  if (stored > 1) return stored;  const stored = getConversionValue(inventoryItem);const determineConversionValue = (inventoryItem, fallbackPiecesPerUnit) => {const formatServicesLabel = (services) => services.join(', ');};  return Array.from(map.values());  }    map.set(key, entry);      : quantityToReduce;      ? quantityToReduce * perUnit    entry.totalPiecesRequested += perUnit > 1        : 1;        ? Math.max(DEFAULT_BOX_PIECES, 1)      : entry.unitType === 'box'      ? entry.piecesPerUnit    const perUnit = entry.piecesPerUnit > 1    entry.totalUnitsRequested += quantityToReduce;    entry.services.add(row.appointmentType);    };      totalPiecesRequested: 0,      totalUnitsRequested: 0,      piecesPerUnit: resolvePiecesPerUnit(row),      unitType: row.unit_type || row.unitType || 'piece',      services: new Set(),      itemName: row.inventoryItemName || row.name || 'Unnamed Item',      itemId: row.inventoryItemId,    const entry = map.get(key) || {    const key = String(row.inventoryItemId);    if (quantityToReduce === 0) continue;    const quantityToReduce = Math.max(0, toNumber(row.quantityToReduce, 0));    if (!row.inventoryItemId) continue;  for (const row of rows) {  const map = new Map();const aggregateRuleItems = (rows) => {};  return 0;  }    }      return parsed;    if (parsed > 1) {    const parsed = Math.floor(toNumber(candidate, 0));  for (const candidate of candidates) {  ];    row.piecesPerBox,    row.pieces_per_box,    row.conversionValue,    row.conversion_value,    row.piecesPerUnit,    row.pieces_per_unit,  const candidates = [const resolvePiecesPerUnit = (row) => {};  return normalizeServiceList(value.split(','));  }    // fall through - treat as comma separated list  } catch (err) {    }      return normalizeServiceList(parsed);    if (Array.isArray(parsed)) {    const parsed = JSON.parse(value);  try {  if (typeof value !== 'string') return [];  if (Array.isArray(value)) return normalizeServiceList(value);  if (!value) return [];const parseStoredServices = (value) => {};  }    return null;    console.warn('Failed to serialize services list:', err);  } catch (err) {    return JSON.stringify(services);  try {  if (!services || services.length === 0) return null;const serializeServices = (services) => {};  return normalized;  }    normalized.push(trimmed);    seen.add(key);    if (seen.has(key)) continue;    const key = trimmed.toLowerCase();    if (!trimmed) continue;    const trimmed = typeof entry === 'string' ? entry.trim() : '';  for (const entry of arr) {  const normalized = [];  const seen = new Set();      : [];      ? raw.split(',')    : typeof raw === 'string'    ? raw  const arr = Array.isArray(raw)  if (!raw) return [];const normalizeServiceList = (raw) => {const DEFAULT_BOX_PIECES = 1;} = require('./inventoryUnits');  deriveQuantitiesFromBase,  getConversionValue,  getBaseQuantity,  toNumber,
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-};  restoreInventoryAutoDeduction,  applyInventoryAutoDeduction,  parseStoredServices,  serializeServices,  normalizeServiceList,module.exports = {}  return { restored: true, count: historyRows.length };  await connection.query('DELETE FROM inventory_reduction_history WHERE treatmentRecordId = ?', [treatmentRecordId]);  }    );      ]        entry.inventoryItemId,        conversionValue > 0 ? breakdown.remaining_pieces : null,        breakdown.quantity,        restoredQuantity,      [      'UPDATE inventory SET base_quantity = ?, quantity = ?, remaining_pieces = ? WHERE id = ?',    await connection.query(      : { quantity: restoredQuantity, remaining_pieces: 0 };      ? deriveQuantitiesFromBase(restoredQuantity, conversionValue)    const breakdown = conversionValue > 0    const restoredQuantity = availablePieces + Math.max(0, toNumber(entry.quantityReduced, 0));    const availablePieces = getBaseQuantity(inventoryItem);    const conversionValue = getConversionValue(inventoryItem);    const inventoryItem = items[0];    if (items.length === 0) continue;    );      [entry.inventoryItemId]       FROM inventory WHERE id = ? FOR UPDATE`,      `SELECT id, quantity, unit_type, pieces_per_box, remaining_pieces, base_quantity, base_unit, main_unit, conversion_value    const [items] = await connection.query(  for (const entry of historyRows) {  }    return { restored: false };  if (!historyRows || historyRows.length === 0) {  );    [treatmentRecordId]    'SELECT id, inventoryItemId, quantityReduced FROM inventory_reduction_history WHERE treatmentRecordId = ?',  const [historyRows] = await connection.query(  if (!treatmentRecordId) return { restored: false };async function restoreInventoryAutoDeduction(connection, treatmentRecordId) {}  };    shortages: shortages.length > 0 ? shortages : undefined,    reductions,    applied: reductions.length > 0,  return {  }    return { applied: false, shortages };  if (shortages.length > 0 && strictMode) {  }    });      quantityAfter: newBaseQuantity,      quantityBefore: availablePieces,      conversionValue,      mainUnit,      baseUnit,      remainingPieces: newBaseQuantity,      unitsDeducted: requirement.totalUnitsRequested,      piecesDeducted: requestedPieces,      unitType: conversionValue > 0 ? 'composite' : 'piece',      itemName: inventoryItem.name || requirement.itemName,      itemId: requirement.itemId,    reductions.push({    ]);      newBaseQuantity,      availablePieces,      requestedPieces,      inventoryItem.name || requirement.itemName,      requirement.itemId,      label,      patientName,      patientId,      treatmentRecordId,      appointmentId,    `, [      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)        (appointmentId, treatmentRecordId, patientId, patientName, appointmentType, inventoryItemId, inventoryItemName, quantityReduced, quantityBefore, quantityAfter)      INSERT INTO inventory_reduction_history    await connection.query(`    );      ]        requirement.itemId,        conversionValue > 0 ? breakdown.remaining_pieces : null,        breakdown.quantity,        newBaseQuantity,      [      'UPDATE inventory SET base_quantity = ?, quantity = ?, remaining_pieces = ? WHERE id = ?',    await connection.query(      : { quantity: newBaseQuantity, remaining_pieces: 0 };      ? deriveQuantitiesFromBase(newBaseQuantity, conversionValue)    const breakdown = conversionValue > 0    const newBaseQuantity = Math.max(0, availablePieces - requestedPieces);    }      continue;      });        mainUnit,        baseUnit,        services: Array.from(requirement.services),        availablePieces,        requestedPieces,        unitType: conversionValue > 0 ? 'composite' : 'piece',        itemName: inventoryItem.name || requirement.itemName,        itemId: requirement.itemId,      shortages.push({    if (availablePieces < requestedPieces) {    const requestedPieces = requirement.totalPiecesRequested;    const availablePieces = getBaseQuantity(inventoryItem);    const conversionValue = getConversionValue(inventoryItem);    const mainUnit = inventoryItem.main_unit || null;    const baseUnit = inventoryItem.base_unit || 'piece';    const inventoryItem = items[0];    }      continue;      });        services: Array.from(requirement.services),        reason: 'MISSING_INVENTORY_ITEM',        itemName: requirement.itemName,        itemId: requirement.itemId,      shortages.push({    if (items.length === 0) {    );      [requirement.itemId]       FROM inventory WHERE id = ? FOR UPDATE`,      `SELECT id, name, quantity, unit_type, pieces_per_box, remaining_pieces, base_quantity, base_unit, main_unit, conversion_value    const [items] = await connection.query(  for (const requirement of aggregated) {  const label = formatServicesLabel(normalizedServices);  const reductions = [];  const shortages = [];  }    return { applied: false, message: 'NO_VALID_RULE_ITEMS' };  if (aggregated.length === 0) {  const aggregated = aggregateRuleItems(rules);  }    return { applied: false, missingRules: normalizedServices };  if (!rules || rules.length === 0) {  `, normalizedServices);    WHERE r.appointmentType IN (${placeholders}) AND r.isActive = TRUE    JOIN inventory i ON i.id = ri.inventoryItemId    JOIN inventory_auto_reduction_rule_items ri ON r.id = ri.ruleId    FROM inventory_auto_reduction_rules_v2 r      i.main_unit      i.base_unit,      i.conversion_value,      i.pieces_per_box,      i.unit_type,      i.name AS inventoryItemName,      ri.quantityToReduce,      ri.inventoryItemId,      r.appointmentType,    SELECT   const [rules] = await connection.query(`  const placeholders = normalizedServices.map(() => '?').join(',');  }    return { applied: false, message: 'NO_SERVICES' };  if (normalizedServices.length === 0) {  const normalizedServices = normalizeServiceList(services);  const strictMode = options.strict !== false;) {  options = {}  } = {},    patientName,    patientId,    treatmentRecordId = null,    appointmentId = null,    services,  {  connection,async function applyInventoryAutoDeduction(const formatServicesLabel = (services) => services.join(', ');};  return Array.from(map.values());  }    map.set(key, entry);    entry.totalPiecesRequested += piecesIncrement;      : quantityToReduce;      ? quantityToReduce * conversionValue    const piecesIncrement = conversionValue > 0    entry.totalUnitsRequested += quantityToReduce;    entry.services.add(row.appointmentType);    };      totalPiecesRequested: 0,      totalUnitsRequested: 0,      services: new Set(),      conversionValue,      itemName: row.inventoryItemName || row.name || 'Unnamed Item',      itemId: row.inventoryItemId,    const entry = map.get(key) || {    if (quantityToReduce === 0) continue;    const quantityToReduce = Math.max(0, toNumber(row.quantityToReduce, 0));    const conversionValue = getConversionValue(row);    const key = String(row.inventoryItemId);    if (!row.inventoryItemId) continue;  for (const row of rows) {  const map = new Map();const aggregateRuleItems = (rows) => {};  return normalizeServiceList(value.split(','));  }    // value might be a comma-separated list  } catch (err) {    }      return normalizeServiceList(parsed);    if (Array.isArray(parsed)) {    const parsed = JSON.parse(value);  try {  if (typeof value !== 'string') return [];  if (Array.isArray(value)) return normalizeServiceList(value);  if (!value) return [];const parseStoredServices = (value) => {};  }    return null;    console.warn('Failed to serialize services list:', err);  } catch (err) {    return JSON.stringify(services);  try {  if (!services || services.length === 0) return null;const serializeServices = (services) => {};  return normalized;  }    normalized.push(trimmed);    seen.add(key);    if (seen.has(key)) continue;    const key = trimmed.toLowerCase();    if (!trimmed) continue;    const trimmed = typeof entry === 'string' ? entry.trim() : '';  for (const entry of arr) {  const normalized = [];  const seen = new Set();      : [];      ? raw.split(',')    : typeof raw === 'string'    ? raw  const arr = Array.isArray(raw)  if (!raw) return [];const normalizeServiceList = (raw) => {} = require('./inventoryUnits');  deriveQuantitiesFromBase,  getConversionValue,  getBaseQuantity,  toNumber,
-const toNumber = (value, fallback = 0) => {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : fallback;
-};
-
-const computeBoxAvailablePieces = (item) => {
-  const perBox = Math.max(DEFAULT_BOX_PIECES, toNumber(item.pieces_per_box, 0));
-  const boxes = Math.max(0, toNumber(item.quantity, 0));
-  if (boxes === 0) return 0;
-  const remaining = item.remaining_pieces == null
-    ? perBox
-    : Math.min(Math.max(0, toNumber(item.remaining_pieces, perBox)), perBox);
-  return Math.max(0, (boxes - 1) * perBox + remaining);
-};
-
-const boxStateFromPieces = (totalPieces, perBox) => {
-  const safePerBox = Math.max(DEFAULT_BOX_PIECES, perBox);
-  if (totalPieces <= 0) {
-    return { quantity: 0, remaining_pieces: 0 };
-  }
-  const fullBoxes = Math.floor(totalPieces / safePerBox);
-  const remainder = totalPieces % safePerBox;
-  if (remainder === 0) {
-    return { quantity: Math.max(fullBoxes, 1), remaining_pieces: safePerBox };
-  }
-  return { quantity: fullBoxes + 1, remaining_pieces: remainder };
-};
+const {
+  toNumber,
+  getBaseQuantity,
+  getConversionValue,
+  deriveQuantitiesFromBase,
+} = require('./inventoryUnits');
 
 const normalizeServiceList = (raw) => {
   if (!raw) return [];
@@ -576,23 +56,27 @@ const aggregateRuleItems = (rows) => {
     if (!row.inventoryItemId) continue;
     const key = String(row.inventoryItemId);
     const unitType = row.unit_type || row.unitType || 'piece';
-    const piecesPerBox = Math.max(DEFAULT_BOX_PIECES, toNumber(row.pieces_per_box, row.piecesPerBox));
+    const conversionValue = getConversionValue(row);
     const quantityToReduce = Math.max(0, toNumber(row.quantityToReduce, 0));
     if (quantityToReduce === 0) continue;
+    
     const entry = map.get(key) || {
       itemId: row.inventoryItemId,
       itemName: row.inventoryItemName || row.name || 'Unnamed Item',
       unitType,
-      piecesPerBox,
+      conversionValue,
       services: new Set(),
       totalUnitsRequested: 0,
       totalPiecesRequested: 0,
     };
+    
     entry.services.add(row.appointmentType);
     entry.totalUnitsRequested += quantityToReduce;
-    const piecesIncrement = unitType === 'box'
-      ? quantityToReduce * piecesPerBox
+    
+    const piecesIncrement = conversionValue > 0
+      ? quantityToReduce * conversionValue
       : quantityToReduce;
+    
     entry.totalPiecesRequested += piecesIncrement;
     map.set(key, entry);
   }
@@ -607,6 +91,7 @@ async function applyInventoryAutoDeduction(connection, {
   treatmentRecordId = null,
   patientId,
   patientName,
+  strict = true
 } = {}) {
   const normalizedServices = normalizeServiceList(services);
   if (normalizedServices.length === 0) {
@@ -621,7 +106,9 @@ async function applyInventoryAutoDeduction(connection, {
       ri.quantityToReduce,
       i.name AS inventoryItemName,
       i.unit_type,
-      i.pieces_per_box
+      i.pieces_per_unit,
+      i.pieces_per_box,
+      i.conversion_value
     FROM inventory_auto_reduction_rules_v2 r
     JOIN inventory_auto_reduction_rule_items ri ON r.id = ri.ruleId
     JOIN inventory i ON i.id = ri.inventoryItemId
@@ -642,12 +129,29 @@ async function applyInventoryAutoDeduction(connection, {
   const label = formatServicesLabel(normalizedServices);
 
   for (const requirement of aggregated) {
-    const [items] = await connection.query(
-      'SELECT id, name, quantity, unit_type, pieces_per_box, remaining_pieces FROM inventory WHERE id = ? FOR UPDATE',
+    const [rows] = await connection.query(
+      `SELECT 
+        id, 
+        name, 
+        unit, 
+        main_unit, 
+        base_unit, 
+        unit_type, 
+        quantity, 
+        main_quantity, 
+        remaining_pieces, 
+        pieces_per_unit, 
+        pieces_per_box, 
+        conversion_value,
+        base_quantity,
+        total_pieces
+      FROM inventory 
+      WHERE id = ? 
+      FOR UPDATE`,
       [requirement.itemId]
     );
 
-    if (items.length === 0) {
+    if (rows.length === 0) {
       shortages.push({
         itemId: requirement.itemId,
         itemName: requirement.itemName,
@@ -657,138 +161,132 @@ async function applyInventoryAutoDeduction(connection, {
       continue;
     }
 
-    const inventoryItem = items[0];
-    const unitType = inventoryItem.unit_type || 'piece';
-    const perBox = Math.max(DEFAULT_BOX_PIECES, toNumber(inventoryItem.pieces_per_box, requirement.piecesPerBox));
-    const availablePieces = unitType === 'box'
-      ? computeBoxAvailablePieces(inventoryItem)
-      : Math.max(0, toNumber(inventoryItem.quantity, 0));
-
-    const requestedPieces = requirement.totalPiecesRequested;
-  const {
-    toNumber,
-    getBaseQuantity,
-    getConversionValue,
-    deriveQuantitiesFromBase,
-  } = require('./inventoryUnits');
-
-    if (availablePieces < requestedPieces) {
+    const inventoryItem = rows[0];
+    const availablePieces = getBaseQuantity(inventoryItem);
+    
+    if (availablePieces < requirement.totalPiecesRequested) {
       shortages.push({
         itemId: requirement.itemId,
         itemName: inventoryItem.name || requirement.itemName,
-        unitType,
-      const unitType = row.unit_type || row.unitType || 'piece';
-      const conversionValue = getConversionValue(row);
+        availablePieces,
+        requestedPieces: requirement.totalPiecesRequested,
+        unitType: inventoryItem.unit_type || requirement.unitType,
         services: Array.from(requirement.services),
       });
       continue;
     }
-
-    if (unitType === 'box') {
-        conversionValue,
-      const { quantity, remaining_pieces } = boxStateFromPieces(newTotalPieces, perBox);
-      await connection.query(
-        'UPDATE inventory SET quantity = ?, remaining_pieces = ? WHERE id = ?',
-        [quantity, remaining_pieces, requirement.itemId]
-      );
-      await connection.query(`
-      const piecesIncrement = conversionValue > 0
-        ? quantityToReduce * conversionValue
-        : quantityToReduce;
-      `, [
-        appointmentId,
-        treatmentRecordId,
-        patientId,
-        patientName,
-        label,
-        requirement.itemId,
-        inventoryItem.name || requirement.itemName,
-        requestedPieces,
-        toNumber(inventoryItem.quantity, 0),
-        quantity,
-      ]);
-      reductions.push({
-    const strictMode = options.strict !== false;
-        itemId: requirement.itemId,
-        itemName: inventoryItem.name || requirement.itemName,
-        unitType,
-        piecesDeducted: requestedPieces,
-        unitsDeducted: requirement.totalUnitsRequested,
-        remainingPieces: newTotalPieces,
-      });
-    } else {
-      const currentQty = Math.max(0, toNumber(inventoryItem.quantity, 0));
-      const newQty = Math.max(0, currentQty - requestedPieces);
-      await connection.query('UPDATE inventory SET quantity = ? WHERE id = ?', [newQty, requirement.itemId]);
-      await connection.query(`
-        INSERT INTO inventory_reduction_history
-          (appointmentId, treatmentRecordId, patientId, patientName, appointmentType, inventoryItemId, inventoryItemName, quantityReduced, quantityBefore, quantityAfter)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
-        appointmentId,
-        treatmentRecordId,
-        patientId,
-        patientName,
-        label,
-        requirement.itemId,
-        inventoryItem.name || requirement.itemName,
-        requestedPieces,
-        currentQty,
-        newQty,
-      ]);
-      reductions.push({
-        itemId: requirement.itemId,
-        itemName: inventoryItem.name || requirement.itemName,
-        unitType,
-        piecesDeducted: requestedPieces,
-        unitsDeducted: requirement.totalUnitsRequested,
-        remainingPieces: newQty,
-      });
-    }
   }
 
-  if (shortages.length > 0) {
+  if (shortages.length > 0 && strict) {
     return { applied: false, shortages };
   }
 
-  return { applied: reductions.length > 0, reductions };
+  // Actually apply reductions
+  for (const requirement of aggregated) {
+    const [rows] = await connection.query(
+      `SELECT * FROM inventory WHERE id = ? FOR UPDATE`,
+      [requirement.itemId]
+    );
+    
+    if (rows.length === 0) continue;
+    
+    const inventoryItem = rows[0];
+    const availablePieces = getBaseQuantity(inventoryItem);
+    const conversionValue = getConversionValue(inventoryItem);
+    
+    const newTotalPieces = availablePieces - requirement.totalPiecesRequested;
+    const breakdown = conversionValue > 0
+      ? deriveQuantitiesFromBase(newTotalPieces, conversionValue)
+      : { quantity: newTotalPieces, remaining_pieces: 0 };
+    
+    await connection.query(
+      'UPDATE inventory SET base_quantity = ?, quantity = ?, remaining_pieces = ?, total_pieces = ?, main_quantity = ? WHERE id = ?',
+      [
+        newTotalPieces, 
+        breakdown.quantity, 
+        conversionValue > 0 ? breakdown.remaining_pieces : null,
+        newTotalPieces,
+        breakdown.quantity,
+        requirement.itemId
+      ]
+    );
+
+    await connection.query(`
+      INSERT INTO inventory_reduction_history
+        (appointmentId, treatmentRecordId, patientId, patientName, appointmentType, inventoryItemId, inventoryItemName, quantityReduced, quantityBefore, quantityAfter, reducedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+    `, [
+      appointmentId,
+      treatmentRecordId,
+      patientId,
+      patientName,
+      label,
+      requirement.itemId,
+      inventoryItem.name || requirement.itemName,
+      requirement.totalPiecesRequested,
+      availablePieces,
+      newTotalPieces,
+    ]);
+
+    reductions.push({
+      itemId: requirement.itemId,
+      itemName: inventoryItem.name || requirement.itemName,
+      piecesDeducted: requirement.totalPiecesRequested,
+      remainingPieces: newTotalPieces,
+    });
+  }
+
+  return {
+    applied: reductions.length > 0,
+    reductions,
+    shortages: shortages.length > 0 ? shortages : undefined,
+  };
 }
 
 async function restoreInventoryAutoDeduction(connection, treatmentRecordId) {
   if (!treatmentRecordId) return { restored: false };
+  
   const [historyRows] = await connection.query(
     'SELECT id, inventoryItemId, quantityReduced FROM inventory_reduction_history WHERE treatmentRecordId = ?',
     [treatmentRecordId]
   );
+  
   if (!historyRows || historyRows.length === 0) {
     return { restored: false };
   }
+  
   for (const entry of historyRows) {
     const [items] = await connection.query(
-      'SELECT id, quantity, unit_type, pieces_per_box, remaining_pieces FROM inventory WHERE id = ? FOR UPDATE',
+      'SELECT * FROM inventory WHERE id = ? FOR UPDATE',
       [entry.inventoryItemId]
     );
+    
     if (items.length === 0) continue;
+    
     const inventoryItem = items[0];
-    const unitType = inventoryItem.unit_type || 'piece';
-    if (unitType === 'box') {
-      const perBox = Math.max(DEFAULT_BOX_PIECES, toNumber(inventoryItem.pieces_per_box, 0));
-      const currentPieces = computeBoxAvailablePieces(inventoryItem);
-      const newTotalPieces = currentPieces + Math.max(0, toNumber(entry.quantityReduced, 0));
-      const { quantity, remaining_pieces } = boxStateFromPieces(newTotalPieces, perBox);
-      await connection.query(
-        'UPDATE inventory SET quantity = ?, remaining_pieces = ? WHERE id = ?',
-        [quantity, remaining_pieces, entry.inventoryItemId]
-      );
-    } else {
-      const currentQty = Math.max(0, toNumber(inventoryItem.quantity, 0));
-      await connection.query(
-        'UPDATE inventory SET quantity = ? WHERE id = ?',
-        [currentQty + Math.max(0, toNumber(entry.quantityReduced, 0)), entry.inventoryItemId]
-      );
-    }
+    const conversionValue = getConversionValue(inventoryItem);
+    const availablePieces = getBaseQuantity(inventoryItem);
+    const restoredQuantity = availablePieces + Math.max(0, toNumber(entry.quantityReduced, 0));
+    
+    const breakdown = conversionValue > 0
+      ? deriveQuantitiesFromBase(restoredQuantity, conversionValue)
+      : { quantity: restoredQuantity, remaining_pieces: 0 };
+      
+    await connection.query(
+      'UPDATE inventory SET base_quantity = ?, quantity = ?, remaining_pieces = ?, total_pieces = ?, main_quantity = ? WHERE id = ?',
+      [
+        restoredQuantity, 
+        breakdown.quantity, 
+        conversionValue > 0 ? breakdown.remaining_pieces : null,
+        restoredQuantity,
+        breakdown.quantity,
+        entry.inventoryItemId
+      ]
+    );
   }
+  
   await connection.query('DELETE FROM inventory_reduction_history WHERE treatmentRecordId = ?', [treatmentRecordId]);
+  
   return { restored: true, count: historyRows.length };
 }
 

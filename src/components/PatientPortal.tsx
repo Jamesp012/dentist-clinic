@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import { handlePhoneInput, formatPhoneNumber } from '../utils/phoneValidation';
 import { convertToDBDate, convertToDisplayDate, formatDateInput, formatToDD_MM_YYYY, formatToWordedDate } from '../utils/dateHelpers';
-import { appointmentAPI } from '../api';
+import { appointmentAPI, API_BASE, SERVER_URL } from '../api';
 import { Notifications } from './Notifications';
 import { generateReferralPDF } from '../utils/referralPdfGenerator';
 import { SearchableSelect } from './SearchableSelect';
@@ -41,7 +41,7 @@ type PatientPortalProps = {
   userRole?: string;
 };
 
-const API_BASE = 'http://localhost:5000/api';
+
 
 const INCLUDED_BILLING_STATUSES = new Set(
   [
@@ -731,7 +731,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
       const formData = new FormData();
       formData.append('file', file);
 
-      const uploadResponse = await fetch('http://localhost:5000/api/upload', {
+      const uploadResponse = await fetch(`${API_BASE}/referrals/upload`, {
         method: 'POST',
         body: formData,
         headers: {

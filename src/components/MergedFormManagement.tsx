@@ -3,6 +3,7 @@ import { Patient, Referral, Payment, TreatmentRecord } from '../App';
 import { referralAPI } from '../api';
 import { generateReferralPDF } from '../utils/referralPdfGenerator';
 import { clinicLogo } from '../assets';
+import { getSafeFileUrl } from '../utils/fileUtils';
 
 const clinicMap = '/clinic-map.jpg';
 import {
@@ -54,6 +55,24 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
   const [showModal, setShowModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [referralToDelete, setReferralToDelete] = useState<string | number | null>(null);
+
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [previewExpanded, setPreviewExpanded] = useState(false);
+
+  const handleFileClick = (file: any) => {
+    const fileUrl = getSafeFileUrl(file);
+    if (!fileUrl) {
+      toast.error('File URL not found');
+      return;
+    }
+
+    if (file.fileType === 'image') {
+      setPreviewImage(fileUrl);
+      setPreviewExpanded(false);
+    } else {
+      window.open(fileUrl, '_blank');
+    }
+  };
 
   // Filter and search referrals
   const filteredReferrals = referrals.filter(ref => {
@@ -109,6 +128,38 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
 
   const handleDownloadReferralPDF = (referral: Referral) => {
     const patient = patients.find(p => String(p.id) === String(referral.patientId));
+
+    const isIncomingPatient =
+      (referral.referralType === 'incoming' && referral.source === 'patient-uploaded') ||
+      referral.createdByRole === 'patient';
+
+    if (isIncomingPatient) {
+      // If patient uploaded original files, prefer downloading original PDF
+      const files = referral.uploadedFiles || [];
+      const pdfFile = files.find(f => f.fileType === 'application/pdf' || /\.pdf$/i.test(String(f.fileName)) || f.fileType === 'pdf');
+      if (pdfFile) {
+        const fileUrl = getSafeFileUrl(pdfFile);
+        if (fileUrl) {
+          // trigger download of original PDF
+          try {
+            const a = document.createElement('a');
+            a.href = fileUrl;
+            a.download = String(pdfFile.fileName || 'referral.pdf');
+            a.target = '_blank';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            return;
+          } catch (e) {
+            // fallback: open in new tab
+            window.open(fileUrl, '_blank');
+            return;
+          }
+        }
+      }
+      // If no original PDF found, fall back to generator to provide a PDF
+    }
+
     generateReferralPDF(referral, patient);
   };
 
@@ -684,6 +735,62 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
                       <p className="font-bold text-gray-800 text-lg">THANK YOU FOR YOUR REFERRAL!</p>
                       <p className="text-gray-700 text-sm leading-relaxed">It is our policy to decline performing procedures that are not indicated in the referral form.<br />This is based on our strict observance of the Dental Code of Ethics.</p>
                     </div>
+
+                    {/* Attached Files Section */}
+                    {selectedReferral.uploadedFiles && selectedReferral.uploadedFiles.length > 0 && (
+                      <div className="mt-8 pt-6 border-t border-slate-200">
+                        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                          <Download size={20} className="text-blue-600" />
+                          Attached Patient Documents ({selectedReferral.uploadedFiles.length})
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {selectedReferral.uploadedFiles.map((file) => {
+                            const fileUrl = getSafeFileUrl(file);
+                            return (
+                              <div 
+                                key={file.id}
+                                className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 transition-colors"
+                              >
+                                <div className="flex items-center gap-3 overflow-hidden">
+                                  <div className="p-2 bg-white rounded-lg border border-slate-200 flex-shrink-0">
+                                    {file.fileType === 'image' ? (
+                                      <img src={fileUrl} alt={file.fileName} className="w-8 h-8 object-cover rounded shadow-sm" />
+                                    ) : (
+                                      <FileText className="w-8 h-8 text-blue-500" />
+                                    )}
+                                  </div>
+                                  <div className="overflow-hidden">
+                                    <p className="text-sm font-bold text-slate-900 truncate">{file.fileName}</p>
+                                    <p className="text-[10px] text-slate-500 uppercase tracking-wider">{file.fileType}</p>
+                                  </div>
+                                </div>
+                                <div className="flex gap-2 ml-2">
+                                  {file.fileType === 'image' && (
+                                    <button
+                                      onClick={() => handleFileClick(file)}
+                                      className="p-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:text-blue-600 hover:border-blue-200 transition-colors"
+                                      title="Preview"
+                                    >
+                                      <Eye size={18} />
+                                    </button>
+                                  )}
+                                  <a
+                                    href={fileUrl}
+                                    download={file.fileName}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:text-green-600 hover:border-green-200 transition-colors"
+                                    title="Download"
+                                  >
+                                    <Download size={18} />
+                                  </a>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-6">
@@ -822,6 +929,62 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
                         />
                       </div>
                     </div>
+
+                    {/* Attached Files Section for X-Ray */}
+                    {selectedReferral.uploadedFiles && selectedReferral.uploadedFiles.length > 0 && (
+                      <div className="mt-8 pt-6 border-t border-slate-200">
+                        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                          <Download size={20} className="text-blue-600" />
+                          Attached Patient Documents ({selectedReferral.uploadedFiles.length})
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {selectedReferral.uploadedFiles.map((file) => {
+                            const fileUrl = getSafeFileUrl(file);
+                            return (
+                              <div 
+                                key={file.id}
+                                className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 transition-colors"
+                              >
+                                <div className="flex items-center gap-3 overflow-hidden">
+                                  <div className="p-2 bg-white rounded-lg border border-slate-200 flex-shrink-0">
+                                    {file.fileType === 'image' ? (
+                                      <img src={fileUrl} alt={file.fileName} className="w-8 h-8 object-cover rounded shadow-sm" />
+                                    ) : (
+                                      <FileText className="w-8 h-8 text-blue-500" />
+                                    )}
+                                  </div>
+                                  <div className="overflow-hidden">
+                                    <p className="text-sm font-bold text-slate-900 truncate">{file.fileName}</p>
+                                    <p className="text-[10px] text-slate-500 uppercase tracking-wider">{file.fileType}</p>
+                                  </div>
+                                </div>
+                                <div className="flex gap-2 ml-2">
+                                  {file.fileType === 'image' && (
+                                    <button
+                                      onClick={() => handleFileClick(file)}
+                                      className="p-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:text-blue-600 hover:border-blue-200 transition-colors"
+                                      title="Preview"
+                                    >
+                                      <Eye size={18} />
+                                    </button>
+                                  )}
+                                  <a
+                                    href={fileUrl}
+                                    download={file.fileName}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:text-green-600 hover:border-green-200 transition-colors"
+                                    title="Download"
+                                  >
+                                    <Download size={18} />
+                                  </a>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1011,6 +1174,36 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Image preview modal */}
+      <AnimatePresence>
+        {previewImage && (
+          <div className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4" onClick={() => setPreviewImage(null)}>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="relative max-w-[95vw] max-h-[95vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => { setPreviewImage(null); setPreviewExpanded(false); }}
+                className="absolute -top-4 -right-4 z-[70] p-3 bg-white hover:bg-gray-100 rounded-full shadow-lg transition-colors border border-gray-200"
+              >
+                <X className="w-6 h-6 text-gray-900" />
+              </button>
+
+              <img
+                src={previewImage}
+                alt="Preview"
+                className="block max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl bg-white"
+                onClick={() => setPreviewExpanded(prev => !prev)}
+                style={previewExpanded ? { width: '95vw', height: '95vh', cursor: 'zoom-out' } : { cursor: 'zoom-in' }}
+              />
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

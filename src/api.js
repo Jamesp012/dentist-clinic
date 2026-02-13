@@ -1,4 +1,14 @@
-const API_BASE = 'http://localhost:5000/api';
+const getApiBase = () => {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    // If we're on localhost or an IP, use the same host for the API
+    return `http://${hostname}:5000/api`;
+  }
+  return 'http://localhost:5000/api';
+};
+
+export const API_BASE = getApiBase();
+export const SERVER_URL = API_BASE.replace('/api', '');
 
 let authToken = localStorage.getItem('token');
 let isUnauthorized = false;

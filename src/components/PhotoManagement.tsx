@@ -3,7 +3,7 @@ import { Patient, PhotoUpload } from '../App';
 import { Camera, Upload, Trash2, RotateCcw, X, Search, AlertCircle, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
-import { photoAPI } from '../api';
+import { photoAPI, API_BASE } from '../api';
 import { formatToDD_MM_YYYY } from '../utils/dateHelpers';
 
 type PhotoManagementProps = {
@@ -81,7 +81,7 @@ export function PhotoManagement({ photos, patients, onDataChanged }: PhotoManage
       const formData = new FormData();
       formData.append('file', file);
       
-      const response = await fetch('http://localhost:5000/api/upload', {
+      const response = await fetch(`${API_BASE}/referrals/upload`, {
         method: 'POST',
         body: formData,
         headers: {

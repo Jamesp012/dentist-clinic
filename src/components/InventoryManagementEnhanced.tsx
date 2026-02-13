@@ -103,7 +103,7 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
   const loadAutoReductionRules = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/inventory-management/auto-reduction/rules', {
+      const response = await fetch(`${API_BASE}/inventory-management/auto-reduction/rules`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       if (response.ok) {
@@ -150,7 +150,7 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
   const loadReductionHistory = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/inventory-management/history?limit=1000', {
+      const response = await fetch(`${API_BASE}/inventory-management/history?limit=1000`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       if (response.ok) {
@@ -168,7 +168,7 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
   const loadOverview = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/inventory-management/overview', {
+      const response = await fetch(`${API_BASE}/inventory-management/overview`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       if (response.ok) {
@@ -262,9 +262,9 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
       };
 
       console.log('Creating rule with payload:', payload);
-      console.log('Sending to:', 'http://localhost:5000/api/inventory-management/auto-reduction/rules');
+      console.log('Sending to:', `${API_BASE}/inventory-management/auto-reduction/rules`);
 
-      const response = await fetch('http://localhost:5000/api/inventory-management/auto-reduction/rules', {
+      const response = await fetch(`${API_BASE}/inventory-management/auto-reduction/rules`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -356,7 +356,7 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
   // Update auto-reduction rule
   const updateAutoReductionRule = async (ruleId: number, newItems: RuleItem[]) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/inventory-management/auto-reduction/rules/${ruleId}`, {
+      const response = await fetch(`${API_BASE}/inventory-management/auto-reduction/rules/${ruleId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -383,7 +383,7 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
     if (!confirm('Delete this auto-reduction rule?')) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/inventory-management/auto-reduction/rules/${ruleId}`, {
+      const response = await fetch(`${API_BASE}/inventory-management/auto-reduction/rules/${ruleId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });

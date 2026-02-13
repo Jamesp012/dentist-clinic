@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Plus, X, Edit, Trash2, Key, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { API_BASE } from '../api';
 import { handlePhoneInput, formatPhoneNumber } from '../utils/phoneValidation';
 import { convertToDBDate, formatToDD_MM_YYYY, formatDateInput, parseDateString } from '../utils/dateHelpers';
 
@@ -102,7 +103,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
   // Fetch employees from API
   const fetchEmployees = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/employees', {
+      const res = await fetch(`${API_BASE}/employees`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -142,7 +143,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
         address: form.get('address') || '',
         dateHired: dateHiredResult.value
       };
-      const res = await fetch('http://localhost:5000/api/employees', {
+      const res = await fetch(`${API_BASE}/employees`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(payload)
@@ -188,7 +189,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
         address: form.get('address') || editingEmployee.address,
         dateHired: dateHiredResult.value ?? editingEmployee.dateHired
       };
-      const res = await fetch(`http://localhost:5000/api/employees/${editingEmployee.id}`, {
+      const res = await fetch(`${API_BASE}/employees/${editingEmployee.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(payload)
@@ -226,7 +227,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
     
     setIsLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/employees/${deletingEmployee.id}`, {
+      const response = await fetch(`${API_BASE}/employees/${deletingEmployee.id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -249,7 +250,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
   const handleGenerateCredentials = async (employeeId: number) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/employees/${employeeId}/generate-credentials`, {
+      const response = await fetch(`${API_BASE}/employees/${employeeId}/generate-credentials`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
