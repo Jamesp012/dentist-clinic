@@ -29,25 +29,32 @@ router.post('/', authMiddleware, async (req, res) => {
     const supplier = req.body.supplier || '';
     const cost = toNumber(req.body.cost, 0);
 
+    const piecesPerUnit = normalized.hasConversion ? normalized.conversionValue : null;
+    const mainQuantity = normalized.mainQuantity ?? normalized.quantity;
+    const totalPieces = normalized.totalPieces ?? normalized.baseQuantity;
+
     const [result] = await pool.query(
       `INSERT INTO inventory 
-        (name, category, quantity, minQuantity, unit, unit_type, pieces_per_box, remaining_pieces, supplier, cost, base_unit, main_unit, conversion_value, base_quantity)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (name, category, quantity, main_quantity, minQuantity, unit, unit_type, pieces_per_box, pieces_per_unit, remaining_pieces, supplier, cost, base_unit, main_unit, conversion_value, base_quantity, total_pieces)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         name,
         category,
-        normalized.quantity,
+        mainQuantity,
+        mainQuantity,
         minQuantity,
         normalized.baseUnit,
         normalized.unitType,
-        normalized.hasConversion ? normalized.conversionValue : null,
+        piecesPerUnit,
+        piecesPerUnit,
         normalized.hasConversion ? normalized.remainingPieces : null,
         supplier,
         cost,
         normalized.baseUnit,
         normalized.hasConversion ? normalized.mainUnit : null,
-        normalized.hasConversion ? normalized.conversionValue : null,
-        normalized.baseQuantity,
+        piecesPerUnit,
+        totalPieces,
+        totalPieces,
       ]
     );
 
@@ -72,38 +79,48 @@ router.put('/:id', authMiddleware, async (req, res) => {
     const supplier = req.body.supplier || '';
     const cost = toNumber(req.body.cost, 0);
 
+    const piecesPerUnit = normalized.hasConversion ? normalized.conversionValue : null;
+    const mainQuantity = normalized.mainQuantity ?? normalized.quantity;
+    const totalPieces = normalized.totalPieces ?? normalized.baseQuantity;
+
     await pool.query(
       `UPDATE inventory SET 
         name=?,
         category=?,
         quantity=?,
+        main_quantity=?,
         minQuantity=?,
         unit=?,
         unit_type=?,
         pieces_per_box=?,
+        pieces_per_unit=?,
         remaining_pieces=?,
         supplier=?,
         cost=?,
         base_unit=?,
         main_unit=?,
         conversion_value=?,
-        base_quantity=?
+        base_quantity=?,
+        total_pieces=?
       WHERE id=?`,
       [
         name,
         category,
-        normalized.quantity,
+        mainQuantity,
+        mainQuantity,
         minQuantity,
         normalized.baseUnit,
         normalized.unitType,
-        normalized.hasConversion ? normalized.conversionValue : null,
+        piecesPerUnit,
+        piecesPerUnit,
         normalized.hasConversion ? normalized.remainingPieces : null,
         supplier,
         cost,
         normalized.baseUnit,
         normalized.hasConversion ? normalized.mainUnit : null,
-        normalized.hasConversion ? normalized.conversionValue : null,
-        normalized.baseQuantity,
+        piecesPerUnit,
+        totalPieces,
+        totalPieces,
         req.params.id,
       ]
     );

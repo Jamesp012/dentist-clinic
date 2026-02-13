@@ -577,7 +577,7 @@ export function DentalCharting({ patients }: DentalChartingProps) {
             })()}
           </div>
         </div>
-
+        
         {/* Sidebar */}
         <ToothDetailsSidebar 
           isOpen={isSidebarOpen}

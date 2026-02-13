@@ -16,21 +16,23 @@ router.get('/overview', authMiddleware, async (req, res) => {
         name,
         category,
         quantity,
-        base_quantity,
+        main_quantity,
+        total_pieces,
         minQuantity,
         unit,
         base_unit,
         main_unit,
         conversion_value,
+        pieces_per_unit,
         supplier,
         cost,
         CASE 
-          WHEN base_quantity = 0 THEN 'out_of_stock'
-          WHEN base_quantity <= minQuantity THEN 'critical'
+          WHEN COALESCE(total_pieces, base_quantity, quantity) = 0 THEN 'out_of_stock'
+          WHEN COALESCE(total_pieces, base_quantity, quantity) <= minQuantity THEN 'critical'
           ELSE 'normal'
         END as status
       FROM inventory
-      ORDER BY status DESC, base_quantity ASC
+      ORDER BY status DESC, COALESCE(total_pieces, base_quantity, quantity) ASC
     `);
 
     const overview = {
@@ -57,20 +59,22 @@ router.get('/alerts', authMiddleware, async (req, res) => {
         name,
         category,
         quantity,
-        base_quantity,
+        main_quantity,
+        total_pieces,
         minQuantity,
         unit,
         base_unit,
         main_unit,
         conversion_value,
+        pieces_per_unit,
         CASE 
-          WHEN base_quantity = 0 THEN 'out_of_stock'
-          WHEN base_quantity <= minQuantity THEN 'critical'
+          WHEN COALESCE(total_pieces, base_quantity, quantity) = 0 THEN 'out_of_stock'
+          WHEN COALESCE(total_pieces, base_quantity, quantity) <= minQuantity THEN 'critical'
           ELSE 'normal'
         END as status
       FROM inventory
-      WHERE base_quantity = 0 OR base_quantity <= minQuantity
-      ORDER BY base_quantity ASC
+      WHERE COALESCE(total_pieces, base_quantity, quantity) = 0 OR COALESCE(total_pieces, base_quantity, quantity) <= minQuantity
+      ORDER BY COALESCE(total_pieces, base_quantity, quantity) ASC
     `);
 
     res.json({ alerts: items });
@@ -125,7 +129,10 @@ router.get('/auto-reduction/rules', authMiddleware, async (req, res) => {
           ri.id as itemId,
           ri.inventoryItemId,
           i.name as itemName,
-          ri.quantityToReduce
+          ri.quantityToReduce,
+          COALESCE(i.total_pieces, i.base_quantity, i.quantity) as availablePieces,
+          i.main_quantity as availableUnits,
+          i.pieces_per_unit as piecesPerUnit
         FROM inventory_auto_reduction_rule_items ri
         LEFT JOIN inventory i ON ri.inventoryItemId = i.id
         WHERE ri.ruleId = ?
@@ -156,7 +163,9 @@ router.get('/auto-reduction/rules/:appointmentType', authMiddleware, async (req,
         ri.inventoryItemId,
         i.name as inventoryItemName,
         ri.quantityToReduce,
-        i.base_quantity as currentQuantity,
+        COALESCE(i.total_pieces, i.base_quantity, i.quantity) as currentPieces,
+        i.main_quantity as currentUnits,
+        i.pieces_per_unit as piecesPerUnit,
         r.isActive
       FROM inventory_auto_reduction_rules_v2 r
       LEFT JOIN inventory_auto_reduction_rule_items ri ON r.id = ri.ruleId

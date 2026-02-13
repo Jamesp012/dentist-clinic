@@ -7,7 +7,13 @@ const toNumber = (value, fallback = 0) => {
 };
 
 const getConversionValue = (row = {}) => {
-  const raw = row.conversion_value ?? row.conversionValue ?? row.pieces_per_box ?? row.piecesPerBox;
+  const raw =
+    row.pieces_per_unit ??
+    row.piecesPerUnit ??
+    row.conversion_value ??
+    row.conversionValue ??
+    row.pieces_per_box ??
+    row.piecesPerBox;
   const parsed = Math.floor(toNumber(raw, 0));
   return parsed > MIN_CONVERSION_VALUE ? parsed : 0;
 };
@@ -17,7 +23,11 @@ const hasStructuredConversion = (row = {}) => {
 };
 
 const getBaseQuantity = (row = {}) => {
-  const stored = row.base_quantity ?? row.baseQuantity;
+  const stored =
+    row.total_pieces ??
+    row.totalPieces ??
+    row.base_quantity ??
+    row.baseQuantity;
   const parsedStored = Math.floor(toNumber(stored, NaN));
   if (Number.isFinite(parsedStored)) {
     return Math.max(0, parsedStored);
@@ -25,7 +35,7 @@ const getBaseQuantity = (row = {}) => {
 
   const conversionValue = getConversionValue(row);
   const hasConversion = conversionValue > 0 && ((row.unit_type ?? row.unitType) === 'box' || row.main_unit || row.mainUnit);
-  const quantity = Math.max(0, Math.floor(toNumber(row.quantity, 0)));
+  const quantity = Math.max(0, Math.floor(toNumber(row.main_quantity ?? row.mainQuantity ?? row.quantity, 0)));
 
   if (!hasConversion || conversionValue <= 1) {
     return quantity;
@@ -65,12 +75,18 @@ const normalizeInventoryPayload = (payload = {}) => {
     ? baseUnitRaw.trim()
     : DEFAULT_BASE_UNIT;
 
-  const mainUnitRaw = payload.main_unit ?? payload.mainUnit;
+  const mainUnitRaw = payload.main_unit ?? payload.mainUnit ?? payload.unit;
   const mainUnit = typeof mainUnitRaw === 'string' && mainUnitRaw.trim().length > 0
     ? mainUnitRaw.trim()
     : null;
 
-  const conversionRaw = payload.conversion_value ?? payload.conversionValue ?? payload.pieces_per_box ?? payload.piecesPerBox;
+  const conversionRaw =
+    payload.pieces_per_unit ??
+    payload.piecesPerUnit ??
+    payload.conversion_value ??
+    payload.conversionValue ??
+    payload.pieces_per_box ??
+    payload.piecesPerBox;
   let conversionValue = Math.floor(toNumber(conversionRaw, 0));
   const hasConversion = Boolean(mainUnit) && conversionValue > MIN_CONVERSION_VALUE;
   if (hasConversion) {
@@ -79,31 +95,39 @@ const normalizeInventoryPayload = (payload = {}) => {
     conversionValue = null;
   }
 
-  let baseQuantityInput = payload.base_quantity ?? payload.baseQuantity;
+  let totalPiecesInput =
+    payload.total_pieces ??
+    payload.totalPieces ??
+    payload.base_quantity ??
+    payload.baseQuantity ??
+    null;
 
-  if (baseQuantityInput == null || baseQuantityInput === '') {
+  if (totalPiecesInput == null || totalPiecesInput === '') {
     if (hasConversion) {
-      const fullUnitsInput = payload.fullUnits ?? payload.quantity;
+      const fullUnitsInput = payload.main_quantity ?? payload.mainQuantity ?? payload.quantity;
       const extraPiecesInput = payload.extraPieces ?? payload.loosePieces ?? payload.remaining_pieces ?? payload.remainingPieces ?? 0;
       const fullUnits = Math.max(0, Math.floor(toNumber(fullUnitsInput, 0)));
       const extraPieces = Math.max(0, Math.floor(toNumber(extraPiecesInput, 0)));
-      baseQuantityInput = fullUnits * conversionValue + Math.min(extraPieces, conversionValue - 1);
+      totalPiecesInput = fullUnits * conversionValue + Math.min(extraPieces, conversionValue - 1);
     } else {
-      baseQuantityInput = payload.quantity ?? 0;
+      totalPiecesInput = payload.quantity ?? payload.main_quantity ?? payload.mainQuantity ?? 0;
     }
   }
 
-  const baseQuantity = Math.max(0, Math.floor(toNumber(baseQuantityInput, 0)));
+  const totalPieces = Math.max(0, Math.floor(toNumber(totalPiecesInput, 0)));
   const breakdown = hasConversion && conversionValue
-    ? deriveQuantitiesFromBase(baseQuantity, conversionValue)
-    : { quantity: baseQuantity, remaining_pieces: 0 };
+    ? deriveQuantitiesFromBase(totalPieces, conversionValue)
+    : { quantity: totalPieces, remaining_pieces: 0 };
 
   return {
     baseUnit,
     mainUnit: hasConversion ? mainUnit : null,
     conversionValue: hasConversion ? conversionValue : null,
-    baseQuantity,
+    piecesPerUnit: hasConversion ? conversionValue : null,
+    baseQuantity: totalPieces,
+    totalPieces,
     quantity: breakdown.quantity,
+    mainQuantity: breakdown.quantity,
     remainingPieces: hasConversion ? breakdown.remaining_pieces : 0,
     unitType: hasConversion ? 'box' : 'piece',
     hasConversion,

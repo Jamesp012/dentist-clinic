@@ -6,15 +6,17 @@ export const toNumber = (value: unknown, fallback = 0): number => {
 };
 
 export const getBaseUnitLabel = (item: Partial<InventoryItem>) =>
-  (item.base_unit as string) || (item as any).baseUnit || item.unit || 'pc';
+  (item.base_unit as string) || (item as any).baseUnit || 'pcs';
 
 export const getMainUnitLabel = (item: Partial<InventoryItem>) =>
-  (item.main_unit as string) || (item as any).mainUnit || null;
+  (item.main_unit as string) || (item as any).mainUnit || item.unit || null;
 
 export const getConversionValue = (item: Partial<InventoryItem>): number => {
   const raw =
     (item.conversion_value as number) ??
     (item as any).conversionValue ??
+    (item as any).conversion_rate ??
+    (item as any).conversionRate ??
     (item.pieces_per_box as number) ??
     (item as any).piecesPerBox;
   const parsed = Math.floor(toNumber(raw, 0));
@@ -34,19 +36,20 @@ export const getBaseQuantity = (item: Partial<InventoryItem>): number => {
   }
 
   const conversionValue = getConversionValue(item);
-  const unitType = (item.unit_type as string) || (item as any).unitType;
   const quantity = Math.max(0, Math.floor(toNumber(item.quantity, 0)));
 
-  if (!conversionValue || unitType !== 'box') {
+  if (!conversionValue) {
     return quantity;
   }
 
   const remainingRaw =
     (item.remaining_pieces as number) ??
     (item as any).remainingPieces ??
-    conversionValue - 1;
+    (item as any).extraPieces ??
+    (item as any).loosePieces ??
+    0;
   const remaining = Math.min(
-    Math.max(0, Math.floor(toNumber(remainingRaw, conversionValue - 1))),
+    Math.max(0, Math.floor(toNumber(remainingRaw, 0))),
     conversionValue - 1
   );
 
