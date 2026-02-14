@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Patient, Appointment, Referral } from '../App';
-import { Bell, Calendar, FileText, Check } from 'lucide-react';
+import { Patient, Appointment, Referral, Announcement } from '../App';
+import { Bell, Calendar, FileText, Check, Megaphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { convertToDBDate, formatToMonthDayYear } from '../utils/dateHelpers';
+import { convertToDBDate, formatToMonthDayYear, timeAgo } from '../utils/dateHelpers';
 
 export type Notification = {
   id: string;
-  type: 'appointment' | 'referral';
-  patientId: string;
-  patientName: string;
+  type: 'appointment' | 'referral' | 'announcement';
+  patientId?: string;
+  patientName?: string;
   title: string;
   message: string;
   date: string;
@@ -22,11 +22,12 @@ type NotificationsProps = {
   patients: Patient[];
   appointments: Appointment[];
   referrals: Referral[];
+  announcements?: Announcement[];
   currentPatientId?: string; // For patient portal
   onNavigate?: (tab: string) => void; // Callback to navigate to a specific tab
 };
 
-export function Notifications({ patients: _patients, appointments, referrals, currentPatientId, onNavigate }: NotificationsProps) {
+export function Notifications({ patients: _patients, appointments, referrals, announcements = [], currentPatientId, onNavigate }: NotificationsProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showPanel, setShowPanel] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -126,18 +127,7 @@ export function Notifications({ patients: _patients, appointments, referrals, cu
 
   const formatNotificationTimestamp = (timestamp: string) => {
     if (!timestamp) return 'Date unavailable';
-    const parsed = new Date(timestamp);
-    if (isNaN(parsed.getTime())) return timestamp;
-    const datePart = parsed.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-    const timePart = parsed.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit'
-    });
-    return `${datePart} • ${timePart}`;
+    return timeAgo(timestamp);
   };
 
   // Helper function to get queue number and queue period for an appointment
@@ -285,14 +275,33 @@ export function Notifications({ patients: _patients, appointments, referrals, cu
       // Show notification for referrals made within the last 7 days
       if (daysSinceReferral >= 0 && daysSinceReferral <= 7) {
         const specialty = referral.specialty || '';
-        let message = `You have been referred to ${referral.referredTo || 'the specified clinic'} (${specialty || 'General'})`;
+        const isIncoming = referral.referralType === 'incoming';
+        
+        let message = '';
+        if (currentPatientId) {
+          // Patient view
+          if (isIncoming) {
+            message = `You have been referred by ${referral.referredBy || 'another clinic'} (${specialty || 'General'})`;
+          } else {
+            message = `You have been referred to ${referral.referredTo || 'the specified clinic'} (${specialty || 'General'})`;
+          }
+        } else {
+          // Staff view
+          if (isIncoming) {
+            message = `${referral.patientName} was referred by ${referral.referredBy || 'another clinic'}`;
+          } else {
+            message = `${referral.patientName} was referred to ${referral.referredTo || 'the specified clinic'}`;
+          }
+        }
 
         if (specialty === 'X-Ray Imaging') {
           message += '. Please schedule your X-ray appointment as soon as possible';
         } else if (specialty.includes('Orthodontics')) {
           message += ' for specialized orthodontic treatment';
-        } else {
-          message += ` for specialized treatment. Reason: ${referral.reason || 'Not specified'}`;
+        } else if (!isIncoming && !currentPatientId) {
+            // No extra reason for staff outgoing
+        } else if (referral.reason) {
+          message += ` for specialized treatment. Reason: ${referral.reason}`;
         }
 
         if (referral.urgency === 'urgent' || referral.urgency === 'emergency') {
@@ -324,6 +333,34 @@ export function Notifications({ patients: _patients, appointments, referrals, cu
       }
     });
 
+    // Announcement notifications
+    announcements.forEach(announcement => {
+      // Show notification for announcements made within the last 14 days
+      const announcementDate = new Date(announcement.date);
+      if (isNaN(announcementDate.getTime())) return;
+
+      const diffInTime = today.getTime() - announcementDate.getTime();
+      const diffInDays = diffInTime / (1000 * 3600 * 24);
+
+      // Show if it's within the last 14 days (including today)
+      // We use -1 to allow today's announcements even if they appear slightly in the future due to timezone
+      if (diffInDays >= -1 && diffInDays <= 14) {
+        const notifId = `ann-${announcement.id}`;
+        const isRead = readIds.includes(notifId);
+        
+        generatedNotifications.push({
+          id: notifId,
+          type: 'announcement',
+          title: announcement.title,
+          message: announcement.message,
+          date: announcement.date,
+          createdAt: announcement.date,
+          read: isRead,
+          details: announcement
+        });
+      }
+    });
+
     // Sort notifications by date in descending order (most recent first)
     const sortedNotifications = generatedNotifications.sort((a, b) => {
       const dateA = new Date(a.createdAt).getTime();
@@ -333,7 +370,7 @@ export function Notifications({ patients: _patients, appointments, referrals, cu
 
     setNotifications(sortedNotifications);
     setUnreadCount(sortedNotifications.filter(n => !n.read).length);
-  }, [appointments, referrals, currentPatientId, readIds]);
+  }, [appointments, referrals, announcements, currentPatientId, readIds]);
 
   const markAsRead = (id: string) => {
     setNotifications(notifications.map(n => 
@@ -444,7 +481,13 @@ export function Notifications({ patients: _patients, appointments, referrals, cu
                             markAsRead(notification.id);
                           }
                           if (onNavigate) {
-                            onNavigate('appointments');
+                            if (notification.type === 'appointment') {
+                              onNavigate('appointments');
+                            } else if (notification.type === 'referral') {
+                              onNavigate(currentPatientId ? 'forms' : 'referrals');
+                            } else if (notification.type === 'announcement') {
+                              onNavigate('announcements');
+                            }
                             setShowPanel(false);
                           }
                         }}
@@ -459,13 +502,17 @@ export function Notifications({ patients: _patients, appointments, referrals, cu
                               className={`w-10 h-10 rounded-xl border flex items-center justify-center ${
                                 notification.type === 'appointment'
                                   ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                                  : 'border-emerald-100 bg-emerald-50 text-emerald-700'
+                                  : notification.type === 'referral'
+                                  ? 'border-emerald-100 bg-emerald-50 text-emerald-700'
+                                  : 'border-blue-200 bg-blue-50 text-blue-700'
                               }`}
                             >
                               {notification.type === 'appointment' ? (
                                 <Calendar className="w-5 h-5" />
-                              ) : (
+                              ) : notification.type === 'referral' ? (
                                 <FileText className="w-5 h-5" />
+                              ) : (
+                                <Megaphone className="w-5 h-5" />
                               )}
                             </div>
                           </div>

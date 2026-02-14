@@ -8,6 +8,7 @@ import { generateReferralPDF } from '../utils/referralPdfGenerator';
 import { PatientSearchInput } from './PatientSearchInput';
 import { getSafeFileUrl } from '../utils/fileUtils';
 import { motion, AnimatePresence } from 'motion/react';
+import { timeAgo } from '../utils/dateHelpers';
 
 // Import image assets
 import { clinicLogo, clinicMap, redorLogo, xrayClinic } from '../assets';
@@ -346,9 +347,10 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
     age: '',
     dateOfBirth: '',
     sex: '',
-    referredBy: '',
-    referredByContact: '',
-    referredByEmail: '',
+    referredBy: 'Doc Maaño',
+    referredTo: '',
+    referredByContact: '0938-171-7695',
+    referredByEmail: 'j.aguilardentalclinic@gmail.com',
     specialty: '',
     reason: '',
     date: new Date().toISOString().split('T')[0],
@@ -429,7 +431,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
         referringDentist: formData.referredBy,
         referredByContact: formData.referredByContact,
         referredByEmail: formData.referredByEmail,
-        referredTo: formData.specialty || (referralType === 'xray' ? 'X-Ray Facility' : ''),
+        referredTo: formData.referredTo || (referralType === 'xray' ? 'X-Ray Facility' : ''),
         specialty: referralType === 'xray' ? 'X-Ray Imaging' : formData.specialty,
         reason: formData.reason,
         selectedServices: referralType === 'doctor' ? selectedServices : selectedXrayItems,
@@ -469,9 +471,10 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
       age: '',
       dateOfBirth: '',
       sex: '',
-      referredBy: '',
-      referredByContact: '',
-      referredByEmail: '',
+      referredBy: 'Doc Maaño',
+      referredTo: '',
+      referredByContact: '0938-171-7695',
+      referredByEmail: 'j.aguilardentalclinic@gmail.com',
       specialty: '',
       reason: '',
       date: new Date().toISOString().split('T')[0],
@@ -674,7 +677,10 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                   <UnderlineInput label="Sex:" value={formData.sex} onChange={v => handleInputChange('sex', v)} disabled />
                   <UnderlineInput label="Date Of Birth:" value={formData.dateOfBirth} onChange={v => handleInputChange('dateOfBirth', v)} disabled />
                 </div>
-                <UnderlineInput label="Referred by:" value={formData.referredBy} onChange={v => handleInputChange('referredBy', v)} />
+                <div className="grid grid-cols-2 gap-4">
+                  <UnderlineInput label="Referred by:" value={formData.referredBy} onChange={v => handleInputChange('referredBy', v)} />
+                  <UnderlineInput label="Referred to:" value={formData.referredTo} onChange={v => handleInputChange('referredTo', v)} />
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <UnderlineInput label="Contact No.:" value={formData.referredByContact} onChange={v => handleInputChange('referredByContact', v)} />
                   <UnderlineInput label="Clinic Email Address:" value={formData.referredByEmail} onChange={v => handleInputChange('referredByEmail', v)} />
@@ -864,12 +870,12 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
 
                 <div className="grid grid-cols-2 gap-4">
                   <UnderlineInput label="Referred by Dr.:" value={formData.referredBy} onChange={(v) => handleInputChange('referredBy', v)} />
-                  <UnderlineInput label="Dentist's Contact #:" value={formData.referredByContact} onChange={(v) => handleInputChange('referredByContact', v)} />
+                  <UnderlineInput label="Referred to:" value={formData.referredTo} onChange={(v) => handleInputChange('referredTo', v)} />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
+                  <UnderlineInput label="Dentist's Contact #:" value={formData.referredByContact} onChange={(v) => handleInputChange('referredByContact', v)} />
                   <UnderlineInput label="Patient's Address:" value={formData.reason} onChange={(v) => handleInputChange('reason', v)} />
-                  <UnderlineInput label="Patient's Contact #:" value={formData.contactNo} onChange={(v) => handleInputChange('contactNo', v)} disabled />
                 </div>
               
               {/* Main instruction */}
@@ -1350,7 +1356,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                               <div className="flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 bg-slate-300 rounded-full hidden sm:block"></span>
                                 <p className="text-sm font-semibold text-slate-500">
-                                  {new Date(referral.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                  {timeAgo(referral.createdAt || referral.date)}
                                 </p>
                               </div>
                             </div>
@@ -1579,8 +1585,14 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                     </div>
 
                     <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
-                      <span className="text-sm font-bold text-slate-500 uppercase tracking-wider w-32 shrink-0">Referred by:</span>
-                      <div className="text-base font-bold text-slate-900 flex-1">{selectedReferral.referringDentist}</div>
+                      <span className="text-sm font-bold text-slate-500 uppercase tracking-wider w-32 shrink-0">
+                        {selectedReferral.referralType === 'incoming' ? 'Referred by:' : 'Referred to:'}
+                      </span>
+                      <div className="text-base font-bold text-slate-900 flex-1">
+                        {selectedReferral.referralType === 'incoming' 
+                          ? (selectedReferral.referredBy || selectedReferral.referringDentist) 
+                          : selectedReferral.referredTo}
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

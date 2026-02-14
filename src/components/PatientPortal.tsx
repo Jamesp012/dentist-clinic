@@ -4,7 +4,7 @@ import { Calendar, FileText, User as UserIcon, Clock, X, Edit, Save, XCircle, In
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import { handlePhoneInput, formatPhoneNumber } from '../utils/phoneValidation';
-import { convertToDBDate, convertToDisplayDate, formatDateInput, formatToDD_MM_YYYY, formatToWordedDate } from '../utils/dateHelpers';
+import { convertToDBDate, convertToDisplayDate, formatDateInput, formatToDD_MM_YYYY, formatToWordedDate, timeAgo } from '../utils/dateHelpers';
 import { appointmentAPI, API_BASE, SERVER_URL } from '../api';
 import { Notifications } from './Notifications';
 import { generateReferralPDF } from '../utils/referralPdfGenerator';
@@ -34,6 +34,7 @@ type PatientPortalProps = {
   photos: PhotoUpload[];
   setPhotos: (photos: PhotoUpload[]) => void;
   announcements: Announcement[];
+  referrals: Referral[];
   payments: Payment[];
   onLogout?: () => void;
   onDataChanged?: () => Promise<void>;
@@ -85,7 +86,7 @@ const getDisplayName = (fullName: string | undefined): string => {
   return `${nameParts[0]} ${nameParts[nameParts.length - 1]}`;
 };
 
-export function PatientPortal({ patient, appointments, setAppointments, treatmentRecords, onUpdatePatient, photos, setPhotos: _, announcements, payments, onLogout, onDataChanged, services = [], userRole }: PatientPortalProps) {
+export function PatientPortal({ patient, appointments, setAppointments, treatmentRecords, onUpdatePatient, photos, setPhotos: _, announcements, referrals, payments, onLogout, onDataChanged, services = [], userRole }: PatientPortalProps) {
   const birthdatePickerRef = useRef<HTMLInputElement | null>(null);
   const [activeTab, setActiveTab] = useState<'home' | 'profile' | 'appointments' | 'records' | 'photos' | 'balance' | 'care-guide' | 'announcements' | 'forms'>('home');
   const [announcementSubTab, setAnnouncementSubTab] = useState<'announcements' | 'services'>('announcements');
@@ -128,7 +129,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
   const [selectedSchedulePeriod, setSelectedSchedulePeriod] = useState<'am' | 'pm' | null>(null);
   
   // Forms data state
-  const [referrals, setReferrals] = useState<any[]>([]);
+  const [patientReferrals, setPatientReferrals] = useState<any[]>([]);
   const [isLoadingForms, setIsLoadingForms] = useState(false);
   // UI: active sub-tab for Forms (doctor vs xray)
   const [formsTab, setFormsTab] = useState<'doctor' | 'xray' | 'patient'>('doctor');
@@ -425,7 +426,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
           
           if (createRes.ok) {
              const newReferral = await createRes.json();
-             setReferrals(prev => [newReferral, ...prev]);
+             setPatientReferrals(prev => [newReferral, ...prev]);
           }
         } catch (err) {
           console.error('Failed to create referral record for uploaded files', err);
@@ -824,17 +825,17 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
         const refResponse = await fetch(`${API_BASE}/referrals/patient/${patient.id}`, { headers });
         if (refResponse.ok) {
           const refData = await refResponse.json();
-          setReferrals(Array.isArray(refData) ? refData : []);
+          setPatientReferrals(Array.isArray(refData) ? refData : []);
         } else {
           const text = await refResponse.text();
           console.error('Failed to fetch referrals:', refResponse.status, text);
-          setReferrals([]);
+          setPatientReferrals([]);
         }
 
         // Prescriptions are no longer fetched in the Patient Portal (visible only to staff portals)
       } catch (error) {
         console.error('Failed to load patient forms:', error);
-        setReferrals([]);
+        setPatientReferrals([]);
         toast.error('Unable to load forms. Please refresh or contact support.');
       } finally {
         setIsLoadingForms(false);
@@ -1129,7 +1130,8 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
             <Notifications
               patients={[patient]}
               appointments={patientAppointments}
-              referrals={[]}
+              referrals={referrals}
+              announcements={announcements}
               currentPatientId={String(patient.id)}
               onNavigate={(tab: string) => setActiveTab(tab as any)}
             />
@@ -1321,7 +1323,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                                   <p className="text-sm text-slate-500 uppercase tracking-wide font-semibold">Latest Update</p>
                                   <p className="text-xs font-semibold" style={{ color: 'var(--primary)' }}>
                                     {latestAnnouncement.date
-                                      ? new Date(latestAnnouncement.date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
+                                      ? timeAgo(latestAnnouncement.date)
                                       : 'Recently posted'
                                     }
                                   </p>
@@ -1982,7 +1984,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                       >
                         Doctor’s Referral
                         <span className="ml-2 inline-flex items-center justify-center text-xs px-2 py-0.5 bg-teal-50 text-teal-500 rounded-full border border-teal-100">
-                          {referrals.filter(r => r.specialty !== 'X-Ray Imaging' && r.referredTo !== 'X-Ray Facility').length}
+                          {patientReferrals.filter(r => r.specialty !== 'X-Ray Imaging' && r.referredTo !== 'X-Ray Facility').length}
                         </span>
                       </button>
 
@@ -1994,7 +1996,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                       >
                         X-ray Referral
                         <span className="ml-2 inline-flex items-center justify-center text-xs px-2 py-0.5 bg-teal-50 text-teal-500 rounded-full border border-teal-100">
-                          {referrals.filter(r => r.specialty === 'X-Ray Imaging' || r.referredTo === 'X-Ray Facility').length}
+                          {patientReferrals.filter(r => r.specialty === 'X-Ray Imaging' || r.referredTo === 'X-Ray Facility').length}
                         </span>
                       </button>
 
@@ -2006,7 +2008,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                       >
                         Your Referrals
                         <span className="ml-2 inline-flex items-center justify-center text-xs px-2 py-0.5 bg-teal-50 text-teal-500 rounded-full border border-teal-100">
-                          {referrals.filter(r => r.createdByRole === 'patient' && String(r.patientId) === String(patient.id)).length}
+                          {patientReferrals.filter(r => r.createdByRole === 'patient' && String(r.patientId) === String(patient.id)).length}
                         </span>
                       </button>
 
@@ -2032,7 +2034,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                             const res = await fetch(`${API_BASE}/referrals/patient/${patient.id}`, { headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
                             if (res.ok) {
                               const data = await res.json();
-                              setReferrals(data);
+                              setPatientReferrals(data);
                             }
                           } catch (err) {
                             console.error('Failed to reload referrals after saving patient referral', err);
@@ -2043,9 +2045,9 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
 
                     {/* Doctor Referrals - shown when Doctor tab active */}
                     {formsTab === 'doctor' && (
-                      referrals.filter(r => r.specialty !== 'X-Ray Imaging' && r.referredTo !== 'X-Ray Facility').length > 0 ? (
+                      patientReferrals.filter(r => r.specialty !== 'X-Ray Imaging' && r.referredTo !== 'X-Ray Facility').length > 0 ? (
                         <div className="grid grid-cols-1 gap-4">
-                          {referrals
+                          {patientReferrals
                             .filter(r => r.specialty !== 'X-Ray Imaging' && r.referredTo !== 'X-Ray Facility')
                             .sort((a, b) => new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime())
                             .map(referral => (
@@ -2063,7 +2065,9 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                                         <FileText className="w-5 h-5 text-teal-500" />
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                        <h4 className="font-bold text-slate-900 text-base">Referred to: {referral.referredTo}</h4>
+                                        <h4 className="font-bold text-slate-900 text-base">
+                                          {referral.referralType === 'incoming' ? 'Referred by:' : 'Referred to:'} {referral.referredBy || referral.referredTo}
+                                        </h4>
                                         <p className="text-sm font-medium text-slate-500 mt-0.5">Dr. {referral.referringDentist}</p>
                                       </div>
                                     </div>
@@ -2107,9 +2111,9 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
 
                     {/* X-Ray Referrals - shown when X-ray tab active */}
                     {formsTab === 'xray' && (
-                      referrals.filter(r => r.specialty === 'X-Ray Imaging' || r.referredTo === 'X-Ray Facility').length > 0 ? (
+                      patientReferrals.filter(r => r.specialty === 'X-Ray Imaging' || r.referredTo === 'X-Ray Facility').length > 0 ? (
                         <div className="grid grid-cols-1 gap-4">
-                          {referrals
+                          {patientReferrals
                             .filter(r => r.specialty === 'X-Ray Imaging' || r.referredTo === 'X-Ray Facility')
                             .sort((a, b) => new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime())
                             .map(referral => (
@@ -2174,9 +2178,9 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
 
                     {/* Patient Referrals (Your Referrals) - shown when Patient tab active */}
                     {formsTab === 'patient' && (
-                      (referrals.filter(r => r.createdByRole === 'patient' && String(r.patientId) === String(patient.id))).length > 0 ? (
+                      (patientReferrals.filter(r => r.createdByRole === 'patient' && String(r.patientId) === String(patient.id))).length > 0 ? (
                         <div className="grid grid-cols-1 gap-4">
-                          {referrals
+                          {patientReferrals
                             .filter(r => r.createdByRole === 'patient' && String(r.patientId) === String(patient.id))
                             .sort((a, b) => new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime())
                             .map(referral => (
@@ -2190,7 +2194,9 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                                         <FileText className="w-5 h-5 text-teal-500" />
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                        <h4 className="font-bold text-slate-900 text-base">{referral.referredTo || 'Referral'}</h4>
+                                        <h4 className="font-bold text-slate-900 text-base">
+                                          {referral.referralType === 'incoming' ? 'Referred by:' : 'Referred to:'} {referral.referredBy || referral.referredTo || 'Referral'}
+                                        </h4>
                                         <p className="text-sm font-medium text-slate-500 mt-0.5">{referral.referringDentist}</p>
                                       </div>
                                     </div>
@@ -2987,7 +2993,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                                 <div className="flex-1">
                                   <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-teal-700 transition-colors">{ann.title}</h3>
                                   <p className="text-sm text-gray-600">
-                                    📅 {new Date(ann.date).toLocaleDateString()} • 👤 {ann.createdBy}
+                                    📅 {timeAgo(ann.date)} • 👤 {ann.createdBy}
                                   </p>
                                 </div>
                                 <span className={`px-3 py-1 rounded-full text-xs font-bold capitalize flex-shrink-0 ${

@@ -4,6 +4,7 @@ import { Plus, X, Trash2, Check, Edit } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import { announcementAPI } from '../api';
+import { timeAgo } from '../utils/dateHelpers';
 
 type Service = {
   id: string;
@@ -171,15 +172,6 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
       case 'important': return '⚠️';
       default: return '📢';
     }
-  };
-
-  const formatToDD_MM_YYYY = (dateString: string) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
   };
 
   const handleAddService = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -363,7 +355,7 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
                           <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-teal-700 transition-colors">{announcement.title}</h3>
                           <div className="flex flex-wrap gap-4 items-center text-sm">
                             <span className="text-gray-600 font-medium flex items-center gap-1">
-                              📅 {formatToDD_MM_YYYY(announcement.date)}
+                              📅 {timeAgo(announcement.date)}
                             </span>
                             <span className="text-gray-600 font-medium flex items-center gap-1">
                               👤 {announcement.createdBy}

@@ -3,6 +3,7 @@ import { ArrowRight, ArrowLeft, FileText, User, Calendar, AlertCircle, CheckCirc
 import { Referral, Patient } from '../App';
 import { motion, AnimatePresence } from 'motion/react';
 import { generateReferralPDF } from '../utils/referralPdfGenerator';
+import { timeAgo } from '../utils/dateHelpers';
 
 interface ReferralManagementProps {
   referrals: Referral[];
@@ -114,11 +115,7 @@ export function ReferralManagement({ referrals, patients, currentUserName = 'Doc
 
                       {/* Date */}
                       <div className="text-xs text-gray-600 mb-4">
-                        {new Date(referral.date).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'numeric',
-                          day: 'numeric'
-                        })}
+                        {timeAgo(referral.createdAt || referral.date)}
                       </div>
 
                       {/* Information Grid */}
@@ -129,10 +126,16 @@ export function ReferralManagement({ referrals, patients, currentUserName = 'Doc
                           <p className="text-sm text-gray-800">{referral.specialty || 'General'}</p>
                         </div>
 
-                        {/* Referred To */}
+                        {/* Referred To/By */}
                         <div>
-                          <p className="text-xs font-medium text-gray-500">Referred To</p>
-                          <p className="text-sm text-gray-800">{referral.referredTo || 'N/A'}</p>
+                          <p className="text-xs font-medium text-gray-500">
+                            {isIncoming ? 'Referred By' : 'Referred To'}
+                          </p>
+                          <p className="text-sm text-gray-800">
+                            {isIncoming 
+                              ? (referral.referredBy || 'N/A') 
+                              : (referral.referredTo || 'N/A')}
+                          </p>
                         </div>
 
                         {/* Reason */}

@@ -648,6 +648,7 @@ export function DoctorDashboard({
               patients={patients}
               appointments={appointments}
               referrals={referrals}
+              announcements={announcements}
               onNavigate={setActiveTab}
             />
           </div>

@@ -48,7 +48,7 @@ export const PatientReferralModal: React.FC<Props> = ({ isOpen, onClose, patient
         patientId: patientId ? String(patientId) : null,
         patientName: patientNameLocal,
         referringDentist: referringDoctor,
-        referredTo: referringClinic,
+        referredBy: referringClinic,
         date: dateReferred,
         createdByRole: 'patient',
         referralType: 'incoming',
@@ -88,7 +88,7 @@ export const PatientReferralModal: React.FC<Props> = ({ isOpen, onClose, patient
           </div>
 
           <div>
-            <label className="block text-sm font-medium">Dental Clinic Name (Referring Clinic)</label>
+            <label className="block text-sm font-medium">Referred By (Clinic Name)</label>
             <input className="w-full px-3 py-2 border rounded" value={referringClinic} onChange={(e) => setReferringClinic(e.target.value)} />
           </div>
 

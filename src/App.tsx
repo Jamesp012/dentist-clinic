@@ -776,6 +776,7 @@ export default function App() {
           photos={photos}
           setPhotos={setPhotos}
           announcements={announcements}
+          referrals={referrals}
           payments={payments}
           onLogout={handleLogout}
           onDataChanged={async () => { await refreshAll(); }}
