@@ -175,6 +175,17 @@ export function DentalChartWebsite() {
     null
   );
 
+  const [showSelectPatientModal, setShowSelectPatientModal] = useState(false);
+  const okButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (showSelectPatientModal) {
+      try {
+        okButtonRef.current?.focus();
+      } catch (e) {}
+    }
+  }, [showSelectPatientModal]);
+
   const [chartHistory, setChartHistory] = useState<ChartSnapshot[]>(() => {
     try {
       const raw = localStorage.getItem('dentalChartHistory');
@@ -239,6 +250,11 @@ export function DentalChartWebsite() {
 
   const handleToothClick = (toothId: number | null) => {
     if (!toothId) return;
+    // prompt user to select patient if none selected
+    if (!selectedPatientObj) {
+      setShowSelectPatientModal(true);
+      return;
+    }
     setSelectedTooth(toothId);
     setIsSidebarOpen(true);
   };
@@ -273,6 +289,10 @@ export function DentalChartWebsite() {
 
   const handleIconClick = (event: React.MouseEvent, iconId: string) => {
     event.stopPropagation();
+    if (!selectedPatientObj) {
+      setShowSelectPatientModal(true);
+      return;
+    }
     const numericId = getToothNumericId(iconId);
     if (!numericId) return;
 
@@ -295,6 +315,11 @@ export function DentalChartWebsite() {
   const handleContainerClick = (event: React.MouseEvent<HTMLDivElement>) => {
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
+    // prompt user to select patient when trying to interact with chart without selection
+    if (!selectedPatientObj) {
+      setShowSelectPatientModal(true);
+      return;
+    }
     const clickX = ((event.clientX - rect.left) / rect.width) * 100;
     const clickY = ((event.clientY - rect.top) / rect.height) * 100;
 
@@ -327,6 +352,35 @@ export function DentalChartWebsite() {
       }
     }
   };
+
+  // When patient selection changes, load the most recent chart for that patient
+  useEffect(() => {
+    if (!selectedPatientObj) {
+      // no patient selected -> reset to blank chart
+      setTeeth(createInitialTeethData());
+      return;
+    }
+
+    // find the most recent saved snapshot for this patient (by createdAt desc)
+    const snapshots = chartHistory.filter((c) => c.patientId === selectedPatientObj.id);
+    if (snapshots.length === 0) {
+      // no history -> blank chart
+      setTeeth(createInitialTeethData());
+      return;
+    }
+
+    const latest = snapshots.reduce((a, b) => (new Date(a.createdAt) > new Date(b.createdAt) ? a : b));
+    if (latest) {
+      setTeeth(latest.teeth);
+    }
+  }, [selectedPatientObj, chartHistory]);
+
+  // If the user clears the patient search input, treat as clearing selection
+  useEffect(() => {
+    if (patientQuery.trim() === '') {
+      setSelectedPatientObj(null);
+    }
+  }, [patientQuery]);
 
   // Normalize various possible condition names to canonical keys used by the renderer
   const normalizeCondition = (raw?: string) => {
@@ -735,7 +789,7 @@ export function DentalChartWebsite() {
             return (
               <div
                 key={tooth.id}
-                className="absolute cursor-pointer group"
+                className={`absolute ${selectedPatientObj ? 'cursor-pointer' : 'cursor-default'} group`}
                 style={{
                   left: `${tooth.leftPct}%`,
                   top: `${tooth.topPct}%`,
@@ -880,6 +934,32 @@ export function DentalChartWebsite() {
         onSelectTooth={handleToothClick}
         fixedIsPermanent={selectedTooth != null ? selectedTooth <= 32 : undefined}
       />
+
+      {/* Modal: prompt user to select a patient before editing */}
+      {showSelectPatientModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowSelectPatientModal(false)} />
+          <div className="relative w-full max-w-md mx-4">
+            <div className="rounded-lg overflow-hidden shadow-lg" role="dialog" aria-modal="true">
+              <div className="p-4 bg-gradient-to-r from-teal-400 via-cyan-400 to-green-400 text-white">
+                <h2 className="text-lg font-semibold">Select a patient</h2>
+              </div>
+              <div className="p-4 bg-white text-slate-800">
+                <p className="mb-4">Please select a patient first to enable chart editing.</p>
+                <div className="flex justify-end">
+                  <button
+                    ref={okButtonRef}
+                    onClick={() => setShowSelectPatientModal(false)}
+                    className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded"
+                  >
+                    OK
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
