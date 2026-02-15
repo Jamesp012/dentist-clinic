@@ -72,6 +72,10 @@ export function RealisticTooth({
   const strokeProps = getStrokeProps();
   const toothFill = getToothFill();
 
+  // Center coordinates for effect placement (middle of the tooth SVG)
+  const centerX = 50;
+  const centerY = view === 'buccal' ? 75 : 50;
+
   return (
     <div 
       className={cn(
@@ -169,20 +173,21 @@ export function RealisticTooth({
               />
             )}
 
-            {/* Broken tooth: Show jagged break line */}
+            {/* Broken tooth: Show jagged break line centered on the tooth */}
             {condition === 'broken' && view === 'buccal' && (
               <>
-                <path 
-                  d={`M20,${isUpper ? '60' : '90'} L30,${isUpper ? '55' : '85'} L40,${isUpper ? '65' : '95'} L50,${isUpper ? '58' : '88'} L60,${isUpper ? '68' : '98'} L70,${isUpper ? '62' : '92'} L80,${isUpper ? '60' : '90'}`}
+                <path
+                  d={`M${centerX - 30},${centerY - 8} L${centerX - 20},${centerY - 15} L${centerX - 10},${centerY - 5} L${centerX},${centerY - 12} L${centerX + 10},${centerY - 2} L${centerX + 20},${centerY - 8} L${centerX + 30},${centerY - 10}`}
                   stroke="#DC2626"
                   strokeWidth="2"
                   fill="none"
                 />
-                {/* Show missing part */}
-                <rect 
-                  x="20" y={isUpper ? "60" : "0"} 
-                  width="60" 
-                  height={isUpper ? "40" : "90"}
+                {/* Show missing/removed part centered below the jagged line */}
+                <rect
+                  x={String(centerX - 30)}
+                  y={String(centerY)}
+                  width="60"
+                  height="40"
                   fill="white"
                   opacity="0.8"
                 />
@@ -215,10 +220,10 @@ export function RealisticTooth({
               </>
             )}
 
-            {/* Chipped tooth: Small chip on edge */}
+            {/* Chipped tooth: Small centered chip marker */}
             {condition === 'chipped' && view === 'buccal' && (
-              <path 
-                d={`M${isUpper ? '35,10' : '35,140'} L${isUpper ? '40,5' : '40,145'} L${isUpper ? '45,10' : '45,140'} Z`}
+              <path
+                d={`M${centerX - 6},${centerY + 4} L${centerX},${centerY - 6} L${centerX + 6},${centerY + 4} Z`}
                 fill="white"
                 stroke="#D1C4B0"
                 strokeWidth="1"
