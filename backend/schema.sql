@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS appointments (
   notes TEXT CHARACTER SET utf8mb4,
   createdByRole ENUM('patient', 'staff') DEFAULT 'staff',
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (patientId) REFERENCES patients(id) ON DELETE SET NULL,
+  FOREIGN KEY (patientId) REFERENCES patients(id) ON DELETE CASCADE,
   INDEX idx_patient_date (patientId, appointmentDateTime),
   INDEX idx_status (status)
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

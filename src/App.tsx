@@ -3,6 +3,7 @@ import { DoctorDashboard } from './components/DoctorDashboard';
 import { AssistantDashboard } from './components/AssistantDashboard';
 import { PatientPortal } from './components/PatientPortal';
 import { AuthPage, User as AuthUser, SignupData } from './components/AuthPage';
+import { PasswordChangePage } from './components/PasswordChangePage';
 import { LandingPage } from './components/ui/LandingPage';
 import { Toaster, toast } from 'sonner';
 import { authAPI, setAuthToken, photoAPI, patientAPI } from './api';
@@ -473,6 +474,31 @@ export default function App() {
       toast.error('Signup failed - cannot connect to server');
     }
   };
+
+  // If user is logged in but it's their first login, they MUST change password
+  if (currentUser?.isFirstLogin) {
+    return (
+      <>
+        <PasswordChangePage user={currentUser} />
+        <Toaster 
+          position="top-center" 
+          richColors
+          toastOptions={{
+            style: {
+              background: '#ffffff',
+              color: '#0f172a',
+              border: '2px solid #14b8a6',
+              borderRadius: '12px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              padding: '16px 24px',
+              fontSize: '14px',
+              fontWeight: '500',
+            },
+          }}
+        />
+      </>
+    );
+  }
 
   // Show landing page if not logged in and landing page should be shown
   if (!currentUser && showLandingPage) {

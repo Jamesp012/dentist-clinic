@@ -2,40 +2,67 @@ const express = require('express');
 const bcryptjs = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/database');
+const { sendPatientCredentials } = require('../utils/emailService');
 
 const router = express.Router();
 
 // Register
 router.post('/register', async (req, res) => {
+  const connection = await pool.getConnection();
+  await connection.beginTransaction();
+
   try {
     const { username, password, fullName, email, role, phone, dateOfBirth, sex, address } = req.body;
 
-    // Check if user exists
-    const [existingUser] = await pool.query('SELECT id FROM users WHERE username = ?', [username]);
+    // Check if username exists
+    const [existingUser] = await connection.query('SELECT id FROM users WHERE username = ?', [username]);
     if (existingUser.length > 0) {
+      await connection.rollback();
       return res.status(400).json({ error: 'Username already exists' });
+    }
+
+    // Check if email exists (for patients)
+    if (email && role === 'patient') {
+      const [existingEmail] = await connection.query('SELECT id FROM users WHERE email = ?', [email]);
+      if (existingEmail.length > 0) {
+        await connection.rollback();
+        return res.status(400).json({ error: 'An account with this email already exists. Please log in or reset your password.' });
+      }
     }
 
     // Hash password
     const hashedPassword = await bcryptjs.hash(password, 10);
 
     // Create user
-    const [result] = await pool.query(
-      'INSERT INTO users (username, password, fullName, email, role, phone) VALUES (?, ?, ?, ?, ?, ?)',
-      [username, hashedPassword, fullName, email, role, phone]
+    const [result] = await connection.query(
+      'INSERT INTO users (username, password, fullName, email, role, phone, isFirstLogin, accessLevel) VALUES (?, ?, ?, ?, ?, ?, FALSE, ?)',
+      [username, hashedPassword, fullName, email, role, phone, 'Default Accounts']
     );
+    const userId = result.insertId;
 
     // If patient role, create patient record with has_account = true
     if (role === 'patient') {
-      await pool.query(
+      await connection.query(
         'INSERT INTO patients (user_id, name, dateOfBirth, phone, email, sex, address, has_account) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE)',
-        [result.insertId, fullName, dateOfBirth, phone, email, sex, address]
+        [userId, fullName, dateOfBirth, phone, email, sex, address]
       );
+    }
+
+    await connection.commit();
+
+    // Send welcome email (using the same credentials utility but it serves as welcome)
+    if (email && role === 'patient') {
+      // For self-registered patients, we just send a welcome note with their chosen username
+      // We don't send the password back for security, but we confirm their account is ready
+      sendPatientCredentials(email, fullName, username, '******** (the password you chose during signup)');
     }
 
     res.status(201).json({ message: 'User registered successfully' });
   } catch (error) {
+    await connection.rollback();
     res.status(500).json({ error: error.message });
+  } finally {
+    connection.release();
   }
 });
 

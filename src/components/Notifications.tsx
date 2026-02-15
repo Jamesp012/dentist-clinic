@@ -69,6 +69,11 @@ export function Notifications({ patients: _patients, appointments, referrals, an
   };
 
   const normalizeDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    // If it's an ISO string, extract the date part
+    if (dateStr.includes('T')) {
+      return dateStr.split('T')[0];
+    }
     const normalized = convertToDBDate(dateStr);
     return isValidDbDate(normalized) ? normalized : '';
   };
@@ -281,14 +286,14 @@ export function Notifications({ patients: _patients, appointments, referrals, an
         if (currentPatientId) {
           // Patient view
           if (isIncoming) {
-            message = `You have been referred by ${referral.referredBy || 'another clinic'} (${specialty || 'General'})`;
+            message = `You have been referred by ${referral.referringDentist || 'another clinic'} (${specialty || 'General'})`;
           } else {
             message = `You have been referred to ${referral.referredTo || 'the specified clinic'} (${specialty || 'General'})`;
           }
         } else {
           // Staff view
           if (isIncoming) {
-            message = `${referral.patientName} was referred by ${referral.referredBy || 'another clinic'}`;
+            message = `${referral.patientName} was referred by ${referral.referringDentist || 'another clinic'}`;
           } else {
             message = `${referral.patientName} was referred to ${referral.referredTo || 'the specified clinic'}`;
           }
@@ -335,16 +340,20 @@ export function Notifications({ patients: _patients, appointments, referrals, an
 
     // Announcement notifications
     announcements.forEach(announcement => {
-      // Show notification for announcements made within the last 14 days
-      const announcementDate = new Date(announcement.date);
-      if (isNaN(announcementDate.getTime())) return;
+      // Ensure announcement date is valid
+      if (!announcement.date) return;
+      
+      const normalizedDate = normalizeDate(String(announcement.date));
+      if (!normalizedDate) return;
+
+      const announcementDate = new Date(normalizedDate + 'T00:00:00Z');
+      announcementDate.setHours(0, 0, 0, 0);
 
       const diffInTime = today.getTime() - announcementDate.getTime();
       const diffInDays = diffInTime / (1000 * 3600 * 24);
 
-      // Show if it's within the last 14 days (including today)
-      // We use -1 to allow today's announcements even if they appear slightly in the future due to timezone
-      if (diffInDays >= -1 && diffInDays <= 14) {
+      // Show notification for announcements made within the last 180 days
+      if (diffInDays >= -7 && diffInDays <= 180) {
         const notifId = `ann-${announcement.id}`;
         const isRead = readIds.includes(notifId);
         
@@ -353,8 +362,8 @@ export function Notifications({ patients: _patients, appointments, referrals, an
           type: 'announcement',
           title: announcement.title,
           message: announcement.message,
-          date: announcement.date,
-          createdAt: announcement.date,
+          date: normalizedDate,
+          createdAt: announcement.createdAt || announcement.date || normalizedDate,
           read: isRead,
           details: announcement
         });

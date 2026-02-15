@@ -1,7 +1,6 @@
 import { motion } from 'motion/react';
 import { Stethoscope, Users, Award, Heart, MapPin, Phone, Mail, ChevronLeft, ChevronRight, User, Lock, LogIn, UserPlus, Calendar, Eye, EyeOff } from 'lucide-react';
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { PatientRecordClaiming } from '../PatientRecordClaiming';
 import { convertToDBDate, convertToDisplayDate, formatDateInput } from '../../utils/dateHelpers';
 
 export type LandingPageProps = {
@@ -14,8 +13,6 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showAuthForm, setShowAuthForm] = useState(false);
   const [isLargeScreen, setIsLargeScreen] = useState<boolean>(typeof window !== 'undefined' ? window.innerWidth >= 1024 : false);
-  const [showClaimingFlow, setShowClaimingFlow] = useState(false);
-  const [pendingSignupData, setPendingSignupData] = useState<any>(null);
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -113,160 +110,46 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
             )}
           </motion.div>
           <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-1 sm:mb-2">
-            {isLoginMode ? 'Welcome Back' : 'Create Your Account'}
+            Welcome Back
           </h2>
           <p className="text-xs sm:text-sm text-slate-600">
-            {isLoginMode ? 'Sign in to access your patient portal' : 'Create your account with Maaño Dental Care'}
+            Sign in to access your patient portal
           </p>
         </div>
 
-        {/* Toggle between Login and Signup */}
-        <div className="flex mt-5 sm:mt-6 bg-slate-100 rounded-xl p-1 sm:p-1.5 gap-1">
-          <button
-            type="button"
-            onClick={() => { setIsLoginMode(true); }}
-            className={`flex-1 py-2 sm:py-2.5 rounded-lg transition-all duration-300 font-medium text-sm sm:text-base ${
-              isLoginMode ? 'bg-white shadow-md text-teal-600' : 'text-slate-600 hover:text-slate-800'
-            }`}
-          >
-            Sign In
-          </button>
-          <button
-            type="button"
-            onClick={() => { setIsLoginMode(false); }}
-            className={`flex-1 py-2 sm:py-2.5 rounded-lg transition-all duration-300 font-medium text-sm sm:text-base ${
-              !isLoginMode ? 'bg-white shadow-md text-teal-600' : 'text-slate-600 hover:text-slate-800'
-            }`}
-          >
-            Sign Up
-          </button>
-        </div>
+        {/* Toggle between Login and Signup removed per user request */}
       </div>
 
-      {/* Form Content - Scrollable for Sign Up, centered for Sign In */}
-      <div className={`px-6 sm:px-8 py-5 sm:py-6 flex-grow ${isLoginMode ? 'overflow-hidden flex flex-col justify-center' : 'overflow-y-auto custom-scrollbar'}`} style={{ scrollbarWidth: 'thin', scrollbarColor: '#14b8a6 transparent' }}>
-        {isLoginMode ? (
-          // Login Form - No scrolling needed
-          <form onSubmit={(e) => { e.preventDefault(); onLogin?.(username, password); }} className="space-y-4 sm:space-y-5">
-            <div>
-              <label htmlFor="login-username" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Username</label>
-              <div className="relative">
-                <User className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
-                <input id="login-username" name="username" type="text" value={username} onChange={(e) => setUsername(e.target.value)} required placeholder="Enter username" className="w-full pl-10 sm:pl-11 pr-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base" />
-              </div>
+      {/* Form Content - Centered for Sign In */}
+      <div className="px-6 sm:px-8 py-5 sm:py-6 flex-grow overflow-hidden flex flex-col justify-center">
+        {/* Login Form - No scrolling needed */}
+        <form onSubmit={(e) => { e.preventDefault(); onLogin?.(username, password); }} className="space-y-4 sm:space-y-5">
+          <div>
+            <label htmlFor="login-username" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Username</label>
+            <div className="relative">
+              <User className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+              <input id="login-username" name="username" type="text" value={username} onChange={(e) => setUsername(e.target.value)} required placeholder="Enter username" className="w-full pl-10 sm:pl-11 pr-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base" />
             </div>
+          </div>
 
-            <div>
-              <label htmlFor="login-password" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Password</label>
-              <div className="relative">
-                <Lock className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
-                <input id="login-password" name="password" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Enter password" className="w-full pl-10 sm:pl-11 pr-11 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base" />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 sm:right-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">{showPassword ? <EyeOff className="w-4 sm:w-5 h-4 sm:h-5" /> : <Eye className="w-4 sm:w-5 h-4 sm:h-5" />}</button>
-              </div>
+          <div>
+            <label htmlFor="login-password" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Password</label>
+            <div className="relative">
+              <Lock className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+              <input id="login-password" name="password" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Enter password" className="w-full pl-10 sm:pl-11 pr-11 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base" />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 sm:right-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">{showPassword ? <EyeOff className="w-4 sm:w-5 h-4 sm:h-5" /> : <Eye className="w-4 sm:w-5 h-4 sm:h-5" />}</button>
             </div>
+          </div>
 
-            <button type="submit" className="w-full py-2.5 sm:py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl font-semibold mt-6 sm:mt-8 text-sm sm:text-base"><LogIn className="w-4 sm:w-5 h-4 sm:h-5" />Sign In</button>
-          </form>
-        ) : (
-          // Signup Form - (same as original) - keep existing signup markup for brevity
-          <form onSubmit={(e) => { e.preventDefault(); const first = (signupData.firstName || '').trim(); const last = (signupData.lastName || '').trim(); setPendingSignupData({ ...signupData, fullName: `${first}\n\n${last}`.trim() }); setShowClaimingFlow(true); }} className="space-y-3.5 sm:space-y-4 pb-3 sm:pb-4">
-            {/* Name Fields Row */}
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
-              <div>
-                <label htmlFor="signup-firstname" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">First Name *</label>
-                <div className="relative">
-                  <User className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
-                  <input id="signup-firstname" name="firstName" type="text" value={signupData.firstName} onChange={(e) => updateNameFields('firstName', e.target.value)} required placeholder="First name" className="w-full pl-10 sm:pl-11 pr-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base" />
-                </div>
-              </div>
-              <div>
-                <label htmlFor="signup-lastname" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Last Name *</label>
-                <div className="relative">
-                  <User className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
-                  <input id="signup-lastname" name="lastName" type="text" value={signupData.lastName} onChange={(e) => updateNameFields('lastName', e.target.value)} required placeholder="Last name" className="w-full pl-10 sm:pl-11 pr-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base" />
-                </div>
-              </div>
-            </div>
-            {/* Remaining signup fields */}
-            <div>
-              <label htmlFor="signup-email" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Email *</label>
-              <div className="relative">
-                <Mail className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
-                <input id="signup-email" name="email" type="email" value={signupData.email} onChange={(e) => setSignupData({ ...signupData, email: e.target.value })} required placeholder="you@example.com" className="w-full pl-10 sm:pl-11 pr-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base" />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="signup-phone" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Phone</label>
-              <div className="relative">
-                <Phone className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
-                <input id="signup-phone" name="phone" type="tel" value={signupData.phone} onChange={(e) => setSignupData({ ...signupData, phone: formatPhoneNumber(e.target.value) })} placeholder="09xxxxxxxxx" className="w-full pl-10 sm:pl-11 pr-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base" />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
-              <div>
-                <label htmlFor="signup-dob" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Date of Birth</label>
-                <input id="signup-dob" name="dateOfBirth" type="date" ref={birthdatePickerRef} value={signupData.dateOfBirth} onChange={(e) => setSignupData({ ...signupData, dateOfBirth: e.target.value })} className="w-full pr-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base" />
-              </div>
-              <div>
-                <label htmlFor="signup-sex" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Sex</label>
-                <select id="signup-sex" name="sex" value={signupData.sex} onChange={(e) => setSignupData({ ...signupData, sex: e.target.value as any })} className="w-full pr-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base">
-                  <option>Male</option>
-                  <option>Female</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="signup-address" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Address</label>
-              <input id="signup-address" name="address" type="text" value={signupData.address} onChange={(e) => setSignupData({ ...signupData, address: e.target.value })} placeholder="Street, City, Province" className="w-full pr-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base" />
-            </div>
-
-            <div>
-              <label htmlFor="signup-username" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Username *</label>
-              <div className="relative">
-                <User className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
-                <input id="signup-username" name="username" type="text" value={signupData.username} onChange={(e) => setSignupData({ ...signupData, username: e.target.value })} required placeholder="Choose a username" className="w-full pl-10 sm:pl-11 pr-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base" />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
-              <div>
-                <label htmlFor="signup-password" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Password *</label>
-                <div className="relative">
-                  <Lock className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
-                  <input id="signup-password" name="password" type={showPassword ? 'text' : 'password'} value={signupData.password} onChange={(e) => setSignupData({ ...signupData, password: e.target.value })} required placeholder="Create password" className="w-full pl-10 sm:pl-11 pr-11 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base" />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 sm:right-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">{showPassword ? <EyeOff className="w-4 sm:w-5 h-4 sm:h-5" /> : <Eye className="w-4 sm:w-5 h-4 sm:h-5" />}</button>
-                </div>
-              </div>
-              <div>
-                <label htmlFor="signup-confirm" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Confirm Password *</label>
-                <div className="relative">
-                  <Lock className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
-                  <input id="signup-confirm" name="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required placeholder="Confirm password" className="w-full pl-10 sm:pl-11 pr-11 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base" />
-                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 sm:right-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">{showConfirmPassword ? <EyeOff className="w-4 sm:w-5 h-4 sm:h-5" /> : <Eye className="w-4 sm:w-5 h-4 sm:h-5" />}</button>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-2">
-              <button type="submit" className="w-full py-2.5 sm:py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl font-semibold mt-2 text-sm sm:text-base">Create Account</button>
-            </div>
-          </form>
-        )}
+          <button type="submit" className="w-full py-2.5 sm:py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl font-semibold mt-6 sm:mt-8 text-sm sm:text-base"><LogIn className="w-4 sm:w-5 h-4 sm:h-5" />Sign In</button>
+        </form>
       </div>
     </div>
   ), [
     isLoginMode,
     username,
     password,
-    confirmPassword,
     showPassword,
-    showConfirmPassword,
-    signupData,
-    pendingSignupData,
-    showClaimingFlow,
     onLogin,
     onSignup
   ]);
@@ -299,94 +182,9 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
     setShowAuthForm(true);
   };
 
-  const handleClaimingComplete = (user: any) => {
-    // After claiming is complete, populate the login form with the created username
-    setUsername(user.username);
-    setPassword('');
-    
-    // Reset signup data and fields
-    setSignupData({
-      firstName: '',
-      lastName: '',
-      fullName: '',
-      email: '',
-      phone: '',
-      dateOfBirth: '',
-      address: '',
-      sex: 'Male' as 'Male' | 'Female',
-      username: '',
-      password: '',
-      role: 'patient' as const
-    });
-    setConfirmPassword('');
-    
-    // Close claiming flow and switch to login mode
-    setShowClaimingFlow(false);
-    setPendingSignupData(null);
-    setIsLoginMode(true);
-    // Ensure auth form stays visible
-    setShowAuthForm(true);
-  };
-
-  const handleClaimingCancel = () => {
-    // User selected "No, I'm new" - create the account directly
-    if (pendingSignupData) {
-      const signupDataConverted = {
-        ...pendingSignupData,
-        dateOfBirth: convertToDBDate(pendingSignupData.dateOfBirth)
-      };
-      onSignup?.(signupDataConverted);
-      
-      // Close claiming flow
-      setShowClaimingFlow(false);
-      setPendingSignupData(null);
-      
-      // Clear all fields
-      setSignupData({
-        firstName: '',
-        lastName: '',
-        fullName: '',
-        email: '',
-        phone: '',
-        dateOfBirth: '',
-        address: '',
-        sex: 'Male' as 'Male' | 'Female',
-        username: '',
-        password: '',
-        role: 'patient' as const
-      });
-      setConfirmPassword('');
-      setUsername('');
-      setPassword('');
-      
-      // Switch to login mode and keep auth form visible
-      setIsLoginMode(true);
-      setShowAuthForm(true);
-    } else {
-      // Just cancel without creating
-      setShowClaimingFlow(false);
-      setPendingSignupData(null);
-    }
-  };
 
   return (
     <div className="w-full bg-white overflow-x-hidden">
-      {/* Patient Record Claiming Modal */}
-      {showClaimingFlow && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full relative p-8"
-          >
-            <PatientRecordClaiming
-              onComplete={handleClaimingComplete}
-              onCancel={handleClaimingCancel}
-              isLoginFlow={false}
-            />
-          </motion.div>
-        </div>
-      )}
 
       {/* Header */}
       <header className="w-full bg-white shadow-md fixed top-0 left-0 right-0 z-50">

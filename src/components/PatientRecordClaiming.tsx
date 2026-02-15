@@ -27,7 +27,7 @@ type PatientClaimingProps = {
  * 6. Create account and link to existing record
  */
 export function PatientRecordClaiming({ onComplete, onCancel, isLoginFlow = false, loggedInUser }: PatientClaimingProps) {
-  const [step, setStep] = useState<ClaimingStep>(isLoginFlow ? 'search' : 'initial');
+  const [step, setStep] = useState<ClaimingStep>('search');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -265,46 +265,6 @@ export function PatientRecordClaiming({ onComplete, onCancel, isLoginFlow = fals
   return (
     <div className="w-full max-w-2xl mx-auto">
       <AnimatePresence mode="wait">
-        {/* Initial Question */}
-        {step === 'initial' && (
-          <motion.div
-            key="initial"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="space-y-6"
-          >
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-slate-800 mb-2">
-                Welcome! Let's Get Started
-              </h2>
-              <p className="text-slate-600">
-                Do you have an existing record in our clinic?
-              </p>
-            </div>
-
-            <div className="flex gap-4">
-              <button
-                onClick={() => setStep('search')}
-                className="flex-1 p-6 bg-gradient-to-br from-teal-500 to-cyan-600 text-white rounded-2xl hover:shadow-lg transition-all"
-              >
-                <CheckCircle className="w-8 h-8 mx-auto mb-2" />
-                <p className="font-semibold">Yes, I have a record</p>
-                <p className="text-sm text-white/80 mt-1">Link to existing record</p>
-              </button>
-
-              <button
-                onClick={onCancel}
-                className="flex-1 p-6 bg-white border-2 border-slate-200 text-slate-700 rounded-2xl hover:border-teal-500 hover:bg-teal-50 transition-all"
-              >
-                <User className="w-8 h-8 mx-auto mb-2" />
-                <p className="font-semibold">No, I'm new</p>
-                <p className="text-sm text-slate-500 mt-1">Create new record</p>
-              </button>
-            </div>
-          </motion.div>
-        )}
-
         {/* Search Form */}
         {step === 'search' && (
           <motion.div
@@ -315,12 +275,6 @@ export function PatientRecordClaiming({ onComplete, onCancel, isLoginFlow = fals
             className="space-y-6"
           >
             <div className="flex items-center gap-3 mb-4">
-              <button
-                onClick={() => isLoginFlow ? onCancel() : setStep('initial')}
-                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
               <div>
                 <h2 className="text-2xl font-bold text-slate-800">Find Your Record</h2>
                 <p className="text-slate-600">Enter your information as registered</p>

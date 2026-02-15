@@ -275,25 +275,25 @@ export function timeAgo(date: Date | string | null | undefined): string {
 
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) {
-    return `${minutes}m ago`;
+    return `${minutes}${minutes === 1 ? 'min' : 'mins'} ago`;
   }
 
   const hours = Math.floor(minutes / 60);
   if (hours < 24) {
-    return `${hours}h ago`;
+    return `${hours}${hours === 1 ? 'hr' : 'hrs'} ago`;
   }
 
   const days = Math.floor(hours / 24);
   if (days < 30) {
-    return `${days}d ago`;
+    return `${days}${days === 1 ? 'day' : 'days'} ago`;
   }
 
   const months = Math.floor(days / 30);
   if (months < 12) {
-    return `${months}mo ago`;
+    return `${months}${months === 1 ? 'mo' : 'mos'} ago`;
   }
 
   const years = Math.floor(months / 12);
-  return `${years}y ago`;
+  return `${years}${years === 1 ? 'yr' : 'yrs'} ago`;
 }
 

@@ -355,6 +355,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
     reason: '',
     date: new Date().toISOString().split('T')[0],
     urgency: 'routine' as 'routine' | 'urgent' | 'emergency',
+    referralFlow: 'outgoing' as 'incoming' | 'outgoing'
   });
   const toggleService = (id: string) => {
     setSelectedServices(prev => {
@@ -381,7 +382,26 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      
+      // If switching flow, set intelligent defaults
+      if (field === 'referralFlow') {
+        if (value === 'incoming') {
+          newData.referredBy = '';
+          newData.referredTo = 'Doc Maaño';
+          newData.referredByContact = '';
+          newData.referredByEmail = '';
+        } else {
+          newData.referredBy = 'Doc Maaño';
+          newData.referredTo = '';
+          newData.referredByContact = '0938-171-7695';
+          newData.referredByEmail = 'j.aguilardentalclinic@gmail.com';
+        }
+      }
+      
+      return newData;
+    });
   };
 
   const handleXrayDiagramClick = (elementId: string) => {
@@ -438,7 +458,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
         date: formData.date,
         urgency: formData.urgency,
         createdByRole: 'staff',
-        referralType: 'outgoing' // Mark as outgoing referral (created by doctor)
+        referralType: formData.referralFlow // Mark based on user selection
       };
 
       // Include X-ray diagram data if it's an X-ray referral
@@ -478,7 +498,8 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
       specialty: '',
       reason: '',
       date: new Date().toISOString().split('T')[0],
-      urgency: 'routine'
+      urgency: 'routine',
+      referralFlow: 'outgoing'
     });
     setSelectedServices({});
     setSelectedXrayItems({});
@@ -657,6 +678,33 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
             </div>
             <form className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent" onSubmit={e => { e.preventDefault(); handleCreateReferral(); }}>
               <div className="mb-6">
+                <label className="block text-sm font-bold mb-2">Referral Flow</label>
+                <div className="flex gap-4 p-1 bg-slate-100 rounded-xl w-fit">
+                  <button
+                    type="button"
+                    onClick={() => handleInputChange('referralFlow', 'outgoing')}
+                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                      formData.referralFlow === 'outgoing'
+                        ? 'bg-white text-teal-600 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    Outgoing (From Us)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleInputChange('referralFlow', 'incoming')}
+                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                      formData.referralFlow === 'incoming'
+                        ? 'bg-white text-teal-600 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    Incoming (To Us)
+                  </button>
+                </div>
+              </div>
+              <div className="mb-6">
                 <label className="block text-sm font-bold mb-2">Search Patient</label>
                 <PatientSearchInput
                   patients={patients}
@@ -678,8 +726,17 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                   <UnderlineInput label="Date Of Birth:" value={formData.dateOfBirth} onChange={v => handleInputChange('dateOfBirth', v)} disabled />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <UnderlineInput label="Referred by:" value={formData.referredBy} onChange={v => handleInputChange('referredBy', v)} />
-                  <UnderlineInput label="Referred to:" value={formData.referredTo} onChange={v => handleInputChange('referredTo', v)} />
+                  {formData.referralFlow === 'incoming' ? (
+                    <>
+                      <UnderlineInput label="Referred by Dr.:" value={formData.referredBy} onChange={v => handleInputChange('referredBy', v)} />
+                      <UnderlineInput label="Referred to:" value={formData.referredTo} onChange={v => handleInputChange('referredTo', v)} disabled />
+                    </>
+                  ) : (
+                    <>
+                      <UnderlineInput label="Referred to Clinic:" value={formData.referredTo} onChange={v => handleInputChange('referredTo', v)} />
+                      <UnderlineInput label="Referred by:" value={formData.referredBy} onChange={v => handleInputChange('referredBy', v)} disabled />
+                    </>
+                  )}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <UnderlineInput label="Contact No.:" value={formData.referredByContact} onChange={v => handleInputChange('referredByContact', v)} />
@@ -810,6 +867,35 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
             </div>
 
             <div className="p-8 max-h-[calc(100vh-100px)] overflow-y-auto space-y-4 scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent">
+              {/* Flow Selection */}
+              <div className="mb-6">
+                <label className="block text-sm font-bold mb-2 text-slate-700 uppercase tracking-tight">Referral Flow</label>
+                <div className="flex gap-4 p-1 bg-slate-100 rounded-xl w-fit">
+                  <button
+                    type="button"
+                    onClick={() => handleInputChange('referralFlow', 'outgoing')}
+                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                      formData.referralFlow === 'outgoing'
+                        ? 'bg-white text-teal-600 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    Outgoing (From Us)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleInputChange('referralFlow', 'incoming')}
+                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                      formData.referralFlow === 'incoming'
+                        ? 'bg-white text-teal-600 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    Incoming (To Us)
+                  </button>
+                </div>
+              </div>
+
               {/* REDOR Header */}
               <div className="flex justify-between items-start border-b-2 pb-4">
                 <div>
@@ -869,8 +955,17 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <UnderlineInput label="Referred by Dr.:" value={formData.referredBy} onChange={(v) => handleInputChange('referredBy', v)} />
-                  <UnderlineInput label="Referred to:" value={formData.referredTo} onChange={(v) => handleInputChange('referredTo', v)} />
+                  {formData.referralFlow === 'incoming' ? (
+                    <>
+                      <UnderlineInput label="Referred by Dr.:" value={formData.referredBy} onChange={(v) => handleInputChange('referredBy', v)} />
+                      <UnderlineInput label="Referred to:" value={formData.referredTo} onChange={(v) => handleInputChange('referredTo', v)} disabled />
+                    </>
+                  ) : (
+                    <>
+                      <UnderlineInput label="Referred to Clinic/Facility:" value={formData.referredTo} onChange={(v) => handleInputChange('referredTo', v)} />
+                      <UnderlineInput label="Referred by:" value={formData.referredBy} onChange={(v) => handleInputChange('referredBy', v)} disabled />
+                    </>
+                  )}
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
@@ -1385,7 +1480,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                                   return (
                                     <>
                                       <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Referred By</p>
-                                      <p className="text-base text-slate-900 font-bold">{referral.referredBy || referral.referringDentist || referral.referredTo}</p>
+                                      <p className="text-base text-slate-900 font-bold">{referral.referredBy || referral.referringDentist || 'External Doctor/Clinic'}</p>
                                     </>
                                   );
                                 } else if (referral.referralType === 'outgoing' || referral.createdByRole === 'staff') {
@@ -1823,8 +1918,14 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
-                        <span className="text-sm font-bold text-slate-500 uppercase tracking-wider w-24 shrink-0">Referred by:</span>
-                        <div className="text-base font-bold text-slate-900 flex-1">{selectedReferral.referringDentist}</div>
+                        <span className="text-sm font-bold text-slate-500 uppercase tracking-wider w-24 shrink-0">
+                          {selectedReferral.referralType === 'incoming' ? 'Referred by:' : 'Referred to:'}
+                        </span>
+                        <div className="text-base font-bold text-slate-900 flex-1">
+                          {selectedReferral.referralType === 'incoming' 
+                            ? selectedReferral.referringDentist 
+                            : selectedReferral.referredToClinic}
+                        </div>
                       </div>
                       <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
                         <span className="text-sm font-bold text-slate-500 uppercase tracking-wider w-24 shrink-0">Contact:</span>

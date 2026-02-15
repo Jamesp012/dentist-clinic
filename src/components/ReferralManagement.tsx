@@ -9,6 +9,7 @@ interface ReferralManagementProps {
   referrals: Referral[];
   patients: Patient[];
   currentUserName?: string;
+  setSelectedReferral?: (referral: Referral | null) => void;
 }
 
 type ReferralFilter = 'all' | 'incoming' | 'outgoing';
@@ -16,7 +17,7 @@ type ReferralFilter = 'all' | 'incoming' | 'outgoing';
 import { toast } from 'sonner';
 import { getSafeFileUrl } from '../utils/fileUtils';
 
-export function ReferralManagement({ referrals, patients, currentUserName = 'Doc Maaño' }: ReferralManagementProps) {
+export function ReferralManagement({ referrals, patients, currentUserName = 'Doc Maaño', setSelectedReferral = () => {} }: ReferralManagementProps) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [previewExpanded, setPreviewExpanded] = useState(false);
 
@@ -133,7 +134,7 @@ export function ReferralManagement({ referrals, patients, currentUserName = 'Doc
                           </p>
                           <p className="text-sm text-gray-800">
                             {isIncoming 
-                              ? (referral.referredBy || 'N/A') 
+                              ? (referral.referringDentist || referral.referredBy || 'N/A') 
                               : (referral.referredTo || 'N/A')}
                           </p>
                         </div>

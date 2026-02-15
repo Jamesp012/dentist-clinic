@@ -4,6 +4,7 @@ import { referralAPI } from '../api';
 import { generateReferralPDF } from '../utils/referralPdfGenerator';
 import { clinicLogo } from '../assets';
 import { getSafeFileUrl } from '../utils/fileUtils';
+import { timeAgo } from '../utils/dateHelpers';
 
 const clinicMap = '/clinic-map.jpg';
 import {
@@ -328,7 +329,12 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
                       <div className="flex flex-wrap gap-y-2 gap-x-6 text-sm text-slate-500">
                         <div className="flex items-center gap-1.5">
                           <UserCircle2 size={16} />
-                          <span>Referred to: <span className="text-slate-900 font-medium">{ref.referredTo}</span></span>
+                          <span>
+                            {ref.referralType === 'incoming' ? 'Referred by: ' : 'Referred to: '}
+                            <span className="text-slate-900 font-medium">
+                              {ref.referralType === 'incoming' ? (ref.referredBy || ref.referringDentist) : ref.referredTo}
+                            </span>
+                          </span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <Building2 size={16} />
@@ -336,7 +342,7 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
                         </div>
                         <div className="flex items-center gap-1.5">
                           <Calendar size={16} />
-                          <span>Sent: {formatToDD_MM_YYYY(ref.date)}</span>
+                          <span>Sent: {timeAgo(ref.createdAt || ref.date)}</span>
                         </div>
                       </div>
                       <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 flex items-start gap-2">
@@ -601,14 +607,25 @@ export const MergedFormManagement: React.FC<MergedFormsComponentProps> = ({
                           />
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm whitespace-nowrap font-semibold">Referred by:</span>
-                        <input
-                          type="text"
-                          value={selectedReferral.referringDentist}
-                          disabled
-                          className="flex-1 border-b-2 border-slate-400 bg-slate-50 px-2 py-2 text-sm font-medium cursor-not-allowed"
-                        />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm whitespace-nowrap font-semibold">Referred by:</span>
+                          <input
+                            type="text"
+                            value={selectedReferral.referringDentist || selectedReferral.referredBy || (selectedReferral.referralType === 'outgoing' ? 'Doc Maaño' : '')}
+                            disabled
+                            className="w-full border-b-2 border-slate-400 bg-slate-50 px-2 py-2 text-sm font-medium cursor-not-allowed"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm whitespace-nowrap font-semibold">Referred to:</span>
+                          <input
+                            type="text"
+                            value={selectedReferral.referredTo || (selectedReferral.referralType === 'incoming' ? 'Doc Maaño' : '')}
+                            disabled
+                            className="w-full border-b-2 border-slate-400 bg-slate-50 px-2 py-2 text-sm font-medium cursor-not-allowed"
+                          />
+                        </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="flex items-center gap-2">

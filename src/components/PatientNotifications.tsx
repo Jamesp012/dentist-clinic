@@ -3,7 +3,7 @@ import { Patient, Appointment } from '../App';
 import { Bell, X, Check, AlertCircle, Calendar, Trash2, Megaphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { notificationAPI } from '../api';
-import { formatToMonthDayYear } from '../utils/dateHelpers';
+import { formatToMonthDayYear, timeAgo } from '../utils/dateHelpers';
 import { toast } from 'sonner';
 
 type PatientNotificationItem = {
@@ -257,7 +257,7 @@ export function PatientNotifications({ patient, appointments, onNavigate }: Pati
                                   {notification.message}
                                 </p>
                                 <p className="text-xs text-gray-500 mt-2">
-                                  {formatDate(notification.createdAt)}
+                                  {timeAgo(notification.createdAt)}
                                 </p>
                               </div>
 

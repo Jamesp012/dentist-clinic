@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Patient, Appointment, TreatmentRecord, PhotoUpload, Announcement, Payment, Service } from '../App';
+import { Patient, Appointment, TreatmentRecord, PhotoUpload, Announcement, Payment, Service, Referral } from '../App';
 import { Calendar, FileText, User as UserIcon, Clock, X, Edit, Save, XCircle, Info, CheckCircle, AlertCircle, Camera, Sparkles, Heart, Smile, Shield, Megaphone, Plus, CreditCard, Settings, Check, Eye, EyeOff, Menu, LogOut, History, RotateCcw, Trash2, Upload, Download, Home } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
@@ -86,7 +86,22 @@ const getDisplayName = (fullName: string | undefined): string => {
   return `${nameParts[0]} ${nameParts[nameParts.length - 1]}`;
 };
 
-export function PatientPortal({ patient, appointments, setAppointments, treatmentRecords, onUpdatePatient, photos, setPhotos: _, announcements, referrals, payments, onLogout, onDataChanged, services = [], userRole }: PatientPortalProps) {
+export function PatientPortal({ 
+  patient, 
+  appointments, 
+  setAppointments, 
+  treatmentRecords, 
+  onUpdatePatient, 
+  photos, 
+  setPhotos: _, 
+  announcements, 
+  referrals, 
+  payments, 
+  onLogout, 
+  onDataChanged, 
+  services = [], 
+  userRole 
+}: PatientPortalProps) {
   const birthdatePickerRef = useRef<HTMLInputElement | null>(null);
   const [activeTab, setActiveTab] = useState<'home' | 'profile' | 'appointments' | 'records' | 'photos' | 'balance' | 'care-guide' | 'announcements' | 'forms'>('home');
   const [announcementSubTab, setAnnouncementSubTab] = useState<'announcements' | 'services'>('announcements');
@@ -2066,7 +2081,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                                       </div>
                                       <div className="flex-1 min-w-0">
                                         <h4 className="font-bold text-slate-900 text-base">
-                                          {referral.referralType === 'incoming' ? 'Referred by:' : 'Referred to:'} {referral.referredBy || referral.referredTo}
+                                          {referral.referralType === 'incoming' ? 'Referred by:' : 'Referred to:'} {referral.referringDentist || referral.referredTo}
                                         </h4>
                                         <p className="text-sm font-medium text-slate-500 mt-0.5">Dr. {referral.referringDentist}</p>
                                       </div>
@@ -2077,7 +2092,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                                       <div className="flex items-center gap-2">
                                         <span className="text-sm text-slate-600 font-medium">Date:</span>
                                         <span className="text-sm font-semibold text-slate-900">
-                                          {new Date(referral.createdAt || referral.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                          {timeAgo(referral.createdAt || referral.date)}
                                         </span>
                                       </div>
                                     </div>
@@ -2144,7 +2159,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                                       <div className="flex items-center gap-2">
                                         <span className="text-sm text-slate-600 font-medium">Date:</span>
                                         <span className="text-sm font-semibold text-slate-900">
-                                          {new Date(referral.createdAt || referral.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                          {timeAgo(referral.createdAt || referral.date)}
                                         </span>
                                       </div>
                                     </div>
@@ -2204,7 +2219,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                                     <div className="mt-4 pt-4 border-t border-slate-100">
                                       <div className="flex items-center gap-2">
                                         <span className="text-xs font-semibold text-slate-600 uppercase">Date</span>
-                                        <span className="text-sm text-slate-700">{new Date(referral.createdAt || referral.date).toLocaleDateString()}</span>
+                                        <span className="text-sm text-slate-700">{timeAgo(referral.createdAt || referral.date)}</span>
                                       </div>
                                     </div>
 
@@ -2292,7 +2307,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                                       <div className="flex-1 min-w-0">
                                         <p className="text-sm font-semibold text-slate-900 truncate">{file.fileName}</p>
                                         <p className="text-xs text-slate-500">
-                                          {new Date(file.uploadedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                          {timeAgo(file.uploadedDate)}
                                         </p>
                                       </div>
                                     </div>
@@ -2415,9 +2430,15 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                       </div>
                     </div>
 
-                    <div>
-                      <p className="text-sm font-semibold">Referred By</p>
-                      <p className="font-medium">By: {selectedPatientReferral.referringDentist}</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-semibold">Referred By</p>
+                        <p className="font-medium">{selectedPatientReferral.referringDentist || selectedPatientReferral.referredBy || (selectedPatientReferral.referralType === 'outgoing' ? 'Doc Maaño' : '—')}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold">Referred To</p>
+                        <p className="font-medium">{selectedPatientReferral.referredTo || (selectedPatientReferral.referralType === 'incoming' ? 'Doc Maaño' : '—')}</p>
+                      </div>
                     </div>
 
                     <div>
@@ -2993,7 +3014,7 @@ export function PatientPortal({ patient, appointments, setAppointments, treatmen
                                 <div className="flex-1">
                                   <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-teal-700 transition-colors">{ann.title}</h3>
                                   <p className="text-sm text-gray-600">
-                                    📅 {timeAgo(ann.date)} • 👤 {ann.createdBy}
+                                    📅 {timeAgo(ann.createdAt || ann.date)} • 👤 {ann.createdBy}
                                   </p>
                                 </div>
                                 <span className={`px-3 py-1 rounded-full text-xs font-bold capitalize flex-shrink-0 ${
