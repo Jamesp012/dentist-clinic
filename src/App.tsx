@@ -635,7 +635,7 @@ export default function App() {
   }
 
   // Default Accounts for doctor role → Doctor interface (fallback for backward compatibility)
-  if (currentUser.role === 'doctor') {
+  if (currentUser.role === 'doctor' || currentUser.role === 'admin') {
     return (
       <>
         <DoctorDashboard

@@ -1,9 +1,118 @@
 cdcdconst express = require('express');
 const pool = require('../config/database');
 const authMiddleware = require('../middleware/auth');
-const { normalizeInventoryPayload, toNumber } = require('../utils/inventoryUnits');
-
 const router = express.Router();
+const { normalizeInventoryPayload, toNumber, deriveQuantitiesFromBase } = require('../utils/inventoryUnits');
+
+// Get inventory history
+router.get('/history', authMiddleware, async (req, res) => {
+  try {
+    const [history] = await pool.query(
+      `SELECT h.*, i.name as item_name 
+       FROM inventory_history h 
+       JOIN inventory i ON h.inventory_id = i.id 
+       ORDER BY h.created_at DESC LIMIT 100`
+    );
+    res.json(history);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get history for a specific item
+router.get('/:id/history', authMiddleware, async (req, res) => {
+  try {
+    const [history] = await pool.query(
+      'SELECT * FROM inventory_history WHERE inventory_id = ? ORDER BY created_at DESC',
+      [req.params.id]
+    );
+    res.json(history);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Manual stock update
+router.post('/:id/update-stock', authMiddleware, async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const { amount, action, reason, unitType } = req.body; // action: 'add', 'subtract', 'set'
+    const updatedBy = req.user.username;
+
+    const [items] = await connection.query('SELECT * FROM inventory WHERE id = ?', [req.params.id]);
+    if (items.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({ error: 'Item not found' });
+    }
+
+    const item = items[0];
+    const conversionValue = item.conversion_value || 1;
+    
+    let currentBaseQty = item.total_pieces || item.base_quantity || item.quantity || 0;
+    let changeInBase = 0;
+
+    // Calculate change in base units (pieces)
+    // If unitType is 'pcs' (vials case), amount is literal pieces.
+    // Otherwise, amount is in bulk units (boxes/packs).
+    if (unitType === 'pcs' || unitType === 'piece') {
+      changeInBase = amount;
+    } else {
+      changeInBase = amount * conversionValue;
+    }
+
+    let newBaseQty = currentBaseQty;
+    if (action === 'add') {
+      newBaseQty = currentBaseQty + changeInBase;
+    } else if (action === 'subtract') {
+      newBaseQty = Math.max(0, currentBaseQty - changeInBase);
+    } else if (action === 'set') {
+      newBaseQty = changeInBase;
+    }
+
+    const actualChange = newBaseQty - currentBaseQty;
+
+    // Update inventory
+    const breakdown = deriveQuantitiesFromBase(newBaseQty, conversionValue);
+    
+    await connection.query(
+      `UPDATE inventory SET 
+        quantity = ?, 
+        main_quantity = ?, 
+        remaining_pieces = ?, 
+        total_pieces = ?, 
+        base_quantity = ? 
+      WHERE id = ?`,
+      [
+        breakdown.quantity,
+        breakdown.quantity,
+        breakdown.remaining_pieces,
+        newBaseQty,
+        newBaseQty,
+        req.params.id
+      ]
+    );
+
+    // Record history
+    await connection.query(
+      `INSERT INTO inventory_history 
+        (inventory_id, change_amount, previous_quantity, new_quantity, unit_type, action_type, reason, updated_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [req.params.id, amount, currentBaseQty, newBaseQty, unitType, action, reason, updatedBy]
+    );
+
+    await connection.commit();
+    
+    const [updated] = await connection.query('SELECT * FROM inventory WHERE id = ?', [req.params.id]);
+    res.json(updated[0]);
+  } catch (error) {
+    await connection.rollback();
+    res.status(500).json({ error: error.message });
+  } finally {
+    connection.release();
+  }
+});
 
 // Get all inventory
 router.get('/', authMiddleware, async (req, res) => {

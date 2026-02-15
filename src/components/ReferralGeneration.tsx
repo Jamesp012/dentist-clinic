@@ -458,7 +458,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
         date: formData.date,
         urgency: formData.urgency,
         createdByRole: 'staff',
-        referralType: formData.referralFlow // Mark based on user selection
+        referralType: 'outgoing'
       };
 
       // Include X-ray diagram data if it's an X-ray referral
@@ -678,33 +678,6 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
             </div>
             <form className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent" onSubmit={e => { e.preventDefault(); handleCreateReferral(); }}>
               <div className="mb-6">
-                <label className="block text-sm font-bold mb-2">Referral Flow</label>
-                <div className="flex gap-4 p-1 bg-slate-100 rounded-xl w-fit">
-                  <button
-                    type="button"
-                    onClick={() => handleInputChange('referralFlow', 'outgoing')}
-                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-                      formData.referralFlow === 'outgoing'
-                        ? 'bg-white text-teal-600 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-700'
-                    }`}
-                  >
-                    Outgoing (From Us)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleInputChange('referralFlow', 'incoming')}
-                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-                      formData.referralFlow === 'incoming'
-                        ? 'bg-white text-teal-600 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-700'
-                    }`}
-                  >
-                    Incoming (To Us)
-                  </button>
-                </div>
-              </div>
-              <div className="mb-6">
                 <label className="block text-sm font-bold mb-2">Search Patient</label>
                 <PatientSearchInput
                   patients={patients}
@@ -726,17 +699,8 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                   <UnderlineInput label="Date Of Birth:" value={formData.dateOfBirth} onChange={v => handleInputChange('dateOfBirth', v)} disabled />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  {formData.referralFlow === 'incoming' ? (
-                    <>
-                      <UnderlineInput label="Referred by Dr.:" value={formData.referredBy} onChange={v => handleInputChange('referredBy', v)} />
-                      <UnderlineInput label="Referred to:" value={formData.referredTo} onChange={v => handleInputChange('referredTo', v)} disabled />
-                    </>
-                  ) : (
-                    <>
-                      <UnderlineInput label="Referred to Clinic:" value={formData.referredTo} onChange={v => handleInputChange('referredTo', v)} />
-                      <UnderlineInput label="Referred by:" value={formData.referredBy} onChange={v => handleInputChange('referredBy', v)} disabled />
-                    </>
-                  )}
+                  <UnderlineInput label="Referred to Clinic:" value={formData.referredTo} onChange={v => handleInputChange('referredTo', v)} />
+                  <UnderlineInput label="Referred by:" value={formData.referredBy} onChange={v => handleInputChange('referredBy', v)} disabled />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <UnderlineInput label="Contact No.:" value={formData.referredByContact} onChange={v => handleInputChange('referredByContact', v)} />
@@ -867,35 +831,6 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
             </div>
 
             <div className="p-8 max-h-[calc(100vh-100px)] overflow-y-auto space-y-4 scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent">
-              {/* Flow Selection */}
-              <div className="mb-6">
-                <label className="block text-sm font-bold mb-2 text-slate-700 uppercase tracking-tight">Referral Flow</label>
-                <div className="flex gap-4 p-1 bg-slate-100 rounded-xl w-fit">
-                  <button
-                    type="button"
-                    onClick={() => handleInputChange('referralFlow', 'outgoing')}
-                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-                      formData.referralFlow === 'outgoing'
-                        ? 'bg-white text-teal-600 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-700'
-                    }`}
-                  >
-                    Outgoing (From Us)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleInputChange('referralFlow', 'incoming')}
-                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-                      formData.referralFlow === 'incoming'
-                        ? 'bg-white text-teal-600 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-700'
-                    }`}
-                  >
-                    Incoming (To Us)
-                  </button>
-                </div>
-              </div>
-
               {/* REDOR Header */}
               <div className="flex justify-between items-start border-b-2 pb-4">
                 <div>
@@ -955,17 +890,8 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  {formData.referralFlow === 'incoming' ? (
-                    <>
-                      <UnderlineInput label="Referred by Dr.:" value={formData.referredBy} onChange={(v) => handleInputChange('referredBy', v)} />
-                      <UnderlineInput label="Referred to:" value={formData.referredTo} onChange={(v) => handleInputChange('referredTo', v)} disabled />
-                    </>
-                  ) : (
-                    <>
-                      <UnderlineInput label="Referred to Clinic/Facility:" value={formData.referredTo} onChange={(v) => handleInputChange('referredTo', v)} />
-                      <UnderlineInput label="Referred by:" value={formData.referredBy} onChange={(v) => handleInputChange('referredBy', v)} disabled />
-                    </>
-                  )}
+                  <UnderlineInput label="Referred to Clinic/Facility:" value={formData.referredTo} onChange={(v) => handleInputChange('referredTo', v)} />
+                  <UnderlineInput label="Referred by:" value={formData.referredBy} onChange={(v) => handleInputChange('referredBy', v)} disabled />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
