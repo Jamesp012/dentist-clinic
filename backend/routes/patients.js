@@ -94,10 +94,12 @@ router.post('/', authMiddleware, async (req, res) => {
 
     await connection.commit();
 
-    // 4. Send email with credentials (don't await to avoid delaying response)
+    // 4. Email credentials disabled as requested
+    /*
     if (email) {
       sendPatientCredentials(email, name, username, tempPassword);
     }
+    */
 
     res.status(201).json({ 
       id: result.insertId, 

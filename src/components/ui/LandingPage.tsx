@@ -109,47 +109,151 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
               <UserPlus className="w-7 sm:w-8 h-7 sm:h-8 text-white" />
             )}
           </motion.div>
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-1 sm:mb-2">
-            Welcome Back
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-600">
-            Sign in to access your patient portal
-          </p>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-1 sm:mb-2">
+              {isLoginMode ? 'Sign In' : 'Create Account'}
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600">
+              {isLoginMode ? 'Access your account to manage your appointments' : 'Join us to start your dental care journey'}
+            </p>
+          </div>
+
+          <div className="flex bg-slate-100 p-1 rounded-xl mt-6">
+            <button
+              onClick={() => setIsLoginMode(true)}
+              className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
+                isLoginMode 
+                  ? 'bg-white text-teal-600 shadow-sm' 
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              onClick={() => setIsLoginMode(false)}
+              className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
+                !isLoginMode 
+                  ? 'bg-white text-teal-600 shadow-sm' 
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Sign Up
+            </button>
+          </div>
         </div>
 
-        {/* Toggle between Login and Signup removed per user request */}
-      </div>
-
-      {/* Form Content - Centered for Sign In */}
-      <div className="px-6 sm:px-8 py-5 sm:py-6 flex-grow overflow-hidden flex flex-col justify-center">
-        {/* Login Form - No scrolling needed */}
-        <form onSubmit={(e) => { e.preventDefault(); onLogin?.(username, password); }} className="space-y-4 sm:space-y-5">
-          <div>
-            <label htmlFor="login-username" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Username</label>
-            <div className="relative">
-              <User className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
-              <input id="login-username" name="username" type="text" value={username} onChange={(e) => setUsername(e.target.value)} required placeholder="Enter username" className="w-full pl-10 sm:pl-11 pr-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base" />
+      {/* Form Content - Centered for Sign In, Scrollable for Sign Up */}
+      <div className={`px-6 sm:px-8 py-5 sm:py-6 flex-grow overflow-hidden flex flex-col ${isLoginMode ? 'justify-center' : ''}`}>
+        {isLoginMode ? (
+          /* Login Form - No scrolling needed */
+          <form onSubmit={(e) => { e.preventDefault(); onLogin?.(username, password); }} className="space-y-4 sm:space-y-5">
+            <div>
+              <label htmlFor="login-username" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Username</label>
+              <div className="relative">
+                <User className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                <input id="login-username" name="username" type="text" value={username} onChange={(e) => setUsername(e.target.value)} required placeholder="Enter username" className="w-full pl-10 sm:pl-11 pr-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base" />
+              </div>
             </div>
-          </div>
 
-          <div>
-            <label htmlFor="login-password" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Password</label>
-            <div className="relative">
-              <Lock className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
-              <input id="login-password" name="password" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Enter password" className="w-full pl-10 sm:pl-11 pr-11 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base" />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 sm:right-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">{showPassword ? <EyeOff className="w-4 sm:w-5 h-4 sm:h-5" /> : <Eye className="w-4 sm:w-5 h-4 sm:h-5" />}</button>
+            <div>
+              <label htmlFor="login-password" className="block text-xs sm:text-sm font-semibold mb-2 text-slate-700">Password</label>
+              <div className="relative">
+                <Lock className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                <input id="login-password" name="password" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Enter password" className="w-full pl-10 sm:pl-11 pr-11 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base" />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 sm:right-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">{showPassword ? <EyeOff className="w-4 sm:w-5 h-4 sm:h-5" /> : <Eye className="w-4 sm:w-5 h-4 sm:h-5" />}</button>
+              </div>
             </div>
-          </div>
 
-          <button type="submit" className="w-full py-2.5 sm:py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl font-semibold mt-6 sm:mt-8 text-sm sm:text-base"><LogIn className="w-4 sm:w-5 h-4 sm:h-5" />Sign In</button>
-        </form>
+            <button type="submit" className="w-full py-2.5 sm:py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl font-semibold mt-6 sm:mt-8 text-sm sm:text-base"><LogIn className="w-4 sm:w-5 h-4 sm:h-5" />Sign In</button>
+          </form>
+        ) : (
+          /* Signup Form - Scrollable */
+          <div className="overflow-y-auto pr-2 -mr-2 scrollbar-light" style={{ maxHeight: '100%' }}>
+            <form onSubmit={(e) => { e.preventDefault(); onSignup?.(signupData); }} className="space-y-4 sm:space-y-5">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                  <label className="block text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 text-slate-700">First Name</label>
+                  <input type="text" value={signupData.firstName} onChange={(e) => updateNameFields('firstName', e.target.value)} required placeholder="John" className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 text-slate-700">Last Name</label>
+                  <input type="text" value={signupData.lastName} onChange={(e) => updateNameFields('lastName', e.target.value)} required placeholder="Doe" className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 text-slate-700">Email Address</label>
+                <div className="relative">
+                  <Mail className="w-3.5 sm:w-4 h-3.5 sm:h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                  <input type="email" value={signupData.email} onChange={(e) => setSignupData({ ...signupData, email: e.target.value })} required placeholder="john@example.com" className="w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 text-slate-700">Phone Number</label>
+                <div className="relative">
+                  <Phone className="w-3.5 sm:w-4 h-3.5 sm:h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                  <input type="tel" value={signupData.phone} onChange={(e) => setSignupData({ ...signupData, phone: formatPhoneNumber(e.target.value) })} required placeholder="+63 912 345 6789" className="w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                  <label className="block text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 text-slate-700">Date of Birth</label>
+                  <div className="relative group">
+                    <Calendar className="w-3.5 sm:w-4 h-3.5 sm:h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors pointer-events-none z-10" />
+                    <input ref={birthdatePickerRef} type="date" value={convertToDBDate(signupData.dateOfBirth)} onChange={(e) => setSignupData({ ...signupData, dateOfBirth: convertToDisplayDate(e.target.value) })} required className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm transition-all appearance-none cursor-pointer" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 text-slate-700">Sex</label>
+                  <select value={signupData.sex} onChange={(e) => setSignupData({ ...signupData, sex: e.target.value as 'Male' | 'Female' })} className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm cursor-pointer transition-all">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 text-slate-700">Username</label>
+                <div className="relative">
+                  <User className="w-3.5 sm:w-4 h-3.5 sm:h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                  <input type="text" value={signupData.username} onChange={(e) => setSignupData({ ...signupData, username: e.target.value })} required placeholder="Choose a username" className="w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                  <label className="block text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 text-slate-700">Password</label>
+                  <div className="relative">
+                    <Lock className="w-3.5 sm:w-4 h-3.5 sm:h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                    <input type={showPassword ? 'text' : 'password'} value={signupData.password} onChange={(e) => setSignupData({ ...signupData, password: e.target.value })} required className="w-full pl-9 sm:pl-10 pr-9 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600">{showPassword ? <EyeOff className="w-3.5 sm:w-4 h-3.5 sm:h-4" /> : <Eye className="w-3.5 sm:w-4 h-3.5 sm:h-4" />}</button>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 text-slate-700">Confirm</label>
+                  <div className="relative">
+                    <Lock className="w-3.5 sm:w-4 h-3.5 sm:h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                    <input type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="w-full pl-9 sm:pl-10 pr-9 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
+                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600">{showConfirmPassword ? <EyeOff className="w-3.5 sm:w-4 h-3.5 sm:h-4" /> : <Eye className="w-3.5 sm:w-4 h-3.5 sm:h-4" />}</button>
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" className="w-full py-3 sm:py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl font-semibold mt-4 sm:mt-6 text-sm sm:text-base"><UserPlus className="w-4 sm:w-5 h-4 sm:h-5" />Create Account</button>
+            </form>
+          </div>
+        )}
       </div>
     </div>
   ), [
     isLoginMode,
     username,
     password,
+    confirmPassword,
     showPassword,
+    showConfirmPassword,
+    signupData,
     onLogin,
     onSignup
   ]);

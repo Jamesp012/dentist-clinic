@@ -139,6 +139,13 @@ export const inventoryAPI = {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
+  updateStock: (id, data) =>
+    fetchWithAuth(`${API_BASE}/inventory/${id}/update-stock`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  getHistory: () => fetchWithAuth(`${API_BASE}/inventory/history`),
+  getItemHistory: (id) => fetchWithAuth(`${API_BASE}/inventory/${id}/history`),
   delete: (id) =>
     fetchWithAuth(`${API_BASE}/inventory/${id}`, {
       method: 'DELETE',

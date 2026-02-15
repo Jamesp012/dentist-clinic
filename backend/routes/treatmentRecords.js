@@ -107,7 +107,8 @@ router.post('/', authMiddleware, async (req, res) => {
       ]
     );
 
-    const deduction = await applyInventoryAutoDeduction(connection, {
+    /* 
+    // const deduction = await applyInventoryAutoDeduction(connection, {
       services: serviceList,
       appointmentId,
       treatmentRecordId: result.insertId,
@@ -122,6 +123,8 @@ router.post('/', authMiddleware, async (req, res) => {
         shortages: deduction.shortages,
       });
     }
+    */
+    const deduction = null;
 
     await updatePatientBalance(patientId, connection);
 
@@ -218,7 +221,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
     if (servicesChanged) {
       await restoreInventoryAutoDeduction(connection, req.params.id);
-      const deduction = await applyInventoryAutoDeduction(connection, {
+      // const deduction = await applyInventoryAutoDeduction(connection, {
         services: servicesToPersist,
         appointmentId,
         treatmentRecordId: req.params.id,
