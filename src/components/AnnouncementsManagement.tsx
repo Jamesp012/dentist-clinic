@@ -355,7 +355,7 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
                           <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-teal-700 transition-colors">{announcement.title}</h3>
                           <div className="flex flex-wrap gap-4 items-center text-sm">
                             <span className="text-gray-600 font-medium flex items-center gap-1">
-                              📅 {timeAgo(announcement.createdAt || announcement.date)}
+                              📅 {timeAgo(announcement.date)}
                             </span>
                             <span className="text-gray-600 font-medium flex items-center gap-1">
                               👤 {announcement.createdBy}

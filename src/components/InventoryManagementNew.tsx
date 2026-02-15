@@ -343,30 +343,31 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                           </span>
                         </td>
                         <td className="px-8 py-6 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex items-center justify-end gap-3">
                             <button
                               onClick={() => {
                                 setStockItem(item);
-                                setStockUnitType(item.main_unit || 'pcs');
+                                setStockUnitType(item.main_unit || item.mainUnit || 'pcs');
                               }}
-                              className="p-3 bg-cyan-50 text-cyan-600 hover:bg-cyan-600 hover:text-white rounded-2xl transition-all duration-300 shadow-sm"
-                              title="Update Stock"
+                              className="group relative p-3 bg-cyan-50 text-cyan-600 hover:bg-cyan-600 hover:text-white rounded-2xl transition-all duration-300 shadow-sm overflow-hidden"
                             >
-                              <Plus className="w-5 h-5" />
+                              <div className="absolute inset-0 bg-cyan-400/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                              <Plus className="w-5 h-5 relative z-10" />
+                              <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Update Stock</span>
                             </button>
                             <button
                               onClick={() => setEditingItem(item)}
-                              className="p-3 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-2xl transition-all duration-300 shadow-sm"
-                              title="Edit Details"
+                              className="group relative p-3 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-2xl transition-all duration-300 shadow-sm"
                             >
                               <Edit className="w-5 h-5" />
+                              <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Edit Details</span>
                             </button>
                             <button
                               onClick={() => deleteItem(item.id)}
-                              className="p-3 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-2xl transition-all duration-300 shadow-sm"
-                              title="Delete"
+                              className="group relative p-3 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-2xl transition-all duration-300 shadow-sm"
                             >
                               <Trash2 className="w-5 h-5" />
+                              <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Delete</span>
                             </button>
                           </div>
                         </td>
@@ -544,32 +545,40 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase">Select Unit</label>
+                  <label className="text-xs font-bold text-gray-500 uppercase">Select Unit to Update</label>
                   <div className="grid grid-cols-2 gap-2">
-                    {stockItem.main_unit && (
+                    {/* Main Unit (Box, Pack, etc) */}
+                    {(stockItem.main_unit || stockItem.mainUnit) && (stockItem.main_unit !== 'piece' && stockItem.mainUnit !== 'piece') && (
                       <button
                         type="button"
-                        onClick={() => setStockUnitType(stockItem.main_unit!)}
-                        className={`py-2.5 rounded-lg text-sm font-bold border-2 transition-all ${
-                          stockUnitType === stockItem.main_unit
-                            ? 'border-cyan-500 bg-cyan-50 text-cyan-700'
+                        onClick={() => setStockUnitType((stockItem.main_unit || stockItem.mainUnit)!)}
+                        className={`py-3 rounded-xl text-sm font-black border-2 transition-all flex flex-col items-center justify-center gap-1 ${
+                          stockUnitType === (stockItem.main_unit || stockItem.mainUnit)
+                            ? 'border-cyan-500 bg-cyan-50 text-cyan-700 shadow-sm'
                             : 'border-gray-100 bg-white text-gray-400 hover:border-gray-200'
                         }`}
                       >
-                        Per {stockItem.main_unit}
+                        <Package className="w-4 h-4" />
+                        <span>Per {(stockItem.main_unit || stockItem.mainUnit)}</span>
                       </button>
                     )}
-                    {(stockItem.main_unit === 'vial' || stockItem.name.toLowerCase().includes('vial') || !stockItem.main_unit) && (
+                    
+                    {/* Piece Unit (Only for vials, or if it's already a piece item) */}
+                    {((stockItem.main_unit || stockItem.mainUnit) === 'vial' || 
+                      stockItem.name.toLowerCase().includes('vial') || 
+                      !(stockItem.main_unit || stockItem.mainUnit) || 
+                      (stockItem.main_unit || stockItem.mainUnit) === 'piece') && (
                       <button
                         type="button"
                         onClick={() => setStockUnitType('pcs')}
-                        className={`py-2.5 rounded-lg text-sm font-bold border-2 transition-all ${
+                        className={`py-3 rounded-xl text-sm font-black border-2 transition-all flex flex-col items-center justify-center gap-1 ${
                           stockUnitType === 'pcs'
-                            ? 'border-cyan-500 bg-cyan-50 text-cyan-700'
+                            ? 'border-cyan-500 bg-cyan-50 text-cyan-700 shadow-sm'
                             : 'border-gray-100 bg-white text-gray-400 hover:border-gray-200'
                         }`}
                       >
-                        Per Piece
+                        <div className="w-4 h-4 flex items-center justify-center text-[10px]">1x</div>
+                        <span>Per Piece</span>
                       </button>
                     )}
                   </div>

@@ -135,7 +135,7 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
       <div className="max-w-2xl w-full bg-white rounded-xl shadow p-6">
         <div className="flex justify-between items-center mb-6 border-b pb-4">
           <h2 className="text-2xl font-bold text-slate-800">
-            {isLoginView ? 'Sign In' : 'Create Account'}
+            {isLoginView ? 'Welcome Back! Sign In' : 'Create Account / Sign Up'}
           </h2>
           <button 
             onClick={() => setIsLoginView(!isLoginView)}

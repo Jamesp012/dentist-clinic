@@ -91,8 +91,8 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // Memoize auth panel JSX so it doesn't remount every render (preserves input focus)
-  const authPanel = useMemo(() => (
+  // Render auth panel directly to avoid input focus issues with useMemo
+  const renderAuthPanel = () => (
     <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col transition-all duration-300" style={{ height: 'min(640px, calc(100vh - 120px))' }}>
       {/* Fixed Header with Tabs */}
       <div className="px-6 sm:px-8 pt-6 sm:pt-8 pb-5 sm:pb-6 border-b border-slate-200 flex-shrink-0 bg-gradient-to-b from-white to-slate-50">
@@ -110,7 +110,7 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
             )}
           </motion.div>
             <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-1 sm:mb-2">
-              {isLoginMode ? 'Sign In' : 'Create Account'}
+              {isLoginMode ? 'Welcome Back! Sign In' : 'Create Account'}
             </h2>
             <p className="text-xs sm:text-sm text-slate-600">
               {isLoginMode ? 'Access your account to manage your appointments' : 'Join us to start your dental care journey'}
@@ -246,17 +246,7 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
         )}
       </div>
     </div>
-  ), [
-    isLoginMode,
-    username,
-    password,
-    confirmPassword,
-    showPassword,
-    showConfirmPassword,
-    signupData,
-    onLogin,
-    onSignup
-  ]);
+  );
 
   // Handle scroll detection for active nav
   useEffect(() => {
@@ -468,7 +458,7 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
               className="hidden lg:block"
             >
                 {/* Slides removed; auth form only appears after Get Started is clicked */}
-                {showAuthForm && authPanel}
+                {showAuthForm && renderAuthPanel()}
             </motion.div>
           </div>
         </div>

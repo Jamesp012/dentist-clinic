@@ -49,7 +49,7 @@ export function Dashboard({ patients, appointments, inventory, treatmentRecords,
     const targetMonth = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
     const nextMonth = new Date(now.getFullYear(), now.getMonth() + monthOffset + 1, 1);
     return treatmentRecords.filter(record => {
-      const recordDate = new Date(record.createdAt || new Date());
+      const recordDate = new Date(record.date || new Date());
       return recordDate >= targetMonth && recordDate < nextMonth;
     }).reduce((sum, record) => sum + Number(record.amountPaid || 0), 0);
   };

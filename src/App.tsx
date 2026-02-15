@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { AlertCircle } from 'lucide-react';
 import { DoctorDashboard } from './components/DoctorDashboard';
 import { AssistantDashboard } from './components/AssistantDashboard';
 import { PatientPortal } from './components/PatientPortal';

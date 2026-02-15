@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Patient, Appointment, TreatmentRecord, PhotoUpload, Announcement, Payment, Service, Referral } from '../App';
 import { Calendar, FileText, User as UserIcon, Clock, X, Edit, Save, XCircle, Info, CheckCircle, AlertCircle, Camera, Sparkles, Heart, Smile, Shield, Megaphone, Plus, CreditCard, Settings, Check, Eye, EyeOff, Menu, LogOut, History, RotateCcw, Trash2, Upload, Download, Home } from 'lucide-react';
 import { toast } from 'sonner';
@@ -103,7 +103,7 @@ export function PatientPortal({
   userRole 
 }: PatientPortalProps) {
   const birthdatePickerRef = useRef<HTMLInputElement | null>(null);
-  const [activeTab, setActiveTab] = useState<'home' | 'profile' | 'appointments' | 'records' | 'photos' | 'balance' | 'care-guide' | 'announcements'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'profile' | 'appointments' | 'records' | 'photos' | 'balance' | 'care-guide' | 'announcements' | 'forms'>('home');
   const [announcementSubTab, setAnnouncementSubTab] = useState<'announcements' | 'services'>('announcements');
   const [isEditing, setIsEditing] = useState(false);
   const [editedPatient, setEditedPatient] = useState<Patient>(patient);
@@ -154,6 +154,14 @@ export function PatientPortal({
   const [newAnnType, setNewAnnType] = useState<'general'|'important'|'promo'|'closure'>('general');
   const [newAnnMessage, setNewAnnMessage] = useState('');
   const [isSubmittingAnn, setIsSubmittingAnn] = useState(false);
+  const [formsTab, setFormsTab] = useState<'doctor' | 'xray' | 'patient'>('doctor');
+  const [isLoadingForms, setIsLoadingForms] = useState(false);
+  const [showPatientReferralModal, setShowPatientReferralModal] = useState(false);
+  const [patientReferrals, setPatientReferrals] = useState<any[]>([]);
+  const [referralUploadFiles, setReferralUploadFiles] = useState<File[]>([]);
+  const [isUploadingReferral, setIsUploadingReferral] = useState(false);
+  const [referralFiles, setReferralFiles] = useState<any[]>(patient.referralFiles || []);
+  const [showReferralUploadModal, setShowReferralUploadModal] = useState(false);
 
   // Sorted announcements (most recent first)
   const sortedAnnouncements = (localAnnouncements || []).slice().sort((a, b) => {
@@ -643,7 +651,7 @@ export function PatientPortal({
             (window as any).__patientPortalWarnedMissingCosts = new Set();
           }
           const warnedSet: Set<string> = (window as any).__patientPortalWarnedMissingCosts;
-          const patientKey = String(patient && (patient.id ?? patient.patientId) ? (patient.id ?? patient.patientId) : 'unknown');
+          const patientKey = String(patient && patient.id ? patient.id : 'unknown');
           if (!warnedSet.has(patientKey)) {
             warnedSet.add(patientKey);
             console.warn('PatientPortal: found treatment records with missing cost values', badCosts.map(r => ({ id: r?.id, patientId: r?.patientId, cost: r?.cost })));
@@ -2961,7 +2969,7 @@ export function PatientPortal({
                                 <div className="flex-1">
                                   <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-teal-700 transition-colors">{ann.title}</h3>
                                   <p className="text-sm text-gray-600">
-                                    📅 {timeAgo(ann.createdAt || ann.date)} • 👤 {ann.createdBy}
+                                    📅 {timeAgo(ann.date)} • 👤 {ann.createdBy}
                                   </p>
                                 </div>
                                 <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
@@ -2972,7 +2980,7 @@ export function PatientPortal({
                                   {ann.type}
                                 </span>
                               </div>
-                              <p className="text-gray-700 mt-3 whitespace-pre-wrap leading-relaxed">{ann.content}</p>
+                              <p className="text-gray-700 mt-3 whitespace-pre-wrap leading-relaxed">{ann.message}</p>
                             </div>
                           </motion.div>
                         ))}

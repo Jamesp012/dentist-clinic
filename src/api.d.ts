@@ -160,6 +160,8 @@ export interface Payment {
   recordedBy: string;
 }
 
+export const API_BASE: string;
+export const SERVER_URL: string;
 export const setAuthToken: (token: string) => void;
 export const getAuthToken: () => string | null;
 
@@ -188,17 +190,25 @@ export const inventoryAPI: {
   getAll: () => Promise<any[]>;
   create: (data: any) => Promise<any>;
   update: (id: string | number, data: any) => Promise<any>;
+  updateStock: (id: string | number, data: any) => Promise<any>;
+  getHistory: () => Promise<any[]>;
+  getItemHistory: (id: string | number) => Promise<any[]>;
   delete: (id: string | number) => Promise<any>;
 };
 
 export const inventoryManagementAPI: {
-  getAll: () => Promise<any[]>;
-  getById: (id: string | number) => Promise<any>;
-  create: (data: any) => Promise<any>;
-  update: (id: string | number, data: any) => Promise<any>;
-  delete: (id: string | number) => Promise<any>;
+  getOverview: () => Promise<any>;
+  getAlerts: () => Promise<any>;
   getAutoReductionRules: () => Promise<any[]>;
-  getActiveRules: () => Promise<any[]>;
+  getRulesByType: (appointmentType: string) => Promise<any[]>;
+  createAutoReductionRule: (data: any) => Promise<any>;
+  updateAutoReductionRule: (id: string | number, data: any) => Promise<any>;
+  deleteAutoReductionRule: (id: string | number) => Promise<any>;
+  resetAutoReductionRules: (appointmentType: string) => Promise<any>;
+  getReductionHistory: (limit?: number, offset?: number) => Promise<any>;
+  getReductionHistoryByPatient: (patientId: string | number) => Promise<any>;
+  getReductionHistoryByAppointment: (appointmentId: string | number) => Promise<any>;
+  getReductionHistoryByItem: (itemId: string | number) => Promise<any>;
   autoReduceForAppointment: (appointmentId: string | number) => Promise<any>;
 };
 
@@ -207,6 +217,7 @@ export const referralAPI: {
   getById: (id: string | number) => Promise<any>;
   getByPatientId: (patientId: string | number) => Promise<any[]>;
   create: (data: any) => Promise<any>;
+  uploadFile: (formData: FormData) => Promise<any>;
   update: (id: string | number, data: any) => Promise<any>;
   delete: (id: string | number) => Promise<any>;
 };

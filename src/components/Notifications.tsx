@@ -363,7 +363,7 @@ export function Notifications({ patients: _patients, appointments, referrals, an
           title: announcement.title,
           message: announcement.message,
           date: normalizedDate,
-          createdAt: announcement.createdAt || announcement.date || normalizedDate,
+          createdAt: announcement.date || normalizedDate,
           read: isRead,
           details: announcement
         });
