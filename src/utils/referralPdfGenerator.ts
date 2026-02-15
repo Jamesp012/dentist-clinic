@@ -240,7 +240,7 @@ export const generateReferralPDF = (referral: Referral, patient?: Patient) => {
       doc.setFont('helvetica', 'bold');
       doc.text('Email:', 15, yPosition);
       doc.setFont('helvetica', 'normal');
-      doc.text('j.aguilardentalclinic@gmail.com', 30, yPosition);
+      doc.text('dentalclinic@maañodentalcare.com', 30, yPosition);
       yPosition += 4;
 
       doc.setFont('helvetica', 'bold');

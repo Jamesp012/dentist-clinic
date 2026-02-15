@@ -23,7 +23,7 @@ async function resetDoctor() {
       console.log(`Doctor user not found. Creating a new one...`);
       
       const fullName = 'Dr. Joseph Maaño';
-      const email = 'doctor@clinic.com';
+      const email = 'dentalclinic@maañodentalcare.com';
       const phone = '+63-9123-456-789';
       
       // Create new doctor user

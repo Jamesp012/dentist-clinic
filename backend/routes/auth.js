@@ -281,13 +281,13 @@ router.post('/reset-doctor', async (req, res) => {
     // Create new user
     const [result] = await pool.query(
       'INSERT INTO users (username,password,fullName,email,phone,role,position,isFirstLogin,accountStatus) VALUES (?,?,?,?,?,?,?,?,?)',
-      ['doctor', hash, 'Dr. Joseph Maaño', 'doctor@clinic.com', '+63-9123-456-789', 'doctor', 'dentist', false, 'active']
+      ['doctor', hash, 'Dr. Joseph Maaño', 'dentalclinic@maañodentalcare.com', '+63-9123-456-789', 'doctor', 'dentist', false, 'active']
     );
     
     // Create employee record
     await pool.query(
       'INSERT INTO employees (user_id,name,position,phone,email,address,dateHired,isCodeUsed) VALUES (?,?,?,?,?,?,?,?)',
-      [result.insertId, 'Dr. Joseph Maaño', 'dentist', '+63-9123-456-789', 'doctor@clinic.com', '123 Medical Plaza', '2020-01-15', true]
+      [result.insertId, 'Dr. Joseph Maaño', 'dentist', '+63-9123-456-789', 'dentalclinic@maañodentalcare.com', '123 Medical Plaza', '2020-01-15', true]
     );
     
     res.json({ message: 'Doctor reset successfully. Login with: doctor / doctor123' });

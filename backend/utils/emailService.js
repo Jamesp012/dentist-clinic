@@ -3,7 +3,9 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: process.env.EMAIL_HOST,
+  port: parseInt(process.env.EMAIL_PORT),
+  secure: process.env.EMAIL_SECURE === 'true',
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
@@ -30,7 +32,7 @@ const sendPatientCredentials = async (email, fullName, username, password) => {
   if (!email) return;
 
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: `"Maaño Dental Care" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: 'Welcome to Maaño Dental Care - Your Account Credentials',
     html: `

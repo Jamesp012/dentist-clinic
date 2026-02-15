@@ -221,7 +221,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
     if (servicesChanged) {
       await restoreInventoryAutoDeduction(connection, req.params.id);
-      // const deduction = await applyInventoryAutoDeduction(connection, {
+      const deduction = await applyInventoryAutoDeduction(connection, {
         services: servicesToPersist,
         appointmentId,
         treatmentRecordId: req.params.id,
