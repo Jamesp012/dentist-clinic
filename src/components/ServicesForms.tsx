@@ -880,7 +880,7 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                 <div className="p-5 bg-gradient-to-r from-cyan-50 to-blue-50 border-2 border-cyan-300/60 rounded-2xl backdrop-blur-sm shadow-sm">
                   <p className="text-base text-cyan-900 font-bold flex items-center gap-2">
                     <span className="text-2xl">📋</span>
-                    For braces, you may need to create a referral form for x-ray or if referring to another dentist.
+                    Braces treatment plan and progress recording.
                   </p>
                 </div>
               )}

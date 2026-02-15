@@ -491,12 +491,6 @@ export function AssistantDashboard({
       color: "from-teal-500 to-emerald-600",
     },
     {
-      id: "referrals",
-      label: "Referrals",
-      icon: FileText,
-      color: "from-cyan-500 to-emerald-600",
-    },
-    {
       id: "services",
       label: "Services Forms",
       icon: Stethoscope,

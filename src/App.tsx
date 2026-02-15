@@ -829,5 +829,28 @@ export default function App() {
     );
   }
 
-  return <div>Unknown role</div>;
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-4">
+      <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-200 max-w-md w-full text-center">
+        <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+          <AlertCircle className="w-10 h-10 text-red-500" />
+        </div>
+        <h2 className="text-2xl font-black text-slate-900 mb-2">Access Denied</h2>
+        <p className="text-slate-600 mb-6">Your account role or access level is not recognized by the system.</p>
+        
+        <div className="bg-slate-50 rounded-2xl p-4 mb-8 text-left space-y-2">
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Debug Info</p>
+          <p className="text-sm font-medium text-slate-700">Role: <span className="text-slate-900 font-bold">{currentUser?.role || 'None'}</span></p>
+          <p className="text-sm font-medium text-slate-700">Access Level: <span className="text-slate-900 font-bold">{currentUser?.accessLevel || 'None'}</span></p>
+        </div>
+
+        <button
+          onClick={handleLogout}
+          className="w-full py-4 bg-gradient-to-r from-cyan-600 to-teal-600 text-white rounded-2xl font-bold shadow-lg shadow-cyan-200 hover:scale-[1.02] active:scale-95 transition-all"
+        >
+          Sign Out & Try Again
+        </button>
+      </div>
+    </div>
+  );
 }

@@ -433,7 +433,6 @@ export function DoctorDashboard({
     { id: 'photos', label: 'Patient Photos', icon: Camera, color: 'from-teal-500 to-emerald-600' },
     { id: 'charting', label: 'Dental Charting', icon: ClipboardList, color: 'from-cyan-500 to-teal-500' },
     { id: 'braces', label: 'Braces Charting', icon: Sparkles, color: 'from-teal-500 to-emerald-600' },
-    { id: 'referrals', label: 'Referrals', icon: FileText, color: 'from-cyan-500 to-emerald-600' },
     { id: 'services', label: 'Services Forms', icon: Stethoscope, color: 'from-teal-600 to-cyan-600' },
     { id: 'inventory', label: 'Inventory', icon: Package, color: 'from-cyan-600 to-teal-500' },
     { id: 'financial', label: 'Financial Report', icon: PesoSign, color: 'from-emerald-500 to-teal-600' },

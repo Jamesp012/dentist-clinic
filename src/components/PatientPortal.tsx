@@ -103,7 +103,7 @@ export function PatientPortal({
   userRole 
 }: PatientPortalProps) {
   const birthdatePickerRef = useRef<HTMLInputElement | null>(null);
-  const [activeTab, setActiveTab] = useState<'home' | 'profile' | 'appointments' | 'records' | 'photos' | 'balance' | 'care-guide' | 'announcements' | 'forms'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'profile' | 'appointments' | 'records' | 'photos' | 'balance' | 'care-guide' | 'announcements'>('home');
   const [announcementSubTab, setAnnouncementSubTab] = useState<'announcements' | 'services'>('announcements');
   const [isEditing, setIsEditing] = useState(false);
   const [editedPatient, setEditedPatient] = useState<Patient>(patient);
@@ -143,20 +143,7 @@ export function PatientPortal({
   const [isBookingAppointment, setIsBookingAppointment] = useState(false);
   const [selectedSchedulePeriod, setSelectedSchedulePeriod] = useState<'am' | 'pm' | null>(null);
   
-  // Forms data state
-  const [patientReferrals, setPatientReferrals] = useState<any[]>([]);
-  const [isLoadingForms, setIsLoadingForms] = useState(false);
-  // UI: active sub-tab for Forms (doctor vs xray)
-  const [formsTab, setFormsTab] = useState<'doctor' | 'xray' | 'patient'>('doctor');
-  
-  // Referral file upload state
-  const [referralFiles, setReferralFiles] = useState<any[]>(patient.referralFiles || []);
-  const [showReferralUploadModal, setShowReferralUploadModal] = useState(false);
-  const [isUploadingReferral, setIsUploadingReferral] = useState(false);
-  const [referralUploadFiles, setReferralUploadFiles] = useState<File[]>([]);
 
-  // Patient Add Referral modal
-  const [showPatientReferralModal, setShowPatientReferralModal] = useState(false);
   // Local announcements state so we can sort and append new items locally
   const [localAnnouncements, setLocalAnnouncements] = useState<Announcement[]>(announcements || []);
   useEffect(() => { setLocalAnnouncements(announcements || []); }, [announcements]);
@@ -550,7 +537,6 @@ export function PatientPortal({
     { id: 'profile', label: 'My Profile', icon: UserIcon, color: 'from-teal-500 to-cyan-600' },
     { id: 'appointments', label: 'Appointments', icon: Calendar, color: 'from-teal-500 to-teal-600' },
     { id: 'records', label: 'Records', icon: FileText, color: 'from-cyan-500 to-cyan-600' },
-    { id: 'forms', label: 'Forms', icon: FileText, color: 'from-indigo-500 to-blue-600' },
     { id: 'photos', label: 'Photos', icon: Camera, color: 'from-teal-600 to-cyan-500' },
     { id: 'balance', label: 'Balance', icon: CreditCard, color: 'from-cyan-500 to-emerald-600' },
     { id: 'announcements', label: 'Announcements', icon: Megaphone, color: 'from-cyan-600 to-teal-500' },
@@ -826,41 +812,7 @@ export function PatientPortal({
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
-  // Load patient forms (referrals and prescriptions)
-  useEffect(() => {
-    const loadPatientForms = async () => {
-      setIsLoadingForms(true);
-      try {
-        const token = localStorage.getItem('token');
-        const headers = {
-          'Authorization': `Bearer ${token}`
-        };
 
-        // Fetch referrals for this patient
-        const refResponse = await fetch(`${API_BASE}/referrals/patient/${patient.id}`, { headers });
-        if (refResponse.ok) {
-          const refData = await refResponse.json();
-          setPatientReferrals(Array.isArray(refData) ? refData : []);
-        } else {
-          const text = await refResponse.text();
-          console.error('Failed to fetch referrals:', refResponse.status, text);
-          setPatientReferrals([]);
-        }
-
-        // Prescriptions are no longer fetched in the Patient Portal (visible only to staff portals)
-      } catch (error) {
-        console.error('Failed to load patient forms:', error);
-        setPatientReferrals([]);
-        toast.error('Unable to load forms. Please refresh or contact support.');
-      } finally {
-        setIsLoadingForms(false);
-      }
-    };
-
-    if (patient.id) {
-      loadPatientForms();
-    }
-  }, [patient.id]);
 
   const isScheduleClosed = (date: string, period: 'am' | 'pm') => {
     return closedSchedules.has(getScheduleKey(date, period));
@@ -1108,12 +1060,7 @@ export function PatientPortal({
                 <p className="text-slate-500 mt-1.5 text-sm font-medium">View your dental treatment records</p>
               </div>
             )}
-            {activeTab === 'forms' && (
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Forms</h2>
-                <p className="text-slate-500 mt-1.5 text-sm font-medium">View your referrals and X-ray referrals</p>
-              </div>
-            )}
+
 
 
             {activeTab === 'photos' && (
@@ -3015,3 +2962,73 @@ export function PatientPortal({
                                   <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-teal-700 transition-colors">{ann.title}</h3>
                                   <p className="text-sm text-gray-600">
                                     📅 {timeAgo(ann.createdAt || ann.date)} • 👤 {ann.createdBy}
+                                  </p>
+                                </div>
+                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                                  ann.type === 'important' ? 'bg-red-100 text-red-600' :
+                                  ann.type === 'promo' ? 'bg-teal-100 text-teal-600' :
+                                  'bg-blue-100 text-blue-600'
+                                }`}>
+                                  {ann.type}
+                                </span>
+                              </div>
+                              <p className="text-gray-700 mt-3 whitespace-pre-wrap leading-relaxed">{ann.content}</p>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-100">
+                        <Megaphone className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+                        <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No announcements at the moment</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Services Sub-Section */}
+                {announcementSubTab === 'services' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    {displayServices.map((service) => (
+                      <motion.div
+                        key={service.id}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:border-cyan-200 transition-all duration-300 group"
+                      >
+                        <div className="flex items-start gap-4">
+                          <div className="w-12 h-12 rounded-2xl bg-cyan-50 flex items-center justify-center text-cyan-600 group-hover:bg-cyan-600 group-hover:text-white transition-all duration-300">
+                            <Sparkles className="w-6 h-6" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex justify-between items-start mb-2">
+                              <h4 className="font-black text-gray-900 uppercase tracking-tight leading-tight">{service.serviceName}</h4>
+                              <span className="text-[10px] font-black text-cyan-600 bg-cyan-50 px-2 py-1 rounded-lg uppercase">{service.duration}</span>
+                            </div>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">{service.category}</p>
+                            <div className="flex flex-wrap gap-2">
+                              {service.description.map((desc, idx) => (
+                                <span key={idx} className="px-2 py-1 bg-gray-50 text-gray-600 text-[10px] font-medium rounded-md">
+                                  {desc}
+                                </span>
+                              ))}
+                            </div>
+                            <div className="mt-4 pt-4 border-t border-gray-50 flex justify-between items-center">
+                              <span className="text-xs font-bold text-gray-400 italic">Starting at</span>
+                              <span className="text-lg font-black text-teal-600">{service.price || 'Price may vary'}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </div>
+  </div>
+  );
+}
