@@ -117,11 +117,11 @@ export function ToothDetailsSidebar({
             className="absolute right-0 top-0 bottom-0 w-[900px] max-w-[90vw] bg-white z-50 shadow-2xl flex overflow-hidden border-l border-slate-200"
           >
             {/* Left Strip: Tooth Navigation & Visuals */}
-            <div className="w-48 bg-slate-900 flex flex-col items-center py-6 text-slate-400 relative overflow-hidden shrink-0">
+            <div className="w-48 bg-white flex flex-col items-center py-6 text-slate-700 relative overflow-hidden shrink-0">
                {/* Background Ruler Lines */}
-               <div className="absolute inset-0 flex flex-col gap-8 opacity-10 pointer-events-none">
+              <div className="absolute inset-0 flex flex-col gap-8 opacity-10 pointer-events-none">
                   {Array.from({ length: 20 }).map((_, i) => (
-                    <div key={i} className="w-full h-px bg-white" />
+                  <div key={i} className="w-full h-px bg-slate-100" />
                   ))}
                </div>
 
@@ -134,7 +134,7 @@ export function ToothDetailsSidebar({
                       onClick={() => onSelectTooth(id)}
                       className={cn(
                         "w-full py-2 px-4 flex items-center gap-4 cursor-pointer hover:text-white transition-colors",
-                        id === selectedTooth ? "text-white bg-slate-800 border-l-4 border-red-500" : "opacity-50"
+                        id === selectedTooth ? "text-white bg-sky-700 border-l-4 border-sky-500" : "text-slate-600"
                       )}
                     >
                        <span className={cn(
@@ -144,7 +144,7 @@ export function ToothDetailsSidebar({
                          {getFDINumber(id)}
                        </span>
                        {/* Show mini text or Universal ID too? */}
-                       <span className="text-[10px] opacity-50 ml-auto">{id}</span>
+                       <span className="text-[10px] text-slate-400 ml-auto">{id}</span>
                     </div>
                   ))}
                </div>
@@ -190,7 +190,7 @@ export function ToothDetailsSidebar({
             </div>
 
             {/* Main Content Area */}
-            <div className="flex-1 flex flex-col bg-slate-50">
+            <div className="flex-1 flex flex-col bg-white">
                {/* Header Section with Back Button */}
                <div className="bg-white p-8 border-b border-slate-200">
                   <div className="flex items-center justify-between mb-4">

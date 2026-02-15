@@ -145,8 +145,10 @@ const INITIAL_LAYOUT: ToothLayout[] = [
 
 export function DentalChartWebsite() {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const historyRef = useRef<HTMLDivElement | null>(null);
   const [layout, setLayout] = useState<ToothLayout[]>(INITIAL_LAYOUT);
   const [hovered, setHovered] = useState(false);
+  const [legendHeight, setLegendHeight] = useState<number | null>(null);
 
   // Tooth data and sidebar state
   const [teeth, setTeeth] = useState<Record<number, ToothData>>(() => createInitialTeethData());
@@ -247,6 +249,66 @@ export function DentalChartWebsite() {
     const entry = Object.entries(PRIMARY_LABELS).find(([, label]) => label === iconId);
     return entry ? Number(entry[0]) : null;
   };
+
+  // Keep legend height synced to the chart container size
+  useEffect(() => {
+    // Prefer measuring the dashboard sidebar up to the sign-out area; fallback to history or container
+    const sidebarEl = document.getElementById('app-sidebar');
+    const historyEl = historyRef.current;
+    const containerEl = containerRef.current;
+
+    const computeHeight = () => {
+      try {
+        if (sidebarEl) {
+          const signoutEl = document.getElementById('sidebar-signout');
+          const sbRect = sidebarEl.getBoundingClientRect();
+          if (signoutEl) {
+            const soRect = signoutEl.getBoundingClientRect();
+            const h = Math.max(0, Math.round(soRect.top - sbRect.top));
+            setLegendHeight(h);
+            return;
+          }
+          setLegendHeight(Math.round(sbRect.height));
+          return;
+        }
+
+        if (historyEl) {
+          setLegendHeight(Math.round(historyEl.getBoundingClientRect().height));
+          return;
+        }
+
+        if (containerEl) {
+          setLegendHeight(Math.round(containerEl.getBoundingClientRect().height));
+          return;
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+
+    computeHeight();
+
+    let ro: ResizeObserver | null = null;
+    try {
+      if ((window as any).ResizeObserver) {
+        ro = new (window as any).ResizeObserver(() => computeHeight());
+        if (sidebarEl) ro.observe(sidebarEl);
+        if (historyEl) ro.observe(historyEl);
+        if (containerEl) ro.observe(containerEl);
+        const signoutEl = document.getElementById('sidebar-signout');
+        if (signoutEl && ro) ro.observe(signoutEl);
+      } else {
+        window.addEventListener('resize', computeHeight);
+      }
+    } catch (e) {
+      window.addEventListener('resize', computeHeight);
+    }
+
+    return () => {
+      if (ro) ro.disconnect();
+      else window.removeEventListener('resize', computeHeight);
+    };
+  }, [historyRef, containerRef, layout]);
 
   const handleToothClick = (toothId: number | null) => {
     if (!toothId) return;
@@ -684,8 +746,30 @@ export function DentalChartWebsite() {
     );
   };
 
+  // Legend items to display on the left of the chart
+  const LEGEND_ITEMS: { key: string; label: string }[] = [
+    { key: 'caries', label: 'Caries' },
+    { key: 'cavity', label: 'Cavity' },
+    { key: 'decay', label: 'Decay' },
+    { key: 'abscess', label: 'Abscess' },
+    { key: 'non_vital', label: 'Non-vital' },
+    { key: 'broken', label: 'Broken' },
+    { key: 'loose', label: 'Loose' },
+    { key: 'cracked', label: 'Cracked' },
+    { key: 'chipped', label: 'Chipped' },
+    { key: 'retained_root', label: 'Retained root' },
+    { key: 'impacted', label: 'Impacted' },
+    { key: 'erosion', label: 'Erosion' },
+    { key: 'discolored', label: 'Discolored' },
+    { key: 'stained', label: 'Stained' },
+    { key: 'needs_filling', label: 'Needs filling' },
+    { key: 'needs_root_canal', label: 'Needs root canal' },
+    { key: 'needs_extraction', label: 'Needs extraction' },
+    { key: 'missing', label: 'Missing' },
+  ];
+
   return (
-    <div className="flex flex-col h-full bg-transparent font-sans">
+    <div className="flex flex-col h-full bg-white font-sans">
       <style>{`
         .floatLooseAnim { animation: floatLoose 2.6s ease-in-out infinite; }
         @keyframes floatLoose {
@@ -693,9 +777,26 @@ export function DentalChartWebsite() {
           50% { transform: translateY(-20%); }
           100% { transform: translateY(-8%); }
         }
+
+        /* Dental chart action buttons themed to #13b5a7 */
+        .dental-save-btn {
+          background: #13b5a7;
+          color: #ffffff;
+          border: 1px solid rgba(0,0,0,0.04);
+          transition: background .15s ease, transform .08s ease;
+        }
+        .dental-save-btn:hover { background: #119a8f; }
+
+        .dental-new-btn {
+          background: #ffffff;
+          color: #13b5a7;
+          border: 1px solid #13b5a7;
+          transition: background .12s ease, color .12s ease;
+        }
+        .dental-new-btn:hover { background: rgba(19,181,167,0.06); }
       `}</style>
       {/* Header: patient selector + actions */}
-      <div className="p-3 flex items-center gap-3 border-b bg-slate-50">
+      <div className="p-3 flex items-center gap-3 border-b bg-white">
         <div className="flex items-center gap-2">
           <label className="text-sm text-slate-700 font-medium">Patient</label>
           <div className="relative">
@@ -741,27 +842,43 @@ export function DentalChartWebsite() {
         <div className="ml-auto flex items-center gap-3">
           <button
             onClick={saveChartSnapshot}
-            className="px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 shadow-sm"
+            className="px-3 py-2 rounded-md dental-save-btn shadow-sm"
           >
             Save Chart
           </button>
           <button
             onClick={handleNewChart}
-            className="px-3 py-2 bg-white text-indigo-700 border border-indigo-200 rounded-md hover:bg-indigo-50"
+            className="px-3 py-2 rounded-md dental-new-btn"
           >
             New Chart
           </button>
         </div>
       </div>
 
-      <div className="flex-1 flex items-start gap-3 p-2">
+      <div className="flex-1 flex items-start gap-3 p-2 bg-white h-full">
+        {/* Legend column */}
+        <div className="w-44 pr-3 flex flex-col gap-3" style={{ height: legendHeight ? `${legendHeight}px` : 'auto' }}>
+          <div className="text-sm font-semibold mb-1 text-slate-700">Legend</div>
+          <div className="flex-1 overflow-auto pr-1">
+            <div className="grid grid-cols-2 gap-2">
+              {LEGEND_ITEMS.map((it) => (
+                <div key={it.key} className="flex items-center gap-2">
+                  <div className="relative w-8 h-8 flex-shrink-0">
+                    <img src="/all-teeth/1.png" alt="tooth" className="w-full h-full object-contain select-none pointer-events-none" draggable={false} />
+                    {renderConditionOverlays('1', it.key)}
+                  </div>
+                  <div className="text-xs text-slate-700">{it.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Chart area */}
         <div className="flex-1 flex flex-col items-center justify-center p-2 gap-3">
           <div
             ref={containerRef}
-            className={`relative inline-block overflow-hidden transition-shadow duration-150 ${
-              hovered ? 'shadow-[0_0_0_2px_rgba(59,130,246,0.8)]' : 'shadow-[0_0_0_1px_rgba(148,163,184,0.6)]'
-            }`}
+            className="relative inline-block overflow-hidden"
             onMouseLeave={() => setHovered(false)}
             onMouseEnter={() => setHovered(true)}
             onClick={handleContainerClick}
@@ -887,7 +1004,7 @@ export function DentalChartWebsite() {
         </div>
 
         {/* History side panel */}
-        <div className="w-80 border-l pl-4">
+        <div ref={historyRef} className="w-80 pl-4 bg-white h-full">
           <h3 className="text-sm font-semibold mb-3 text-slate-700">Chart History</h3>
           {selectedPatientObj ? (
             <div className="space-y-2">

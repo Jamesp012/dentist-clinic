@@ -445,6 +445,7 @@ export function DoctorDashboard({
       <motion.div 
         initial={{ x: -100, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
+        id="app-sidebar"
         className={`${sidebarOpen ? 'w-72' : 'w-20'} bg-[#e2fcfb] text-gray-800 transition-all duration-300 flex flex-col shadow-2xl relative overflow-hidden scrollbar-light`}
       >
         {/* Decorative gradient overlay */}
@@ -537,7 +538,7 @@ export function DoctorDashboard({
         </nav>
 
         {/* User Info and Logout */}
-        <div className="p-4 border-t border-teal-300 relative z-10">
+        <div id="sidebar-signout" className="p-4 border-t border-teal-300 relative z-10">
           {sidebarOpen ? (
             <button
               onClick={onLogout}
@@ -559,7 +560,7 @@ export function DoctorDashboard({
       </motion.div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto flex flex-col bg-gradient-to-br from-slate-50 via-slate-25 to-[#C4FFF9]/20 scrollbar-thin scrollbar-thumb-teal-500 scrollbar-track-slate-100 hover:scrollbar-thumb-teal-600">
+      <div className={`flex-1 overflow-auto flex flex-col ${activeTab === 'charting' ? 'bg-white' : 'bg-gradient-to-br from-slate-50 via-slate-25 to-[#C4FFF9]/20'} scrollbar-thin scrollbar-thumb-teal-500 scrollbar-track-slate-100 hover:scrollbar-thumb-teal-600`}>
         {/* Header with Notifications - Premium Design */}
         <motion.div 
           initial={{ y: -20, opacity: 0 }}
