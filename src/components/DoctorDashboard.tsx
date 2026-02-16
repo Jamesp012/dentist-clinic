@@ -12,6 +12,7 @@ import { ReferralGeneration } from './ReferralGeneration';
 import { ServicesForms } from './ServicesForms';
 import { FinancialReport } from './FinancialReport';
 import { AnnouncementsManagement } from './AnnouncementsManagement';
+import ServicesManagement from './ServicesManagement';
 import { Notifications } from './Notifications';
 import { EmployeeManagement } from './EmployeeManagement';
 import { motion, AnimatePresence } from 'motion/react';
@@ -433,10 +434,12 @@ export function DoctorDashboard({
     { id: 'photos', label: 'Patient Photos', icon: Camera, color: 'from-teal-500 to-emerald-600' },
     { id: 'charting', label: 'Dental Charting', icon: ClipboardList, color: 'from-cyan-500 to-teal-500' },
     { id: 'braces', label: 'Braces Charting', icon: Sparkles, color: 'from-teal-500 to-emerald-600' },
+    { id: 'referrals', label: 'Referrals', icon: FileText, color: 'from-cyan-600 to-teal-500' },
     { id: 'services', label: 'Services Forms', icon: Stethoscope, color: 'from-teal-600 to-cyan-600' },
     { id: 'inventory', label: 'Inventory', icon: Package, color: 'from-cyan-600 to-teal-500' },
     { id: 'financial', label: 'Financial Report', icon: PesoSign, color: 'from-emerald-500 to-teal-600' },
     { id: 'announcements', label: 'Announcements', icon: Megaphone, color: 'from-cyan-600 to-teal-500' },
+    { id: 'services-offered', label: 'Services Offered', icon: Sparkles, color: 'from-cyan-600 to-teal-500' },
   ];
 
   return (
@@ -622,6 +625,12 @@ export function DoctorDashboard({
               <div>
                 <h2 className="text-xl font-bold text-slate-900 font-poppins">Services Forms</h2>
                 <p className="text-sm text-slate-500">Manage clinic services and treatments</p>
+              </div>
+            )}
+            {activeTab === 'services-offered' && (
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Services Offered</h2>
+                <p className="text-sm text-slate-500">Browse available services and pricing</p>
               </div>
             )}
             {activeTab === 'inventory' && (
@@ -959,6 +968,12 @@ export function DoctorDashboard({
                   prefilledAppointment={prefilledAppointmentData || undefined}
                   onServiceCreated={() => setPrefilledAppointmentData(null)}
                   onDataChanged={onDataChanged}
+                />
+              )}
+              {activeTab === 'services-offered' && (
+                <ServicesManagement
+                  services={services}
+                  setServices={setServices}
                 />
               )}
               {activeTab === 'financial' && (

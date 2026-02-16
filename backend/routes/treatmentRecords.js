@@ -221,6 +221,10 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
     if (servicesChanged) {
       await restoreInventoryAutoDeduction(connection, req.params.id);
+      /*
+      // Inventory auto-deduction is disabled for now. If re-enabled,
+      // restore the call to `applyInventoryAutoDeduction` and remove
+      // the `deduction = null` fallback below.
       const deduction = await applyInventoryAutoDeduction(connection, {
         services: servicesToPersist,
         appointmentId,
@@ -235,6 +239,10 @@ router.put('/:id', authMiddleware, async (req, res) => {
       }
 
       deductionSummary = deduction;
+      */
+
+      // Keep a safe fallback while inventory deduction is disabled
+      const deduction = null;
     } else if ((existingRecord.appointmentId ?? null) !== (appointmentId ?? null)) {
       await connection.query('UPDATE inventory_reduction_history SET appointmentId = ? WHERE treatmentRecordId = ?', [appointmentId, req.params.id]);
     }

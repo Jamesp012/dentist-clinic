@@ -103,7 +103,7 @@ export function PatientPortal({
   userRole 
 }: PatientPortalProps) {
   const birthdatePickerRef = useRef<HTMLInputElement | null>(null);
-  const [activeTab, setActiveTab] = useState<'home' | 'profile' | 'appointments' | 'records' | 'photos' | 'balance' | 'care-guide' | 'announcements' | 'forms'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'profile' | 'appointments' | 'records' | 'photos' | 'balance' | 'care-guide' | 'announcements' | 'services-offered' | 'forms'>('home');
   const [announcementSubTab, setAnnouncementSubTab] = useState<'announcements' | 'services'>('announcements');
   const [isEditing, setIsEditing] = useState(false);
   const [editedPatient, setEditedPatient] = useState<Patient>(patient);
@@ -548,6 +548,7 @@ export function PatientPortal({
     { id: 'photos', label: 'Photos', icon: Camera, color: 'from-teal-600 to-cyan-500' },
     { id: 'balance', label: 'Balance', icon: CreditCard, color: 'from-cyan-500 to-emerald-600' },
     { id: 'announcements', label: 'Announcements', icon: Megaphone, color: 'from-cyan-600 to-teal-500' },
+    { id: 'services-offered', label: 'Services Offered', icon: Sparkles, color: 'from-cyan-600 to-teal-500' },
     { id: 'care-guide', label: 'Care Guide', icon: Sparkles, color: 'from-teal-500 to-emerald-600' },
   ] as const;
 
@@ -598,12 +599,12 @@ export function PatientPortal({
 
   // Default services
   const defaultServices = [
-    { id: 'service_1', serviceName: 'ORAL EXAMINATION / CHECK-UP', category: 'Consultation', description: ['Dental consultation', 'Oral examination', 'Diagnosis', 'Treatment planning'], duration: '30 mins', price: 'Price may vary' },
-    { id: 'service_2', serviceName: 'ORAL PROPHYLAXIS', category: 'Cleaning', description: ['Dental cleaning', 'Scaling', 'Polishing', 'Stain removal'], duration: '45 mins', price: 'Price may vary' },
-    { id: 'service_3', serviceName: 'RESTORATION (PERMANENT / TEMPORARY)', category: 'Restorative', description: ['Temporary filling', 'Permanent filling', 'Tooth repair', 'Dental bonding'], duration: '60 mins', price: 'Price may vary' },
-    { id: 'service_4', serviceName: 'TOOTH EXTRACTION', category: 'Extraction', description: ['Simple tooth extraction', 'Surgical extraction', 'Impacted tooth removal'], duration: '45-90 mins', price: 'Price may vary' },
-    { id: 'service_5', serviceName: 'ORTHODONTIC TREATMENT', category: 'Orthodontics', description: ['Braces installation', 'Braces adjustment', 'Retainers', 'Orthodontic consultation'], duration: 'Varies', price: 'Price may vary' },
-    { id: 'service_6', serviceName: 'PROSTHODONTICS', category: 'Prosthetics', description: ['Complete dentures', 'Partial dentures'], duration: 'Multiple sessions', price: 'Price may vary' }
+    { id: 'service_1', serviceName: 'ORAL EXAMINATION / CHECK-UP', category: 'Consultation', description: ['Dental consultation', 'Oral examination', 'Diagnosis', 'Treatment planning'], price: '₱0–₱500' },
+    { id: 'service_2', serviceName: 'ORAL PROPHYLAXIS', category: 'Cleaning', description: ['Dental cleaning', 'Scaling', 'Polishing', 'Stain removal'], price: '₱1,000' },
+    { id: 'service_3', serviceName: 'RESTORATION (PERMANENT / TEMPORARY)', category: 'Restorative', description: ['Temporary filling', 'Permanent filling', 'Tooth repair', 'Dental bonding'], price: '₱1,000' },
+    { id: 'service_4', serviceName: 'TOOTH EXTRACTION', category: 'Extraction', description: ['Simple tooth extraction', 'Surgical extraction', 'Impacted tooth removal'], price: '₱1,000' },
+    { id: 'service_5', serviceName: 'ORTHODONTIC TREATMENT', category: 'Orthodontics', description: ['Braces installation', 'Braces adjustment', 'Retainers', 'Orthodontic consultation'], price: '₱5,000 downpayment and\n₱1,000 monthly' },
+    { id: 'service_6', serviceName: 'PROSTHODONTICS', category: 'Prosthetics', description: ['Complete dentures', 'Partial dentures'], price: '₱5,000' }
   ] as Service[];
 
   const serviceOverrides = services || [];
@@ -1095,6 +1096,12 @@ export function PatientPortal({
                 <p className="text-slate-500 mt-1.5 text-sm font-medium">Latest clinic announcements and updates</p>
               </div>
             )}
+            {activeTab === 'services-offered' && (
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Services Offered</h2>
+                <p className="text-slate-500 mt-1.5 text-sm font-medium">Browse available services and pricing</p>
+              </div>
+            )}
           </div>
           <div className="relative z-10 ml-auto">
             <Notifications
@@ -1562,9 +1569,9 @@ export function PatientPortal({
             {activeTab === 'appointments' && (
               <div className="p-6 space-y-4 flex-1">
                 {/* Book New Appointment Form */}
-                <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200 shadow-lg">
-                  <h2 className="text-xl mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-2">
-                    <Plus className="w-6 h-6 text-blue-600" />
+                <div className="p-6 rounded-xl border-2 shadow-lg appointment-card">
+                  <h2 className="text-xl mb-4 appointment-title flex items-center gap-2">
+                    <Plus className="w-6 h-6 appointment-icon" />
                     Book New Appointment
                   </h2>
                   <div className="space-y-4">
@@ -1578,7 +1585,7 @@ export function PatientPortal({
                           setAppointmentDate(e.target.value);
                           setSelectedSchedulePeriod(null);
                         }}
-                        className="w-full px-3 py-2 border border-purple-300 rounded-lg"
+                        className="w-full px-3 py-2 rounded-lg appointment-field"
                         min={new Date().toISOString().split('T')[0]}
                       />
                     </div>
@@ -1600,6 +1607,7 @@ export function PatientPortal({
                           >
                             <p className="font-semibold text-gray-900">Morning</p>
                             <p className="text-xs text-gray-600 mb-2">8:00 AM - 12:00 PM</p>
+                            <p className="text-xs text-gray-600 mb-1">there's</p>
                             <p className="text-lg font-bold text-emerald-600">{getBookingCountForPeriod(appointmentDate, 'am')}</p>
                             <p className="text-xs text-gray-600">in queue</p>
                             {isScheduleClosed(appointmentDate, 'am') && (
@@ -1619,6 +1627,7 @@ export function PatientPortal({
                           >
                             <p className="font-semibold text-gray-900">Afternoon</p>
                             <p className="text-xs text-gray-600 mb-2">12:30 PM - 8:00 PM</p>
+                            <p className="text-xs text-gray-600 mb-1">there's</p>
                             <p className="text-lg font-bold text-orange-600">{getBookingCountForPeriod(appointmentDate, 'pm')}</p>
                             <p className="text-xs text-gray-600">in queue</p>
                             {isScheduleClosed(appointmentDate, 'pm') && (
@@ -1674,7 +1683,7 @@ export function PatientPortal({
                         value={appointmentNotes}
                         onChange={(e) => setAppointmentNotes(e.target.value)}
                         placeholder="Any special requests..."
-                        className="w-full px-3 py-2 border border-purple-300 rounded-lg"
+                        className="w-full px-3 py-2 rounded-lg appointment-field"
                         rows={3}
                       />
                     </div>
@@ -1683,7 +1692,7 @@ export function PatientPortal({
                   <button
                     onClick={handleBookAppointment}
                     disabled={isBookingAppointment || !selectedSchedulePeriod}
-                    className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 font-medium mt-4"
+                    className="w-full px-4 py-3 appointment-cta disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium mt-4"
                   >
                     <Calendar className="w-5 h-5" />
                     {isBookingAppointment ? 'Booking...' : 'Join Queue'}
@@ -1696,17 +1705,17 @@ export function PatientPortal({
 
                 {upcomingAppointments.length > 0 && (
                   <div>
-                    <h2 className="text-xl mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    <h2 className="text-xl mb-4 appointment-title">
                       Upcoming Appointments
                     </h2>
                     <div className="space-y-3">
                       {upcomingAppointments.map(apt => {
                         const { queueNumber, period, queueList } = getQueueInfo(apt);
                         const isCompleted = apt.status === 'completed';
-                        return (
+                          return (
                           <motion.div 
                             key={apt.id} 
-                            className={`p-4 border-2 border-blue-200 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 transition-opacity ${isCompleted ? 'opacity-30' : ''}`}
+                            className={`p-4 border-2 rounded-lg appointment-upcoming-card transition-opacity ${isCompleted ? 'opacity-30' : ''}`}
                             initial={{ opacity: 1 }}
                             animate={{ opacity: isCompleted ? 0.3 : 1 }}
                             transition={{ duration: 0.5 }}
@@ -1717,17 +1726,13 @@ export function PatientPortal({
                                 <div className="flex items-center gap-2 text-sm text-gray-600">
                                   <Calendar className="w-4 h-4" />
                                   <span>{formatToWordedDate(getDateString(apt.date))}</span>
-                                  <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded font-semibold text-xs">
+                                  <span className="ml-2 px-2 py-1 appointment-badge rounded font-semibold text-xs">
                                     You are in a queue…
                                   </span>
                                 </div>
                               </div>
                               <motion.span 
-                                className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                                  isCompleted 
-                                    ? 'bg-gray-200 text-gray-600' 
-                                    : 'bg-green-100 text-green-700'
-                                }`}
+                                className={`px-3 py-1 rounded-full text-sm font-semibold ${isCompleted ? 'appointment-status--completed' : 'appointment-status--active'}`}
                                 animate={{ scale: isCompleted ? 0.95 : 1 }}
                               >
                                 {apt.status}
@@ -1736,7 +1741,7 @@ export function PatientPortal({
 
                             {/* Queue List */}
                             {queueList.length > 0 && (
-                              <div className="mt-3 p-3 bg-white bg-opacity-50 rounded border border-blue-100">
+                              <div className="mt-3 p-3 bg-white bg-opacity-50 rounded border" style={{borderColor: 'rgb(154, 245, 228)'}}>
                                 <p className="text-xs font-semibold text-gray-600 mb-2">Queue Order ({period}):</p>
                                 <div className="flex flex-wrap gap-2">
                                   {queueList.map((queueApt, idx) => (
@@ -1744,10 +1749,10 @@ export function PatientPortal({
                                       key={queueApt.id}
                                       className={`group relative px-3 py-1 rounded text-sm font-semibold transition-all ${
                                         queueApt.id === apt.id
-                                          ? 'bg-blue-500 text-white'
+                                          ? 'appointment-current'
                                           : queueApt.status === 'completed'
                                           ? 'bg-gray-200 text-gray-500 line-through opacity-40'
-                                          : 'bg-gray-100 text-gray-700'
+                                          : 'appointment-queue-item'
                                       }`}
                                     >
                                       {queueApt.id === apt.id ? (
@@ -2532,15 +2537,9 @@ export function PatientPortal({
                         <p className="text-sm text-slate-500">As of {formatToDD_MM_YYYY(new Date())}</p>
                       </div>
                       <div className="flex-shrink-0">
-                        <div className={`w-20 h-20 rounded-2xl flex items-center justify-center transition-all duration-300 ${
-                          hasOutstandingBalance 
-                            ? 'bg-gradient-to-br from-red-100 to-red-50 group-hover:from-red-200 group-hover:to-red-100' 
-                            : 'bg-gradient-to-br from-emerald-100 to-emerald-50 group-hover:from-emerald-200 group-hover:to-emerald-100'
-                        }`}>
-                          <CreditCard className={`w-10 h-10 transition-transform duration-300 group-hover:scale-110 ${
-                            hasOutstandingBalance ? 'text-red-600' : 'text-emerald-600'
-                          }`} />
-                        </div>
+                            <div className="w-20 h-20 rounded-2xl flex items-center justify-center transition-all duration-300" style={{backgroundColor: 'rgb(16, 172, 170)'}}>
+                              <CreditCard className="w-10 h-10 text-white transition-transform duration-300 group-hover:scale-110" />
+                            </div>
                       </div>
                     </div>
 
@@ -2608,7 +2607,7 @@ export function PatientPortal({
                   className="space-y-4"
                 >
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{backgroundColor: 'rgb(16, 172, 170)'}}>
                       <History className="w-5 h-5 text-white" />
                     </div>
                     <h3 className="text-xl font-bold text-slate-900">Recent Payments</h3>
@@ -2658,7 +2657,7 @@ export function PatientPortal({
                   className="space-y-4"
                 >
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{backgroundColor: 'rgb(16, 172, 170)'}}>
                       <FileText className="w-5 h-5 text-white" />
                     </div>
                     <h3 className="text-xl font-bold text-slate-900">Treatment Charges</h3>
@@ -2921,116 +2920,101 @@ export function PatientPortal({
 
             {/* Announcements Tab */}
             {activeTab === 'announcements' && (
-              <div className="p-6 space-y-6" >
-                {/* Sub-Tab Navigation */}
-                <div className="flex gap-4 border-b-2 border-gray-200/50">
-                  <button
-                    onClick={() => setAnnouncementSubTab('announcements')}
-                    className={`px-6 py-3 font-semibold transition-all duration-300 border-b-2 -mb-0.5 ${
-                      announcementSubTab === 'announcements'
-                        ? 'text-teal-700 border-teal-600 bg-gradient-to-r from-teal-50 to-cyan-50/30 rounded-t-xl'
-                        : 'text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300'
-                    }`}
-                  >
-                    📢 Announcements
-                  </button>
-                  <button
-                    onClick={() => setAnnouncementSubTab('services')}
-                    className={`px-6 py-3 font-semibold transition-all duration-300 border-b-2 -mb-0.5 ${
-                      announcementSubTab === 'services'
-                        ? 'text-cyan-700 border-cyan-600 bg-gradient-to-r from-cyan-50/30 to-teal-50 rounded-t-xl'
-                        : 'text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300'
-                    }`}
-                  >
-                    🦷 Services Offered
-                  </button>
-                </div>
-
-                {/* Announcements Sub-Section */}
-                {announcementSubTab === 'announcements' && (
-                  <div>
-                    {sortedAnnouncements && sortedAnnouncements.length > 0 ? (
-                      <div className="space-y-3">
-                        {sortedAnnouncements.map(ann => (
-                          <motion.div
-                            key={ann.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="bg-white rounded-xl border border-cyan-200/60 shadow-md hover:shadow-lg transition-all overflow-hidden group"
-                          >
-                            <div className={`h-1.5 bg-gradient-to-r ${
-                              ann.type === 'important' ? 'from-red-500 to-orange-500' :
-                              ann.type === 'promo' ? 'from-teal-500 to-cyan-500' :
-                              ann.type === 'closure' ? 'from-orange-500 to-red-500' :
-                              'from-blue-500 to-cyan-500'
-                            }`} />
-                            <div className="p-6">
-                              <div className="flex justify-between items-start mb-3">
-                                <div className="flex-1">
-                                  <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-teal-700 transition-colors">{ann.title}</h3>
-                                  <p className="text-sm text-gray-600">
-                                    📅 {timeAgo(ann.date)} • 👤 {ann.createdBy}
-                                  </p>
-                                </div>
-                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                                  ann.type === 'important' ? 'bg-red-100 text-red-600' :
-                                  ann.type === 'promo' ? 'bg-teal-100 text-teal-600' :
-                                  'bg-blue-100 text-blue-600'
-                                }`}>
-                                  {ann.type}
-                                </span>
+              <div className="p-6 space-y-6">
+                <div>
+                  {sortedAnnouncements && sortedAnnouncements.length > 0 ? (
+                    <div className="space-y-3">
+                      {sortedAnnouncements.map(ann => (
+                        <motion.div
+                          key={ann.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="bg-white rounded-xl border border-cyan-200/60 shadow-md hover:shadow-lg transition-all overflow-hidden group"
+                        >
+                          <div className={`h-1.5`} style={{
+                            backgroundImage: ann.type === 'important'
+                              ? 'linear-gradient(to right, #005461, #003a47)'
+                              : ann.type === 'promo'
+                                ? 'linear-gradient(to right, #6AECE1, #52d4d1)'
+                                : ann.type === 'closure'
+                                  ? 'linear-gradient(to right, #A7E399, #94d975)'
+                                  : 'linear-gradient(to right, #3BC1A8, #2aaa95)'
+                          }} />
+                          <div className="p-6">
+                            <div className="flex justify-between items-start mb-3">
+                              <div className="flex-1">
+                                <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-teal-700 transition-colors">{ann.title}</h3>
+                                <p className="text-sm text-gray-600">
+                                  📅 {timeAgo(ann.date)} • 👤 {ann.createdBy}
+                                </p>
                               </div>
-                              <p className="text-gray-700 mt-3 whitespace-pre-wrap leading-relaxed">{ann.message}</p>
+                              <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest" style={{
+                                backgroundColor: ann.type === 'important' ? '#E8F0F2' :
+                                                 ann.type === 'promo' ? '#E0FCFA' :
+                                                 ann.type === 'closure' ? '#F0F7E0' :
+                                                 '#E6F5F1',
+                                color: ann.type === 'important' ? '#005461' :
+                                       ann.type === 'promo' ? '#6AECE1' :
+                                       ann.type === 'closure' ? '#A7E399' :
+                                       '#3BC1A8'
+                              }}>
+                                {ann.type}
+                              </span>
                             </div>
-                          </motion.div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-100">
-                        <Megaphone className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-                        <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No announcements at the moment</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Services Sub-Section */}
-                {announcementSubTab === 'services' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    {displayServices.map((service) => (
-                      <motion.div
-                        key={service.id}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:border-cyan-200 transition-all duration-300 group"
-                      >
-                        <div className="flex items-start gap-4">
-                          <div className="w-12 h-12 rounded-2xl bg-cyan-50 flex items-center justify-center text-cyan-600 group-hover:bg-cyan-600 group-hover:text-white transition-all duration-300">
-                            <Sparkles className="w-6 h-6" />
+                            <p className="text-gray-700 mt-3 whitespace-pre-wrap leading-relaxed">{ann.message}</p>
                           </div>
-                          <div className="flex-1">
-                            <div className="flex justify-between items-start mb-2">
-                              <h4 className="font-black text-gray-900 uppercase tracking-tight leading-tight">{service.serviceName}</h4>
-                              <span className="text-[10px] font-black text-cyan-600 bg-cyan-50 px-2 py-1 rounded-lg uppercase">{service.duration}</span>
-                            </div>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">{service.category}</p>
-                            <div className="flex flex-wrap gap-2">
-                              {service.description.map((desc, idx) => (
-                                <span key={idx} className="px-2 py-1 bg-gray-50 text-gray-600 text-[10px] font-medium rounded-md">
-                                  {desc}
-                                </span>
-                              ))}
-                            </div>
-                            <div className="mt-4 pt-4 border-t border-gray-50 flex justify-between items-center">
-                              <span className="text-xs font-bold text-gray-400 italic">Starting at</span>
-                              <span className="text-lg font-black text-teal-600">{service.price || 'Price may vary'}</span>
-                            </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-100">
+                      <Megaphone className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+                      <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No announcements at the moment</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Services Offered (separate page) */}
+            {activeTab === 'services-offered' && (
+              <div className="m-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                {displayServices.map((service) => (
+                  <motion.div
+                    key={service.id}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:border-cyan-200 transition-all duration-300 group"
+                  >
+                    <div className="flex items-start gap-4">
+                      
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="font-black text-gray-900 uppercase tracking-tight leading-tight">{service.serviceName}</h4>
+                        </div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">{service.category}</p>
+                        <div className="flex flex-wrap gap-2">
+                          {service.description.map((desc, idx) => (
+                            <span key={idx} className="px-2 py-1 bg-gray-50 text-gray-600 text-[10px] font-medium rounded-md">
+                              {desc}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-gray-50">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-gray-500">Price starts at</span>
+                            <span className="text-lg font-black text-teal-600 whitespace-pre-line">{service.price || 'Price may vary'}</span>
+                          </div>
+                          <div className="mt-3">
+                            <p className="text-xs text-emerald-800 font-semibold bg-emerald-100 rounded-lg p-3 border border-emerald-300">💡 Pricing varies depending on the complexity of your case</p>
                           </div>
                         </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+                </div>
               </div>
             )}
           </motion.div>

@@ -146,6 +146,7 @@ const INITIAL_LAYOUT: ToothLayout[] = [
 export function DentalChartWebsite() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const historyRef = useRef<HTMLDivElement | null>(null);
+  const legendRef = useRef<HTMLDivElement | null>(null);
   const [layout, setLayout] = useState<ToothLayout[]>(INITIAL_LAYOUT);
   const [hovered, setHovered] = useState(false);
   const [legendHeight, setLegendHeight] = useState<number | null>(null);
@@ -252,13 +253,25 @@ export function DentalChartWebsite() {
 
   // Keep legend height synced to the chart container size
   useEffect(() => {
-    // Prefer measuring the dashboard sidebar up to the sign-out area; fallback to history or container
+    // Prefer measuring the legend element to extend it to the bottom of the visible viewport.
+    // Fallback to measuring the dashboard sidebar up to the sign-out area, then history or container.
+    const legendEl = legendRef.current;
     const sidebarEl = document.getElementById('app-sidebar');
     const historyEl = historyRef.current;
     const containerEl = containerRef.current;
 
     const computeHeight = () => {
       try {
+        // If the legend element exists, size it to reach the bottom of the viewport
+        if (legendEl) {
+          const lgRect = legendEl.getBoundingClientRect();
+          const viewportHeight = window.innerHeight;
+          // subtract a small margin so the bottom isn't flush against the viewport edge
+          const h = Math.max(0, Math.round(viewportHeight - lgRect.top - 8));
+          setLegendHeight(h);
+          return;
+        }
+
         if (sidebarEl) {
           const signoutEl = document.getElementById('sidebar-signout');
           const sbRect = sidebarEl.getBoundingClientRect();
@@ -292,6 +305,7 @@ export function DentalChartWebsite() {
     try {
       if ((window as any).ResizeObserver) {
         ro = new (window as any).ResizeObserver(() => computeHeight());
+        if (legendEl) ro.observe(legendEl);
         if (sidebarEl) ro.observe(sidebarEl);
         if (historyEl) ro.observe(historyEl);
         if (containerEl) ro.observe(containerEl);
@@ -857,17 +871,17 @@ export function DentalChartWebsite() {
 
       <div className="flex-1 flex items-start gap-3 p-2 bg-white h-full">
         {/* Legend column */}
-        <div className="w-44 pr-3 flex flex-col gap-3" style={{ height: legendHeight ? `${legendHeight}px` : 'auto' }}>
-          <div className="text-sm font-semibold mb-1 text-slate-700">Legend</div>
-          <div className="flex-1 overflow-auto pr-1">
-            <div className="grid grid-cols-2 gap-2">
+        <div ref={legendRef} className="w-64 pr-4 flex flex-col gap-4" style={{ height: legendHeight ? `${legendHeight}px` : 'auto' }}>
+          <div className="text-base font-semibold mb-2 text-slate-700">Legend</div>
+          <div className="flex-1 overflow-auto pr-2">
+            <div className="grid grid-cols-2 gap-3">
               {LEGEND_ITEMS.map((it) => (
-                <div key={it.key} className="flex items-center gap-2">
-                  <div className="relative w-8 h-8 flex-shrink-0">
+                <div key={it.key} className="flex items-center gap-3">
+                  <div className="relative w-10 h-10 flex-shrink-0">
                     <img src="/all-teeth/1.png" alt="tooth" className="w-full h-full object-contain select-none pointer-events-none" draggable={false} />
                     {renderConditionOverlays('1', it.key)}
                   </div>
-                  <div className="text-xs text-slate-700">{it.label}</div>
+                  <div className="text-sm text-slate-700">{it.label}</div>
                 </div>
               ))}
             </div>

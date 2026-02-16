@@ -31,6 +31,7 @@ import { ReferralGeneration } from "./ReferralGeneration";
 import { ServicesForms } from "./ServicesForms";
 import { FinancialReport } from "./FinancialReport";
 import { AnnouncementsManagement } from "./AnnouncementsManagement";
+import ServicesManagement from './ServicesManagement';
 import { Notifications } from "./Notifications";
 import { motion, AnimatePresence } from "motion/react";
 import { formatToDD_MM_YYYY } from "../utils/dateHelpers";
@@ -508,6 +509,12 @@ export function AssistantDashboard({
       icon: Megaphone,
       color: "from-cyan-600 to-teal-500",
     },
+    {
+      id: "services-offered",
+      label: "Services Offered",
+      icon: Sparkles,
+      color: "from-cyan-600 to-teal-500",
+    },
   ];
 
   return (
@@ -717,6 +724,12 @@ export function AssistantDashboard({
               <div>
                 <h2 className="text-xl font-bold text-slate-900 font-poppins">Services Forms</h2>
                 <p className="text-sm text-slate-500">Manage clinic services and treatments</p>
+              </div>
+            )}
+            {activeTab === 'services-offered' && (
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Services Offered</h2>
+                <p className="text-sm text-slate-500">Browse available services and pricing</p>
               </div>
             )}
             {activeTab === 'financial' && (
@@ -1041,6 +1054,12 @@ export function AssistantDashboard({
                   prefilledAppointment={prefilledAppointmentData || undefined}
                   onServiceCreated={() => setPrefilledAppointmentData(null)}
                   onDataChanged={onDataChanged}
+                />
+              )}
+              {activeTab === 'services-offered' && (
+                <ServicesManagement
+                  services={services}
+                  setServices={setServices}
                 />
               )}
               {activeTab === "financial" && (

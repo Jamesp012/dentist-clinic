@@ -16,6 +16,7 @@ import {
   Star
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { toast } from 'sonner';
 import { PatientSearch } from './PatientSearch';
 import { formatToDD_MM_YYYY } from '../utils/dateHelpers';
 import { DndProvider } from "react-dnd";
@@ -443,44 +444,98 @@ export function BracesCharting({ patients }: BracesChartingProps) {
           inputClassName="pl-9 pr-8 py-1.5 text-sm mt-2 mb-4"
         />
 
-        {/* When no patient selected, show a blurred preview of the main UI */}
+        {/* When no patient selected, show the braces chart and palette but disable interactions */}
         {!selectedPatient && (
           <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-stretch mt-4">
-            <div className="flex-1 bg-white p-8 rounded-xl shadow-xl border border-cyan-100 filter blur-sm opacity-60 pointer-events-none select-none">
+            <div className="flex-1 bg-white p-8 rounded-xl shadow-xl border border-cyan-100">
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex bg-cyan-50 p-1.5 rounded-2xl">
-                    <button className="flex items-center gap-2.5 px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-400">
+                    <button
+                      onClick={() => toast.error('Please select a patient first')}
+                      className="flex items-center gap-2.5 px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-400"
+                    >
                       SELECT ALL
                     </button>
-                    <button className="flex items-center gap-2.5 px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-400">
+                    <button
+                      onClick={() => toast.error('Please select a patient first')}
+                      className="flex items-center gap-2.5 px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-400"
+                    >
                       PRECISION
                     </button>
                   </div>
                 </div>
 
                 <div className="flex gap-3 mt-4">
-                  <div className="flex items-center gap-2 px-4 py-2 border-2 border-red-200 rounded-lg text-red-400 text-xs font-bold">REMOVE BRACKET</div>
-                  <div className="flex items-center gap-2 px-4 py-2 border-2 border-cyan-200 rounded-lg text-cyan-400 text-xs font-bold">ADD BRACKET</div>
+                  <button
+                    onClick={() => toast.error('Please select a patient first')}
+                    className="flex items-center gap-2 px-4 py-2 border-2 border-red-200 rounded-lg text-red-400 text-xs font-bold"
+                  >
+                    REMOVE BRACKET
+                  </button>
+                  <button
+                    onClick={() => toast.error('Please select a patient first')}
+                    className="flex items-center gap-2 px-4 py-2 border-2 border-cyan-200 rounded-lg text-cyan-400 text-xs font-bold"
+                  >
+                    ADD BRACKET
+                  </button>
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl border border-gray-200 p-8 mb-6 shadow-xl h-64" />
+              <div className="bg-white rounded-2xl border border-gray-200 p-8 mb-6 shadow-xl">
+                <div className="h-full">
+                  <DentalChart
+                    colors={previewColors}
+                    selectedIndices={selectedIndices}
+                    onToothClick={(idx: number) => toast.error('Please select a patient first')}
+                    selectionMode={selectionMode}
+                    upperPositions={upperPositions}
+                    lowerPositions={lowerPositions}
+                    draggable={false}
+                    bracketVisibility={bracketVisibility}
+                  />
+                </div>
+              </div>
 
-              <div className="w-full py-2 px-4 rounded-md font-semibold text-sm transition-all shadow-md bg-gray-100 text-gray-400 text-center">SAVE</div>
-
+              <button
+                onClick={() => toast.error('Please select a patient first')}
+                className={`w-full py-2 px-4 rounded-md font-semibold text-sm transition-all shadow-md bg-gray-100 text-gray-400 text-center`}
+              >
+                SAVE
+              </button>
             </div>
 
-            <div className="lg:w-96 bg-white rounded-xl shadow-lg border border-cyan-100 backdrop-blur-sm bg-opacity-90 flex flex-col filter blur-sm opacity-60 pointer-events-none select-none">
+            <div className="lg:w-96 bg-white rounded-xl shadow-lg border border-cyan-100 backdrop-blur-sm bg-opacity-90 flex flex-col">
               <div className="flex p-3 bg-cyan-50/30 border-b border-cyan-100 rounded-t-xl">
                 <div className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-xs text-slate-400">PALETTE</div>
                 <div className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-xs text-slate-400">HISTORY</div>
               </div>
-              <div className="flex-1 min-h-0 overflow-y-auto p-8">
-                <div className="space-y-6">
-                  <div className="p-5 bg-white border border-cyan-50 rounded-3xl h-32" />
-                  <div className="p-5 bg-white border border-cyan-50 rounded-3xl h-32" />
-                </div>
+              <div className="flex-1 min-h-0 overflow-y-auto">
+                <AnimatePresence mode="wait">
+                  {activeTab === "palette" ? (
+                    <ColorPalette
+                      key="palette"
+                      colors={COLORS}
+                      selectedColor={selectedColor}
+                      onColorSelect={() => toast.error('Please select a patient first')}
+                      showSpecs={false}
+                    />
+                  ) : (
+                    <ColorHistory
+                      key="history"
+                      history={(getPatientBracesData().colorHistory || []).map(entry => ({
+                        color: { name: entry.colorName || 'Chart Snapshot', value: entry.colorValue || '#E5E7EB' },
+                        timestamp: new Date(entry.date).toLocaleString('en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          month: 'short',
+                          day: 'numeric'
+                        })
+                      }))}
+                      onSelectItem={() => toast.error('Please select a patient first')}
+                    />
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </div>
