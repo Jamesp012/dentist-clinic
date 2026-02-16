@@ -103,7 +103,7 @@ export function PatientPortal({
   userRole 
 }: PatientPortalProps) {
   const birthdatePickerRef = useRef<HTMLInputElement | null>(null);
-  const [activeTab, setActiveTab] = useState<'home' | 'profile' | 'appointments' | 'records' | 'photos' | 'balance' | 'care-guide' | 'announcements' | 'forms'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'profile' | 'appointments' | 'records' | 'photos' | 'balance' | 'care-guide' | 'announcements' | 'services-offered' | 'forms'>('home');
   const [announcementSubTab, setAnnouncementSubTab] = useState<'announcements' | 'services'>('announcements');
   const [isEditing, setIsEditing] = useState(false);
   const [editedPatient, setEditedPatient] = useState<Patient>(patient);
@@ -548,6 +548,7 @@ export function PatientPortal({
     { id: 'photos', label: 'Photos', icon: Camera, color: 'from-teal-600 to-cyan-500' },
     { id: 'balance', label: 'Balance', icon: CreditCard, color: 'from-cyan-500 to-emerald-600' },
     { id: 'announcements', label: 'Announcements', icon: Megaphone, color: 'from-cyan-600 to-teal-500' },
+    { id: 'services-offered', label: 'Services Offered', icon: Sparkles, color: 'from-cyan-600 to-teal-500' },
     { id: 'care-guide', label: 'Care Guide', icon: Sparkles, color: 'from-teal-500 to-emerald-600' },
   ] as const;
 
@@ -598,12 +599,12 @@ export function PatientPortal({
 
   // Default services
   const defaultServices = [
-    { id: 'service_1', serviceName: 'ORAL EXAMINATION / CHECK-UP', category: 'Consultation', description: ['Dental consultation', 'Oral examination', 'Diagnosis', 'Treatment planning'], duration: '30 mins', price: 'Price may vary' },
-    { id: 'service_2', serviceName: 'ORAL PROPHYLAXIS', category: 'Cleaning', description: ['Dental cleaning', 'Scaling', 'Polishing', 'Stain removal'], duration: '45 mins', price: 'Price may vary' },
-    { id: 'service_3', serviceName: 'RESTORATION (PERMANENT / TEMPORARY)', category: 'Restorative', description: ['Temporary filling', 'Permanent filling', 'Tooth repair', 'Dental bonding'], duration: '60 mins', price: 'Price may vary' },
-    { id: 'service_4', serviceName: 'TOOTH EXTRACTION', category: 'Extraction', description: ['Simple tooth extraction', 'Surgical extraction', 'Impacted tooth removal'], duration: '45-90 mins', price: 'Price may vary' },
-    { id: 'service_5', serviceName: 'ORTHODONTIC TREATMENT', category: 'Orthodontics', description: ['Braces installation', 'Braces adjustment', 'Retainers', 'Orthodontic consultation'], duration: 'Varies', price: 'Price may vary' },
-    { id: 'service_6', serviceName: 'PROSTHODONTICS', category: 'Prosthetics', description: ['Complete dentures', 'Partial dentures'], duration: 'Multiple sessions', price: 'Price may vary' }
+    { id: 'service_1', serviceName: 'ORAL EXAMINATION / CHECK-UP', category: 'Consultation', description: ['Dental consultation', 'Oral examination', 'Diagnosis', 'Treatment planning'], price: '₱0–₱500' },
+    { id: 'service_2', serviceName: 'ORAL PROPHYLAXIS', category: 'Cleaning', description: ['Dental cleaning', 'Scaling', 'Polishing', 'Stain removal'], price: '₱1,000' },
+    { id: 'service_3', serviceName: 'RESTORATION (PERMANENT / TEMPORARY)', category: 'Restorative', description: ['Temporary filling', 'Permanent filling', 'Tooth repair', 'Dental bonding'], price: '₱1,000' },
+    { id: 'service_4', serviceName: 'TOOTH EXTRACTION', category: 'Extraction', description: ['Simple tooth extraction', 'Surgical extraction', 'Impacted tooth removal'], price: '₱1,000' },
+    { id: 'service_5', serviceName: 'ORTHODONTIC TREATMENT', category: 'Orthodontics', description: ['Braces installation', 'Braces adjustment', 'Retainers', 'Orthodontic consultation'], price: '₱5,000 downpayment and\n₱1,000 monthly' },
+    { id: 'service_6', serviceName: 'PROSTHODONTICS', category: 'Prosthetics', description: ['Complete dentures', 'Partial dentures'], price: '₱5,000' }
   ] as Service[];
 
   const serviceOverrides = services || [];
@@ -2913,124 +2914,101 @@ export function PatientPortal({
 
             {/* Announcements Tab */}
             {activeTab === 'announcements' && (
-              <div className="p-6 space-y-6" >
-                {/* Sub-Tab Navigation */}
-                <div className="flex gap-4 border-b-2 border-gray-200/50">
-                  <button
-                    onClick={() => setAnnouncementSubTab('announcements')}
-                    className={`px-6 py-3 font-semibold transition-all duration-300 border-b-2 -mb-0.5 ${
-                      announcementSubTab === 'announcements'
-                        ? 'text-teal-700 border-teal-600 bg-gradient-to-r from-teal-50 to-cyan-50/30 rounded-t-xl'
-                        : 'text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300'
-                    }`}
-                  >
-                    📢 Announcements
-                  </button>
-                  <button
-                    onClick={() => setAnnouncementSubTab('services')}
-                    className={`px-6 py-3 font-semibold transition-all duration-300 border-b-2 -mb-0.5 ${
-                      announcementSubTab === 'services'
-                        ? 'text-cyan-700 border-cyan-600 bg-gradient-to-r from-cyan-50/30 to-teal-50 rounded-t-xl'
-                        : 'text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300'
-                    }`}
-                  >
-                    🦷 Services Offered
-                  </button>
-                </div>
-
-                {/* Announcements Sub-Section */}
-                {announcementSubTab === 'announcements' && (
-                  <div>
-                    {sortedAnnouncements && sortedAnnouncements.length > 0 ? (
-                      <div className="space-y-3">
-                        {sortedAnnouncements.map(ann => (
-                          <motion.div
-                            key={ann.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="bg-white rounded-xl border border-cyan-200/60 shadow-md hover:shadow-lg transition-all overflow-hidden group"
-                          >
-                            <div className={`h-1.5`} style={{
-                              backgroundImage: ann.type === 'important'
-                                ? 'linear-gradient(to right, #005461, #003a47)'
-                                : ann.type === 'promo'
-                                  ? 'linear-gradient(to right, #6AECE1, #52d4d1)'
-                                  : ann.type === 'closure'
-                                    ? 'linear-gradient(to right, #A7E399, #94d975)'
-                                    : 'linear-gradient(to right, #3BC1A8, #2aaa95)'
-                            }} />
-                            <div className="p-6">
-                              <div className="flex justify-between items-start mb-3">
-                                <div className="flex-1">
-                                  <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-teal-700 transition-colors">{ann.title}</h3>
-                                  <p className="text-sm text-gray-600">
-                                    📅 {timeAgo(ann.date)} • 👤 {ann.createdBy}
-                                  </p>
-                                </div>
-                                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest" style={{
-                                  backgroundColor: ann.type === 'important' ? '#E8F0F2' :
-                                                   ann.type === 'promo' ? '#E0FCFA' :
-                                                   ann.type === 'closure' ? '#F0F7E0' :
-                                                   '#E6F5F1',
-                                  color: ann.type === 'important' ? '#005461' :
-                                         ann.type === 'promo' ? '#6AECE1' :
-                                         ann.type === 'closure' ? '#A7E399' :
-                                         '#3BC1A8'
-                                }}>
-                                  {ann.type}
-                                </span>
+              <div className="p-6 space-y-6">
+                <div>
+                  {sortedAnnouncements && sortedAnnouncements.length > 0 ? (
+                    <div className="space-y-3">
+                      {sortedAnnouncements.map(ann => (
+                        <motion.div
+                          key={ann.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="bg-white rounded-xl border border-cyan-200/60 shadow-md hover:shadow-lg transition-all overflow-hidden group"
+                        >
+                          <div className={`h-1.5`} style={{
+                            backgroundImage: ann.type === 'important'
+                              ? 'linear-gradient(to right, #005461, #003a47)'
+                              : ann.type === 'promo'
+                                ? 'linear-gradient(to right, #6AECE1, #52d4d1)'
+                                : ann.type === 'closure'
+                                  ? 'linear-gradient(to right, #A7E399, #94d975)'
+                                  : 'linear-gradient(to right, #3BC1A8, #2aaa95)'
+                          }} />
+                          <div className="p-6">
+                            <div className="flex justify-between items-start mb-3">
+                              <div className="flex-1">
+                                <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-teal-700 transition-colors">{ann.title}</h3>
+                                <p className="text-sm text-gray-600">
+                                  📅 {timeAgo(ann.date)} • 👤 {ann.createdBy}
+                                </p>
                               </div>
-                              <p className="text-gray-700 mt-3 whitespace-pre-wrap leading-relaxed">{ann.message}</p>
+                              <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest" style={{
+                                backgroundColor: ann.type === 'important' ? '#E8F0F2' :
+                                                 ann.type === 'promo' ? '#E0FCFA' :
+                                                 ann.type === 'closure' ? '#F0F7E0' :
+                                                 '#E6F5F1',
+                                color: ann.type === 'important' ? '#005461' :
+                                       ann.type === 'promo' ? '#6AECE1' :
+                                       ann.type === 'closure' ? '#A7E399' :
+                                       '#3BC1A8'
+                              }}>
+                                {ann.type}
+                              </span>
                             </div>
-                          </motion.div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-100">
-                        <Megaphone className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-                        <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No announcements at the moment</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Services Sub-Section */}
-                {announcementSubTab === 'services' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    {displayServices.map((service) => (
-                      <motion.div
-                        key={service.id}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:border-cyan-200 transition-all duration-300 group"
-                      >
-                        <div className="flex items-start gap-4">
-                          <div className="w-12 h-12 rounded-2xl bg-cyan-50 flex items-center justify-center text-cyan-600 group-hover:bg-cyan-600 group-hover:text-white transition-all duration-300">
-                            <Sparkles className="w-6 h-6" />
+                            <p className="text-gray-700 mt-3 whitespace-pre-wrap leading-relaxed">{ann.message}</p>
                           </div>
-                          <div className="flex-1">
-                            <div className="flex justify-between items-start mb-2">
-                              <h4 className="font-black text-gray-900 uppercase tracking-tight leading-tight">{service.serviceName}</h4>
-                              <span className="text-[10px] font-black text-cyan-600 bg-cyan-50 px-2 py-1 rounded-lg uppercase">{service.duration}</span>
-                            </div>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">{service.category}</p>
-                            <div className="flex flex-wrap gap-2">
-                              {service.description.map((desc, idx) => (
-                                <span key={idx} className="px-2 py-1 bg-gray-50 text-gray-600 text-[10px] font-medium rounded-md">
-                                  {desc}
-                                </span>
-                              ))}
-                            </div>
-                            <div className="mt-4 pt-4 border-t border-gray-50 flex justify-between items-center">
-                              <span className="text-xs font-bold text-gray-400 italic">Starting at</span>
-                              <span className="text-lg font-black text-teal-600">{service.price || 'Price may vary'}</span>
-                            </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-100">
+                      <Megaphone className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+                      <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No announcements at the moment</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Services Offered (separate page) */}
+            {activeTab === 'services-offered' && (
+              <div className="m-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                {displayServices.map((service) => (
+                  <motion.div
+                    key={service.id}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:border-cyan-200 transition-all duration-300 group"
+                  >
+                    <div className="flex items-start gap-4">
+                      
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="font-black text-gray-900 uppercase tracking-tight leading-tight">{service.serviceName}</h4>
+                        </div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">{service.category}</p>
+                        <div className="flex flex-wrap gap-2">
+                          {service.description.map((desc, idx) => (
+                            <span key={idx} className="px-2 py-1 bg-gray-50 text-gray-600 text-[10px] font-medium rounded-md">
+                              {desc}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-gray-50">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-gray-500">Price starts at</span>
+                            <span className="text-lg font-black text-teal-600 whitespace-pre-line">{service.price || 'Price may vary'}</span>
+                          </div>
+                          <div className="mt-3">
+                            <p className="text-xs text-emerald-800 font-semibold bg-emerald-100 rounded-lg p-3 border border-emerald-300">💡 Pricing varies depending on the complexity of your case</p>
                           </div>
                         </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+                </div>
               </div>
             )}
           </motion.div>

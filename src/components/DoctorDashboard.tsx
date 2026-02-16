@@ -12,6 +12,7 @@ import { ReferralGeneration } from './ReferralGeneration';
 import { ServicesForms } from './ServicesForms';
 import { FinancialReport } from './FinancialReport';
 import { AnnouncementsManagement } from './AnnouncementsManagement';
+import ServicesManagement from './ServicesManagement';
 import { Notifications } from './Notifications';
 import { EmployeeManagement } from './EmployeeManagement';
 import { motion, AnimatePresence } from 'motion/react';
@@ -437,6 +438,7 @@ export function DoctorDashboard({
     { id: 'inventory', label: 'Inventory', icon: Package, color: 'from-cyan-600 to-teal-500' },
     { id: 'financial', label: 'Financial Report', icon: PesoSign, color: 'from-emerald-500 to-teal-600' },
     { id: 'announcements', label: 'Announcements', icon: Megaphone, color: 'from-cyan-600 to-teal-500' },
+    { id: 'services-offered', label: 'Services Offered', icon: Sparkles, color: 'from-cyan-600 to-teal-500' },
   ];
 
   return (
@@ -959,6 +961,12 @@ export function DoctorDashboard({
                   prefilledAppointment={prefilledAppointmentData || undefined}
                   onServiceCreated={() => setPrefilledAppointmentData(null)}
                   onDataChanged={onDataChanged}
+                />
+              )}
+              {activeTab === 'services-offered' && (
+                <ServicesManagement
+                  services={services}
+                  setServices={setServices}
                 />
               )}
               {activeTab === 'financial' && (

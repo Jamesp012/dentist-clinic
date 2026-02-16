@@ -31,6 +31,7 @@ import { ReferralGeneration } from "./ReferralGeneration";
 import { ServicesForms } from "./ServicesForms";
 import { FinancialReport } from "./FinancialReport";
 import { AnnouncementsManagement } from "./AnnouncementsManagement";
+import ServicesManagement from './ServicesManagement';
 import { Notifications } from "./Notifications";
 import { motion, AnimatePresence } from "motion/react";
 import { formatToDD_MM_YYYY } from "../utils/dateHelpers";
@@ -506,6 +507,12 @@ export function AssistantDashboard({
       id: "announcements",
       label: "Announcements",
       icon: Megaphone,
+      color: "from-cyan-600 to-teal-500",
+    },
+    {
+      id: "services-offered",
+      label: "Services Offered",
+      icon: Sparkles,
       color: "from-cyan-600 to-teal-500",
     },
   ];
@@ -1041,6 +1048,12 @@ export function AssistantDashboard({
                   prefilledAppointment={prefilledAppointmentData || undefined}
                   onServiceCreated={() => setPrefilledAppointmentData(null)}
                   onDataChanged={onDataChanged}
+                />
+              )}
+              {activeTab === 'services-offered' && (
+                <ServicesManagement
+                  services={services}
+                  setServices={setServices}
                 />
               )}
               {activeTab === "financial" && (
