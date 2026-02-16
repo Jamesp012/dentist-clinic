@@ -1562,9 +1562,9 @@ export function PatientPortal({
             {activeTab === 'appointments' && (
               <div className="p-6 space-y-4 flex-1">
                 {/* Book New Appointment Form */}
-                <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200 shadow-lg">
-                  <h2 className="text-xl mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-2">
-                    <Plus className="w-6 h-6 text-blue-600" />
+                <div className="p-6 rounded-xl border-2 shadow-lg appointment-card">
+                  <h2 className="text-xl mb-4 appointment-title flex items-center gap-2">
+                    <Plus className="w-6 h-6 appointment-icon" />
                     Book New Appointment
                   </h2>
                   <div className="space-y-4">
@@ -1578,7 +1578,7 @@ export function PatientPortal({
                           setAppointmentDate(e.target.value);
                           setSelectedSchedulePeriod(null);
                         }}
-                        className="w-full px-3 py-2 border border-purple-300 rounded-lg"
+                        className="w-full px-3 py-2 rounded-lg appointment-field"
                         min={new Date().toISOString().split('T')[0]}
                       />
                     </div>
@@ -1600,6 +1600,7 @@ export function PatientPortal({
                           >
                             <p className="font-semibold text-gray-900">Morning</p>
                             <p className="text-xs text-gray-600 mb-2">8:00 AM - 12:00 PM</p>
+                            <p className="text-xs text-gray-600 mb-1">there's</p>
                             <p className="text-lg font-bold text-emerald-600">{getBookingCountForPeriod(appointmentDate, 'am')}</p>
                             <p className="text-xs text-gray-600">in queue</p>
                             {isScheduleClosed(appointmentDate, 'am') && (
@@ -1619,6 +1620,7 @@ export function PatientPortal({
                           >
                             <p className="font-semibold text-gray-900">Afternoon</p>
                             <p className="text-xs text-gray-600 mb-2">12:30 PM - 8:00 PM</p>
+                            <p className="text-xs text-gray-600 mb-1">there's</p>
                             <p className="text-lg font-bold text-orange-600">{getBookingCountForPeriod(appointmentDate, 'pm')}</p>
                             <p className="text-xs text-gray-600">in queue</p>
                             {isScheduleClosed(appointmentDate, 'pm') && (
@@ -1674,7 +1676,7 @@ export function PatientPortal({
                         value={appointmentNotes}
                         onChange={(e) => setAppointmentNotes(e.target.value)}
                         placeholder="Any special requests..."
-                        className="w-full px-3 py-2 border border-purple-300 rounded-lg"
+                        className="w-full px-3 py-2 rounded-lg appointment-field"
                         rows={3}
                       />
                     </div>
@@ -1683,7 +1685,7 @@ export function PatientPortal({
                   <button
                     onClick={handleBookAppointment}
                     disabled={isBookingAppointment || !selectedSchedulePeriod}
-                    className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 font-medium mt-4"
+                    className="w-full px-4 py-3 appointment-cta disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium mt-4"
                   >
                     <Calendar className="w-5 h-5" />
                     {isBookingAppointment ? 'Booking...' : 'Join Queue'}
@@ -1696,17 +1698,17 @@ export function PatientPortal({
 
                 {upcomingAppointments.length > 0 && (
                   <div>
-                    <h2 className="text-xl mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    <h2 className="text-xl mb-4 appointment-title">
                       Upcoming Appointments
                     </h2>
                     <div className="space-y-3">
                       {upcomingAppointments.map(apt => {
                         const { queueNumber, period, queueList } = getQueueInfo(apt);
                         const isCompleted = apt.status === 'completed';
-                        return (
+                          return (
                           <motion.div 
                             key={apt.id} 
-                            className={`p-4 border-2 border-blue-200 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 transition-opacity ${isCompleted ? 'opacity-30' : ''}`}
+                            className={`p-4 border-2 rounded-lg appointment-upcoming-card transition-opacity ${isCompleted ? 'opacity-30' : ''}`}
                             initial={{ opacity: 1 }}
                             animate={{ opacity: isCompleted ? 0.3 : 1 }}
                             transition={{ duration: 0.5 }}
@@ -1717,17 +1719,13 @@ export function PatientPortal({
                                 <div className="flex items-center gap-2 text-sm text-gray-600">
                                   <Calendar className="w-4 h-4" />
                                   <span>{formatToWordedDate(getDateString(apt.date))}</span>
-                                  <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded font-semibold text-xs">
+                                  <span className="ml-2 px-2 py-1 appointment-badge rounded font-semibold text-xs">
                                     You are in a queue…
                                   </span>
                                 </div>
                               </div>
                               <motion.span 
-                                className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                                  isCompleted 
-                                    ? 'bg-gray-200 text-gray-600' 
-                                    : 'bg-green-100 text-green-700'
-                                }`}
+                                className={`px-3 py-1 rounded-full text-sm font-semibold ${isCompleted ? 'appointment-status--completed' : 'appointment-status--active'}`}
                                 animate={{ scale: isCompleted ? 0.95 : 1 }}
                               >
                                 {apt.status}
@@ -1736,7 +1734,7 @@ export function PatientPortal({
 
                             {/* Queue List */}
                             {queueList.length > 0 && (
-                              <div className="mt-3 p-3 bg-white bg-opacity-50 rounded border border-blue-100">
+                              <div className="mt-3 p-3 bg-white bg-opacity-50 rounded border" style={{borderColor: 'rgb(154, 245, 228)'}}>
                                 <p className="text-xs font-semibold text-gray-600 mb-2">Queue Order ({period}):</p>
                                 <div className="flex flex-wrap gap-2">
                                   {queueList.map((queueApt, idx) => (
@@ -1744,10 +1742,10 @@ export function PatientPortal({
                                       key={queueApt.id}
                                       className={`group relative px-3 py-1 rounded text-sm font-semibold transition-all ${
                                         queueApt.id === apt.id
-                                          ? 'bg-blue-500 text-white'
+                                          ? 'appointment-current'
                                           : queueApt.status === 'completed'
                                           ? 'bg-gray-200 text-gray-500 line-through opacity-40'
-                                          : 'bg-gray-100 text-gray-700'
+                                          : 'appointment-queue-item'
                                       }`}
                                     >
                                       {queueApt.id === apt.id ? (
@@ -2532,15 +2530,9 @@ export function PatientPortal({
                         <p className="text-sm text-slate-500">As of {formatToDD_MM_YYYY(new Date())}</p>
                       </div>
                       <div className="flex-shrink-0">
-                        <div className={`w-20 h-20 rounded-2xl flex items-center justify-center transition-all duration-300 ${
-                          hasOutstandingBalance 
-                            ? 'bg-gradient-to-br from-red-100 to-red-50 group-hover:from-red-200 group-hover:to-red-100' 
-                            : 'bg-gradient-to-br from-emerald-100 to-emerald-50 group-hover:from-emerald-200 group-hover:to-emerald-100'
-                        }`}>
-                          <CreditCard className={`w-10 h-10 transition-transform duration-300 group-hover:scale-110 ${
-                            hasOutstandingBalance ? 'text-red-600' : 'text-emerald-600'
-                          }`} />
-                        </div>
+                            <div className="w-20 h-20 rounded-2xl flex items-center justify-center transition-all duration-300" style={{backgroundColor: 'rgb(16, 172, 170)'}}>
+                              <CreditCard className="w-10 h-10 text-white transition-transform duration-300 group-hover:scale-110" />
+                            </div>
                       </div>
                     </div>
 
@@ -2608,7 +2600,7 @@ export function PatientPortal({
                   className="space-y-4"
                 >
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{backgroundColor: 'rgb(16, 172, 170)'}}>
                       <History className="w-5 h-5 text-white" />
                     </div>
                     <h3 className="text-xl font-bold text-slate-900">Recent Payments</h3>
@@ -2658,7 +2650,7 @@ export function PatientPortal({
                   className="space-y-4"
                 >
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{backgroundColor: 'rgb(16, 172, 170)'}}>
                       <FileText className="w-5 h-5 text-white" />
                     </div>
                     <h3 className="text-xl font-bold text-slate-900">Treatment Charges</h3>
@@ -2958,12 +2950,15 @@ export function PatientPortal({
                             animate={{ opacity: 1, y: 0 }}
                             className="bg-white rounded-xl border border-cyan-200/60 shadow-md hover:shadow-lg transition-all overflow-hidden group"
                           >
-                            <div className={`h-1.5 bg-gradient-to-r ${
-                              ann.type === 'important' ? 'from-red-500 to-orange-500' :
-                              ann.type === 'promo' ? 'from-teal-500 to-cyan-500' :
-                              ann.type === 'closure' ? 'from-orange-500 to-red-500' :
-                              'from-blue-500 to-cyan-500'
-                            }`} />
+                            <div className={`h-1.5`} style={{
+                              backgroundImage: ann.type === 'important'
+                                ? 'linear-gradient(to right, #005461, #003a47)'
+                                : ann.type === 'promo'
+                                  ? 'linear-gradient(to right, #6AECE1, #52d4d1)'
+                                  : ann.type === 'closure'
+                                    ? 'linear-gradient(to right, #A7E399, #94d975)'
+                                    : 'linear-gradient(to right, #3BC1A8, #2aaa95)'
+                            }} />
                             <div className="p-6">
                               <div className="flex justify-between items-start mb-3">
                                 <div className="flex-1">
@@ -2972,11 +2967,16 @@ export function PatientPortal({
                                     📅 {timeAgo(ann.date)} • 👤 {ann.createdBy}
                                   </p>
                                 </div>
-                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                                  ann.type === 'important' ? 'bg-red-100 text-red-600' :
-                                  ann.type === 'promo' ? 'bg-teal-100 text-teal-600' :
-                                  'bg-blue-100 text-blue-600'
-                                }`}>
+                                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest" style={{
+                                  backgroundColor: ann.type === 'important' ? '#E8F0F2' :
+                                                   ann.type === 'promo' ? '#E0FCFA' :
+                                                   ann.type === 'closure' ? '#F0F7E0' :
+                                                   '#E6F5F1',
+                                  color: ann.type === 'important' ? '#005461' :
+                                         ann.type === 'promo' ? '#6AECE1' :
+                                         ann.type === 'closure' ? '#A7E399' :
+                                         '#3BC1A8'
+                                }}>
                                   {ann.type}
                                 </span>
                               </div>
