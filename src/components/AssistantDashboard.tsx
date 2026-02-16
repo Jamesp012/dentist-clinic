@@ -726,6 +726,12 @@ export function AssistantDashboard({
                 <p className="text-sm text-slate-500">Manage clinic services and treatments</p>
               </div>
             )}
+            {activeTab === 'services-offered' && (
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 font-poppins">Services Offered</h2>
+                <p className="text-sm text-slate-500">Browse available services and pricing</p>
+              </div>
+            )}
             {activeTab === 'financial' && (
               <div>
                 <h2 className="text-xl font-bold text-slate-900 font-poppins">Financial Report</h2>

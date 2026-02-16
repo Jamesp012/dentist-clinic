@@ -1096,6 +1096,12 @@ export function PatientPortal({
                 <p className="text-slate-500 mt-1.5 text-sm font-medium">Latest clinic announcements and updates</p>
               </div>
             )}
+            {activeTab === 'services-offered' && (
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Services Offered</h2>
+                <p className="text-slate-500 mt-1.5 text-sm font-medium">Browse available services and pricing</p>
+              </div>
+            )}
           </div>
           <div className="relative z-10 ml-auto">
             <Notifications
