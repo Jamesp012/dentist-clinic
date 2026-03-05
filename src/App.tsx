@@ -339,6 +339,7 @@ export default function App() {
     setReferrals,
     setPayments,
     setAnnouncements,
+    setServices,
     isAuthenticated: !!currentUser,
   });
 

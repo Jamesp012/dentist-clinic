@@ -1060,6 +1060,7 @@ export function AssistantDashboard({
                 <ServicesManagement
                   services={services}
                   setServices={setServices}
+                  onDataChanged={onDataChanged}
                 />
               )}
               {activeTab === "financial" && (

@@ -2,14 +2,16 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, X, Trash2, Check, Edit } from 'lucide-react';
 import { toast } from 'sonner';
+import { serviceAPI } from '../api';
 import type { Service } from '../App';
 
 type ServicesManagementProps = {
   services?: Service[];
   setServices?: (services: Service[]) => void;
+  onDataChanged?: () => Promise<void>;
 };
 
-export default function ServicesManagement({ services = [], setServices }: ServicesManagementProps) {
+export default function ServicesManagement({ services = [], setServices, onDataChanged }: ServicesManagementProps) {
   const defaultServices: Service[] = [
     { id: 'service_1', serviceName: 'ORAL EXAMINATION / CHECK-UP', category: 'Consultation', description: ['Dental consultation', 'Oral examination', 'Diagnosis', 'Treatment planning'], duration: '30 mins', price: '₱0–₱500' },
     { id: 'service_2', serviceName: 'ORAL PROPHYLAXIS', category: 'Cleaning', description: ['Dental cleaning', 'Scaling', 'Polishing', 'Stain removal'], duration: '45 mins', price: '₱1,000' },
@@ -20,10 +22,14 @@ export default function ServicesManagement({ services = [], setServices }: Servi
   ];
 
   const serviceOverrides = services || [];
+  // Merge defaults with database services
+  // If a database service has the same name as a default, the database one wins
   const displayServices = [
-    ...defaultServices.map(defaultService => serviceOverrides.find(s => s.id === defaultService.id) || defaultService),
-    ...serviceOverrides.filter(service => !defaultServices.some(defaultService => defaultService.id === service.id))
-  ];
+    ...serviceOverrides,
+    ...defaultServices.filter(def => 
+      !serviceOverrides.some(s => s.serviceName.toLowerCase() === def.serviceName.toLowerCase())
+    )
+  ].sort((a, b) => a.serviceName.localeCompare(b.serviceName));
 
   // Editing / modal state
   const [showAddService, setShowAddService] = useState(false);
@@ -36,8 +42,10 @@ export default function ServicesManagement({ services = [], setServices }: Servi
   const handleAddService = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoadingService(true);
+    // Use a reference to currentTarget because it can be null after async calls
+    const form = e.currentTarget;
     try {
-      const formData = new FormData(e.currentTarget);
+      const formData = new FormData(form);
       const serviceName = (formData.get('serviceName') as string)?.trim();
       const category = (formData.get('category') as string)?.trim();
       const price = (formData.get('price') as string)?.trim();
@@ -49,36 +57,42 @@ export default function ServicesManagement({ services = [], setServices }: Servi
         return;
       }
 
-      const newService: Service = {
-        id: editingServiceId || Date.now().toString(),
+      const serviceData = {
         serviceName,
         category,
-        description: finalDescriptions.length > 0 ? finalDescriptions : [],
-        
+        description: JSON.stringify(finalDescriptions),
         price: price || 'Price may vary',
-      } as Service;
+      };
 
+      let successMessage = '';
       if (editingServiceId) {
-        const isEditingDefault = defaultServices.some(s => s.id === editingServiceId) && !services.some(s => s.id === editingServiceId);
-        if (isEditingDefault) {
-          const newServicesList = [...services, newService];
-          setServices?.(newServicesList);
-          toast.success('Service created successfully');
+        // IDs starting with 'service_' are hardcoded defaults
+        const isFromDatabase = !editingServiceId.toString().startsWith('service_');
+        
+        if (isFromDatabase) {
+          await serviceAPI.update(editingServiceId, serviceData);
+          successMessage = 'Service updated successfully';
         } else {
-          const updatedServices = services.map(s => s.id === editingServiceId ? newService : s);
-          setServices?.(updatedServices);
-          toast.success('Service updated successfully');
+          // If editing a default service, create it in the database
+          await serviceAPI.create(serviceData);
+          successMessage = 'Service created successfully';
         }
         setEditingServiceId(null);
       } else {
-        const newServicesList = [...services, newService];
-        setServices?.(newServicesList);
-        toast.success('Service added successfully');
+        await serviceAPI.create(serviceData);
+        successMessage = 'Service added successfully';
       }
 
+      // Refresh the data from backend
+      if (onDataChanged) {
+        await onDataChanged();
+      }
+
+      // Show success toast ONLY after backend and sync are done
+      toast.success(successMessage);
       setShowAddService(false);
       setDescriptions([]);
-      (e.currentTarget as HTMLFormElement).reset();
+      form.reset();
     } catch (error) {
       console.error('Error saving service:', error);
       toast.error('Failed to save service');
@@ -87,14 +101,29 @@ export default function ServicesManagement({ services = [], setServices }: Servi
     }
   };
 
-  const handleDeleteService = (id: string) => {
-    const customServiceIndex = services.findIndex(s => s.id === id);
-    if (customServiceIndex >= 0) {
-      const updatedServices = services.filter(s => s.id !== id);
-      setServices?.(updatedServices);
+  const handleDeleteService = async (id: string) => {
+    // Database IDs are numeric (e.g., 1, 2, 3), while default IDs are strings (e.g., "service_1")
+    // Note: Numbers from database might be numeric strings if coming from API
+    const isNumeric = !isNaN(Number(id));
+    const isFromDatabase = isNumeric && !id.toString().startsWith('service_');
+    
+    if (!isFromDatabase) {
+      toast.info('Default services cannot be deleted from the database. Create a custom service to manage.');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to delete this service?')) return;
+
+    try {
+      await serviceAPI.delete(id);
+      
+      if (onDataChanged) {
+        await onDataChanged();
+      }
       toast.success('Service deleted');
-    } else {
-      toast.info('Default service reverted. (Create a custom service to make permanent changes)');
+    } catch (error) {
+      console.error('Error deleting service:', error);
+      toast.error('Failed to delete service');
     }
   };
 
@@ -126,6 +155,20 @@ export default function ServicesManagement({ services = [], setServices }: Servi
 
   return (
     <div className="m-6">
+      <div className="flex justify-between items-center mb-8 bg-white p-6 rounded-2xl border border-cyan-100 shadow-sm">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Services Offered</h2>
+          <p className="text-sm text-gray-500">Manage and customize your clinic's service catalog</p>
+        </div>
+        <button 
+          onClick={() => handleOpenServiceEditor(null)}
+          className="px-6 py-3 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-xl font-bold flex items-center gap-2 hover:shadow-lg hover:scale-105 transition-all duration-300"
+        >
+          <Plus className="w-5 h-5" />
+          Add New Service
+        </button>
+      </div>
+
       {displayServices && displayServices.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
           {displayServices.map((service) => (

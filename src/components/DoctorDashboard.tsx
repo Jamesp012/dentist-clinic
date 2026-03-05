@@ -974,6 +974,7 @@ export function DoctorDashboard({
                 <ServicesManagement
                   services={services}
                   setServices={setServices}
+                  onDataChanged={onDataChanged}
                 />
               )}
               {activeTab === 'financial' && (

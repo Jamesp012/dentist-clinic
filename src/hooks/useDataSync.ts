@@ -29,6 +29,7 @@ type UseDataSyncProps = {
   setReferrals?: (referrals: any[]) => void;
   setPayments?: (payments: any[]) => void;
   setAnnouncements?: (announcements: any[]) => void;
+  setServices?: (services: any[]) => void;
   isAuthenticated?: boolean;
 };
 
@@ -40,6 +41,7 @@ export function useDataSync({
   setReferrals,
   setPayments,
   setAnnouncements,
+  setServices,
   isAuthenticated = false,
 }: UseDataSyncProps) {
   const isSyncing = useRef(false);
@@ -198,6 +200,34 @@ export function useDataSync({
   }, [setReferrals, isAuthenticated]);
 
   /**
+   * Fetch and update services
+   */
+  const refreshServices = useCallback(async () => {
+    if (!isAuthenticated || hasEncountered401.current) return false;
+    try {
+      if (!setServices) return false;
+      const servicesData = await serviceAPI.getAll();
+      // Ensure description is an array
+      const normalizedServices = (servicesData || []).map((service: any) => ({
+        ...service,
+        description: Array.isArray(service.description) 
+          ? service.description 
+          : (typeof service.description === 'string' 
+              ? (service.description.startsWith('[') ? JSON.parse(service.description) : [service.description]) 
+              : [])
+      }));
+      setServices(normalizedServices);
+      return true;
+    } catch (error: any) {
+      if (error.message?.includes('401')) {
+        hasEncountered401.current = true;
+      }
+      console.error('Failed to refresh services:', error);
+      return false;
+    }
+  }, [setServices, isAuthenticated]);
+
+  /**
    * Refresh all data
    */
   const refreshAll = useCallback(async () => {
@@ -225,15 +255,18 @@ export function useDataSync({
       if (hasEncountered401.current) return false;
       
       const an = await refreshAnnouncements();
+      if (hasEncountered401.current) return false;
+
+      const s = await refreshServices();
       
-      return p && a && i && r && t && py && an;
+      return p && a && i && r && t && py && an && s;
     } catch (error) {
       console.error('Failed to refresh all data:', error);
       return false;
     } finally {
       isSyncing.current = false;
     }
-  }, [refreshPatients, refreshAppointments, refreshInventory, refreshReferrals, refreshTreatmentRecords, refreshPayments, refreshAnnouncements, isAuthenticated]);
+  }, [refreshPatients, refreshAppointments, refreshInventory, refreshReferrals, refreshTreatmentRecords, refreshPayments, refreshAnnouncements, refreshServices, isAuthenticated]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -276,5 +309,6 @@ export function useDataSync({
     refreshTreatmentRecords,
     refreshPayments,
     refreshAnnouncements,
+    refreshServices,
   };
 }
