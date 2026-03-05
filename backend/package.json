@@ -8,7 +8,9 @@
     "dev": "nodemon server.js",
     "migrate": "node migrate-schema.js",
     "sanitize:records": "node scripts/sanitize-treatment-records.js",
-    "test": "mocha --recursive --exit"
+    "test": "mocha --recursive --exit",
+    "test:dev": "set NODE_ENV=test && mocha --recursive --exit",
+    "test:prod": "set NODE_ENV=production && mocha --recursive --exit"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

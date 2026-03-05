@@ -1,6 +1,10 @@
 const mysql = require('mysql2/promise');
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+const env = (process.env.NODE_ENV || 'development').trim();
+const envFile = env === 'test' ? '.env.test' : (env === 'production' ? '.env.production' : '.env');
+require('dotenv').config({ path: path.join(__dirname, '..', envFile) });
+
+console.log(`Database Config: Connecting to ${process.env.DB_HOST} with database ${process.env.DB_NAME} (Env: ${env})`);
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',

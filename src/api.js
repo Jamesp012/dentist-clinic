@@ -324,6 +324,25 @@ export const photoAPI = {
     }),
 };
 
+// Service APIs
+export const serviceAPI = {
+  getAll: () => fetchWithAuth(`${API_BASE}/services`),
+  create: (data) =>
+    fetchWithAuth(`${API_BASE}/services`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  update: (id, data) =>
+    fetchWithAuth(`${API_BASE}/services/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  delete: (id) =>
+    fetchWithAuth(`${API_BASE}/services/${id}`, {
+      method: 'DELETE',
+    }),
+};
+
 // Patient Claiming APIs
 export const patientClaimingAPI = {
   // Search for existing patient records

@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useRef } from 'react';
-import { patientAPI, appointmentAPI, inventoryAPI, referralAPI, treatmentRecordAPI, paymentAPI, announcementAPI } from '../api';
+import { patientAPI, appointmentAPI, inventoryAPI, referralAPI, treatmentRecordAPI, paymentAPI, announcementAPI, serviceAPI } from '../api';
 
 /**
  * Helper function to normalize appointment dates to YYYY-MM-DD format
