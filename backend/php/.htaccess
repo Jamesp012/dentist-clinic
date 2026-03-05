@@ -1,0 +1,14 @@
+RewriteEngine On
+RewriteBase /backend/php/
+
+# Prevent directory listing
+Options -Indexes
+
+# If the request is for a directory that exists, and it's not the root, 
+# still route to index.php to avoid 403/404 issues with trailing slashes
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^(api/.*)$ index.php [QSA,L]
+
+# Route everything to index.php unless it is a physical file
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ index.php [QSA,L]
