@@ -78,6 +78,27 @@ export const authAPI = {
       method: 'POST',
       body: JSON.stringify({ userId, newPassword }),
     }),
+
+  forgotPassword: (username) =>
+    fetch(`${API_BASE}/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username }),
+    }).then((r) => r.json()),
+
+  verifyOTP: (username, otp) =>
+    fetch(`${API_BASE}/auth/verify-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, otp }),
+    }).then((r) => r.json()),
+
+  resetPassword: (username, otp, newPassword) =>
+    fetch(`${API_BASE}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, otp, newPassword }),
+    }).then((r) => r.json()),
 };
 
 // Patient APIs

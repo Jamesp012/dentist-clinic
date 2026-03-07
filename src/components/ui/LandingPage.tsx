@@ -2,14 +2,18 @@ import { motion } from 'motion/react';
 import { Stethoscope, Users, Award, Heart, MapPin, Phone, Mail, ChevronLeft, ChevronRight, User, Lock, LogIn, UserPlus, Calendar, Eye, EyeOff } from 'lucide-react';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { convertToDBDate, convertToDisplayDate, formatDateInput } from '../../utils/dateHelpers';
+import { authAPI } from '../../api';
+import { toast } from 'sonner';
+import { PasswordInput } from '../PasswordInput';
 
 export type LandingPageProps = {
   onGetStarted?: () => void;
   onLogin?: (username: string, password: string) => void;
   onSignup?: (signupData: any) => void;
+  onForgotPassword?: () => void;
 };
 
-export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProps) {
+export function LandingPage({ onGetStarted, onLogin, onSignup, onForgotPassword }: LandingPageProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showAuthForm, setShowAuthForm] = useState(false);
   const [isLargeScreen, setIsLargeScreen] = useState<boolean>(typeof window !== 'undefined' ? window.innerWidth >= 1024 : false);
@@ -19,6 +23,87 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Forgot password flow
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordStep, setForgotPasswordStep] = useState<'request' | 'verify' | 'reset'>('request');
+  const [forgotPasswordUsername, setForgotPasswordUsername] = useState('');
+  const [resetOTP, setResetOTP] = useState('');
+  const [newResetPassword, setNewResetPassword] = useState('');
+  const [confirmResetPassword, setConfirmResetPassword] = useState('');
+  const [maskedPhone, setMaskedPhone] = useState('');
+  const [isResetLoading, setIsResetLoading] = useState(false);
+  const [resetError, setResetError] = useState('');
+
+  const handleRequestOTP = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!forgotPasswordUsername) return setResetError('Please enter your username');
+    
+    setIsResetLoading(true);
+    setResetError('');
+    try {
+      const resp = await authAPI.forgotPassword(forgotPasswordUsername);
+      if (resp.error) {
+        setResetError(resp.error);
+      } else {
+        setMaskedPhone(resp.phone);
+        setForgotPasswordStep('verify');
+        toast.success('OTP sent to your registered phone number');
+      }
+    } catch (err: any) {
+      setResetError(err.message || 'Failed to send OTP');
+    } finally {
+      setIsResetLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!resetOTP) return setResetError('Please enter the OTP');
+    
+    setIsResetLoading(true);
+    setResetError('');
+    try {
+      const resp = await authAPI.verifyOTP(forgotPasswordUsername, resetOTP);
+      if (resp.error) {
+        setResetError(resp.error);
+      } else {
+        setForgotPasswordStep('reset');
+        toast.success('OTP verified successfully');
+      }
+    } catch (err: any) {
+      setResetError(err.message || 'Failed to verify OTP');
+    } finally {
+      setIsResetLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!newResetPassword) return setResetError('Please enter a new password');
+    if (newResetPassword !== confirmResetPassword) return setResetError('Passwords do not match');
+    
+    setIsResetLoading(true);
+    setResetError('');
+    try {
+      const resp = await authAPI.resetPassword(forgotPasswordUsername, resetOTP, newResetPassword);
+      if (resp.error) {
+        setResetError(resp.error);
+      } else {
+        toast.success('Password reset successful. You can now log in with your new password.');
+        setShowForgotPassword(false);
+        setForgotPasswordStep('request');
+        setForgotPasswordUsername('');
+        setResetOTP('');
+        setNewResetPassword('');
+        setConfirmResetPassword('');
+      }
+    } catch (err: any) {
+      setResetError(err.message || 'Failed to reset password');
+    } finally {
+      setIsResetLoading(false);
+    }
+  };
   const birthdatePickerRef = useRef<HTMLInputElement | null>(null);  const [activeNav, setActiveNav] = useState('home');
   const [hoveredNav, setHoveredNav] = useState<string | null>(null);  
   const [signupData, setSignupData] = useState({
@@ -109,10 +194,7 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
               <UserPlus className="w-7 sm:w-8 h-7 sm:h-8 text-white" />
             )}
           </motion.div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-1 sm:mb-2">
-              {isLoginMode ? 'Welcome Back! Sign In' : 'Create Account'}
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-600">
+            <p className="text-xs sm:text-sm text-slate-600 mt-2">
               {isLoginMode ? 'Access your account to manage your appointments' : 'Join us to start your dental care journey'}
             </p>
           </div>
@@ -160,6 +242,15 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
                 <Lock className="w-4 sm:w-5 h-4 sm:h-5 absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
                 <input id="login-password" name="password" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Enter password" className="w-full pl-10 sm:pl-11 pr-11 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base" />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 sm:right-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">{showPassword ? <EyeOff className="w-4 sm:w-5 h-4 sm:h-5" /> : <Eye className="w-4 sm:w-5 h-4 sm:h-5" />}</button>
+              </div>
+              <div className="flex justify-end mt-2">
+                <button 
+                  type="button" 
+                  onClick={() => setShowForgotPassword(true)}
+                  className="text-xs sm:text-sm text-teal-600 hover:text-teal-700 underline font-medium"
+                >
+                  Forgot password?
+                </button>
               </div>
             </div>
 
@@ -419,7 +510,7 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
-              className="space-y-8"
+              className="space-y-8 hidden lg:block"
             >
               <div>
                 <motion.div
@@ -455,10 +546,10 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
-              className="hidden lg:block"
+              className="w-full flex justify-center lg:block"
             >
-                {/* Slides removed; auth form only appears after Get Started is clicked */}
-                {showAuthForm && renderAuthPanel()}
+                {/* Always show on mobile, only show after Get Started on desktop */}
+                {(showAuthForm || !isLargeScreen) && renderAuthPanel()}
             </motion.div>
           </div>
         </div>
@@ -697,6 +788,159 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
           </div>
         </div>
       </footer>
+
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <div className="fixed inset-0 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm z-[100] p-4">
+          <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-md border border-slate-100">
+            <h3 className="font-bold text-lg text-slate-800 mb-4">Reset Password</h3>
+            
+            {forgotPasswordStep === 'request' && (
+              <form onSubmit={handleRequestOTP} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Username</label>
+                  <input 
+                    type="text"
+                    value={forgotPasswordUsername} 
+                    onChange={e => setForgotPasswordUsername(e.target.value)} 
+                    placeholder="Enter your username" 
+                    className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-teal-500 outline-none"
+                    required
+                  />
+                  <p className="text-xs text-slate-500 mt-2">We will send a 6-digit verification code to your registered phone number.</p>
+                </div>
+                {resetError && (
+                  <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100">
+                    {resetError}
+                  </div>
+                )}
+                <div className="flex justify-end gap-2 pt-2">
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setShowForgotPassword(false);
+                      setResetError('');
+                    }} 
+                    className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                    disabled={isResetLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    disabled={isResetLoading}
+                    className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors shadow-md disabled:opacity-70"
+                  >
+                    {isResetLoading ? 'Sending...' : 'Send OTP'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {forgotPasswordStep === 'verify' && (
+              <form onSubmit={handleVerifyOTP} className="space-y-4">
+                <div>
+                  <p className="text-sm text-slate-600 mb-4 text-center">
+                    Verification code sent to <span className="font-bold text-slate-800">{maskedPhone}</span>
+                  </p>
+                  <label className="block text-sm font-medium text-slate-700 mb-1 text-center">Verification Code (OTP)</label>
+                  <input 
+                    type="text"
+                    value={resetOTP} 
+                    onChange={e => setResetOTP(e.target.value.replace(/\D/g, '').substring(0, 6))} 
+                    placeholder="Enter 6-digit code" 
+                    className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-teal-500 outline-none text-center text-xl tracking-[0.5em] font-mono"
+                    required
+                  />
+                </div>
+                {resetError && (
+                  <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100">
+                    {resetError}
+                  </div>
+                )}
+                <div className="flex justify-between items-center pt-2">
+                  <button 
+                    type="button" 
+                    onClick={() => setForgotPasswordStep('request')} 
+                    className="text-sm text-teal-600 hover:text-teal-700 underline"
+                    disabled={isResetLoading}
+                  >
+                    Back
+                  </button>
+                  <div className="flex gap-2">
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        setShowForgotPassword(false);
+                        setResetError('');
+                      }} 
+                      className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                      disabled={isResetLoading}
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit" 
+                      disabled={isResetLoading || resetOTP.length !== 6}
+                      className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors shadow-md disabled:opacity-70"
+                    >
+                      {isResetLoading ? 'Verifying...' : 'Verify OTP'}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            )}
+
+            {forgotPasswordStep === 'reset' && (
+              <form onSubmit={handleResetPassword} className="space-y-4">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">New Password</label>
+                    <PasswordInput 
+                      value={newResetPassword} 
+                      onChange={e => setNewResetPassword(e.target.value)} 
+                      placeholder="Enter new password" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Confirm New Password</label>
+                    <PasswordInput 
+                      value={confirmResetPassword} 
+                      onChange={e => setConfirmResetPassword(e.target.value)} 
+                      placeholder="Confirm new password" 
+                    />
+                  </div>
+                </div>
+                {resetError && (
+                  <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100">
+                    {resetError}
+                  </div>
+                )}
+                <div className="flex justify-end gap-2 pt-2">
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setShowForgotPassword(false);
+                      setResetError('');
+                    }} 
+                    className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                    disabled={isResetLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    disabled={isResetLoading}
+                    className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors shadow-md disabled:opacity-70"
+                  >
+                    {isResetLoading ? 'Resetting...' : 'Reset Password'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
 
     </div>
   );

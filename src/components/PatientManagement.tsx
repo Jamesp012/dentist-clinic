@@ -225,31 +225,12 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
             'radial-gradient(circle at 20% 20%, rgba(45, 212, 191, 0.35), transparent 45%), radial-gradient(circle at 80% 0%, rgba(14, 165, 233, 0.25), transparent 35%)',
         }}
       />
-      <div className="relative flex flex-col flex-1 min-h-0 overflow-hidden px-6 py-6 sm:px-10 sm:py-10 gap-8">
+      <div className="relative flex flex-col flex-1 min-h-0 overflow-hidden px-6 py-6 sm:px-10 sm:py-8 gap-6">
         {/* Search & Add Button */}
-        <div className="relative rounded-3xl border border-white/70 bg-white/90 px-6 py-6 sm:px-8 sm:py-8 shadow-[0_35px_80px_rgba(15,23,42,0.08)] backdrop-blur-xl overflow-hidden">
+        <div className="relative rounded-3xl border border-white/70 bg-white/90 px-6 py-6 shadow-[0_35px_80px_rgba(15,23,42,0.08)] backdrop-blur-xl overflow-hidden">
           <div className="absolute inset-y-0 right-[-80px] w-[260px] bg-gradient-to-b from-teal-50/60 to-cyan-100/30 blur-3xl opacity-60" aria-hidden="true"></div>
-          <div className="relative flex flex-col gap-2">
-            <span className="text-xs font-semibold uppercase tracking-[0.4em] text-slate-400">Home • Patient Portal</span>
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div className="max-w-2xl">
-                <h1 className="text-3xl font-bold text-slate-900 leading-tight">Patient Directory Overview</h1>
-                <p className="text-sm text-slate-500 mt-2">
-                  Search, review, and manage every patient record inside a calming clinical workspace.
-                </p>
-              </div>
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="relative group bg-gradient-to-r from-teal-500 via-emerald-500 to-cyan-500 text-white px-7 py-3.5 rounded-2xl font-semibold tracking-wide shadow-[0_20px_45px_rgba(14,165,233,0.35)] transition-all duration-300 flex items-center gap-2.5 whitespace-nowrap hover:-translate-y-0.5 hover:shadow-[0_30px_60px_rgba(14,165,233,0.35)]"
-              >
-                <Plus className="w-5 h-5" />
-                <span>Add Patient</span>
-                <div className="absolute inset-0 rounded-2xl bg-white/0 group-hover:bg-white/10 transition-colors duration-300"></div>
-              </button>
-            </div>
-          </div>
-          <div className="relative mt-6">
-            <div className="relative flex-1 min-w-0 group">
+          <div className="relative flex flex-col sm:flex-row items-center gap-4">
+            <div className="relative flex-1 w-full group">
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-teal-500 transition-colors" />
               <input
                 type="text"
@@ -259,10 +240,18 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
                 className="w-full pl-14 pr-4 py-4 bg-white/70 border border-white/70 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 placeholder:text-slate-400 text-slate-900 shadow-inner hover:shadow-[inset_0_0_0_rgba(0,0,0,0)]"
               />
             </div>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="relative group bg-gradient-to-r from-teal-500 via-emerald-500 to-cyan-500 text-white px-7 py-4 rounded-2xl font-semibold tracking-wide shadow-[0_20px_45px_rgba(14,165,233,0.35)] transition-all duration-300 flex items-center justify-center gap-2.5 whitespace-nowrap hover:-translate-y-0.5 hover:shadow-[0_30px_60px_rgba(14,165,233,0.35)] w-full sm:w-auto"
+            >
+              <Plus className="w-5 h-5" />
+              <span>Add Patient</span>
+              <div className="absolute inset-0 rounded-2xl bg-white/0 group-hover:bg-white/10 transition-colors duration-300"></div>
+            </button>
           </div>
         </div>
 
-        {/* Patients Table */}
+        {/* Patients List/Table */}
         <div className="flex-1 flex flex-col min-h-0 gap-6 overflow-hidden pb-6">
           {sortedPatients.length === 0 ? (
             <div className="flex-1 flex items-center justify-center">
@@ -281,109 +270,183 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
               </div>
             </div>
           ) : (
-            <div className="flex-1 min-h-0 border border-white/70 bg-white/95 rounded-3xl flex flex-col overflow-hidden shadow-[0_40px_90px_rgba(15,23,42,0.08)] backdrop-blur-xl">
-              <div className="bg-gradient-to-r from-white/80 via-teal-50/60 to-white/80 border-b border-white/60 z-20 flex-none sticky top-0">
-                <table className="w-full table-fixed text-sm">
-                  <thead className="text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-500">
-                    <tr>
-                      <th scope="col" className="px-6 py-5 text-left align-middle">Name</th>
-                      <th scope="col" className="px-4 py-5 text-center align-middle w-20">Age</th>
-                      <th scope="col" className="px-4 py-5 text-left align-middle w-32">Birthdate</th>
-                      <th scope="col" className="px-4 py-5 text-left align-middle w-64">Email</th>
-                      <th scope="col" className="px-4 py-5 text-left align-middle w-40">Phone</th>
-                      <th scope="col" className="px-4 py-5 text-left align-middle w-[240px]">Address</th>
-                      <th scope="col" className="px-4 py-5 text-center align-middle w-[140px]">Actions</th>
-                    </tr>
-                  </thead>
-                </table>
-              </div>
-              <div
-                className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-teal-200/80 scrollbar-track-transparent"
-                style={{ maxHeight: 'calc(100vh - 340px)' }}
-              >
-                <table className="w-full table-fixed text-sm">
-                  <tbody className="text-sm text-slate-700">
-                    {sortedPatients.map((patient) => {
-                      const ageValue = patient.dateOfBirth ? calculateAge(patient.dateOfBirth) : NaN;
-                      const hasAge = Number.isFinite(ageValue);
-                      const dobLabel = patient.dateOfBirth ? formatToDD_MM_YYYY(patient.dateOfBirth) : 'N/A';
-                      const sexLabel = patient.sex || 'N/A';
+            <div className="flex-1 min-h-0 flex flex-col gap-4 overflow-hidden">
+              {/* Desktop Table View */}
+              <div className="hidden md:flex flex-1 min-h-0 border border-white/70 bg-white/95 rounded-3xl shadow-[0_40px_90px_rgba(15,23,42,0.08)] backdrop-blur-xl overflow-hidden flex-col">
+                <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-teal-200/80 scrollbar-track-transparent">
+                  <table className="w-full table-fixed border-collapse text-sm">
+                    <thead className="sticky top-0 z-20">
+                      <tr className="bg-gradient-to-r from-white/95 via-teal-50/90 to-white/95 backdrop-blur-md">
+                        <th scope="col" className="px-6 py-5 text-left text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 border-b border-teal-100/50 w-[18%]">
+                          <div className="flex items-center gap-2">
+                            Patient Name
+                          </div>
+                        </th>
+                        <th scope="col" className="px-4 py-5 text-center text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 border-b border-teal-100/50 w-[8%]">Age</th>
+                        <th scope="col" className="px-4 py-5 text-left text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 border-b border-teal-100/50 w-[12%]">Birthdate</th>
+                        <th scope="col" className="px-4 py-5 text-left text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 border-b border-teal-100/50 w-[18%]">Email</th>
+                        <th scope="col" className="px-4 py-5 text-left text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 border-b border-teal-100/50 w-[14%]">Phone</th>
+                        <th scope="col" className="px-4 py-5 text-left text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 border-b border-teal-100/50 w-[18%]">Address</th>
+                        <th scope="col" className="px-4 py-5 text-center text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 border-b border-teal-100/50 w-[12%]">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-sm text-slate-700 divide-y divide-teal-50/50">
+                      {sortedPatients.map((patient) => {
+                        const ageValue = patient.dateOfBirth ? calculateAge(patient.dateOfBirth) : NaN;
+                        const hasAge = Number.isFinite(ageValue);
+                        const dobLabel = patient.dateOfBirth ? formatToDD_MM_YYYY(patient.dateOfBirth) : 'N/A';
+                        const sexLabel = patient.sex || 'N/A';
+                        const { first, last } = splitName(patient.name);
 
-                      return (
-                        <tr
-                          key={patient.id}
-                          className="relative transition-all duration-300 border-b border-white/70 last:border-0 odd:bg-white even:bg-teal-50/40 hover:bg-white"
-                          style={{ minHeight: '68px' }}
-                        >
-                          <td className="px-6 py-5 align-middle text-left">
-                            <div className="text-base font-semibold text-slate-900 tracking-tight break-words">{formatPatientName(patient.name)}</div>
-                            <div className="text-xs font-medium text-slate-400 mt-1">{sexLabel}</div>
-                          </td>
-                          <td className="px-4 py-5 align-middle text-center whitespace-nowrap">
-                            {hasAge ? (
-                              <>
-                                <span className="text-xl font-semibold text-slate-900">{ageValue}</span>
-                                <span className="text-xs text-slate-400 ml-1">yrs</span>
-                              </>
-                            ) : (
-                              <span className="text-sm text-slate-400">N/A</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-5 align-middle whitespace-nowrap text-left">
-                            <span className="text-sm font-semibold text-slate-900">{dobLabel}</span>
-                          </td>
-                          <td className="px-4 py-5 align-middle text-left whitespace-nowrap">
-                            <p className="text-sm text-slate-600 break-words leading-relaxed">{patient.email}</p>
-                          </td>
-                          <td className="px-4 py-5 align-middle whitespace-nowrap text-left">
-                            <p className="text-sm font-semibold text-slate-900 tracking-wide">{patient.phone}</p>
-                          </td>
-                          <td className="px-4 py-5 align-middle text-left" style={{ width: '240px' }}>
-                            <p
-                              className="text-sm text-slate-500 leading-relaxed"
-                              style={{
-                                whiteSpace: 'normal',
-                                wordBreak: 'break-word',
-                                overflowWrap: 'break-word',
-                                display: '-webkit-box',
-                                WebkitLineClamp: 2,
-                                WebkitBoxOrient: 'vertical',
-                                overflow: 'hidden',
-                              }}
-                            >
-                              {patient.address}
-                            </p>
-                          </td>
-                          <td className="px-4 py-5 align-middle text-center whitespace-nowrap" style={{ width: '140px' }}>
-                            <div className="flex justify-center items-center gap-3 flex-nowrap" style={{ whiteSpace: 'nowrap' }}>
-                              <button
-                                onClick={() => setViewingPatient(patient)}
-                                className="w-10 h-10 flex items-center justify-center rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
-                                title="View Patient"
-                              >
-                                <Eye className="w-5 h-5" />
-                              </button>
-                              <button
-                                onClick={() => setEditingPatient(patient)}
-                                className="w-10 h-10 flex items-center justify-center rounded-full bg-sky-50 text-sky-600 border border-sky-100 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
-                                title="Edit Patient"
-                              >
-                                <Edit className="w-5 h-5" />
-                              </button>
-                              <button
-                                onClick={() => setDeletingPatient(patient)}
-                                className="w-10 h-10 flex items-center justify-center rounded-full bg-rose-50 text-rose-600 border border-rose-100 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
-                                title="Delete Patient"
-                              >
-                                <Trash2 className="w-5 h-5" />
-                              </button>
+                        return (
+                          <tr
+                            key={patient.id}
+                            className="group transition-all duration-300 hover:bg-teal-50/40"
+                          >
+                            <td className="px-6 py-4 align-middle">
+                              <div className="text-sm font-bold text-slate-900 leading-tight uppercase">{last}</div>
+                              <div className="text-xs font-semibold text-slate-500 leading-tight mt-0.5">{first}</div>
+                              <div className="text-[10px] font-bold text-teal-600/70 mt-1 uppercase tracking-wider">{sexLabel}</div>
+                            </td>
+                            <td className="px-4 py-4 align-middle text-center">
+                              {hasAge ? (
+                                <div className="flex items-baseline justify-center">
+                                  <span className="text-lg font-bold text-slate-900">{ageValue}</span>
+                                  <span className="text-[9px] font-bold text-slate-400 ml-1 uppercase">yrs</span>
+                                </div>
+                              ) : (
+                                <span className="text-xs font-medium text-slate-300">N/A</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-4 align-middle">
+                              <span className="text-sm font-semibold text-slate-600">{dobLabel}</span>
+                            </td>
+                            <td className="px-4 py-4 align-middle">
+                              <span className="text-xs font-medium text-slate-500 truncate block" title={patient.email}>{patient.email}</span>
+                            </td>
+                            <td className="px-4 py-4 align-middle">
+                              <span className="text-xs font-bold text-slate-700 tracking-tight">{patient.phone}</span>
+                            </td>
+                            <td className="px-4 py-4 align-middle">
+                              <p className="text-xs text-slate-500 leading-relaxed line-clamp-2" title={patient.address}>
+                                {patient.address}
+                              </p>
+                            </td>
+                            <td className="px-4 py-4 align-middle text-center">
+                              <div className="flex justify-center items-center gap-2">
+                                <button
+                                  onClick={() => setViewingPatient(patient)}
+                                  className="p-2 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 hover:scale-110 transition-all"
+                                  title="View"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => setEditingPatient(patient)}
+                                  className="p-2 rounded-full bg-sky-50 text-sky-600 border border-sky-100 hover:scale-110 transition-all"
+                                  title="Edit"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => setDeletingPatient(patient)}
+                                  className="p-2 rounded-full bg-rose-50 text-rose-600 border border-rose-100 hover:scale-110 transition-all"
+                                  title="Delete"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden flex-1 overflow-y-auto space-y-4 pr-2 scrollbar-thin scrollbar-thumb-teal-200 scrollbar-track-transparent">
+                {sortedPatients.map((patient) => {
+                  const ageValue = patient.dateOfBirth ? calculateAge(patient.dateOfBirth) : NaN;
+                  const hasAge = Number.isFinite(ageValue);
+                  const dobLabel = patient.dateOfBirth ? formatToDD_MM_YYYY(patient.dateOfBirth) : 'N/A';
+                  const sexLabel = patient.sex || 'N/A';
+                  const { first, last } = splitName(patient.name);
+
+                  return (
+                    <div 
+                      key={patient.id}
+                      className="bg-white/90 backdrop-blur-md rounded-2xl p-5 border border-white/70 shadow-lg space-y-4 transition-all active:scale-[0.98]"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-base font-bold text-slate-900 uppercase leading-tight truncate">{last}</div>
+                          <div className="text-sm font-semibold text-slate-600 leading-tight mt-0.5 truncate">{first}</div>
+                          <div className="inline-flex items-center px-2 py-0.5 mt-2 rounded-md bg-teal-50 text-[10px] font-bold text-teal-600 uppercase tracking-wider border border-teal-100">
+                            {sexLabel}
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0 ml-4">
+                          {hasAge ? (
+                            <div className="flex items-baseline justify-end">
+                              <span className="text-2xl font-bold text-slate-900 leading-none">{ageValue}</span>
+                              <span className="text-[10px] font-bold text-slate-400 ml-1 uppercase">yrs</span>
                             </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                          ) : (
+                            <span className="text-xs font-medium text-slate-300 uppercase tracking-wider">Age N/A</span>
+                          )}
+                          <div className="text-[11px] font-semibold text-slate-400 mt-1 uppercase tracking-tight">
+                            {dobLabel}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 py-4 border-y border-slate-50">
+                        <div className="space-y-1">
+                          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Phone</div>
+                          <div className="text-xs font-bold text-slate-700">{patient.phone}</div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Email</div>
+                          <div className="text-xs font-medium text-slate-600 truncate" title={patient.email}>
+                            {patient.email}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Address</div>
+                        <div className="text-xs text-slate-600 leading-relaxed line-clamp-2">
+                          {patient.address}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 pt-2">
+                        <button
+                          onClick={() => setViewingPatient(patient)}
+                          className="flex-1 py-3 px-4 rounded-xl bg-emerald-50 text-emerald-600 font-bold text-xs uppercase tracking-wider border border-emerald-100 flex items-center justify-center gap-2 transition-all active:bg-emerald-100"
+                        >
+                          <Eye className="w-4 h-4" />
+                          View
+                        </button>
+                        <button
+                          onClick={() => setEditingPatient(patient)}
+                          className="flex-1 py-3 px-4 rounded-xl bg-sky-50 text-sky-600 font-bold text-xs uppercase tracking-wider border border-sky-100 flex items-center justify-center gap-2 transition-all active:bg-sky-100"
+                        >
+                          <Edit className="w-4 h-4" />
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => setDeletingPatient(patient)}
+                          className="p-3 rounded-xl bg-rose-50 text-rose-600 border border-rose-100 transition-all active:bg-rose-100"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

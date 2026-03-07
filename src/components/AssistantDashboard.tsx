@@ -137,7 +137,7 @@ export function AssistantDashboard({
 }: AssistantDashboardProps) {
   const [activeTab, setActiveTab] =
     useState<string>("dashboard");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(typeof window !== 'undefined' ? window.innerWidth > 1024 : true);
   const [showSettings, setShowSettings] = useState(false);
   const [newFullName, setNewFullName] = useState(currentUser.fullName);
   const [newUsername, setNewUsername] = useState(currentUser.username);
@@ -518,22 +518,154 @@ export function AssistantDashboard({
   ];
 
   return (
-    <div className="flex h-screen bg-slate-50">
-      {/* Sidebar - Modern Dark Purple Design */}
+    <div className="flex flex-col h-screen bg-slate-50 overflow-hidden">
+      {/* Header with Notifications - Full Width */}
       <motion.div
-        initial={{ x: -100, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        className={`${sidebarOpen ? "w-72" : "w-20"} bg-[#e2fcfb] text-gray-800 transition-all duration-300 flex flex-col shadow-2xl relative overflow-hidden scrollbar-light`}
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className={`sticky top-0 z-[60] border-b border-slate-200 px-6 py-5 min-h-[100px] flex justify-between items-center shadow-sm w-full`}
+        style={{ backgroundColor: 'rgb(225, 252, 251)' }}
+      >
+        {/* Mobile Menu Toggle Button */}
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="lg:hidden p-2 mr-3 hover:bg-teal-100 rounded-lg transition-colors text-gray-700"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+
+        <div className="flex-1 min-w-0">
+          {activeTab === 'patients' && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">Patient Management</h2>
+              <p className="text-sm text-slate-500">Manage patient records and medical information</p>
+            </div>
+          )}
+          {activeTab === 'appointments' && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">Appointments</h2>
+              <p className="text-sm text-slate-500">Schedule and manage patient appointments</p>
+            </div>
+          )}
+          {activeTab === 'employees' && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">Employee Management</h2>
+              <p className="text-sm text-slate-500">Manage clinic staff and their access credentials</p>
+            </div>
+          )}
+          {activeTab === 'dental-charting' && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">Dental Charting</h2>
+              <p className="text-sm text-slate-500">Track dental conditions and treatments</p>
+            </div>
+          )}
+          {activeTab === 'photos' && (
+            <div>
+              <h3 className="text-xl font-bold text-slate-900 font-poppins">Upload Patient Photo</h3>
+              <p className="text-sm text-slate-500">Add treatment photos to patient records</p>
+            </div>
+          )}
+          {activeTab === 'financial-report' && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">Financial Report</h2>
+              <p className="text-sm text-slate-500">View financial data and reports</p>
+            </div>
+          )}
+          {activeTab === 'braces-charting' && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">Braces Charting</h2>
+              <p className="text-sm text-slate-500">Track and manage patient braces records</p>
+            </div>
+          )}
+          {activeTab === 'inventory' && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">Inventory Management</h2>
+              <p className="text-sm text-slate-500">Manage clinic supplies and equipment</p>
+            </div>
+          )}
+          {activeTab === 'braces' && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">Braces Charting</h2>
+              <p className="text-sm text-slate-500">Track and manage patient braces records</p>
+            </div>
+          )}
+          {activeTab === 'photos' && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">Patient Photos</h2>
+              <p className="text-sm text-slate-500">Manage patient treatment photos</p>
+            </div>
+          )}
+          {activeTab === 'referrals' && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">Referrals</h2>
+              <p className="text-sm text-slate-500">Generate and manage patient referrals</p>
+            </div>
+          )}
+          {activeTab === 'services' && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">Services Forms</h2>
+              <p className="text-sm text-slate-500">Manage clinic services and treatments</p>
+            </div>
+          )}
+          {activeTab === 'services-offered' && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">Services Offered</h2>
+              <p className="text-sm text-slate-500">Browse available services and pricing</p>
+            </div>
+          )}
+          {activeTab === 'financial' && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">Financial Report</h2>
+              <p className="text-sm text-slate-500">View financial data and reports</p>
+            </div>
+          )}
+          {(activeTab === 'dashboard' || !activeTab) && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">Dashboard</h2>
+              <p className="text-sm text-slate-500">Overview of clinic operations</p>
+            </div>
+          )}
+        </div>
+        <div className="ml-auto">
+          <Notifications
+            patients={patients}
+            appointments={appointments}
+            referrals={referrals}
+            announcements={announcements}
+            onNavigate={setActiveTab}
+          />
+        </div>
+      </motion.div>
+
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Sidebar Backdrop for Mobile */}
+        {sidebarOpen && (
+          <div 
+            className="lg:hidden fixed inset-0 bg-black/50 z-[45] backdrop-blur-sm transition-opacity"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+      {/* Sidebar - Modern Design */}
+      <motion.div
+        initial={false}
+        animate={{ 
+          x: (typeof window !== 'undefined' && window.innerWidth < 1024 && !sidebarOpen) ? -300 : 0,
+          opacity: 1
+        }}
+        className={`${
+          sidebarOpen ? "w-72 translate-x-0" : "w-0 lg:w-20 -translate-x-full lg:translate-x-0"
+        } bg-[#e2fcfb] text-gray-800 transition-all duration-300 flex flex-col shadow-2xl fixed lg:relative inset-y-0 left-0 z-50 overflow-hidden scrollbar-light flex-shrink-0`}
       >
         {/* Decorative gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-transparent to-cyan-500/5 pointer-events-none"></div>
 
-        <div className={`px-6 py-6 flex items-center justify-start gap-3 border-b border-teal-300 relative z-10 ${sidebarOpen ? 'min-h-[104px]' : 'min-h-[100px]'}`}>
+        <div className={`px-6 py-6 flex items-center justify-start gap-3 border-b border-teal-300 relative z-10 ${(typeof window !== 'undefined' && window.innerWidth >= 1024) ? (sidebarOpen ? 'min-h-[104px]' : 'min-h-[100px]') : 'min-h-[100px]'}`}>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="p-2.5 hover:bg-teal-200 rounded-lg transition-all duration-200 backdrop-blur-sm text-gray-700"
           >
-            <Menu className="w-5 h-5" />
+            {sidebarOpen && typeof window !== 'undefined' && window.innerWidth < 1024 ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
           {sidebarOpen && (
             <motion.div
@@ -568,7 +700,10 @@ export function AssistantDashboard({
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  if (typeof window !== 'undefined' && window.innerWidth < 1024) setSidebarOpen(false);
+                }}
                 className={`flex items-center gap-3 transition-all duration-300 group relative overflow-visible ${
                   sidebarOpen 
                     ? 'w-full px-4 py-3 rounded-full' 
@@ -645,118 +780,7 @@ export function AssistantDashboard({
         </div>
       </motion.div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col bg-white">
-        {/* Header with Notifications - Premium Design */}
-        <motion.div
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className={`border-b border-slate-200 bg-white px-6 py-5 ${sidebarOpen ? 'min-h-[104px]' : 'min-h-[100px]'} flex justify-between items-center`}
-        >
-          <div className="flex-1 min-w-0">
-            {activeTab === 'patients' && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Patient Management</h2>
-                <p className="text-sm text-slate-500">Manage patient records and medical information</p>
-              </div>
-            )}
-            {activeTab === 'appointments' && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Appointments</h2>
-                <p className="text-sm text-slate-500">Schedule and manage patient appointments</p>
-              </div>
-            )}
-            {activeTab === 'employees' && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Employee Management</h2>
-                <p className="text-sm text-slate-500">Manage clinic staff and their access credentials</p>
-              </div>
-            )}
-            {activeTab === 'dental-charting' && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Dental Charting</h2>
-                <p className="text-sm text-slate-500">Track dental conditions and treatments</p>
-              </div>
-            )}
-            {activeTab === 'photos' && (
-              <div>
-                <h3 className="text-xl font-bold text-slate-900 font-poppins">Upload Patient Photo</h3>
-                <p className="text-sm text-slate-500">Add treatment photos to patient records</p>
-              </div>
-            )}
-            {activeTab === 'financial-report' && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Financial Report</h2>
-                <p className="text-sm text-slate-500">View financial data and reports</p>
-              </div>
-            )}
-            {activeTab === 'braces-charting' && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Braces Charting</h2>
-                <p className="text-sm text-slate-500">Track and manage patient braces records</p>
-              </div>
-            )}
-            {activeTab === 'inventory' && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Inventory Management</h2>
-                <p className="text-sm text-slate-500">Manage clinic supplies and equipment</p>
-              </div>
-            )}
-            {activeTab === 'braces' && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Braces Charting</h2>
-                <p className="text-sm text-slate-500">Track and manage patient braces records</p>
-              </div>
-            )}
-            {activeTab === 'photos' && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Patient Photos</h2>
-                <p className="text-sm text-slate-500">Manage patient treatment photos</p>
-              </div>
-            )}
-            {activeTab === 'referrals' && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Referrals</h2>
-                <p className="text-sm text-slate-500">Generate and manage patient referrals</p>
-              </div>
-            )}
-            {activeTab === 'services' && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Services Forms</h2>
-                <p className="text-sm text-slate-500">Manage clinic services and treatments</p>
-              </div>
-            )}
-            {activeTab === 'services-offered' && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Services Offered</h2>
-                <p className="text-sm text-slate-500">Browse available services and pricing</p>
-              </div>
-            )}
-            {activeTab === 'financial' && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Financial Report</h2>
-                <p className="text-sm text-slate-500">View financial data and reports</p>
-              </div>
-            )}
-            {(activeTab === 'dashboard' || !activeTab) && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Dashboard</h2>
-                <p className="text-sm text-slate-500">Overview of clinic operations</p>
-              </div>
-            )}
-          </div>
-          <div className="ml-auto">
-            <Notifications
-              patients={patients}
-              appointments={appointments}
-              referrals={referrals}
-              announcements={announcements}
-              onNavigate={setActiveTab}
-            />
-          </div>
-        </motion.div>
-
-        {/* Main Content Area with Animation */}
+        {/* Main Content Area */}
         <div className="flex-1 overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.div

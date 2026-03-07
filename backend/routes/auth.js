@@ -3,6 +3,7 @@ const bcryptjs = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/database');
 const { sendPatientCredentials } = require('../utils/emailService');
+const { sendSMS } = require('../utils/smsService');
 
 const router = express.Router();
 
@@ -293,6 +294,137 @@ router.post('/reset-doctor', async (req, res) => {
     res.json({ message: 'Doctor reset successfully. Login with: doctor / doctor123' });
   } catch (error) {
     console.error('Reset doctor error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Forgot Password - Send OTP
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { username } = req.body;
+    
+    if (!username) {
+      return res.status(400).json({ error: 'Username is required' });
+    }
+
+    // Find user by username
+    const [users] = await pool.query('SELECT id, phone, fullName FROM users WHERE username = ?', [username]);
+    if (users.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = users[0];
+    if (!user.phone) {
+      return res.status(400).json({ error: 'No phone number associated with this account. Please contact the clinic.' });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Store OTP in database
+    await pool.query('DELETE FROM otp_verifications WHERE phone = ?', [user.phone]);
+    await pool.query(
+      'INSERT INTO otp_verifications (phone, otp, expiresAt, verified) VALUES (?, ?, ?, FALSE)',
+      [user.phone, otp, expiresAt]
+    );
+
+    // Send SMS
+    const smsResult = await sendSMS(user.phone, `Your ${process.env.PHILSMS_SENDER_NAME || 'PhilSMS'} verification code for password reset is: ${otp}. Valid for 10 minutes.`);
+
+    if (smsResult.success) {
+      // Mask phone number for security
+      const maskedPhone = user.phone.replace(/(\d{3})\d+(\d{4})/, '$1****$2');
+      res.json({ 
+        message: 'OTP sent successfully', 
+        phone: maskedPhone,
+        userId: user.id 
+      });
+    } else {
+      res.status(500).json({ error: 'Failed to send OTP via SMS', details: smsResult.error });
+    }
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Verify OTP
+router.post('/verify-otp', async (req, res) => {
+  try {
+    const { username, otp } = req.body;
+
+    if (!username || !otp) {
+      return res.status(400).json({ error: 'Username and OTP are required' });
+    }
+
+    // Find user's phone
+    const [users] = await pool.query('SELECT phone FROM users WHERE username = ?', [username]);
+    if (users.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const phone = users[0].phone;
+
+    // Check OTP
+    const [otps] = await pool.query(
+      'SELECT * FROM otp_verifications WHERE phone = ? AND otp = ? AND expiresAt > NOW() AND verified = FALSE',
+      [phone, otp]
+    );
+
+    if (otps.length === 0) {
+      return res.status(400).json({ error: 'Invalid or expired OTP' });
+    }
+
+    // Mark as verified
+    await pool.query('UPDATE otp_verifications SET verified = TRUE WHERE id = ?', [otps[0].id]);
+
+    res.json({ message: 'OTP verified successfully', verified: true });
+  } catch (error) {
+    console.error('Verify OTP error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Reset Password
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { username, otp, newPassword } = req.body;
+
+    if (!username || !otp || !newPassword) {
+      return res.status(400).json({ error: 'Username, OTP, and new password are required' });
+    }
+
+    // Find user's phone
+    const [users] = await pool.query('SELECT id, phone FROM users WHERE username = ?', [username]);
+    if (users.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = users[0];
+
+    // Check if OTP was verified
+    const [otps] = await pool.query(
+      'SELECT * FROM otp_verifications WHERE phone = ? AND otp = ? AND verified = TRUE',
+      [user.phone, otp]
+    );
+
+    if (otps.length === 0) {
+      return res.status(400).json({ error: 'OTP not verified or invalid' });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcryptjs.hash(newPassword, 10);
+
+    // Update password
+    await pool.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, user.id]);
+
+    // Clean up OTP
+    await pool.query('DELETE FROM otp_verifications WHERE phone = ?', [user.phone]);
+
+    res.json({ message: 'Password reset successfully' });
+  } catch (error) {
+    console.error('Reset password error:', error);
     res.status(500).json({ error: error.message });
   }
 });

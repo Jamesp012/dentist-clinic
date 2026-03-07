@@ -532,12 +532,22 @@ export default function App() {
 
   // Show auth page if no user is logged in
   if (!currentUser) {
-    return <AuthPage onLogin={handleLogin} onSignup={handleSignup} />;
+    return (
+      <AuthPage 
+        onLogin={handleLogin} 
+        onSignup={handleSignup} 
+      />
+    );
   }
 
   // If first-time login, show password change prompt
   if (currentUser.isFirstLogin && currentUser.role !== 'patient') {
-    return <AuthPage onLogin={handleLogin} onSignup={handleSignup} />;
+    return (
+      <AuthPage 
+        onLogin={handleLogin} 
+        onSignup={handleSignup} 
+      />
+    );
   }
 
   // Route to appropriate dashboard based on accessLevel

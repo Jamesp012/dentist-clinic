@@ -445,7 +445,7 @@ export function Notifications({ patients: _patients, appointments, referrals, an
                   initial={{ opacity: 0, y: -10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                  className="fixed right-8 top-20 w-96 bg-white rounded-2xl shadow-[0_20px_60px_rgba(15,23,42,0.15)] border border-slate-200 ring-1 ring-emerald-100 z-[2147483647] h-[70vh] max-h-[600px] flex flex-col pointer-events-auto"
+                  className="fixed right-4 md:right-8 top-20 w-[calc(100vw-2rem)] md:w-96 bg-white rounded-2xl shadow-[0_20px_60px_rgba(15,23,42,0.15)] border border-slate-200 ring-1 ring-emerald-100 z-[2147483647] h-[70vh] max-h-[600px] flex flex-col pointer-events-auto"
                 >
               {/* Header */}
               <div className="px-5 py-4 border-b border-slate-100 bg-emerald-50/80 flex justify-between items-center">

@@ -109,7 +109,7 @@ export function DoctorDashboard({
   onDataChanged
 }: DoctorDashboardProps) {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(typeof window !== 'undefined' ? window.innerWidth > 1024 : true);
   const [showSettings, setShowSettings] = useState(false);
   const [newFullName, setNewFullName] = useState(currentUser.fullName);
   const [newUsername, setNewUsername] = useState(currentUser.username);
@@ -443,237 +443,261 @@ export function DoctorDashboard({
   ];
 
   return (
-    <div className="flex h-screen bg-slate-50">{/* Sidebar - Modern Dark Purple Design */}
+    <div className="flex flex-col h-screen bg-slate-50 overflow-hidden">
+      {/* Header with Notifications - Full Width */}
       <motion.div 
-        initial={{ x: -100, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        id="app-sidebar"
-        className={`${sidebarOpen ? 'w-72' : 'w-20'} bg-[#e2fcfb] text-gray-800 transition-all duration-300 flex flex-col shadow-2xl relative overflow-hidden scrollbar-light`}
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className={`sticky top-0 z-[60] bg-white/80 backdrop-blur-md border-b border-white/40 px-8 py-6 min-h-[100px] flex justify-between items-center shadow-sm w-full`}
       >
-        {/* Decorative gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-transparent to-cyan-500/5 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#9CEAEF]/30 via-transparent to-[#68D8D6]/20 pointer-events-none"></div>
         
-        <div className={`px-6 py-6 flex items-center justify-start gap-3 border-b border-teal-300 relative z-10 ${sidebarOpen ? 'min-h-[104px]' : 'min-h-[100px]'}`}>
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2.5 hover:bg-teal-200 rounded-lg transition-all duration-200 backdrop-blur-sm text-gray-700"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-          {sidebarOpen && (
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => setShowSettings(true)}
-            >
-              <div className="min-w-0">
-                <h1 className="text-lg font-semibold text-gray-800 whitespace-nowrap overflow-hidden text-ellipsis">
-                  {getUserDisplayName(currentUser.fullName) || currentUser.username || 'Doctor'}
-                </h1>
-                <p className="text-xs text-gray-600 flex items-center gap-1 mt-1">
-                  Doctor
-                  <Settings className="w-3 h-3" />
-                </p>
-              </div>
-            </motion.div>
+        {/* Mobile Menu Toggle Button */}
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="lg:hidden p-2 mr-3 hover:bg-teal-100 rounded-lg transition-colors text-gray-700 relative z-10"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+
+        <div className="relative z-10 flex-1">
+          {activeTab === 'dashboard' && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">Dashboard</h2>
+              <p className="text-sm text-slate-500">Overview of clinic operations</p>
+            </div>
+          )}
+          {activeTab === 'patients' && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">Patient Management</h2>
+              <p className="text-sm text-slate-500">Manage patient records and medical information</p>
+            </div>
+          )}
+          {activeTab === 'employees' && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">Employee Management</h2>
+              <p className="text-sm text-slate-500">Manage clinic staff and their access credentials</p>
+            </div>
+          )}
+          {activeTab === 'appointments' && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">Appointments</h2>
+              <p className="text-sm text-slate-500">Schedule and manage patient appointments</p>
+            </div>
+          )}
+          {activeTab === 'charting' && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">Dental Charting</h2>
+              <p className="text-sm text-slate-500">Track dental conditions and treatments</p>
+            </div>
+          )}
+          {activeTab === 'photos' && (
+            <div>
+              <h3 className="text-xl font-bold text-slate-900 font-poppins">Upload Patient Photo</h3>
+              <p className="text-sm text-slate-500">Add treatment photos to patient records</p>
+            </div>
+          )}
+          {activeTab === 'braces' && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">Braces Charting</h2>
+              <p className="text-sm text-slate-500">Track and manage patient braces records</p>
+            </div>
+          )}
+          {activeTab === 'referrals' && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">Referrals</h2>
+              <p className="text-sm text-slate-500">Generate and manage patient referrals</p>
+            </div>
+          )}
+          {activeTab === 'services' && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">Services Forms</h2>
+              <p className="text-sm text-slate-500">Manage clinic services and treatments</p>
+            </div>
+          )}
+          {activeTab === 'services-offered' && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">Services Offered</h2>
+              <p className="text-sm text-slate-500">Browse available services and pricing</p>
+            </div>
+          )}
+          {activeTab === 'inventory' && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">Inventory Management</h2>
+              <p className="text-sm text-slate-500">Track supplies and manage inventory</p>
+            </div>
+          )}
+          {activeTab === 'financial' && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">Financial Report</h2>
+              <p className="text-sm text-slate-500">View financial data and reports</p>
+            </div>
+          )}
+          {activeTab === 'announcements' && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">Announcements</h2>
+              <p className="text-sm text-slate-500">Manage clinic announcements and updates</p>
+            </div>
           )}
         </div>
+        <div className="relative z-10 ml-auto">
+          <Notifications
+            patients={patients}
+            appointments={appointments}
+            referrals={referrals}
+            announcements={announcements}
+            onNavigate={setActiveTab}
+          />
+        </div>
+      </motion.div>
 
-        <nav className={`flex-1 overflow-y-auto relative z-10 sidebar-scroll space-y-2 ${
-          sidebarOpen ? 'p-4' : 'p-2'
-        }`}>
-          {menuItems.map((item, index) => {
-            const Icon = item.icon;
-            const unreadMessages = 0;
-            return (
-              <motion.button
-                key={item.id}
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Sidebar Backdrop for Mobile */}
+        {sidebarOpen && (
+          <div 
+            className="lg:hidden fixed inset-0 bg-black/50 z-[45] backdrop-blur-sm transition-opacity"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Sidebar - Modern Design */}
+        <motion.div 
+          initial={false}
+          animate={{ 
+            x: (typeof window !== 'undefined' && window.innerWidth < 1024 && !sidebarOpen) ? -300 : 0,
+            opacity: 1
+          }}
+          id="app-sidebar"
+          className={`${
+            sidebarOpen ? 'w-72 translate-x-0' : 'w-0 lg:w-20 -translate-x-full lg:translate-x-0'
+          } bg-[#e2fcfb] text-gray-800 transition-all duration-300 flex flex-col shadow-2xl fixed lg:relative inset-y-0 left-0 z-50 overflow-hidden scrollbar-light flex-shrink-0`}
+        >
+          {/* Decorative gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-transparent to-cyan-500/5 pointer-events-none"></div>
+          
+          <div className={`px-6 py-6 flex items-center justify-start gap-3 border-b border-teal-300 relative z-10 min-h-[100px]`}>
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2.5 hover:bg-teal-200 rounded-lg transition-all duration-200 backdrop-blur-sm text-gray-700"
+            >
+              {sidebarOpen && typeof window !== 'undefined' && window.innerWidth < 1024 ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+            {sidebarOpen && (
+              <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-                onClick={() => setActiveTab(item.id)}
-                className={`flex items-center gap-3 transition-all duration-300 group relative overflow-visible ${
-                  sidebarOpen 
-                    ? 'w-full px-4 py-3 rounded-full' 
-                    : 'w-16 h-16 justify-center rounded-lg'
-                } ${
-                  activeTab === item.id
-                    ? 'bg-teal-200 shadow-lg shadow-teal-300/30 translate-x-1'
-                    : 'hover:bg-teal-100 hover:translate-x-0.5'
-                }`}
+                className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => setShowSettings(true)}
               >
-                {activeTab === item.id && (
-                  <motion.div
-                    layoutId="activeTab"
-                    className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent rounded-full"
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                  />
-                )}
-                <div className={`p-2 rounded-lg flex-shrink-0 transition-all duration-300 relative ${
-                  activeTab === item.id 
-                    ? 'bg-gradient-to-br ' + item.color + ' text-white shadow-lg' 
-                    : 'bg-teal-100 text-gray-700'
-                }`}>
-                  <Icon className="w-5 h-5" />
-                  {unreadMessages > 0 && (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-semibold animate-pulse">
-                      {unreadMessages}
-                    </span>
-                  )}
+                <div className="min-w-0">
+                  <h1 className="text-lg font-semibold text-gray-800 whitespace-nowrap overflow-hidden text-ellipsis">
+                    {getUserDisplayName(currentUser.fullName) || currentUser.username || 'Doctor'}
+                  </h1>
+                  <p className="text-xs text-gray-600 flex items-center gap-1 mt-1">
+                    Doctor
+                    <Settings className="w-3 h-3" />
+                  </p>
                 </div>
-                {sidebarOpen && (
-                  <div className="flex items-center justify-between flex-1 min-w-0">
-                    <span className={`text-sm font-medium transition-colors duration-300 ${activeTab === item.id ? 'text-gray-900' : 'text-gray-700'}`}>
-                      {item.label}
-                    </span>
+              </motion.div>
+            )}
+          </div>
+
+          <nav className={`flex-1 overflow-y-auto relative z-10 sidebar-scroll space-y-2 ${
+            sidebarOpen ? 'p-4' : 'p-2'
+          }`}>
+            {menuItems.map((item, index) => {
+              const Icon = item.icon;
+              const unreadMessages = 0;
+              return (
+                <motion.button
+                  key={item.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  onClick={() => {
+                    setActiveTab(item.id);
+                    if (typeof window !== 'undefined' && window.innerWidth < 1024) setSidebarOpen(false);
+                  }}
+                  className={`flex items-center gap-3 transition-all duration-300 group relative overflow-visible ${
+                    sidebarOpen 
+                      ? 'w-full px-4 py-3 rounded-full' 
+                      : 'w-16 h-16 justify-center rounded-lg'
+                  } ${
+                    activeTab === item.id
+                      ? 'bg-teal-200 shadow-lg shadow-teal-300/30 translate-x-1'
+                      : 'hover:bg-teal-100 hover:translate-x-0.5'
+                  }`}
+                >
+                  {activeTab === item.id && (
+                    <motion.div
+                      layoutId="activeTab"
+                      className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent rounded-full"
+                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                    />
+                  )}
+                  <div className={`p-2 rounded-lg flex-shrink-0 transition-all duration-300 relative ${
+                    activeTab === item.id 
+                      ? 'bg-gradient-to-br ' + item.color + ' text-white shadow-lg' 
+                      : 'bg-teal-100 text-gray-700'
+                  }`}>
+                    <Icon className="w-5 h-5" />
                     {unreadMessages > 0 && (
-                      <span className="px-2 py-0.5 bg-red-500 text-white text-xs rounded-full font-semibold animate-pulse flex-shrink-0 ml-2">
+                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-semibold animate-pulse">
                         {unreadMessages}
                       </span>
                     )}
                   </div>
-                )}
-              </motion.button>
-            );
-          })}
-        </nav>
+                  {sidebarOpen && (
+                    <div className="flex items-center justify-between flex-1 min-w-0">
+                      <span className={`text-sm font-medium transition-colors duration-300 ${activeTab === item.id ? 'text-gray-900' : 'text-gray-700'}`}>
+                        {item.label}
+                      </span>
+                      {unreadMessages > 0 && (
+                        <span className="px-2 py-0.5 bg-red-500 text-white text-xs rounded-full font-semibold animate-pulse flex-shrink-0 ml-2">
+                          {unreadMessages}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </motion.button>
+              );
+            })}
+          </nav>
 
-        {/* User Info and Logout */}
-        <div id="sidebar-signout" className="p-4 border-t border-teal-300 relative z-10">
-          {sidebarOpen ? (
-            <button
-              onClick={onLogout}
-              className="w-full px-4 py-2.5 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 rounded-full flex items-center justify-center gap-2 transition-all duration-300 shadow-lg hover:shadow-xl font-medium text-white"
-            >
-              <LogOut className="w-4 h-4" />
-              Sign Out
-            </button>
-          ) : (
-            <button
-              onClick={onLogout}
-              className="w-full p-3 hover:bg-teal-200 rounded-lg flex items-center justify-center transition-all group"
-              title="Logout"
-            >
-              <LogOut className="w-5 h-5 text-teal-600 group-hover:text-teal-700 transition-colors" />
-            </button>
-          )}
-        </div>
-      </motion.div>
-
-      {/* Main Content */}
-      <div className={`flex-1 overflow-auto flex flex-col ${activeTab === 'charting' ? 'bg-white' : 'bg-gradient-to-br from-slate-50 via-slate-25 to-[#C4FFF9]/20'} scrollbar-thin scrollbar-thumb-teal-500 scrollbar-track-slate-100 hover:scrollbar-thumb-teal-600`}>
-        {/* Header with Notifications - Premium Design */}
-        <motion.div 
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className={`bg-white/80 backdrop-blur-md border-b border-white/40 px-8 py-6 ${sidebarOpen ? 'min-h-[104px]' : 'min-h-[100px]'} flex justify-between items-center shadow-sm relative`}
-        >
-          {/* Divider between sidebar and header for visual separation */}
-          <div aria-hidden className="absolute top-0 bottom-0 pointer-events-none transition-all duration-300" style={{ left: sidebarOpen ? '18rem' : '5rem', width: '1px', backgroundColor: 'rgba(2,6,23,0.06)', boxShadow: sidebarOpen ? '1px 0 8px rgba(2,6,23,0.06)' : '1px 0 6px rgba(2,6,23,0.04)' }} />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#9CEAEF]/30 via-transparent to-[#68D8D6]/20 pointer-events-none"></div>
-          <div className="relative z-10 flex-1">
-            {activeTab === 'dashboard' && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Dashboard</h2>
-                <p className="text-sm text-slate-500">Overview of clinic operations</p>
-              </div>
+          {/* User Info and Logout */}
+          <div id="sidebar-signout" className="p-4 border-t border-teal-300 relative z-10">
+            {sidebarOpen ? (
+              <button
+                onClick={onLogout}
+                className="w-full px-4 py-2.5 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 rounded-full flex items-center justify-center gap-2 transition-all duration-300 shadow-lg hover:shadow-xl font-medium text-white"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </button>
+            ) : (
+              <button
+                onClick={onLogout}
+                className="w-full p-3 hover:bg-teal-200 rounded-lg flex items-center justify-center transition-all group"
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5 text-teal-600 group-hover:text-teal-700 transition-colors" />
+              </button>
             )}
-            {activeTab === 'patients' && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Patient Management</h2>
-                <p className="text-sm text-slate-500">Manage patient records and medical information</p>
-              </div>
-            )}
-            {activeTab === 'employees' && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Employee Management</h2>
-                <p className="text-sm text-slate-500">Manage clinic staff and their access credentials</p>
-              </div>
-            )}
-            {activeTab === 'appointments' && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Appointments</h2>
-                <p className="text-sm text-slate-500">Schedule and manage patient appointments</p>
-              </div>
-            )}
-            {activeTab === 'charting' && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Dental Charting</h2>
-                <p className="text-sm text-slate-500">Track dental conditions and treatments</p>
-              </div>
-            )}
-            {activeTab === 'photos' && (
-              <div>
-                <h3 className="text-xl font-bold text-slate-900 font-poppins">Upload Patient Photo</h3>
-                <p className="text-sm text-slate-500">Add treatment photos to patient records</p>
-              </div>
-            )}
-            {activeTab === 'braces' && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Braces Charting</h2>
-                <p className="text-sm text-slate-500">Track and manage patient braces records</p>
-              </div>
-            )}
-            {activeTab === 'referrals' && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Referrals</h2>
-                <p className="text-sm text-slate-500">Generate and manage patient referrals</p>
-              </div>
-            )}
-            {activeTab === 'services' && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Services Forms</h2>
-                <p className="text-sm text-slate-500">Manage clinic services and treatments</p>
-              </div>
-            )}
-            {activeTab === 'services-offered' && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Services Offered</h2>
-                <p className="text-sm text-slate-500">Browse available services and pricing</p>
-              </div>
-            )}
-            {activeTab === 'inventory' && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Inventory Management</h2>
-                <p className="text-sm text-slate-500">Track supplies and manage inventory</p>
-              </div>
-            )}
-            {activeTab === 'financial' && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Financial Report</h2>
-                <p className="text-sm text-slate-500">View financial data and reports</p>
-              </div>
-            )}
-            {activeTab === 'announcements' && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Announcements</h2>
-                <p className="text-sm text-slate-500">Manage clinic announcements and updates</p>
-              </div>
-            )}
-          </div>
-          <div className="relative z-10 ml-auto">
-            <Notifications
-              patients={patients}
-              appointments={appointments}
-              referrals={referrals}
-              announcements={announcements}
-              onNavigate={setActiveTab}
-            />
           </div>
         </motion.div>
-        
-        {/* Main Content Area with Animation */}
-        <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-teal-500 scrollbar-track-slate-100 hover:scrollbar-thumb-teal-600">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.2 }}
-              className="h-full"
-            >
+
+        {/* Main Content Area */}
+        <div className={`flex-1 flex flex-col min-w-0 overflow-hidden relative ${activeTab === 'charting' ? 'bg-white' : 'bg-gradient-to-br from-slate-50 via-slate-25 to-[#C4FFF9]/20'}`}>
+          <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-teal-500 scrollbar-track-slate-100 hover:scrollbar-thumb-teal-600">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2 }}
+                className="h-full"
+              >
               {activeTab === 'dashboard' && (
                 <Dashboard
                   patients={patients}
@@ -1484,6 +1508,7 @@ export function DoctorDashboard({
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
     </div>
   );
 }

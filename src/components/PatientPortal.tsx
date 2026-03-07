@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Patient, Appointment, TreatmentRecord, PhotoUpload, Announcement, Payment, Service, Referral } from '../App';
-import { Calendar, FileText, User as UserIcon, Clock, X, Edit, Save, XCircle, Info, CheckCircle, AlertCircle, Camera, Sparkles, Heart, Smile, Shield, Megaphone, Plus, CreditCard, Settings, Check, Eye, EyeOff, Menu, LogOut, History, RotateCcw, Trash2, Upload, Download, Home } from 'lucide-react';
+import { Calendar, FileText, User as UserIcon, Clock, X, Edit, Save, XCircle, Info, CheckCircle, AlertCircle, Camera, Sparkles, Heart, Smile, Shield, Megaphone, Plus, CreditCard, Settings, Check, Eye, EyeOff, Menu, LogOut, History, RotateCcw, Trash2, Upload, Download, Home, ClipboardList } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import { handlePhoneInput, formatPhoneNumber } from '../utils/phoneValidation';
@@ -8,7 +8,6 @@ import { convertToDBDate, convertToDisplayDate, formatDateInput, formatToDD_MM_Y
 import { appointmentAPI, API_BASE, SERVER_URL } from '../api';
 import { Notifications } from './Notifications';
 import { generateReferralPDF } from '../utils/referralPdfGenerator';
-import { SearchableSelect } from './SearchableSelect';
 import SERVICE_TYPES from '../data/serviceTypes';
 import PatientReferralModal from './PatientReferralModal';
 
@@ -103,13 +102,13 @@ export function PatientPortal({
   userRole 
 }: PatientPortalProps) {
   const birthdatePickerRef = useRef<HTMLInputElement | null>(null);
-  const [activeTab, setActiveTab] = useState<'home' | 'profile' | 'appointments' | 'records' | 'photos' | 'balance' | 'care-guide' | 'announcements' | 'services-offered' | 'forms'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'profile' | 'appointments' | 'records' | 'photos' | 'balance' | 'care-guide' | 'announcements' | 'services-offered' | 'forms' | 'settings'>('home');
   const [announcementSubTab, setAnnouncementSubTab] = useState<'announcements' | 'services'>('announcements');
   const [isEditing, setIsEditing] = useState(false);
   const [editedPatient, setEditedPatient] = useState<Patient>(patient);
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoUpload | null>(null);
   const [showSettings, setShowSettings] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 1024);
   const [newFullName, setNewFullName] = useState(patient.name);
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -157,7 +156,10 @@ export function PatientPortal({
   const [formsTab, setFormsTab] = useState<'doctor' | 'xray' | 'patient'>('doctor');
   const [isLoadingForms, setIsLoadingForms] = useState(false);
   const [showPatientReferralModal, setShowPatientReferralModal] = useState(false);
-  const [patientReferrals, setPatientReferrals] = useState<any[]>([]);
+  const [patientReferrals, setPatientReferrals] = useState<any[]>(referrals || []);
+  useEffect(() => {
+    setPatientReferrals(referrals || []);
+  }, [referrals]);
   const [referralUploadFiles, setReferralUploadFiles] = useState<File[]>([]);
   const [isUploadingReferral, setIsUploadingReferral] = useState(false);
   const [referralFiles, setReferralFiles] = useState<any[]>(patient.referralFiles || []);
@@ -542,14 +544,16 @@ export function PatientPortal({
 
   const menuItems = [
     { id: 'home', label: 'Home', icon: Home, color: 'from-teal-500 to-cyan-600' },
-    { id: 'profile', label: 'My Profile', icon: UserIcon, color: 'from-teal-500 to-cyan-600' },
     { id: 'appointments', label: 'Appointments', icon: Calendar, color: 'from-teal-500 to-teal-600' },
     { id: 'records', label: 'Records', icon: FileText, color: 'from-cyan-500 to-cyan-600' },
     { id: 'photos', label: 'Photos', icon: Camera, color: 'from-teal-600 to-cyan-500' },
+    { id: 'forms', label: 'Forms', icon: ClipboardList, color: 'from-cyan-500 to-teal-500' },
     { id: 'balance', label: 'Balance', icon: CreditCard, color: 'from-cyan-500 to-emerald-600' },
-    { id: 'announcements', label: 'Announcements', icon: Megaphone, color: 'from-cyan-600 to-teal-500' },
-    { id: 'services-offered', label: 'Services Offered', icon: Sparkles, color: 'from-cyan-600 to-teal-500' },
     { id: 'care-guide', label: 'Care Guide', icon: Sparkles, color: 'from-teal-500 to-emerald-600' },
+    { id: 'services-offered', label: 'Services Offered', icon: Sparkles, color: 'from-cyan-600 to-teal-500' },
+    { id: 'announcements', label: 'Announcements', icon: Megaphone, color: 'from-cyan-600 to-teal-500' },
+    { id: 'profile', label: 'My Profile', icon: UserIcon, color: 'from-teal-500 to-cyan-600' },
+    { id: 'settings', label: 'Account Settings', icon: Settings, color: 'from-slate-600 to-slate-700' },
   ] as const;
 
   const upcomingAppointments = patientAppointments.filter(apt => {
@@ -584,10 +588,17 @@ export function PatientPortal({
   });
 
   const calculateAge = (dob: string) => {
+    if (!dob) return 'N/A';
     // Parse date string as local date to avoid timezone issues
     const dateStr = dob.includes('T') ? dob.split('T')[0] : dob;
+    if (!dateStr || !dateStr.includes('-')) return 'N/A';
+    
     const [year, month, day] = dateStr.split('-').map(Number);
+    if (!year || isNaN(year)) return 'N/A';
+    
     const birthDate = new Date(year, month - 1, day);
+    if (isNaN(birthDate.getTime())) return 'N/A';
+    
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
@@ -931,11 +942,24 @@ export function PatientPortal({
 
   return (
     <div className="flex h-screen bg-slate-50">
+      {/* Sidebar Backdrop for Mobile */}
+      {sidebarOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black/50 z-[45] backdrop-blur-sm transition-opacity"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <motion.div 
-        initial={{ x: -100, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        className={`${sidebarOpen ? 'w-72' : 'w-20'} bg-[#e2fcfb] text-gray-800 transition-all duration-300 flex flex-col shadow-2xl relative overflow-hidden scrollbar-light`}
+        initial={false}
+        animate={{ 
+          x: (window.innerWidth <= 1024 && !sidebarOpen) ? -300 : 0,
+          opacity: 1
+        }}
+        className={`${
+          sidebarOpen ? 'w-72 translate-x-0' : 'w-20 lg:w-20 -translate-x-full lg:translate-x-0'
+        } bg-[#e2fcfb] text-gray-800 transition-all duration-300 flex flex-col shadow-2xl fixed lg:relative inset-y-0 left-0 z-50 overflow-hidden scrollbar-light`}
       >
         {/* Decorative gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-transparent to-cyan-500/5 pointer-events-none"></div>
@@ -945,7 +969,7 @@ export function PatientPortal({
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="p-2.5 hover:bg-teal-200 rounded-lg transition-all duration-200 backdrop-blur-sm text-gray-700"
           >
-            <Menu className="w-5 h-5" />
+            {sidebarOpen && window.innerWidth <= 1024 ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
           {sidebarOpen && (
             <motion.div
@@ -976,7 +1000,13 @@ export function PatientPortal({
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => {
+                  if (item.id === 'settings') {
+                    setShowSettings(true);
+                  }
+                  setActiveTab(item.id);
+                  if (window.innerWidth <= 1024) setSidebarOpen(false);
+                }}
                 className={`flex items-center gap-3 transition-all duration-300 group relative overflow-visible ${
                   sidebarOpen 
                     ? 'w-full px-4 py-3 rounded-full' 
@@ -1041,10 +1071,18 @@ export function PatientPortal({
         <motion.div 
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className={`sticky top-0 z-40 border-b border-slate-100 px-8 py-6 ${sidebarOpen ? 'min-h-[104px]' : 'min-h-[100px]'} flex justify-between items-center shadow-sm`}
+          className={`sticky top-0 z-40 border-b border-slate-100 px-4 lg:px-8 py-6 ${sidebarOpen ? 'min-h-[104px]' : 'min-h-[100px]'} flex justify-between items-center shadow-sm`}
           style={{ backgroundColor: 'rgb(225, 252, 251)' }}
         >
-          <div className="relative z-10 flex-1">
+          {/* Mobile Menu Toggle Button */}
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="lg:hidden p-2 mr-3 hover:bg-teal-100 rounded-lg transition-colors text-gray-700"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+
+          <div className="relative z-10 flex-1 min-w-0">
             {activeTab === 'home' && (
               <div>
                 <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Welcome Home</h2>
@@ -1102,6 +1140,18 @@ export function PatientPortal({
                 <p className="text-slate-500 mt-1.5 text-sm font-medium">Browse available services and pricing</p>
               </div>
             )}
+            {activeTab === 'forms' && (
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Referrals & Forms</h2>
+                <p className="text-slate-500 mt-1.5 text-sm font-medium">View and upload your dental referral documents</p>
+              </div>
+            )}
+            {activeTab === 'settings' && (
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Account Settings</h2>
+                <p className="text-slate-500 mt-1.5 text-sm font-medium">Manage your security and account preferences</p>
+              </div>
+            )}
           </div>
           <div className="relative z-10 ml-auto">
             <Notifications
@@ -1141,10 +1191,6 @@ export function PatientPortal({
                     </div>
                     <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                       <div className="max-w-2xl space-y-3">
-                        <h3 className="text-2xl font-semibold leading-tight">Personalized care brief</h3>
-                        <p className="text-sm text-white/80 md:text-base">
-                          Track appointments, monitor balances, and jump into care resources without leaving this view.
-                        </p>
                       </div>
                       <div className="flex flex-col gap-2 text-sm text-white/90">
                         <span className="rounded-full border border-white/30 bg-white/10 px-4 py-2 text-center font-semibold backdrop-blur">
@@ -1187,21 +1233,21 @@ export function PatientPortal({
                     </div>
                   </motion.div>
 
-                  {/* Two-Column Layout for TODAY'S SCHEDULE and APPOINTMENT STATUS */}
-                  <div className="grid grid-cols-2 gap-4">
+                  {/* Three-Column Layout for TODAY'S SCHEDULE, FORMS, and ANNOUNCEMENT */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     {/* TODAY'S SCHEDULE Card */}
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, delay: 0.1 }}
-                      className="group relative rounded-2xl bg-white border border-slate-200 p-4 hover:shadow-lg transition-all duration-300"
+                      className="group relative rounded-2xl bg-white border border-slate-200 p-4 hover:shadow-lg transition-all duration-300 overflow-hidden"
                     >
                       <div className="absolute inset-0 bg-gradient-to-br from-rose-50 to-orange-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
                       
                       {/* Card Header with Accent */}
                       <div className="flex items-center justify-center mb-6 relative">
                         <div className="absolute inset-0 flex justify-center -z-10">
-                          <div className="w-56 h-10 rounded-full bg-gradient-to-br from-white to-slate-50 opacity-60 blur-sm"></div>
+                          <div className="w-full max-w-[224px] h-10 rounded-full bg-gradient-to-br from-white to-slate-50 opacity-60 blur-sm"></div>
                         </div>
                         <h3 className="text-lg font-bold uppercase tracking-wide z-10" style={{ color: 'var(--dental-primary-dark)' }}>TODAY'S SCHEDULE</h3>
                       </div>
@@ -1213,7 +1259,6 @@ export function PatientPortal({
                         const todayAppt = patientAppointments.find(apt => getDateString(apt.date) === todayStr && apt.status !== 'cancelled');
                         
                         if (todayAppt) {
-                          const daysUntil = 0; // Today
                           return (
                             <div className="space-y-4">
                               {/* Live Alert */}
@@ -1269,21 +1314,63 @@ export function PatientPortal({
                       })()}
                     </motion.div>
 
+                    {/* REFERRALS & FORMS Card */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: 0.12 }}
+                      className="group relative rounded-2xl bg-white border border-slate-200 p-4 hover:shadow-lg transition-all duration-300 overflow-hidden"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                      
+                      {/* Card Header with Accent */}
+                      <div className="flex items-center justify-center mb-6 relative">
+                        <div className="absolute inset-0 flex justify-center -z-10">
+                          <div className="w-full max-w-[224px] h-10 rounded-full bg-gradient-to-br from-white to-slate-50 opacity-60 blur-sm"></div>
+                        </div>
+                        <h3 className="text-lg font-bold uppercase tracking-wide z-10" style={{ color: 'var(--dental-primary-dark)' }}>FORMS & REFERRALS</h3>
+                      </div>
+
+                      {/* Content */}
+                      <div className="space-y-4 text-center py-2">
+                        <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform duration-300">
+                          <ClipboardList className="w-8 h-8 text-emerald-600" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-slate-900 font-bold">Referral Documents</p>
+                          <p className="text-xs text-slate-500">View and upload your dental forms</p>
+                        </div>
+                        
+                        <div className="pt-2">
+                          <p className="text-xs font-semibold text-emerald-600 mb-4">{referrals.length} {referrals.length === 1 ? 'Document' : 'Documents'} Available</p>
+                          <button
+                            onClick={() => setActiveTab('forms')}
+                            className="w-full px-4 py-2.5 rounded-xl text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm"
+                          >
+                            Go to Forms
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+
                     {/* CLINIC NEWS Card */}
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, delay: 0.15 }}
-                      className="group relative rounded-2xl bg-white border border-slate-200 p-4 hover:shadow-lg transition-all duration-300"
+                      className="group relative rounded-2xl bg-white border border-slate-200 p-4 hover:shadow-lg transition-all duration-300 overflow-hidden"
                     >
-                      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-cyan-50/50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
                       
                       {/* Card Header with Accent */}
-                      <div className="flex items-center justify-center mb-6 relative">
-                        <div className="absolute inset-0 flex justify-center -z-10">
-                          <div className="w-56 h-10 rounded-full bg-gradient-to-br from-white to-slate-50 opacity-60 blur-sm"></div>
+                      <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-50">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                            <Megaphone className="w-4 h-4 text-emerald-600" />
+                          </div>
+                          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Clinic Update</h3>
                         </div>
-                        <h3 className="text-lg font-bold uppercase tracking-wide z-10" style={{ color: 'var(--dental-primary-dark)' }}>CLINIC NEWS</h3>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-1 rounded-md">News</span>
                       </div>
 
                       {/* Content */}
@@ -1294,41 +1381,32 @@ export function PatientPortal({
                         if (latestAnnouncement) {
                           return (
                             <div className="space-y-4">
-                              {/* Title Section */}
-                              <div className="pb-4 border-b border-slate-200">
-                                <div className="flex items-center justify-between mb-1">
-                                  <p className="text-sm text-slate-500 uppercase tracking-wide font-semibold">Latest Update</p>
-                                  <p className="text-xs font-semibold" style={{ color: 'var(--primary)' }}>
-                                    {latestAnnouncement.date
-                                      ? timeAgo(latestAnnouncement.date)
-                                      : 'Recently posted'
-                                    }
-                                  </p>
-                                </div>
-                                <p className="font-semibold text-slate-900 line-clamp-2">{latestAnnouncement.title}</p>
+                              <div className="space-y-1">
+                                <p className="text-xs font-semibold text-emerald-600">
+                                  {latestAnnouncement.date
+                                    ? timeAgo(latestAnnouncement.date)
+                                    : 'Recently posted'
+                                  }
+                                </p>
+                                <p className="font-bold text-slate-900 line-clamp-2 leading-tight">{latestAnnouncement.title}</p>
                               </div>
 
-                              {/* Message Preview */}
-                              <div className="space-y-2">
-                                <p className="text-sm text-slate-700 line-clamp-3">{latestAnnouncement.message}</p>
-                              </div>
+                              <p className="text-sm text-slate-600 line-clamp-3 leading-relaxed">{latestAnnouncement.message}</p>
 
-                              {/* (date moved into title header) */}
                               <button
                                 onClick={() => setActiveTab('announcements')}
-                                className="w-full px-4 py-2.5 rounded-lg text-sm font-semibold"
-                                style={{ background: 'var(--primary)', color: 'var(--primary-foreground)' }}
+                                className="w-full px-4 py-2.5 rounded-xl text-sm font-bold bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-sm"
                               >
-                                View All News
+                                Read More
                               </button>
                             </div>
                           );
                         } else {
                           return (
-                            <div className="text-center py-8">
-                              <Megaphone className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-                              <p className="text-slate-600 font-medium">No announcements yet</p>
-                              <p className="text-xs text-slate-500 mt-1">Check back soon for clinic updates</p>
+                            <div className="text-center py-6">
+                              <Megaphone className="w-10 h-10 text-slate-200 mx-auto mb-2" />
+                              <p className="text-slate-500 font-semibold text-sm">No updates yet</p>
+                              <p className="text-[10px] text-slate-400 mt-1">Check back later for news</p>
                             </div>
                           );
                         }
@@ -1339,8 +1417,8 @@ export function PatientPortal({
                 </div>
               )}
               {activeTab === 'profile' && (
-                <div className="p-8">
-                  <div className="relative overflow-hidden rounded-[32px] border border-emerald-100/80 bg-gradient-to-br from-emerald-50/80 via-white to-slate-50/80 p-6 shadow-[0_35px_70px_rgba(16,185,129,0.16)] space-y-6 backdrop-blur">
+                <div className="p-6 space-y-6">
+                  <div className="relative overflow-hidden rounded-[32px] border border-emerald-100/80 bg-gradient-to-br from-emerald-50/80 via-white to-slate-50/80 p-6 shadow-[0_35px_70px_rgba(16,185,129,0.16)] space-y-6 backdrop-blur w-full">
                     <div className="absolute -right-16 -top-10 h-48 w-48 rounded-full bg-emerald-200/40 blur-3xl"></div>
                     <div className="absolute -left-8 bottom-0 h-64 w-64 rounded-full bg-teal-100/40 blur-[120px]"></div>
                     <div className="relative z-10 space-y-8">
@@ -1454,8 +1532,11 @@ export function PatientPortal({
                           </div>
                         ) : (
                           <p className="text-lg font-semibold text-slate-900">{(() => {
+                            if (!patient.dateOfBirth) return 'N/A';
                             const dateStr = patient.dateOfBirth.includes('T') ? patient.dateOfBirth.split('T')[0] : patient.dateOfBirth;
-                            const [year, month, day] = dateStr.split('-');
+                            const parts = dateStr.split('-');
+                            if (parts.length < 3) return dateStr;
+                            const [year, month, day] = parts;
                             return `${month}/${day}/${year}`;
                           })()}</p>
                         )}
@@ -1710,9 +1791,11 @@ export function PatientPortal({
                     </h2>
                     <div className="space-y-3">
                       {upcomingAppointments.map(apt => {
-                        const { queueNumber, period, queueList } = getQueueInfo(apt);
+                        const { period, queueList } = getQueueInfo(apt);
                         const isCompleted = apt.status === 'completed';
-                          return (
+                        const appointmentTypesList = Array.isArray(apt.type) ? apt.type.join(', ') : (apt.type || 'N/A');
+                        
+                        return (
                           <motion.div 
                             key={apt.id} 
                             className={`p-4 border-2 rounded-lg appointment-upcoming-card transition-opacity ${isCompleted ? 'opacity-30' : ''}`}
@@ -1722,7 +1805,7 @@ export function PatientPortal({
                           >
                             <div className="flex justify-between items-start mb-3">
                               <div>
-                                <p className="text-lg mb-1 font-semibold">{apt.type}</p>
+                                <p className="text-lg mb-1 font-semibold">{appointmentTypesList}</p>
                                 <div className="flex items-center gap-2 text-sm text-gray-600">
                                   <Calendar className="w-4 h-4" />
                                   <span>{formatToWordedDate(getDateString(apt.date))}</span>
@@ -1740,7 +1823,7 @@ export function PatientPortal({
                             </div>
 
                             {/* Queue List */}
-                            {queueList.length > 0 && (
+                            {queueList && queueList.length > 0 && (
                               <div className="mt-3 p-3 bg-white bg-opacity-50 rounded border" style={{borderColor: 'rgb(154, 245, 228)'}}>
                                 <p className="text-xs font-semibold text-gray-600 mb-2">Queue Order ({period}):</p>
                                 <div className="flex flex-wrap gap-2">
@@ -1791,7 +1874,9 @@ export function PatientPortal({
                         <div key={apt.id} className="p-4 border border-gray-200 rounded-lg bg-gray-50">
                           <div className="flex justify-between items-start">
                             <div>
-                              <p className="text-lg mb-1">{apt.type}</p>
+                              <p className="text-lg mb-1 font-semibold">
+                                {Array.isArray(apt.type) ? apt.type.join(', ') : (apt.type || 'N/A')}
+                              </p>
                               <div className="flex items-center gap-2 text-sm text-gray-600">
                                 <Calendar className="w-4 h-4" />
                                 <span>{formatToWordedDate(getDateString(apt.date))}</span>
@@ -1799,7 +1884,7 @@ export function PatientPortal({
                                 <span>{formatTime(apt.time)}</span>
                               </div>
                             </div>
-                            <span className="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm">
+                            <span className="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm font-medium">
                               {apt.status}
                             </span>
                           </div>
@@ -1959,7 +2044,7 @@ export function PatientPortal({
                       >
                         Doctor’s Referral
                         <span className="ml-2 inline-flex items-center justify-center text-xs px-2 py-0.5 bg-teal-50 text-teal-500 rounded-full border border-teal-100">
-                          {patientReferrals.filter(r => r.specialty !== 'X-Ray Imaging' && r.referredTo !== 'X-Ray Facility').length}
+                          {patientReferrals.filter(r => r && r.specialty !== 'X-Ray Imaging' && r.referredTo !== 'X-Ray Facility').length}
                         </span>
                       </button>
 
@@ -1971,7 +2056,7 @@ export function PatientPortal({
                       >
                         X-ray Referral
                         <span className="ml-2 inline-flex items-center justify-center text-xs px-2 py-0.5 bg-teal-50 text-teal-500 rounded-full border border-teal-100">
-                          {patientReferrals.filter(r => r.specialty === 'X-Ray Imaging' || r.referredTo === 'X-Ray Facility').length}
+                          {patientReferrals.filter(r => r && (r.specialty === 'X-Ray Imaging' || r.referredTo === 'X-Ray Facility')).length}
                         </span>
                       </button>
 
@@ -1983,7 +2068,7 @@ export function PatientPortal({
                       >
                         Your Referrals
                         <span className="ml-2 inline-flex items-center justify-center text-xs px-2 py-0.5 bg-teal-50 text-teal-500 rounded-full border border-teal-100">
-                          {patientReferrals.filter(r => r.createdByRole === 'patient' && String(r.patientId) === String(patient.id)).length}
+                          {patientReferrals.filter(r => r && r.createdByRole === 'patient' && String(r.patientId) === String(patient.id)).length}
                         </span>
                       </button>
 
@@ -2441,9 +2526,45 @@ export function PatientPortal({
             {patientPreviewImage && (
               <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
                 <div className="relative max-w-[90vw] max-h-[90vh]">
-                  <button onClick={() => { setPatientPreviewImage(null); setPatientPreviewExpanded(false); }} className="absolute top-2 right-2 p-2 bg-white rounded-full"><X className="w-4 h-4" /></button>
+                  <button onClick={() => { setPatientPreviewImage(null); setPatientPreviewExpanded(false); }} className="absolute top-2 right-2 p-2 bg-white rounded-full text-slate-800"><X className="w-4 h-4" /></button>
                   <img src={patientPreviewImage} alt="preview" onClick={() => setPatientPreviewExpanded(prev => !prev)} className="object-contain" style={patientPreviewExpanded ? { width: '95vw', height: '95vh', cursor: 'zoom-out' } : { maxWidth: '80vw', maxHeight: '80vh', cursor: 'zoom-in' }} />
                 </div>
+              </div>
+            )}
+
+            {/* Treatment Photo Modal */}
+            {selectedPhoto && (
+              <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                  className="relative max-w-[95vw] max-h-[95vh] flex flex-col items-center"
+                >
+                  <button 
+                    onClick={() => setSelectedPhoto(null)} 
+                    className="absolute -top-12 right-0 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all hover:scale-110 active:scale-95"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                  
+                  <div className="overflow-hidden rounded-2xl shadow-2xl bg-white/5 p-1 ring-1 ring-white/20">
+                    <img 
+                      src={selectedPhoto.url} 
+                      alt={selectedPhoto.type} 
+                      className="max-w-full max-h-[80vh] object-contain rounded-xl shadow-2xl"
+                      style={{ imageRendering: 'auto' }}
+                    />
+                  </div>
+                  
+                  <div className="mt-6 text-center space-y-1">
+                    <h3 className="text-white text-2xl font-bold capitalize tracking-tight">{selectedPhoto.type}</h3>
+                    <div className="flex items-center justify-center space-x-2 text-cyan-200/80">
+                      <Calendar className="w-4 h-4" />
+                      <p className="text-sm font-medium">{formatToDD_MM_YYYY(selectedPhoto.date)}</p>
+                    </div>
+                  </div>
+                </motion.div>
               </div>
             )}
 
@@ -2509,11 +2630,6 @@ export function PatientPortal({
             {/* Billing Balance Tab */}
             {activeTab === 'balance' && (
               <div className="p-6 space-y-4 bg-gradient-to-b from-slate-50 to-slate-100/50 flex-1">
-                {/* Premium Header */}
-                <div className="mb-8">
-                  <h2 className="text-4xl font-bold text-slate-900 tracking-tight mb-2">Billing & Payments</h2>
-                  <p className="text-slate-600 font-medium">Manage your account balance and payment history</p>
-                </div>
 
                 {/* Balance Card - Premium Style */}
                 <motion.div 
@@ -2921,55 +3037,64 @@ export function PatientPortal({
             {/* Announcements Tab */}
             {activeTab === 'announcements' && (
               <div className="p-6 space-y-6">
-                <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xl font-bold text-slate-900 tracking-tight">Recent Announcements</h3>
+                  <div className="h-px flex-1 bg-slate-100 mx-6 hidden sm:block"></div>
+                  <span className="text-sm font-medium text-slate-500">{sortedAnnouncements.length} updates</span>
+                </div>
+
+                <div className="grid gap-6">
                   {sortedAnnouncements && sortedAnnouncements.length > 0 ? (
-                    <div className="space-y-3">
-                      {sortedAnnouncements.map(ann => (
+                    <div className="space-y-4">
+                      {sortedAnnouncements.map((ann, idx) => (
                         <motion.div
                           key={ann.id}
-                          initial={{ opacity: 0, y: 20 }}
+                          initial={{ opacity: 0, y: 15 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="bg-white rounded-xl border border-cyan-200/60 shadow-md hover:shadow-lg transition-all overflow-hidden group"
+                          transition={{ delay: idx * 0.05 }}
+                          className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group"
                         >
-                          <div className={`h-1.5`} style={{
-                            backgroundImage: ann.type === 'important'
-                              ? 'linear-gradient(to right, #005461, #003a47)'
-                              : ann.type === 'promo'
-                                ? 'linear-gradient(to right, #6AECE1, #52d4d1)'
-                                : ann.type === 'closure'
-                                  ? 'linear-gradient(to right, #A7E399, #94d975)'
-                                  : 'linear-gradient(to right, #3BC1A8, #2aaa95)'
-                          }} />
                           <div className="p-6">
-                            <div className="flex justify-between items-start mb-3">
-                              <div className="flex-1">
-                                <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-teal-700 transition-colors">{ann.title}</h3>
-                                <p className="text-sm text-gray-600">
-                                  📅 {timeAgo(ann.date)} • 👤 {ann.createdBy}
-                                </p>
+                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${
+                                    ann.type === 'important' ? 'bg-red-50 text-red-600 border border-red-100' :
+                                    ann.type === 'promo' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                                    ann.type === 'closure' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
+                                    'bg-slate-50 text-slate-600 border border-slate-100'
+                                  }`}>
+                                    {ann.type}
+                                  </span>
+                                  <span className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
+                                    <Clock className="w-3.5 h-3.5" />
+                                    {timeAgo(ann.date)}
+                                  </span>
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-900 group-hover:text-emerald-600 transition-colors leading-tight">
+                                  {ann.title}
+                                </h3>
                               </div>
-                              <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest" style={{
-                                backgroundColor: ann.type === 'important' ? '#E8F0F2' :
-                                                 ann.type === 'promo' ? '#E0FCFA' :
-                                                 ann.type === 'closure' ? '#F0F7E0' :
-                                                 '#E6F5F1',
-                                color: ann.type === 'important' ? '#005461' :
-                                       ann.type === 'promo' ? '#6AECE1' :
-                                       ann.type === 'closure' ? '#A7E399' :
-                                       '#3BC1A8'
-                              }}>
-                                {ann.type}
-                              </span>
+                              <div className="flex items-center gap-2 text-slate-400 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100 sm:self-start">
+                                <UserIcon className="w-4 h-4" />
+                                <span className="text-xs font-semibold">{ann.createdBy}</span>
+                              </div>
                             </div>
-                            <p className="text-gray-700 mt-3 whitespace-pre-wrap leading-relaxed">{ann.message}</p>
+                            <div className="prose prose-slate prose-sm max-w-none">
+                              <p className="text-slate-600 whitespace-pre-wrap leading-relaxed">
+                                {ann.message}
+                              </p>
+                            </div>
                           </div>
                         </motion.div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-100">
-                      <Megaphone className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-                      <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No announcements at the moment</p>
+                    <div className="text-center py-20 bg-slate-50/50 rounded-[32px] border-2 border-dashed border-slate-200">
+                      <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4 border border-slate-100">
+                        <Megaphone className="w-8 h-8 text-slate-300" />
+                      </div>
+                      <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No announcements yet</p>
                     </div>
                   )}
                 </div>
@@ -3015,6 +3140,135 @@ export function PatientPortal({
                   </motion.div>
                 ))}
                 </div>
+              </div>
+            )}
+
+            {/* Account Settings Tab */}
+            {activeTab === 'settings' && (
+              <div className="p-6 space-y-6">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white rounded-[32px] border border-slate-100 shadow-xl overflow-hidden w-full"
+                >
+                  <div className="p-8 space-y-8">
+                    {/* Full Name Section */}
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <UserIcon className="w-5 h-5 text-teal-600" />
+                        <h4 className="font-bold text-slate-900">Personal Information</h4>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">Full Name</label>
+                        <input
+                          type="text"
+                          value={newFullName}
+                          onChange={(e) => setNewFullName(e.target.value)}
+                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 transition-all font-medium"
+                          placeholder="Your full name"
+                        />
+                      </div>
+                    </div>
+
+                    <hr className="border-slate-100" />
+
+                    {/* Security Section */}
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Shield className="w-5 h-5 text-teal-600" />
+                        <h4 className="font-bold text-slate-900">Security & Credentials</h4>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">New Username (Optional)</label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={newUsername}
+                            onChange={(e) => handleUsernameChange(e.target.value)}
+                            className={`w-full px-4 py-3 bg-slate-50 border rounded-xl focus:ring-2 focus:ring-teal-500 transition-all font-medium ${
+                              usernameAvailable === true ? 'border-emerald-200 ring-emerald-100' :
+                              usernameAvailable === false ? 'border-red-200 ring-red-100' : 'border-slate-200'
+                            }`}
+                            placeholder="Change username"
+                          />
+                          {checkingUsername && (
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                              <div className="w-4 h-4 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                          )}
+                          {!checkingUsername && usernameAvailable === true && (
+                            <Check className="w-4 h-4 text-emerald-500 absolute right-4 top-1/2 -translate-y-1/2" />
+                          )}
+                          {!checkingUsername && usernameAvailable === false && (
+                            <XCircle className="w-4 h-4 text-red-500 absolute right-4 top-1/2 -translate-y-1/2" />
+                          )}
+                        </div>
+                        {usernameAvailable === false && (
+                          <p className="text-[10px] text-red-500 font-bold mt-1 uppercase tracking-wider px-1">Username is already taken</p>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-slate-700 mb-2">New Password</label>
+                          <div className="relative">
+                            <input
+                              type={showNewPassword ? "text" : "password"}
+                              value={newPassword}
+                              onChange={(e) => setNewPassword(e.target.value)}
+                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 transition-all"
+                              placeholder="Min. 8 characters"
+                            />
+                            <button onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                              {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-slate-700 mb-2">Confirm New Password</label>
+                          <div className="relative">
+                            <input
+                              type={showConfirmPassword ? "text" : "password"}
+                              value={confirmPassword}
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 transition-all"
+                            />
+                            <button onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                              {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-4 p-4 bg-amber-50 rounded-2xl border border-amber-100">
+                        <label className="block text-xs font-bold text-amber-700 uppercase tracking-widest mb-2">Current Password</label>
+                        <p className="text-[10px] text-amber-600 mb-3 font-medium">Required to save any changes to your security settings</p>
+                        <div className="relative">
+                          <input
+                            type={showCurrentPassword ? "text" : "password"}
+                            value={currentPassword}
+                            onChange={(e) => setCurrentPassword(e.target.value)}
+                            className="w-full px-4 py-3 bg-white border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 transition-all shadow-sm"
+                            placeholder="Verify your identity"
+                          />
+                          <button onClick={() => setShowCurrentPassword(!showCurrentPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-400">
+                            {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                      <button
+                        onClick={handleSaveSettings}
+                        className="flex-1 py-4 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-2xl font-bold shadow-lg shadow-teal-500/20 hover:shadow-teal-500/40 hover:-translate-y-0.5 transition-all"
+                      >
+                        Save Changes
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
               </div>
             )}
           </motion.div>
