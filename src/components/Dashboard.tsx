@@ -25,7 +25,7 @@ export function Dashboard({ patients, appointments, inventory, treatmentRecords,
   const todayAppointments = appointments.filter(apt => apt.date === new Date().toISOString().split('T')[0]);
   const lowStockItems = inventory.filter(item => item.quantity <= item.minQuantity);
   
-  const totalRevenue = treatmentRecords.reduce((sum, record) => sum + Number(record.amountPaid || 0), 0);
+  const totalServiceEarnings = treatmentRecords.reduce((sum, record) => sum + Number(record.amountPaid || 0), 0);
 
   // Generate appointment data with 5-day view based on actual appointments
   const getAppointmentsForDate = (daysOffset: number) => {
@@ -43,8 +43,8 @@ export function Dashboard({ patients, appointments, inventory, treatmentRecords,
     { day: 'Day After', appointments: getAppointmentsForDate(2) }
   ];
 
-  // Calculate revenue for last month and this month
-  const getRevenueForMonth = (monthOffset: number) => {
+  // Calculate earnings for last month and this month
+  const getEarningsForMonth = (monthOffset: number) => {
     const now = new Date();
     const targetMonth = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
     const nextMonth = new Date(now.getFullYear(), now.getMonth() + monthOffset + 1, 1);
@@ -54,13 +54,13 @@ export function Dashboard({ patients, appointments, inventory, treatmentRecords,
     }).reduce((sum, record) => sum + Number(record.amountPaid || 0), 0);
   };
 
-  const lastMonthRevenue = getRevenueForMonth(-1);
-  const thisMonthRevenue = getRevenueForMonth(0);
+  const lastMonthEarnings = getEarningsForMonth(-1);
+  const thisMonthEarnings = getEarningsForMonth(0);
 
-  const revenueData = [
-    { month: 'Last Month', revenue: lastMonthRevenue },
-    { month: 'This Month', revenue: thisMonthRevenue },
-    { month: 'Total', revenue: totalRevenue }
+  const earningsData = [
+    { month: 'Last Month', earnings: lastMonthEarnings },
+    { month: 'This Month', earnings: thisMonthEarnings },
+    { month: 'Total', earnings: totalServiceEarnings }
   ];
 
   return (
@@ -162,8 +162,8 @@ export function Dashboard({ patients, appointments, inventory, treatmentRecords,
                 <span>+8%</span>
               </div>
             </div>
-            <p className="text-slate-500 text-xs mb-3 font-bold tracking-widest uppercase">Total Revenue</p>
-            <p className="text-4xl font-bold text-slate-900 mb-1">₱{totalRevenue.toLocaleString()}</p>
+            <p className="text-slate-500 text-xs mb-3 font-bold tracking-widest uppercase">Service Earnings</p>
+            <p className="text-4xl font-bold text-slate-900 mb-1">₱{totalServiceEarnings.toLocaleString()}</p>
             <div className="h-1 w-8 bg-gradient-to-r from-[#9CEAEF] to-[#68D8D6] rounded-full"></div>
           </div>
         </motion.button>
@@ -196,21 +196,21 @@ export function Dashboard({ patients, appointments, inventory, treatmentRecords,
         <div className="bg-white/60 backdrop-blur-xl p-8 rounded-2xl shadow-lg border border-white/60 hover:shadow-xl transition-all duration-300">
           <div className="mb-6 pb-4 border-b border-white/40 flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Revenue Overview</h2>
-              <p className="text-xs text-slate-500 mt-1.5 font-medium">Monthly revenue comparison</p>
+              <h2 className="text-lg font-bold text-slate-900">Earnings Overview</h2>
+              <p className="text-xs text-slate-500 mt-1.5 font-medium">Monthly earnings comparison</p>
             </div>
             <div className="px-3 py-1.5 bg-gradient-to-r from-[#9CEAEF]/20 to-[#68D8D6]/20 border border-[#9CEAEF]/30 rounded-lg">
               <span className="text-xs font-bold text-[#07BEB8]">₱</span>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={revenueData}>
+            <BarChart data={earningsData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis domain={[0, 50000]} ticks={[10000, 20000, 30000, 40000, 50000]} />
               <Tooltip />
               <Legend />
-              <Bar dataKey="revenue" fill="#10b981" />
+              <Bar dataKey="earnings" fill="#10b981" />
             </BarChart>
           </ResponsiveContainer>
         </div>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
+import { AlertCircle } from 'lucide-react';
 import { authAPI, getAuthToken } from '../api';
 import { PasswordInput } from './PasswordInput';
 import { User } from './AuthPage';
@@ -13,13 +14,31 @@ export function PasswordChangePage({ user }: PasswordChangePageProps) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [formSubmitted, setFormSubmitted] = useState(false);
+
+  const validatePassword = (pass: string) => {
+    const hasUpper = /[A-Z]/.test(pass);
+    const hasLower = /[a-z]/.test(pass);
+    const hasNumber = /[0-9]/.test(pass);
+    const hasSymbol = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pass);
+    const isLongEnough = pass.length >= 8;
+    
+    if (!isLongEnough) return "Password must be at least 8 characters long";
+    if (!hasUpper) return "Password must contain at least one uppercase letter";
+    if (!hasLower) return "Password must contain at least one lowercase letter";
+    if (!hasNumber) return "Password must contain at least one number";
+    if (!hasSymbol) return "Password must contain at least one symbol";
+    return null;
+  };
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormSubmitted(true);
     setError('');
 
-    if (newPassword.length < 6) {
-      return setError('Password must be at least 6 characters long');
+    const passwordError = validatePassword(newPassword);
+    if (passwordError) {
+      return setError(passwordError);
     }
 
     if (newPassword !== confirmPassword) {
@@ -63,6 +82,7 @@ export function PasswordChangePage({ user }: PasswordChangePageProps) {
               value={newPassword} 
               onChange={e => setNewPassword(e.target.value)} 
               placeholder="Enter new password" 
+              className={(formSubmitted && (!newPassword || validatePassword(newPassword))) ? 'border-red-500' : ''}
             />
           </div>
           <div>
@@ -71,7 +91,48 @@ export function PasswordChangePage({ user }: PasswordChangePageProps) {
               value={confirmPassword} 
               onChange={e => setConfirmPassword(e.target.value)} 
               placeholder="Confirm new password" 
+              className={(formSubmitted && (confirmPassword !== newPassword)) ? 'border-red-500' : ''}
             />
+          </div>
+
+          <div className={`border rounded-xl p-4 space-y-2 transition-all duration-300 shadow-sm ${ 
+            (formSubmitted && (!newPassword || validatePassword(newPassword))) 
+              ? 'bg-red-50 border-red-200 ring-1 ring-red-200' 
+              : (newPassword && !validatePassword(newPassword)) 
+                ? 'bg-green-50 border-green-200 ring-1 ring-green-200' 
+                : 'bg-blue-50 border-blue-200 ring-1 ring-blue-200'
+          }`}>
+            <p className={`text-sm font-bold flex items-center gap-2 ${ 
+              (formSubmitted && (!newPassword || validatePassword(newPassword))) 
+                ? 'text-red-800' 
+                : (newPassword && !validatePassword(newPassword)) 
+                  ? 'text-green-800' 
+                  : 'text-blue-800'
+            }`}>
+              <AlertCircle className="w-4 h-4" /> Password Requirements:
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+              <div className={`flex items-center gap-2 text-xs ${newPassword.length >= 8 ? 'text-green-600 font-bold' : 'text-slate-500'}`}>
+                <div className={`w-1.5 h-1.5 rounded-full ${newPassword.length >= 8 ? 'bg-green-600' : 'bg-slate-300'}`} />
+                At least 8 characters
+              </div>
+              <div className={`flex items-center gap-2 text-xs ${/[A-Z]/.test(newPassword) ? 'text-green-600 font-bold' : 'text-slate-500'}`}>
+                <div className={`w-1.5 h-1.5 rounded-full ${/[A-Z]/.test(newPassword) ? 'bg-green-600' : 'bg-slate-300'}`} />
+                One uppercase (A-Z)
+              </div>
+              <div className={`flex items-center gap-2 text-xs ${/[a-z]/.test(newPassword) ? 'text-green-600 font-bold' : 'text-slate-500'}`}>
+                <div className={`w-1.5 h-1.5 rounded-full ${/[a-z]/.test(newPassword) ? 'bg-green-600' : 'bg-slate-300'}`} />
+                One lowercase (a-z)
+              </div>
+              <div className={`flex items-center gap-2 text-xs ${/[0-9]/.test(newPassword) ? 'text-green-600 font-bold' : 'text-slate-500'}`}>
+                <div className={`w-1.5 h-1.5 rounded-full ${/[0-9]/.test(newPassword) ? 'bg-green-600' : 'bg-slate-300'}`} />
+                One number (0-9)
+              </div>
+              <div className={`flex items-center gap-2 text-xs ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword) ? 'text-green-600 font-bold' : 'text-slate-500'}`}>
+                <div className={`w-1.5 h-1.5 rounded-full ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword) ? 'bg-green-600' : 'bg-slate-300'}`} />
+                One symbol (@#$%)
+              </div>
+            </div>
           </div>
 
           {error && (

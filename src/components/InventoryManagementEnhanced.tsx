@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { InventoryItem } from '../App';
 import { Package, Plus, X, Edit, Search, Zap, AlertCircle, TrendingDown, History, Settings, Eye, Trash2, Save, Loader, Trash } from 'lucide-react';
 import { toast } from 'sonner';
-import { inventoryAPI } from '../api';
+import { inventoryAPI, API_BASE } from '../api';
 
 type InventoryManagementProps = {
   inventory: InventoryItem[];

@@ -206,7 +206,6 @@ router.post('/send-otp', async (req, res) => {
 
     // Generate OTP
     const otp = generateOTP();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     // Delete old OTPs for this patient
     await pool.query(
@@ -216,8 +215,8 @@ router.post('/send-otp', async (req, res) => {
 
     // Store OTP in database
     await pool.query(
-      'INSERT INTO otp_verifications (phone, otp, expiresAt, patientId) VALUES (?, ?, ?, ?)',
-      [patient.phone, otp, expiresAt, patientId]
+      'INSERT INTO otp_verifications (phone, otp, expiresAt, patientId) VALUES (?, ?, DATE_ADD(UTC_TIMESTAMP(), INTERVAL 10 MINUTE), ?)',
+      [patient.phone, otp, patientId]
     );
 
     // Send SMS
@@ -281,7 +280,7 @@ router.post('/verify-and-link', async (req, res) => {
     const [otpRecords] = await connection.query(
       `SELECT id, verified, expiresAt 
        FROM otp_verifications 
-       WHERE patientId = ? AND otp = ? 
+       WHERE patientId = ? AND otp = ? AND expiresAt > UTC_TIMESTAMP()
        ORDER BY createdAt DESC 
        LIMIT 1`,
       [patientId, otp]
@@ -289,15 +288,10 @@ router.post('/verify-and-link', async (req, res) => {
 
     if (otpRecords.length === 0) {
       await connection.rollback();
-      return res.status(400).json({ error: 'Invalid OTP' });
+      return res.status(400).json({ error: 'Invalid or expired OTP' });
     }
 
     const otpRecord = otpRecords[0];
-
-    if (new Date() > new Date(otpRecord.expiresAt)) {
-      await connection.rollback();
-      return res.status(400).json({ error: 'OTP has expired' });
-    }
 
     if (otpRecord.verified) {
       await connection.rollback();
@@ -439,7 +433,6 @@ router.post('/resend-otp', async (req, res) => {
 
     // Generate new OTP
     const otp = generateOTP();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     // Delete old OTPs
     await pool.query(
@@ -449,8 +442,8 @@ router.post('/resend-otp', async (req, res) => {
 
     // Store new OTP
     await pool.query(
-      'INSERT INTO otp_verifications (phone, otp, expiresAt, patientId) VALUES (?, ?, ?, ?)',
-      [patient.phone, otp, expiresAt, patientId]
+      'INSERT INTO otp_verifications (phone, otp, expiresAt, patientId) VALUES (?, ?, DATE_ADD(UTC_TIMESTAMP(), INTERVAL 10 MINUTE), ?)',
+      [patient.phone, otp, patientId]
     );
 
     // Send SMS

@@ -57,14 +57,14 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
     };
   });
 
-  // Calculate monthly revenue using amountPaid (matches Dashboard)
+  // Calculate monthly earnings using amountPaid (matches Dashboard)
   const monthlyRecords = treatmentRecords.filter(record => {
     if (!record.date) return false;  // Skip records with null/undefined date
     const recordMonth = record.date.slice(0, 7);
     return recordMonth === selectedMonth;
   });
 
-  const monthlyRevenue = monthlyRecords.reduce((sum, record) => sum + Number(record.amountPaid || 0), 0);
+  const monthlyEarnings = monthlyRecords.reduce((sum, record) => sum + Number(record.amountPaid || 0), 0);
   const monthlyTransactions = monthlyRecords.length;
 
   // Calculate total outstanding balance
@@ -72,27 +72,27 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
 
   // Calculate totals (match Dashboard calculation)
   const totalBilled = treatmentRecords.reduce((sum, record) => sum + Number(record.cost || 0), 0);
-  const totalRevenue = treatmentRecords.reduce((sum, record) => sum + Number(record.amountPaid || 0), 0);
+  const totalServiceEarnings = treatmentRecords.reduce((sum, record) => sum + Number(record.amountPaid || 0), 0);
 
   // Treatment type breakdown
   const treatmentBreakdown = treatmentRecords.reduce((acc, record) => {
     const type = record.treatment;
     if (!acc[type]) {
-      acc[type] = { count: 0, revenue: 0 };
+      acc[type] = { count: 0, earnings: 0 };
     }
     acc[type].count++;
-    acc[type].revenue += Number(record.cost || 0);
+    acc[type].earnings += Number(record.cost || 0);
     return acc;
-  }, {} as { [key: string]: { count: number; revenue: number } });
+  }, {} as { [key: string]: { count: number; earnings: number } });
 
   const downloadReport = () => {
     const reportData = {
       generatedDate: new Date().toISOString(),
       summary: {
-        totalRevenue,
+        totalServiceEarnings,
         totalBilled,
         totalOutstanding,
-        monthlyRevenue,
+        monthlyEarnings,
         monthlyTransactions
       },
       patientBalances,
@@ -303,8 +303,8 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                       <span className="text-xs font-semibold text-emerald-600">+12%</span>
                     </div>
                   </div>
-                  <p className="text-emerald-600 text-sm font-medium mb-2 uppercase tracking-wider">Total Revenue</p>
-                  <p className="text-3xl sm:text-4xl font-bold text-emerald-600 mb-1">₱{totalRevenue.toLocaleString('en-US')}</p>
+                  <p className="text-emerald-600 text-sm font-medium mb-2 uppercase tracking-wider">Service Earnings</p>
+                  <p className="text-3xl sm:text-4xl font-bold text-emerald-600 mb-1">₱{totalServiceEarnings.toLocaleString('en-US')}</p>
                   <p className="text-sm text-gray-500">All time paid amount</p>
                 </div>
                 <div className="h-1 bg-gradient-to-r from-emerald-400 to-teal-400" />
@@ -324,7 +324,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                       <PesoSign className="w-7 h-7 sm:w-8 sm:h-8 text-teal-600" />
                     </div>
                     <div className="text-right">
-                      <p className="text-lg font-bold text-teal-600">{totalBilled > 0 ? ((totalRevenue / totalBilled) * 100).toFixed(1) : '0'}%</p>
+                      <p className="text-lg font-bold text-teal-600">{totalBilled > 0 ? ((totalServiceEarnings / totalBilled) * 100).toFixed(1) : '0'}%</p>
                       <p className="text-xs text-gray-500">collection rate</p>
                     </div>
                   </div>
@@ -360,7 +360,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                 <div className="h-1 bg-gradient-to-r from-cyan-400 to-teal-400" />
               </motion.div>
 
-              {/* Monthly Revenue Card */}
+              {/* Monthly Earnings Card */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -378,8 +378,8 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                       <p className="text-xs text-gray-500">transactions</p>
                     </div>
                   </div>
-                  <p className="text-emerald-600 text-sm font-medium mb-2 uppercase tracking-wider">Monthly Revenue</p>
-                  <p className="text-3xl sm:text-4xl font-bold text-emerald-600 mb-1">₱{monthlyRevenue.toLocaleString('en-US')}</p>
+                  <p className="text-emerald-600 text-sm font-medium mb-2 uppercase tracking-wider">Monthly Earnings</p>
+                  <p className="text-3xl sm:text-4xl font-bold text-emerald-600 mb-1">₱{monthlyEarnings.toLocaleString('en-US')}</p>
                   <p className="text-sm text-gray-500">This month only</p>
                 </div>
                 <div className="h-1 bg-gradient-to-r from-emerald-400 to-teal-400" />
@@ -402,8 +402,8 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <button
                   onClick={() => generateFinancialPDF(
-                    { totalRevenue, totalBilled },
-                    monthlyRevenue,
+                    { totalServiceEarnings, totalBilled },
+                    monthlyEarnings,
                     totalOutstanding,
                     treatmentBreakdown
                   )}
@@ -427,15 +427,15 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                   <BarChart3 className="w-6 h-6 text-emerald-600" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Treatment Revenue Breakdown</h2>
-                  <p className="text-sm text-gray-500">Revenue by service type</p>
+                  <h2 className="text-2xl font-bold text-gray-900">Treatment Earnings Breakdown</h2>
+                  <p className="text-sm text-gray-500">Earnings by service type</p>
                 </div>
               </div>
               <div className="space-y-4 max-h-[70vh] overflow-y-auto scrollbar-thin">
                 {Object.entries(treatmentBreakdown)
-                  .sort(([, a], [, b]) => b.revenue - a.revenue)
+                  .sort(([, a], [, b]) => b.earnings - a.earnings)
                   .map(([treatment, data], index) => {
-                    const percentage = totalBilled > 0 ? (data.revenue / totalBilled) * 100 : 0;
+                    const percentage = totalBilled > 0 ? (data.earnings / totalBilled) * 100 : 0;
                     return (
                       <motion.div
                         key={treatment}
@@ -450,8 +450,8 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                             <p className="text-sm text-gray-600 mt-1">{data.count} procedure{data.count !== 1 ? 's' : ''} • {percentage.toFixed(1)}% of total</p>
                           </div>
                           <div className="text-right">
-                            <p className="font-bold text-emerald-600 text-xl">₱{data.revenue.toLocaleString('en-US')}</p>
-                            <p className="text-xs text-gray-500 mt-1">Total revenue</p>
+                            <p className="font-bold text-emerald-600 text-xl">₱{data.earnings.toLocaleString('en-US')}</p>
+                            <p className="text-xs text-gray-500 mt-1">Total earnings</p>
                           </div>
                         </div>
                         <div className="relative h-3 bg-gray-200 rounded-full overflow-hidden">
@@ -483,7 +483,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                   <BarChart3 className="w-6 h-6 text-emerald-600" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Transaction History</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">Transaction Earnings</h2>
                   <p className="text-sm text-gray-500">Complete record of all procedures</p>
                 </div>
               </div>

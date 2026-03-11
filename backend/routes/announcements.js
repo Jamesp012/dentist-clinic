@@ -5,11 +5,19 @@ const authMiddleware = require('../middleware/auth');
 const router = express.Router();
 
 // Get all announcements (patients + staff)
-router.get('/', authMiddleware, async (_req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
   try {
-    const [announcements] = await pool.query(
-      'SELECT * FROM announcements ORDER BY date DESC, createdAt DESC'
-    );
+    let query = 'SELECT * FROM announcements';
+    let params = [];
+
+    // Patients only see active ones, staff can see all
+    if (req.user.role === 'patient') {
+      query += ' WHERE expiresAt IS NULL OR expiresAt > UTC_TIMESTAMP()';
+    }
+
+    query += ' ORDER BY date DESC, createdAt DESC';
+
+    const [announcements] = await pool.query(query, params);
     res.json(announcements);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -19,7 +27,7 @@ router.get('/', authMiddleware, async (_req, res) => {
 // Create announcement (staff only)
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { title, message, type } = req.body;
+    const { title, message, type, expiresAt } = req.body;
 
     if (!title || !message || !type) {
       return res.status(400).json({ error: 'Title, message, and type are required' });
@@ -33,8 +41,8 @@ router.post('/', authMiddleware, async (req, res) => {
     const createdBy = req.user.fullName || req.user.username || req.user.role;
 
     const [result] = await pool.query(
-      'INSERT INTO announcements (title, message, type, date, createdBy) VALUES (?, ?, ?, ?, ?)',
-      [title, message, type, announcementDate, createdBy]
+      'INSERT INTO announcements (title, message, type, date, createdBy, expiresAt) VALUES (?, ?, ?, ?, ?, ?)',
+      [title, message, type, announcementDate, createdBy, expiresAt || null]
     );
 
     const [rows] = await pool.query('SELECT * FROM announcements WHERE id = ?', [result.insertId]);
@@ -42,7 +50,7 @@ router.post('/', authMiddleware, async (req, res) => {
 
     // Create notifications for all patients
     try {
-      console.log('Creating notifications for announcement:', { title, id: result.insertId });
+      console.log('Creating notifications for announcement:', { title, id: result.insertId, expiresAt });
       
       const [patients] = await pool.query('SELECT id FROM patients');
       console.log('Found patients:', patients.length);
@@ -56,8 +64,8 @@ router.post('/', authMiddleware, async (req, res) => {
             const notificationMessage = message;
             
             await pool.query(
-              'INSERT INTO patient_notifications (patientId, type, title, message) VALUES (?, ?, ?, ?)',
-              [patient.id, 'announcement_posted', notificationTitle, notificationMessage]
+              'INSERT INTO patient_notifications (patientId, type, title, message, expiresAt) VALUES (?, ?, ?, ?, ?)',
+              [patient.id, 'announcement_posted', notificationTitle, notificationMessage, expiresAt || null]
             );
             notificationCount++;
           } catch (err) {

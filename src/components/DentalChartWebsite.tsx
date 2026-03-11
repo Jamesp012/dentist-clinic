@@ -1,6 +1,7 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { ToothData } from './Tooth';
 import { ToothDetailsSidebar } from './dental/ToothDetailsSidebar';
+import { Patient } from '../App';
 
 // Interactive dental chart using backgroundngipin.png as the guide image.
 // Icons from /public/all-teeth are positioned over the chart and can be
@@ -143,7 +144,7 @@ const INITIAL_LAYOUT: ToothLayout[] = [
   { id: 'T', leftPct: 28.636363636363637, topPct: 71.9899425407962, widthPct: 18.590909090909093 },
 ];
 
-export function DentalChartWebsite() {
+export function DentalChartWebsite({ patients }: { patients: Patient[] }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const historyRef = useRef<HTMLDivElement | null>(null);
   const legendRef = useRef<HTMLDivElement | null>(null);
@@ -159,22 +160,14 @@ export function DentalChartWebsite() {
   // Patient selector + chart history (persisted to localStorage)
   type ChartSnapshot = {
     id: string;
-    patientId: string;
+    patientId: string | number;
     patientName: string;
     createdAt: string; // ISO
     teeth: Record<number, ToothData>;
   };
 
-  const [patients, setPatients] = useState<{ id: string; name: string }[]>(() => {
-    try {
-      const raw = localStorage.getItem('patients');
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) {
-      return [];
-    }
-  });
   const [patientQuery, setPatientQuery] = useState('');
-  const [selectedPatientObj, setSelectedPatientObj] = useState<{ id: string; name: string } | null>(
+  const [selectedPatientObj, setSelectedPatientObj] = useState<Patient | null>(
     null
   );
 
@@ -235,7 +228,11 @@ export function DentalChartWebsite() {
     if (!snapshot) return;
     setTeeth(snapshot.teeth);
     // set selected patient to match snapshot
-    setSelectedPatientObj({ id: snapshot.patientId, name: snapshot.patientName });
+    const patient = patients.find((p) => String(p.id) === String(snapshot.patientId));
+    if (patient) {
+      setSelectedPatientObj(patient);
+      setPatientQuery(patient.name);
+    }
   };
 
   const handleNewChart = () => {
@@ -819,15 +816,10 @@ export function DentalChartWebsite() {
               onChange={(e) => setPatientQuery(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
-                  // if exact match not found, create new patient
+                  // if exact match not found, do nothing or show alert
                   if (patientQuery.trim().length === 0) return;
                   const existing = patients.find((p) => p.name.toLowerCase() === patientQuery.toLowerCase());
                   if (existing) setSelectedPatientObj(existing);
-                  else {
-                    const np = { id: Date.now().toString(), name: patientQuery.trim() };
-                    setPatients((s) => [np, ...s]);
-                    setSelectedPatientObj(np);
-                  }
                 }
               }}
               placeholder="Search patient..."

@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Appointment, Patient, TreatmentRecord, Service } from '../App';
-import { Calendar, Plus, X, Filter, Info } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, X, Filter, Info } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { Calendar as CalendarUI } from './ui/calendar';
 import { toast } from 'sonner';
 import { appointmentAPI } from '../api';
 import { PatientSearchInput } from './PatientSearchInput';
-import { convertToDBDate, convertToDisplayDate, formatDateInput, isValidDateFormat } from '../utils/dateHelpers';
+import { convertToDBDate, convertToDisplayDate, formatDateInput, isValidDateFormat, parseDateString, formatToDD_MM_YYYY } from '../utils/dateHelpers';
 
 // Helper function to extract date string without timezone conversion
 const getDateString = (date: string | Date): string => {
@@ -262,10 +264,30 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
       <div className="p-4 space-y-4 flex flex-col flex-1">
 
         {/* Controls */}
-        <div className="relative bg-white/70 backdrop-blur-md py-3 px-5 rounded-2xl shadow-md border border-slate-200/60 overflow-x-auto">
-          <div className="flex gap-3 items-center whitespace-nowrap">
+        <div className="relative bg-white/70 backdrop-blur-md py-3 px-5 rounded-2xl shadow-md border border-slate-200/60 overflow-hidden">
+          <div className="flex gap-3 items-center whitespace-nowrap overflow-x-auto scrollbar-none pb-0.5 pr-20 sm:pr-0 relative z-0">
             <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-slate-500" />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="p-1 hover:bg-slate-100 rounded-md transition-colors focus:outline-none">
+                    <CalendarIcon className="w-5 h-5 text-slate-500 cursor-pointer" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarUI
+                    mode="single"
+                    selected={parseDateString(selectedDateInput) || undefined}
+                    onSelect={(date) => {
+                      if (date) {
+                        const formatted = formatToDD_MM_YYYY(date);
+                        setSelectedDateInput(formatted);
+                        setSelectedDate(convertToDBDate(formatted));
+                      }
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
               <input
                 type="text"
                 value={selectedDateInput}
@@ -277,49 +299,63 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                   }
                 }}
                 placeholder="DD/MM/YYYY"
-                className="w-32 px-2.5 py-2 bg-white border border-slate-200/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm"
+                className="w-24 px-2.5 py-2 bg-white border border-slate-200/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm text-xs"
               />
             </div>
 
-            <div className="flex gap-2">
-              <button
-                onClick={() => setViewMode('day')}
-                className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 ${
-                  viewMode === 'day'
-                    ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                Day View
-              </button>
-              <button
-                onClick={() => setViewMode('thisWeek')}
-                className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 ${
-                  viewMode === 'thisWeek'
-                    ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                This Week
-              </button>
-              <button
-                onClick={() => setViewMode('viewAll')}
-                className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 ${
-                  viewMode === 'viewAll'
-                    ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                View All
-              </button>
+            {/* View Mode Dropdown (Mobile) / Buttons (Desktop) */}
+            <div className="flex items-center gap-2">
+              <div className="md:hidden">
+                <select
+                  value={viewMode}
+                  onChange={(e) => setViewMode(e.target.value as 'day' | 'thisWeek' | 'viewAll')}
+                  className="w-24 px-2 py-2 bg-white border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 shadow-sm text-xs font-semibold truncate"
+                >
+                  <option value="day">Day View</option>
+                  <option value="thisWeek">This Week</option>
+                  <option value="viewAll">View All</option>
+                </select>
+              </div>
+              <div className="hidden md:flex gap-2">
+                <button
+                  onClick={() => setViewMode('day')}
+                  className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 ${
+                    viewMode === 'day'
+                      ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  Day View
+                </button>
+                <button
+                  onClick={() => setViewMode('thisWeek')}
+                  className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 ${
+                    viewMode === 'thisWeek'
+                      ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  This Week
+                </button>
+                <button
+                  onClick={() => setViewMode('viewAll')}
+                  className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 ${
+                    viewMode === 'viewAll'
+                      ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  View All
+                </button>
+              </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <Filter className="w-5 h-5 text-slate-500" />
+              <Filter className="w-5 h-5 text-slate-500 hidden sm:block" />
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3.5 py-2.5 bg-white border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 shadow-sm"
+                className="px-3.5 py-2.5 bg-white border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 shadow-sm text-sm font-medium"
               >
                 <option value="all">All Status</option>
                 <option value="scheduled">Scheduled</option>
@@ -327,17 +363,17 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                 <option value="cancelled">Cancelled</option>
               </select>
             </div>
+          </div>
 
-            <div className="ml-auto flex items-center gap-2">
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="relative group bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-6 py-2.5 rounded-xl hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-teal-500/20 flex items-center gap-2 whitespace-nowrap font-semibold text-sm tracking-wide transform hover:scale-105 active:scale-95"
-              >
-                <Plus className="w-5 h-5" />
-                <span>New Appointment</span>
-                <div className="absolute inset-0 rounded-xl bg-white/0 group-hover:bg-white/10 transition-colors duration-300"></div>
-              </button>
-            </div>
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 pl-12 bg-gradient-to-l from-white/95 via-white/80 to-transparent pointer-events-none z-10">
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="pointer-events-auto relative group bg-gradient-to-r from-teal-500 to-cyan-500 text-white p-2.5 sm:px-6 sm:py-2.5 rounded-xl hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-teal-500/20 flex items-center gap-2 whitespace-nowrap font-semibold text-sm tracking-wide transform hover:scale-105 active:scale-95"
+            >
+              <Plus className="w-5 h-5" />
+              <span className="hidden sm:inline">New Appointment</span>
+              <div className="absolute inset-0 rounded-xl bg-white/0 group-hover:bg-white/10 transition-colors duration-300"></div>
+            </button>
           </div>
         </div>
 
@@ -618,7 +654,7 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
 
       {/* Add Appointment Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
           <div className="bg-white/95 backdrop-blur-md rounded-2xl p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent shadow-2xl border border-white/40">
             <div className="flex justify-between items-center mb-6">
               <div>

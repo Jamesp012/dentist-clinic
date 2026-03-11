@@ -105,7 +105,7 @@ export function ToothDetailsSidebar({
             animate={{ opacity: 0.3 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black z-40"
+            className="absolute inset-0 bg-black z-[110]"
           />
           
           {/* Sidebar Panel */}
@@ -114,7 +114,7 @@ export function ToothDetailsSidebar({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="absolute right-0 top-0 bottom-0 w-[900px] max-w-[90vw] bg-white z-50 shadow-2xl flex overflow-hidden border-l border-slate-200"
+            className="absolute right-0 top-0 bottom-0 w-[900px] max-w-[90vw] bg-white z-[120] shadow-2xl flex overflow-hidden border-l border-slate-200"
           >
             {/* Left Strip: Tooth Navigation & Visuals */}
             <div className="w-48 bg-white flex flex-col items-center py-6 text-slate-700 relative overflow-hidden shrink-0">

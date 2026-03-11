@@ -19,16 +19,16 @@ router.get('/', authMiddleware, async (req, res) => {
   try {
     // For patients: show only their own notifications
     // For staff: show all unread notifications (or filter by patient if patientId provided)
-    let query = 'SELECT * FROM patient_notifications';
+    let query = 'SELECT * FROM patient_notifications WHERE (expiresAt IS NULL OR expiresAt > UTC_TIMESTAMP())';
     let params = [];
 
     if (req.user.role === 'patient') {
       // Patient can only see their own notifications
-      query += ' WHERE patientId = ?';
+      query += ' AND patientId = ?';
       params.push(req.user.patientId);
     } else if (req.query.patientId) {
       // Staff can filter by specific patient
-      query += ' WHERE patientId = ?';
+      query += ' AND patientId = ?';
       params.push(req.query.patientId);
     }
 
@@ -44,7 +44,7 @@ router.get('/', authMiddleware, async (req, res) => {
 // Get unread notifications count
 router.get('/unread/count', authMiddleware, async (req, res) => {
   try {
-    let query = 'SELECT COUNT(*) as count FROM patient_notifications WHERE isRead = 0';
+    let query = 'SELECT COUNT(*) as count FROM patient_notifications WHERE isRead = 0 AND (expiresAt IS NULL OR expiresAt > UTC_TIMESTAMP())';
     let params = [];
 
     if (req.user.role === 'patient') {
@@ -70,7 +70,7 @@ router.get('/patient/:patientId', authMiddleware, async (req, res) => {
     }
 
     const [notifications] = await pool.query(
-      'SELECT * FROM patient_notifications WHERE patientId = ? ORDER BY createdAt DESC',
+      'SELECT * FROM patient_notifications WHERE patientId = ? AND (expiresAt IS NULL OR expiresAt > UTC_TIMESTAMP()) ORDER BY createdAt DESC',
       [req.params.patientId]
     );
     res.json(notifications);

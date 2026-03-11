@@ -197,6 +197,7 @@ export type Announcement = {
   type: 'promo' | 'closure' | 'general' | 'important';
   date: string;
   createdBy: string;
+  expiresAt?: string;
 };
 
 export type Service = {

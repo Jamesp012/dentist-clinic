@@ -16,6 +16,7 @@ type PatientNotificationItem = {
   isRead: boolean;
   createdAt: string;
   readAt?: string;
+  expiresAt?: string;
 };
 
 type PatientNotificationsProps = {
@@ -41,8 +42,16 @@ export function PatientNotifications({ patient, appointments, onNavigate }: Pati
   const loadNotifications = async () => {
     try {
       const data = await notificationAPI.getAll();
+      
+      // Filter out expired notifications
+      const now = new Date();
+      const validNotifications = data.filter((n: PatientNotificationItem) => {
+        if (!n.expiresAt) return true;
+        return new Date(n.expiresAt) > now;
+      });
+
       // Sort by createdAt in descending order (newest first)
-      const sorted = data.sort((a: PatientNotificationItem, b: PatientNotificationItem) => {
+      const sorted = validNotifications.sort((a: PatientNotificationItem, b: PatientNotificationItem) => {
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       });
       setNotifications(sorted);

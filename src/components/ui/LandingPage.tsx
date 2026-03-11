@@ -1,10 +1,16 @@
 import { motion } from 'motion/react';
-import { Stethoscope, Users, Award, Heart, MapPin, Phone, Mail, ChevronLeft, ChevronRight, User, Lock, LogIn, UserPlus, Calendar, Eye, EyeOff } from 'lucide-react';
+import { Stethoscope, Users, Award, Heart, MapPin, Phone, Mail, ChevronLeft, ChevronRight, User, Lock, LogIn, UserPlus, Calendar, Eye, EyeOff, AlertCircle, Check } from 'lucide-react';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { convertToDBDate, convertToDisplayDate, formatDateInput } from '../../utils/dateHelpers';
 import { authAPI } from '../../api';
 import { toast } from 'sonner';
 import { PasswordInput } from '../PasswordInput';
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSeparator,
+  InputOTPSlot,
+} from "./input-otp";
 
 export type LandingPageProps = {
   onGetStarted?: () => void;
@@ -34,6 +40,18 @@ export function LandingPage({ onGetStarted, onLogin, onSignup, onForgotPassword 
   const [maskedPhone, setMaskedPhone] = useState('');
   const [isResetLoading, setIsResetLoading] = useState(false);
   const [resetError, setResetError] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [hasTriedVerify, setHasTriedVerify] = useState(false);
+
+  useEffect(() => {
+    let timer: any;
+    if (resendCooldown > 0) {
+      timer = setInterval(() => {
+        setResendCooldown(prev => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
 
   const handleRequestOTP = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -49,6 +67,8 @@ export function LandingPage({ onGetStarted, onLogin, onSignup, onForgotPassword 
         setMaskedPhone(resp.phone);
         setForgotPasswordStep('verify');
         toast.success('OTP sent to your registered phone number');
+        setResendCooldown(60);
+        setHasTriedVerify(false);
       }
     } catch (err: any) {
       setResetError(err.message || 'Failed to send OTP');
@@ -59,6 +79,10 @@ export function LandingPage({ onGetStarted, onLogin, onSignup, onForgotPassword 
 
   const handleVerifyOTP = async (e?: React.FormEvent) => {
     e?.preventDefault();
+    if (hasTriedVerify && resendCooldown === 0) {
+      return handleRequestOTP();
+    }
+    
     if (!resetOTP) return setResetError('Please enter the OTP');
     
     setIsResetLoading(true);
@@ -67,12 +91,14 @@ export function LandingPage({ onGetStarted, onLogin, onSignup, onForgotPassword 
       const resp = await authAPI.verifyOTP(forgotPasswordUsername, resetOTP);
       if (resp.error) {
         setResetError(resp.error);
+        setHasTriedVerify(true);
       } else {
         setForgotPasswordStep('reset');
         toast.success('OTP verified successfully');
       }
     } catch (err: any) {
       setResetError(err.message || 'Failed to verify OTP');
+      setHasTriedVerify(true);
     } finally {
       setIsResetLoading(false);
     }
@@ -93,6 +119,8 @@ export function LandingPage({ onGetStarted, onLogin, onSignup, onForgotPassword 
         toast.success('Password reset successful. You can now log in with your new password.');
         setShowForgotPassword(false);
         setForgotPasswordStep('request');
+        setIsLoginMode(true);
+        setUsername(forgotPasswordUsername);
         setForgotPasswordUsername('');
         setResetOTP('');
         setNewResetPassword('');
@@ -104,6 +132,108 @@ export function LandingPage({ onGetStarted, onLogin, onSignup, onForgotPassword 
       setIsResetLoading(false);
     }
   };
+
+  const validatePassword = (pass: string) => {
+    const hasUpper = /[A-Z]/.test(pass);
+    const hasLower = /[a-z]/.test(pass);
+    const hasNumber = /[0-9]/.test(pass);
+    const hasSymbol = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pass);
+    const isLongEnough = pass.length >= 8;
+    
+    if (!isLongEnough) return "Password must be at least 8 characters long";
+    if (!hasUpper) return "Password must contain at least one uppercase letter";
+    if (!hasLower) return "Password must contain at least one lowercase letter";
+    if (!hasNumber) return "Password must contain at least one number";
+    if (!hasSymbol) return "Password must contain at least one symbol";
+    return null;
+  };
+
+  const [emailOTP, setEmailOTP] = useState('');
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [isSendingEmailOTP, setIsSendingEmailOTP] = useState(false);
+  const [emailOTPCooldown, setEmailOTPCooldown] = useState(0);
+  const [showEmailOTPInput, setShowEmailOTPInput] = useState(false);
+
+  useEffect(() => {
+    let timer: any;
+    if (emailOTPCooldown > 0) {
+      timer = setInterval(() => {
+        setEmailOTPCooldown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [emailOTPCooldown]);
+
+  const handleRequestEmailOTP = async () => {
+    if (!signupData.email || emailAvailable === false) return;
+    
+    setIsSendingEmailOTP(true);
+    try {
+      const resp = await authAPI.requestSignupOTP(signupData.email);
+      if (resp.error) {
+        toast.error(resp.error);
+      } else {
+        toast.success("Verification code sent to your email");
+        setShowEmailOTPInput(true);
+        setEmailOTPCooldown(60);
+      }
+    } catch (err) {
+      toast.error("Failed to send verification code");
+    } finally {
+      setIsSendingEmailOTP(false);
+    }
+  };
+
+  const handleVerifyEmailOTP = async () => {
+    if (emailOTP.length !== 6) return;
+    
+    try {
+      const resp = await authAPI.verifySignupOTP(signupData.email, emailOTP);
+      if (resp.error) {
+        toast.error(resp.error);
+      } else {
+        setEmailVerified(true);
+        setShowEmailOTPInput(false);
+        toast.success("Email verified successfully");
+      }
+    } catch (err) {
+      toast.error("Failed to verify code");
+    }
+  };
+
+  const handleSignupSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormSubmitted(true);
+
+    if (!emailVerified) {
+      toast.error("Please verify your email first");
+      return;
+    }
+
+    if (signupData.password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    
+    const passwordError = validatePassword(signupData.password);
+    if (passwordError) {
+      toast.error(passwordError);
+      return;
+    }
+    
+    try {
+      await onSignup?.({ ...signupData, otp: emailOTP });
+      // Successfully registered - switch to login mode
+      setTimeout(() => {
+        setIsLoginMode(true);
+        setUsername(signupData.username);
+        setFormSubmitted(false);
+      }, 1000);
+    } catch (err: any) {
+      toast.error(err.message || "Signup failed");
+    }
+  };
+
   const birthdatePickerRef = useRef<HTMLInputElement | null>(null);  const [activeNav, setActiveNav] = useState('home');
   const [hoveredNav, setHoveredNav] = useState<string | null>(null);  
   const [signupData, setSignupData] = useState({
@@ -119,6 +249,62 @@ export function LandingPage({ onGetStarted, onLogin, onSignup, onForgotPassword 
     password: '',
     role: 'patient' as const
   });
+  const [formSubmitted, setFormSubmitted] = useState(false);
+
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [emailAvailable, setEmailAvailable] = useState<boolean | null>(null);
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+
+  // Reset validation state when switching modes
+  useEffect(() => {
+    setFormSubmitted(false);
+  }, [isLoginMode]);
+
+  // Real-time validation for Username
+  useEffect(() => {
+    if (!signupData.username || signupData.username.length < 3) {
+      setUsernameAvailable(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsCheckingUsername(true);
+      try {
+        const resp = await authAPI.checkUsername(signupData.username);
+        setUsernameAvailable(resp.available);
+      } catch (err) {
+        console.error('Failed to check username', err);
+      } finally {
+        setIsCheckingUsername(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [signupData.username]);
+
+  // Real-time validation for Email
+  useEffect(() => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!signupData.email || !emailRegex.test(signupData.email)) {
+      setEmailAvailable(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsCheckingEmail(true);
+      try {
+        const resp = await authAPI.checkEmail(signupData.email);
+        setEmailAvailable(resp.available);
+      } catch (err) {
+        console.error('Failed to check email', err);
+      } finally {
+        setIsCheckingEmail(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [signupData.email]);
 
   const formatPhoneNumber = (value: string) => {
     // Remove all non-digit characters
@@ -201,7 +387,10 @@ export function LandingPage({ onGetStarted, onLogin, onSignup, onForgotPassword 
 
           <div className="flex bg-slate-100 p-1 rounded-xl mt-6">
             <button
-              onClick={() => setIsLoginMode(true)}
+              onClick={() => {
+                setIsLoginMode(true);
+                setFormSubmitted(false);
+              }}
               className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
                 isLoginMode 
                   ? 'bg-white text-teal-600 shadow-sm' 
@@ -211,7 +400,10 @@ export function LandingPage({ onGetStarted, onLogin, onSignup, onForgotPassword 
               Sign In
             </button>
             <button
-              onClick={() => setIsLoginMode(false)}
+              onClick={() => {
+                setIsLoginMode(false);
+                setFormSubmitted(false);
+              }}
               className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
                 !isLoginMode 
                   ? 'bg-white text-teal-600 shadow-sm' 
@@ -257,33 +449,114 @@ export function LandingPage({ onGetStarted, onLogin, onSignup, onForgotPassword 
             <button type="submit" className="w-full py-2.5 sm:py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl font-semibold mt-6 sm:mt-8 text-sm sm:text-base"><LogIn className="w-4 sm:w-5 h-4 sm:h-5" />Sign In</button>
           </form>
         ) : (
-          /* Signup Form - Scrollable */
           <div className="overflow-y-auto pr-2 -mr-2 scrollbar-light" style={{ maxHeight: '100%' }}>
-            <form onSubmit={(e) => { e.preventDefault(); onSignup?.(signupData); }} className="space-y-4 sm:space-y-5">
+            <form onSubmit={handleSignupSubmit} className="space-y-4 sm:space-y-5">
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <label className="block text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 text-slate-700">First Name</label>
-                  <input type="text" value={signupData.firstName} onChange={(e) => updateNameFields('firstName', e.target.value)} required placeholder="John" className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
+                  <input 
+                    type="text" 
+                    value={signupData.firstName} 
+                    onChange={(e) => updateNameFields('firstName', e.target.value)} 
+                    required 
+                    placeholder="John" 
+                    className={`w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 text-sm transition-all ${
+                      formSubmitted && !signupData.firstName ? 'border-red-500 ring-red-500/20' : 'border-slate-200 focus:ring-teal-500'
+                    }`} 
+                  />
                 </div>
                 <div>
                   <label className="block text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 text-slate-700">Last Name</label>
-                  <input type="text" value={signupData.lastName} onChange={(e) => updateNameFields('lastName', e.target.value)} required placeholder="Doe" className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
+                  <input 
+                    type="text" 
+                    value={signupData.lastName} 
+                    onChange={(e) => updateNameFields('lastName', e.target.value)} 
+                    required 
+                    placeholder="Doe" 
+                    className={`w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 text-sm transition-all ${
+                      formSubmitted && !signupData.lastName ? 'border-red-500 ring-red-500/20' : 'border-slate-200 focus:ring-teal-500'
+                    }`} 
+                  />
                 </div>
               </div>
 
-              <div>
+              <div className="space-y-3">
                 <label className="block text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 text-slate-700">Email Address</label>
-                <div className="relative">
-                  <Mail className="w-3.5 sm:w-4 h-3.5 sm:h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
-                  <input type="email" value={signupData.email} onChange={(e) => setSignupData({ ...signupData, email: e.target.value })} required placeholder="john@example.com" className="w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Mail className={`w-3.5 sm:w-4 h-3.5 sm:h-4 absolute left-3 top-1/2 transform -translate-y-1/2 ${ (formSubmitted && !signupData.email) || emailAvailable === false ? 'text-red-500' : 'text-slate-400'}`} />
+                    <input 
+                      type="email" 
+                      value={signupData.email} 
+                      onChange={(e) => {
+                        setSignupData({ ...signupData, email: e.target.value });
+                        setEmailVerified(false);
+                      }} 
+                      required 
+                      disabled={emailVerified}
+                      placeholder="john@example.com" 
+                      className={`w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-2.5 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 text-sm transition-all ${
+                        (formSubmitted && !signupData.email) || emailAvailable === false ? 'border-red-500 ring-red-500/20' : 'border-slate-200 focus:ring-teal-500'
+                      } ${emailVerified ? 'bg-green-50 border-green-200 text-green-700' : ''}`} 
+                    />
+                  </div>
+                  {!emailVerified && (
+                    <button
+                      type="button"
+                      onClick={handleRequestEmailOTP}
+                      disabled={!signupData.email || emailAvailable === false || isSendingEmailOTP || emailOTPCooldown > 0}
+                      className="px-4 py-2 bg-teal-600 text-white rounded-lg text-xs font-bold hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:grayscale whitespace-nowrap min-w-[80px]"
+                    >
+                      {isSendingEmailOTP ? 'Sending...' : emailOTPCooldown > 0 ? `Resend OTP (${emailOTPCooldown}s)` : 'Verify'}
+                    </button>
+                  )}
                 </div>
+                {emailAvailable === false && signupData.email && <p className="text-[10px] text-red-500 mt-1 font-medium">This email is already taken or invalid.</p>}
+                {emailVerified && <p className="text-[10px] text-green-600 mt-1 font-bold flex items-center gap-1"><Check className="w-3 h-3" /> Email verified successfully</p>}
+                
+                {showEmailOTPInput && !emailVerified && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-3 bg-teal-50 border border-teal-100 rounded-lg space-y-2 mt-2"
+                  >
+                    <p className="text-[10px] sm:text-xs font-medium text-teal-800">Enter the 6-digit code sent to your email:</p>
+                    <div className="flex gap-2">
+                      <input 
+                        type="text"
+                        maxLength={6}
+                        value={emailOTP}
+                        onChange={(e) => setEmailOTP(e.target.value.replace(/\D/g, ''))}
+                        placeholder="000000"
+                        className="flex-1 px-3 py-2 bg-white border border-teal-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 tracking-[0.5em] font-mono text-center"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleVerifyEmailOTP}
+                        disabled={emailOTP.length !== 6}
+                        className="px-4 py-2 bg-teal-600 text-white rounded-md text-xs font-bold hover:bg-teal-700 disabled:opacity-50"
+                      >
+                        Verify
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
               </div>
 
               <div>
                 <label className="block text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 text-slate-700">Phone Number</label>
                 <div className="relative">
-                  <Phone className="w-3.5 sm:w-4 h-3.5 sm:h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
-                  <input type="tel" value={signupData.phone} onChange={(e) => setSignupData({ ...signupData, phone: formatPhoneNumber(e.target.value) })} required placeholder="+63 912 345 6789" className="w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
+                  <Phone className={`w-3.5 sm:w-4 h-3.5 sm:h-4 absolute left-3 top-1/2 transform -translate-y-1/2 ${formSubmitted && !signupData.phone ? 'text-red-500' : 'text-slate-400'}`} />
+                  <input 
+                    type="tel" 
+                    value={signupData.phone} 
+                    onChange={(e) => setSignupData({ ...signupData, phone: formatPhoneNumber(e.target.value) })} 
+                    required 
+                    placeholder="+63 912 345 6789" 
+                    className={`w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-2.5 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 text-sm transition-all ${
+                      formSubmitted && !signupData.phone ? 'border-red-500 ring-red-500/20' : 'border-slate-200 focus:ring-teal-500'
+                    }`} 
+                  />
                 </div>
               </div>
 
@@ -291,8 +564,17 @@ export function LandingPage({ onGetStarted, onLogin, onSignup, onForgotPassword 
                 <div>
                   <label className="block text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 text-slate-700">Date of Birth</label>
                   <div className="relative group">
-                    <Calendar className="w-3.5 sm:w-4 h-3.5 sm:h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors pointer-events-none z-10" />
-                    <input ref={birthdatePickerRef} type="date" value={convertToDBDate(signupData.dateOfBirth)} onChange={(e) => setSignupData({ ...signupData, dateOfBirth: convertToDisplayDate(e.target.value) })} required className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm transition-all appearance-none cursor-pointer" />
+                    <Calendar className={`w-3.5 sm:w-4 h-3.5 sm:h-4 absolute left-3 top-1/2 transform -translate-y-1/2 group-focus-within:text-teal-500 transition-colors pointer-events-none z-10 ${formSubmitted && !signupData.dateOfBirth ? 'text-red-500' : 'text-slate-400'}`} />
+                    <input 
+                      ref={birthdatePickerRef} 
+                      type="date" 
+                      value={convertToDBDate(signupData.dateOfBirth)} 
+                      onChange={(e) => setSignupData({ ...signupData, dateOfBirth: convertToDisplayDate(e.target.value) })} 
+                      required 
+                      className={`w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-2.5 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 text-sm transition-all appearance-none cursor-pointer ${
+                        formSubmitted && !signupData.dateOfBirth ? 'border-red-500 ring-red-500/20' : 'border-slate-200 focus:ring-teal-500'
+                      }`} 
+                    />
                   </div>
                 </div>
                 <div>
@@ -307,31 +589,115 @@ export function LandingPage({ onGetStarted, onLogin, onSignup, onForgotPassword 
               <div>
                 <label className="block text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 text-slate-700">Username</label>
                 <div className="relative">
-                  <User className="w-3.5 sm:w-4 h-3.5 sm:h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
-                  <input type="text" value={signupData.username} onChange={(e) => setSignupData({ ...signupData, username: e.target.value })} required placeholder="Choose a username" className="w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
+                  <User className={`w-3.5 sm:w-4 h-3.5 sm:h-4 absolute left-3 top-1/2 transform -translate-y-1/2 ${ (formSubmitted && !signupData.username) || usernameAvailable === false ? 'text-red-500' : 'text-slate-400'}`} />
+                  <input 
+                    type="text" 
+                    value={signupData.username} 
+                    onChange={(e) => setSignupData({ ...signupData, username: e.target.value })} 
+                    required 
+                    placeholder="Choose a username" 
+                    className={`w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-2.5 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 text-sm transition-all ${
+                      (formSubmitted && !signupData.username) || usernameAvailable === false ? 'border-red-500 ring-red-500/20' : 'border-slate-200 focus:ring-teal-500'
+                    }`} 
+                  />
                 </div>
+                {usernameAvailable === false && signupData.username && <p className="text-[10px] text-red-500 mt-1 font-medium">This username is already taken.</p>}
               </div>
 
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <label className="block text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 text-slate-700">Password</label>
                   <div className="relative">
-                    <Lock className="w-3.5 sm:w-4 h-3.5 sm:h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
-                    <input type={showPassword ? 'text' : 'password'} value={signupData.password} onChange={(e) => setSignupData({ ...signupData, password: e.target.value })} required className="w-full pl-9 sm:pl-10 pr-9 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
+                    <Lock className={`w-3.5 sm:w-4 h-3.5 sm:h-4 absolute left-3 top-1/2 transform -translate-y-1/2 ${ (formSubmitted && !signupData.password) || (signupData.password && validatePassword(signupData.password)) ? 'text-red-500' : 'text-slate-400'}`} />
+                    <input 
+                      type={showPassword ? 'text' : 'password'} 
+                      value={signupData.password} 
+                      onChange={(e) => setSignupData({ ...signupData, password: e.target.value })} 
+                      required 
+                      placeholder="Create password"
+                      className={`w-full pl-9 sm:pl-10 pr-9 py-2 sm:py-2.5 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 text-sm transition-all ${
+                        (formSubmitted && !signupData.password) || (signupData.password && validatePassword(signupData.password)) ? 'border-red-500 ring-red-500/20' : 'border-slate-200 focus:ring-teal-500'
+                      }`} 
+                    />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600">{showPassword ? <EyeOff className="w-3.5 sm:w-4 h-3.5 sm:h-4" /> : <Eye className="w-3.5 sm:w-4 h-3.5 sm:h-4" />}</button>
                   </div>
                 </div>
                 <div>
                   <label className="block text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 text-slate-700">Confirm</label>
                   <div className="relative">
-                    <Lock className="w-3.5 sm:w-4 h-3.5 sm:h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
-                    <input type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="w-full pl-9 sm:pl-10 pr-9 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
+                    <Lock className={`w-3.5 sm:w-4 h-3.5 sm:h-4 absolute left-3 top-1/2 transform -translate-y-1/2 ${ (formSubmitted && !confirmPassword) || (confirmPassword && confirmPassword !== signupData.password) ? 'text-red-500' : 'text-slate-400'}`} />
+                    <input 
+                      type={showConfirmPassword ? 'text' : 'password'} 
+                      value={confirmPassword} 
+                      onChange={(e) => setConfirmPassword(e.target.value)} 
+                      required 
+                      placeholder="Confirm password"
+                      className={`w-full pl-9 sm:pl-10 pr-9 py-2 sm:py-2.5 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 text-sm transition-all ${
+                        (formSubmitted && !confirmPassword) || (confirmPassword && confirmPassword !== signupData.password) ? 'border-red-500 ring-red-500/20' : 'border-slate-200 focus:ring-teal-500'
+                      }`} 
+                    />
                     <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600">{showConfirmPassword ? <EyeOff className="w-3.5 sm:w-4 h-3.5 sm:h-4" /> : <Eye className="w-3.5 sm:w-4 h-3.5 sm:h-4" />}</button>
                   </div>
                 </div>
               </div>
 
-              <button type="submit" className="w-full py-3 sm:py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl font-semibold mt-4 sm:mt-6 text-sm sm:text-base"><UserPlus className="w-4 sm:w-5 h-4 sm:h-5" />Create Account</button>
+              {/* Password Complexity Requirements - Moved up for visibility */}
+              <div className={`border rounded-xl p-3 sm:p-4 space-y-2 transition-all duration-300 shadow-sm ${ 
+                (formSubmitted && (!signupData.password || validatePassword(signupData.password))) 
+                  ? 'bg-red-50 border-red-200 ring-1 ring-red-200' 
+                  : (signupData.password && !validatePassword(signupData.password)) 
+                    ? 'bg-green-50 border-green-200 ring-1 ring-green-200' 
+                    : 'bg-blue-50 border-blue-200 ring-1 ring-blue-200'
+              }`}>
+                <p className={`text-xs sm:text-sm font-bold flex items-center gap-2 ${ 
+                  (formSubmitted && (!signupData.password || validatePassword(signupData.password))) 
+                    ? 'text-red-800' 
+                    : (signupData.password && !validatePassword(signupData.password)) 
+                      ? 'text-green-800' 
+                      : 'text-blue-800'
+                }`}>
+                  <AlertCircle className="w-4 h-4" /> Password Requirements:
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+                  <div className={`flex items-center gap-2 text-[10px] sm:text-xs ${signupData.password.length >= 8 ? 'text-green-600 font-bold' : 'text-slate-500'}`}>
+                    <div className={`w-1.5 h-1.5 rounded-full ${signupData.password.length >= 8 ? 'bg-green-600' : 'bg-slate-300'}`} />
+                    At least 8 characters
+                  </div>
+                  <div className={`flex items-center gap-2 text-[10px] sm:text-xs ${/[A-Z]/.test(signupData.password) ? 'text-green-600 font-bold' : 'text-slate-500'}`}>
+                    <div className={`w-1.5 h-1.5 rounded-full ${/[A-Z]/.test(signupData.password) ? 'bg-green-600' : 'bg-slate-300'}`} />
+                    One uppercase (A-Z)
+                  </div>
+                  <div className={`flex items-center gap-2 text-[10px] sm:text-xs ${/[a-z]/.test(signupData.password) ? 'text-green-600 font-bold' : 'text-slate-500'}`}>
+                    <div className={`w-1.5 h-1.5 rounded-full ${/[a-z]/.test(signupData.password) ? 'bg-green-600' : 'bg-slate-300'}`} />
+                    One lowercase (a-z)
+                  </div>
+                  <div className={`flex items-center gap-2 text-[10px] sm:text-xs ${/[0-9]/.test(signupData.password) ? 'text-green-600 font-bold' : 'text-slate-500'}`}>
+                    <div className={`w-1.5 h-1.5 rounded-full ${/[0-9]/.test(signupData.password) ? 'bg-green-600' : 'bg-slate-300'}`} />
+                    One number (0-9)
+                  </div>
+                  <div className={`flex items-center gap-2 text-[10px] sm:text-xs ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(signupData.password) ? 'text-green-600 font-bold' : 'text-slate-500'}`}>
+                    <div className={`w-1.5 h-1.5 rounded-full ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(signupData.password) ? 'bg-green-600' : 'bg-slate-300'}`} />
+                    One symbol (@#$%)
+                  </div>
+                </div>
+              </div>
+
+              <button 
+                type="submit" 
+                disabled={
+                  !signupData.firstName || 
+                  !signupData.lastName || 
+                  !signupData.email || emailAvailable !== true || emailVerified !== true ||
+                  !signupData.phone ||
+                  !signupData.dateOfBirth ||
+                  !signupData.username || usernameAvailable !== true ||
+                  !signupData.password || validatePassword(signupData.password) !== null ||
+                  signupData.password !== confirmPassword
+                }
+                className="w-full py-3 sm:py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl font-semibold mt-4 sm:mt-6 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale"
+              >
+                <UserPlus className="w-4 sm:w-5 h-4 sm:h-5" />Create Account
+              </button>
             </form>
           </div>
         )}
@@ -802,19 +1168,26 @@ export function LandingPage({ onGetStarted, onLogin, onSignup, onForgotPassword 
                   <input 
                     type="text"
                     value={forgotPasswordUsername} 
-                    onChange={e => setForgotPasswordUsername(e.target.value)} 
+                    onChange={e => {
+                      setForgotPasswordUsername(e.target.value);
+                      setResetError('');
+                    }} 
                     placeholder="Enter your username" 
-                    className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-teal-500 outline-none"
+                    className={`w-full border rounded-lg p-2.5 focus:ring-2 outline-none transition-all ${
+                      resetError && resetError.toLowerCase().includes('not found') ? 'border-red-500 ring-red-500/20' : 'border-slate-300 focus:ring-teal-500'
+                    }`}
                     required
                   />
                   <p className="text-xs text-slate-500 mt-2">We will send a 6-digit verification code to your registered phone number.</p>
                 </div>
                 {resetError && (
-                  <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100">
+                  <div className={`p-3 rounded-lg text-sm border ${
+                    resetError.toLowerCase().includes('not found') ? 'bg-red-50 text-red-600 border-red-100' : 'bg-amber-50 text-amber-600 border-amber-100'
+                  }`}>
                     {resetError}
                   </div>
                 )}
-                <div className="flex justify-end gap-2 pt-2">
+                <div className="flex justify-between items-center pt-2">
                   <button 
                     type="button" 
                     onClick={() => {
@@ -824,7 +1197,7 @@ export function LandingPage({ onGetStarted, onLogin, onSignup, onForgotPassword 
                     className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
                     disabled={isResetLoading}
                   >
-                    Cancel
+                    Back
                   </button>
                   <button 
                     type="submit" 
@@ -843,15 +1216,30 @@ export function LandingPage({ onGetStarted, onLogin, onSignup, onForgotPassword 
                   <p className="text-sm text-slate-600 mb-4 text-center">
                     Verification code sent to <span className="font-bold text-slate-800">{maskedPhone}</span>
                   </p>
-                  <label className="block text-sm font-medium text-slate-700 mb-1 text-center">Verification Code (OTP)</label>
-                  <input 
-                    type="text"
-                    value={resetOTP} 
-                    onChange={e => setResetOTP(e.target.value.replace(/\D/g, '').substring(0, 6))} 
-                    placeholder="Enter 6-digit code" 
-                    className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-teal-500 outline-none text-center text-xl tracking-[0.5em] font-mono"
-                    required
-                  />
+                  <label className="block text-sm font-medium text-slate-700 mb-3 text-center">Verification Code</label>
+                  <div className="flex justify-center mb-6">
+                    <InputOTP
+                      maxLength={6}
+                      value={resetOTP}
+                      onChange={(value) => {
+                        setResetOTP(value);
+                        setHasTriedVerify(false);
+                        setResetError("");
+                      }}
+                    >
+                      <InputOTPGroup>
+                        <InputOTPSlot index={0} className="w-10 h-12 text-lg sm:w-12 sm:h-14 sm:text-xl" />
+                        <InputOTPSlot index={1} className="w-10 h-12 text-lg sm:w-12 sm:h-14 sm:text-xl" />
+                        <InputOTPSlot index={2} className="w-10 h-12 text-lg sm:w-12 sm:h-14 sm:text-xl" />
+                      </InputOTPGroup>
+                      <InputOTPSeparator />
+                      <InputOTPGroup>
+                        <InputOTPSlot index={3} className="w-10 h-12 text-lg sm:w-12 sm:h-14 sm:text-xl" />
+                        <InputOTPSlot index={4} className="w-10 h-12 text-lg sm:w-12 sm:h-14 sm:text-xl" />
+                        <InputOTPSlot index={5} className="w-10 h-12 text-lg sm:w-12 sm:h-14 sm:text-xl" />
+                      </InputOTPGroup>
+                    </InputOTP>
+                  </div>
                 </div>
                 {resetError && (
                   <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100">
@@ -861,32 +1249,26 @@ export function LandingPage({ onGetStarted, onLogin, onSignup, onForgotPassword 
                 <div className="flex justify-between items-center pt-2">
                   <button 
                     type="button" 
-                    onClick={() => setForgotPasswordStep('request')} 
-                    className="text-sm text-teal-600 hover:text-teal-700 underline"
+                    onClick={() => {
+                      setShowForgotPassword(false);
+                      setResetError('');
+                    }} 
+                    className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
                     disabled={isResetLoading}
                   >
                     Back
                   </button>
-                  <div className="flex gap-2">
-                    <button 
-                      type="button" 
-                      onClick={() => {
-                        setShowForgotPassword(false);
-                        setResetError('');
-                      }} 
-                      className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-                      disabled={isResetLoading}
-                    >
-                      Cancel
-                    </button>
-                    <button 
-                      type="submit" 
-                      disabled={isResetLoading || resetOTP.length !== 6}
-                      className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors shadow-md disabled:opacity-70"
-                    >
-                      {isResetLoading ? 'Verifying...' : 'Verify OTP'}
-                    </button>
-                  </div>
+                  <button 
+                    type="submit" 
+                    disabled={isResetLoading || resendCooldown > 0 || (!hasTriedVerify && resetOTP.length !== 6)}
+                    className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors shadow-md disabled:opacity-70"
+                  >
+                    {isResetLoading ? 'Processing...' : (
+                      resendCooldown > 0 
+                        ? `Resend OTP (${resendCooldown}s)` 
+                        : (hasTriedVerify ? 'Resend OTP' : 'Verify OTP')
+                    )}
+                  </button>
                 </div>
               </form>
             )}
@@ -900,6 +1282,7 @@ export function LandingPage({ onGetStarted, onLogin, onSignup, onForgotPassword 
                       value={newResetPassword} 
                       onChange={e => setNewResetPassword(e.target.value)} 
                       placeholder="Enter new password" 
+                      className={newResetPassword && validatePassword(newResetPassword) ? 'border-red-500' : ''}
                     />
                   </div>
                   <div>
@@ -908,15 +1291,58 @@ export function LandingPage({ onGetStarted, onLogin, onSignup, onForgotPassword 
                       value={confirmResetPassword} 
                       onChange={e => setConfirmResetPassword(e.target.value)} 
                       placeholder="Confirm new password" 
+                      className={confirmResetPassword && confirmResetPassword !== newResetPassword ? 'border-red-500' : ''}
                     />
                   </div>
                 </div>
+
+                {/* Password Complexity Requirements */}
+                <div className={`border rounded-xl p-3 space-y-1.5 transition-all duration-300 shadow-sm ${ 
+                  (newResetPassword && validatePassword(newResetPassword)) 
+                    ? 'bg-red-50 border-red-200 ring-1 ring-red-200' 
+                    : (newResetPassword && !validatePassword(newResetPassword)) 
+                      ? 'bg-green-50 border-green-200 ring-1 ring-green-200' 
+                      : 'bg-blue-50 border-blue-200 ring-1 ring-blue-200'
+                }`}>
+                  <p className={`text-[12px] font-bold flex items-center gap-2 ${ 
+                    (newResetPassword && validatePassword(newResetPassword)) 
+                      ? 'text-red-800' 
+                      : (newResetPassword && !validatePassword(newResetPassword)) 
+                        ? 'text-green-800' 
+                        : 'text-blue-800'
+                  }`}>
+                    <AlertCircle className="w-3.5 h-3.5" /> Password Requirements:
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1 mt-1">
+                    <div className={`flex items-center gap-2 text-[10px] sm:text-xs ${newResetPassword.length >= 8 ? 'text-green-600 font-bold' : 'text-slate-500'}`}>
+                      <div className={`w-1.5 h-1.5 rounded-full ${newResetPassword.length >= 8 ? 'bg-green-600' : 'bg-slate-300'}`} />
+                      At least 8 characters
+                    </div>
+                    <div className={`flex items-center gap-2 text-[10px] sm:text-xs ${/[A-Z]/.test(newResetPassword) ? 'text-green-600 font-bold' : 'text-slate-500'}`}>
+                      <div className={`w-1.5 h-1.5 rounded-full ${/[A-Z]/.test(newResetPassword) ? 'bg-green-600' : 'bg-slate-300'}`} />
+                      One uppercase (A-Z)
+                    </div>
+                    <div className={`flex items-center gap-2 text-[10px] sm:text-xs ${/[a-z]/.test(newResetPassword) ? 'text-green-600 font-bold' : 'text-slate-500'}`}>
+                      <div className={`w-1.5 h-1.5 rounded-full ${/[a-z]/.test(newResetPassword) ? 'bg-green-600' : 'bg-slate-300'}`} />
+                      One lowercase (a-z)
+                    </div>
+                    <div className={`flex items-center gap-2 text-[10px] sm:text-xs ${/[0-9]/.test(newResetPassword) ? 'text-green-600 font-bold' : 'text-slate-500'}`}>
+                      <div className={`w-1.5 h-1.5 rounded-full ${/[0-9]/.test(newResetPassword) ? 'bg-green-600' : 'bg-slate-300'}`} />
+                      One number (0-9)
+                    </div>
+                    <div className={`flex items-center gap-2 text-[10px] sm:text-xs ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newResetPassword) ? 'text-green-600 font-bold' : 'text-slate-500'}`}>
+                      <div className={`w-1.5 h-1.5 rounded-full ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newResetPassword) ? 'bg-green-600' : 'bg-slate-300'}`} />
+                      One symbol (@#$%)
+                    </div>
+                  </div>
+                </div>
+
                 {resetError && (
                   <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100">
                     {resetError}
                   </div>
                 )}
-                <div className="flex justify-end gap-2 pt-2">
+                <div className="flex justify-between items-center pt-2">
                   <button 
                     type="button" 
                     onClick={() => {
@@ -926,11 +1352,11 @@ export function LandingPage({ onGetStarted, onLogin, onSignup, onForgotPassword 
                     className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
                     disabled={isResetLoading}
                   >
-                    Cancel
+                    Back
                   </button>
                   <button 
                     type="submit" 
-                    disabled={isResetLoading}
+                    disabled={isResetLoading || !newResetPassword || validatePassword(newResetPassword) !== null || newResetPassword !== confirmResetPassword}
                     className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors shadow-md disabled:opacity-70"
                   >
                     {isResetLoading ? 'Resetting...' : 'Reset Password'}

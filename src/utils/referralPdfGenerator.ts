@@ -3,7 +3,7 @@ import { Referral, Patient } from '../App';
 import { toast } from 'sonner';
 
 // Import image assets
-import { clinicLogo, clinicMap, redorLogo, xrayClinic } from '../assets';
+import { clinicLogo, clinicMap, redorLogo, xrayClinic } from '../assets/index';
 
 const formatFullName = (fullName: string | undefined | null) => {
   if (!fullName) return '';

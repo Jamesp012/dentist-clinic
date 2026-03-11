@@ -2,7 +2,7 @@ const express = require('express');
 const bcryptjs = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/database');
-const { sendPatientCredentials } = require('../utils/emailService');
+const { sendPatientCredentials, sendVerificationOTP } = require('../utils/emailService');
 const { sendSMS } = require('../utils/smsService');
 
 const router = express.Router();
@@ -13,7 +13,28 @@ router.post('/register', async (req, res) => {
   await connection.beginTransaction();
 
   try {
-    const { username, password, fullName, email, role, phone, dateOfBirth, sex, address } = req.body;
+    const { username, password, fullName, email, role, phone, dateOfBirth, sex, address, otp } = req.body;
+
+    // Check if email verification is required (only for patients self-registering)
+    if (role === 'patient') {
+      if (!otp) {
+        await connection.rollback();
+        return res.status(400).json({ error: 'Email verification code is required' });
+      }
+
+      const [otps] = await connection.query(
+        'SELECT * FROM otp_verifications WHERE email = ? AND otp = ? AND type = "email" AND expiresAt > UTC_TIMESTAMP() AND verified = FALSE',
+        [email, otp]
+      );
+
+      if (otps.length === 0) {
+        await connection.rollback();
+        return res.status(400).json({ error: 'Invalid or expired verification code' });
+      }
+
+      // Mark OTP as verified
+      await connection.query('UPDATE otp_verifications SET verified = TRUE WHERE id = ?', [otps[0].id]);
+    }
 
     // Check if username exists
     const [existingUser] = await connection.query('SELECT id FROM users WHERE username = ?', [username]);
@@ -143,7 +164,8 @@ router.post('/login', async (req, res) => {
       } 
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Auth route error:', error);
+    res.status(500).json({ error: error.message, stack: error.stack });
   }
 });
 
@@ -163,7 +185,8 @@ router.post('/change-password', async (req, res) => {
 
     res.json({ message: 'Password changed successfully' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Auth route error:', error);
+    res.status(500).json({ error: error.message, stack: error.stack });
   }
 });
 
@@ -181,7 +204,27 @@ router.get('/check-username', async (req, res) => {
     
     res.json({ available: users.length === 0 });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Auth route error:', error);
+    res.status(500).json({ error: error.message, stack: error.stack });
+  }
+});
+
+// Check email availability
+router.get('/check-email', async (req, res) => {
+  try {
+    const { email } = req.query;
+    
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    // Check if email exists across all roles
+    const [users] = await pool.query('SELECT id FROM users WHERE email = ?', [email.trim()]);
+    
+    res.json({ available: users.length === 0 });
+  } catch (error) {
+    console.error('Auth route error:', error);
+    res.status(500).json({ error: error.message, stack: error.stack });
   }
 });
 
@@ -320,13 +363,12 @@ router.post('/forgot-password', async (req, res) => {
 
     // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     // Store OTP in database
-    await pool.query('DELETE FROM otp_verifications WHERE phone = ?', [user.phone]);
+    await pool.query('DELETE FROM otp_verifications WHERE phone = ? AND type = "phone"', [user.phone]);
     await pool.query(
-      'INSERT INTO otp_verifications (phone, otp, expiresAt, verified) VALUES (?, ?, ?, FALSE)',
-      [user.phone, otp, expiresAt]
+      'INSERT INTO otp_verifications (phone, otp, expiresAt, verified, type) VALUES (?, ?, DATE_ADD(UTC_TIMESTAMP(), INTERVAL 10 MINUTE), FALSE, "phone")',
+      [user.phone, otp]
     );
 
     // Send SMS
@@ -349,6 +391,71 @@ router.post('/forgot-password', async (req, res) => {
   }
 });
 
+// Request Signup Email Verification
+router.post('/request-signup-otp', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    // Check if email already exists
+    const [existingEmail] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
+    if (existingEmail.length > 0) {
+      return res.status(400).json({ error: 'An account with this email already exists' });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Store OTP in database
+    await pool.query('DELETE FROM otp_verifications WHERE email = ? AND type = "email"', [email]);
+    await pool.query(
+      'INSERT INTO otp_verifications (email, otp, expiresAt, verified, type) VALUES (?, ?, DATE_ADD(UTC_TIMESTAMP(), INTERVAL 10 MINUTE), FALSE, "email")',
+      [email, otp]
+    );
+
+    // Send Email
+    const emailResult = await sendVerificationOTP(email, otp);
+
+    if (emailResult.success) {
+      res.json({ message: 'Verification code sent to your email' });
+    } else {
+      res.status(500).json({ error: 'Failed to send verification email', details: emailResult.error });
+    }
+  } catch (error) {
+    console.error('Signup OTP error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Verify Signup OTP
+router.post('/verify-signup-otp', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ error: 'Email and verification code are required' });
+    }
+
+    // Check OTP
+    const [otps] = await pool.query(
+      'SELECT * FROM otp_verifications WHERE email = ? AND otp = ? AND type = "email" AND expiresAt > UTC_TIMESTAMP() AND verified = FALSE',
+      [email, otp]
+    );
+
+    if (otps.length === 0) {
+      return res.status(400).json({ error: 'Invalid or expired verification code' });
+    }
+
+    res.json({ message: 'Email verified successfully' });
+  } catch (error) {
+    console.error('Verify signup OTP error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Verify OTP
 router.post('/verify-otp', async (req, res) => {
   try {
@@ -361,20 +468,31 @@ router.post('/verify-otp', async (req, res) => {
     // Find user's phone
     const [users] = await pool.query('SELECT phone FROM users WHERE username = ?', [username]);
     if (users.length === 0) {
+      console.log(`[OTP Verify] User not found: ${username}`);
       return res.status(404).json({ error: 'User not found' });
     }
 
     const phone = users[0].phone;
+    console.log(`[OTP Verify] Attempting to verify OTP for user: ${username}, phone: ${phone}, otp: ${otp}`);
 
     // Check OTP
     const [otps] = await pool.query(
-      'SELECT * FROM otp_verifications WHERE phone = ? AND otp = ? AND expiresAt > NOW() AND verified = FALSE',
+      'SELECT * FROM otp_verifications WHERE phone = ? AND otp = ? AND expiresAt > UTC_TIMESTAMP() AND verified = FALSE',
       [phone, otp]
     );
 
     if (otps.length === 0) {
+      // Log more details for debugging
+      const [allOtps] = await pool.query(
+        'SELECT *, expiresAt > UTC_TIMESTAMP() as isNotExpired FROM otp_verifications WHERE phone = ? ORDER BY createdAt DESC LIMIT 1',
+        [phone]
+      );
+      console.log(`[OTP Verify] No matching active OTP found. Last OTP record for this phone:`, allOtps[0] || 'NONE');
+      
       return res.status(400).json({ error: 'Invalid or expired OTP' });
     }
+
+    console.log(`[OTP Verify] Success! Found matching OTP:`, otps[0]);
 
     // Mark as verified
     await pool.query('UPDATE otp_verifications SET verified = TRUE WHERE id = ?', [otps[0].id]);

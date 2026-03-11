@@ -418,25 +418,88 @@ export function DentalCharting({ patients }: DentalChartingProps) {
         {/* Main Chart Area */}
         <div className="flex-1 flex items-center justify-center bg-white p-8 overflow-auto">
           <div className="relative max-w-5xl w-full flex flex-col items-center gap-6">
-            {/* Legend */}
-            <div className="flex items-center gap-6 text-xs text-slate-500 mb-2">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 flex items-center justify-center">
-                  <svg viewBox="0 0 24 24" className="w-5 h-5">
-                    <circle cx="12" cy="12" r="9" fill="#FDFBF7" stroke="#000000" strokeWidth="2" />
-                  </svg>
-                </div>
-                <span>Permanent teeth (outer ring)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 flex items-center justify-center">
-                  <svg viewBox="0 0 24 24" className="w-5 h-5">
-                    <circle cx="12" cy="12" r="9" fill="#FDFBF7" stroke="#D1D5DB" strokeWidth="2" />
-                  </svg>
-                </div>
-                <span>Primary / temporary teeth (inner ring)</span>
-              </div>
-            </div>
+            {/* Modern Legends Container */}
+            <div className="relative w-full max-w-4xl p-10 mb-6 rounded-3xl bg-white/70 backdrop-blur-xl border border-slate-200/50 shadow-lg overflow-hidden group">
+
+  {/* Top Gradient Glow */}
+  <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[28rem] h-[16rem] 
+    bg-gradient-to-r from-teal-400/20 via-cyan-400/20 to-blue-400/20 
+    rounded-full opacity-60 pointer-events-none" />
+
+  <div className="relative flex flex-col gap-10">
+
+    {/* Tooth Type Legend */}
+    <div className="flex flex-wrap items-center justify-center gap-6">
+      <div className="flex items-center gap-4 group/item">
+        <div className="w-12 h-12 rounded-2xl bg-white border border-slate-300 flex items-center justify-center shadow-sm transition-transform group-hover/item:scale-110">
+          <div className="w-6 h-6 rounded-full border border-slate-200 bg-slate-50/50" />
+        </div>
+        <div className="flex flex-col">
+          <span className="text-xs font-black text-slate-800 uppercase tracking-wider">Permanent</span>
+          <span className="text-[10px] font-semibold text-slate-400">Outer Ring (1-32)</span>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4 group/item">
+        <div className="w-12 h-12 rounded-2xl bg-white border border-slate-300 flex items-center justify-center shadow-sm transition-transform group-hover/item:scale-110">
+          <div className="w-4 h-4 rounded-full border border-slate-100 bg-slate-50/30" />
+        </div>
+        <div className="flex flex-col">
+          <span className="text-xs font-black text-slate-500 uppercase tracking-wider">Primary</span>
+          <span className="text-[10px] font-semibold text-slate-400">Inner Ring (A-T)</span>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4 group/item">
+        <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center shadow-sm transition-transform group-hover/item:scale-110">
+          <div className="w-6 h-6 rounded-full bg-rose-200/80" />
+        </div>
+        <div className="flex flex-col">
+          <span className="text-xs font-black text-rose-600 uppercase tracking-wider">Gums</span>
+          <span className="text-[10px] font-semibold text-rose-300">Tissue Base</span>
+        </div>
+      </div>
+    </div>
+
+    {/* Modern Status Divider */}
+    <div className="relative flex items-center justify-center">
+      <div className="absolute inset-0 flex items-center" aria-hidden="true">
+        <div className="w-full border-t border-slate-200" />
+      </div>
+      <div className="relative px-6 py-1 bg-white/90 rounded-full border border-slate-200">
+        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Condition Glossary</span>
+      </div>
+    </div>
+
+    {/* Condition Legend - Modern Pills */}
+    <div className="flex flex-wrap items-center justify-center gap-3">
+      <div className="flex items-center gap-2.5 px-4 py-2 bg-white border border-slate-200 rounded-2xl shadow-sm text-xs font-bold text-slate-700 transition-all hover:border-slate-400 hover:shadow-md">
+        <div className="w-3.5 h-3.5 rounded-full bg-slate-800/40 blur-sm" />
+        Caries / Decay
+      </div>
+      <div className="flex items-center gap-2.5 px-4 py-2 bg-white border border-slate-200 rounded-2xl shadow-sm text-xs font-bold text-slate-700 transition-all hover:border-slate-400 hover:shadow-md">
+        <div className="w-3.5 h-3.5 rounded-md bg-gradient-to-br from-amber-300 to-amber-600 shadow" />
+        Crown / Gold
+      </div>
+      <div className="flex items-center gap-2.5 px-4 py-2 bg-white border border-slate-200 rounded-2xl shadow-sm text-xs font-bold text-slate-700 transition-all hover:border-slate-400 hover:shadow-md">
+        <div className="w-3.5 h-3.5 rounded-md bg-gradient-to-br from-slate-300 to-slate-500 shadow" />
+        Amalgam
+      </div>
+      <div className="flex items-center gap-2.5 px-4 py-2 bg-rose-50 border border-rose-100 rounded-2xl shadow-sm text-xs font-bold text-rose-600 transition-all hover:border-rose-300 hover:shadow-md">
+        <div className="relative w-3.5 h-3.5">
+          <div className="absolute inset-0 bg-rose-500 rotate-45 w-full h-0.5 top-1/2 -translate-y-1/2 rounded-full" />
+          <div className="absolute inset-0 bg-rose-500 -rotate-45 w-full h-0.5 top-1/2 -translate-y-1/2 rounded-full" />
+        </div>
+        Extraction
+      </div>
+      <div className="flex items-center gap-2.5 px-4 py-2 bg-slate-50 border border-dashed border-slate-300 rounded-2xl text-xs font-bold text-slate-400">
+        <div className="w-3.5 h-3.5 rounded-md border-2 border-dashed border-slate-300" />
+        Missing
+      </div>
+    </div>
+
+  </div>
+</div>
 
             {/* Occlusal-style Double Arch Layout */}
             {(() => {

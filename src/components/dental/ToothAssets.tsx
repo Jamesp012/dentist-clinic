@@ -11,7 +11,22 @@ export const TOOTH_STYLE = {
 export const TOOTH_SHADOW = "inset 0 0 10px rgba(139, 69, 19, 0.1)";
 
 // Helper to get tooth type from ID (Universal System)
-export const getToothType = (id: number): 'molar' | 'premolar' | 'canine' | 'incisor' => {
+export const getToothType = (id: number | string): 'molar' | 'premolar' | 'canine' | 'incisor' => {
+  const numId = typeof id === 'string' ? 
+    (id.toUpperCase() >= 'A' && id.toUpperCase() <= 'T' ? 
+      // Map A-T to some numeric equivalent or just check string
+      id.toUpperCase() : 0) : id;
+
+  if (typeof id === 'string') {
+    const s = id.toUpperCase();
+    // Primary Molars: A, B, I, J, K, L, S, T
+    if (['A', 'B', 'I', 'J', 'K', 'L', 'S', 'T'].includes(s)) return 'molar';
+    // Primary Canines: C, H, M, R
+    if (['C', 'H', 'M', 'R'].includes(s)) return 'canine';
+    // Primary Incisors: D, E, F, G, N, O, P, Q
+    return 'incisor';
+  }
+
   // Molars: 1,2,3, 14,15,16, 17,18,19, 30,31,32
   if ([1, 2, 3, 14, 15, 16, 17, 18, 19, 30, 31, 32].includes(id)) return 'molar';
   // Premolars: 4,5, 12,13, 20,21, 28,29

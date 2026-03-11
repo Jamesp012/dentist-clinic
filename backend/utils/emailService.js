@@ -71,7 +71,51 @@ const sendPatientCredentials = async (email, fullName, username, password) => {
   }
 };
 
+/**
+ * Send verification OTP to a user
+ * @param {string} email - User's email
+ * @param {string} otp - 6-digit OTP code
+ */
+const sendVerificationOTP = async (email, otp) => {
+  if (!email) return;
+
+  const mailOptions = {
+    from: `"Maaño Dental Care" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: 'Verification Code - Maaño Dental Care',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+        <h2 style="color: #14b8a6; text-align: center;">Verify Your Email</h2>
+        <p>Thank you for choosing Maaño Dental Care. Please use the following verification code to complete your signup process:</p>
+        
+        <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+          <h1 style="margin: 0; color: #0f172a; letter-spacing: 5px; font-size: 32px;">${otp}</h1>
+          <p style="margin-top: 10px; color: #64748b; font-size: 14px;">Valid for 10 minutes</p>
+        </div>
+        
+        <p>If you didn't request this code, you can safely ignore this email.</p>
+        
+        <hr style="margin-top: 30px; border: 0; border-top: 1px solid #eee;" />
+        <p style="font-size: 12px; color: #666; text-align: center;">
+          This is an automated message. Please do not reply directly to this email.<br />
+          If you have any questions, please contact us at (042) 7171156.
+        </p>
+      </div>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`Verification OTP email sent to ${email}`);
+    return { success: true };
+  } catch (error) {
+    console.error('Error sending verification email:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 module.exports = {
   sendPatientCredentials,
+  sendVerificationOTP,
   transporter,
 };

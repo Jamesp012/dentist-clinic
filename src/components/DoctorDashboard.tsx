@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Menu, Users, Calendar, ClipboardList, FileText, LayoutDashboard, Stethoscope, LogOut, Sparkles, UserCog, Settings, X, Check, Eye, EyeOff, Megaphone, Camera, Package, Upload, Trash2, RotateCcw, AlertCircle } from 'lucide-react';
+import { Menu, Users, User as UserIcon, Calendar, ClipboardList, FileText, LayoutDashboard, Stethoscope, LogOut, Sparkles, UserCog, Settings, X, Check, Eye, EyeOff, Megaphone, Camera, Package, Upload, Trash2, RotateCcw, AlertCircle, Shield } from 'lucide-react';
 import { PesoSign } from './icons/PesoSign';
 import { Dashboard } from './Dashboard';
 import { PatientManagement } from './PatientManagement';
@@ -17,11 +17,11 @@ import { Notifications } from './Notifications';
 import { EmployeeManagement } from './EmployeeManagement';
 import { motion, AnimatePresence } from 'motion/react';
 import { formatToDD_MM_YYYY } from '../utils/dateHelpers';
-import type { User } from './AuthPage';
+import type { User as AuthUser } from './AuthPage';
 import type { Patient, Appointment, InventoryItem, TreatmentRecord, Referral, PhotoUpload, Payment, Announcement, Service } from '../App';
 
 type DoctorDashboardProps = {
-  currentUser: User;
+  currentUser: AuthUser;
   onLogout: () => void;
   patients: Patient[];
   setPatients: (patients: Patient[]) => void;
@@ -110,7 +110,6 @@ export function DoctorDashboard({
 }: DoctorDashboardProps) {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(typeof window !== 'undefined' ? window.innerWidth > 1024 : true);
-  const [showSettings, setShowSettings] = useState(false);
   const [newFullName, setNewFullName] = useState(currentUser.fullName);
   const [newUsername, setNewUsername] = useState(currentUser.username);
   const [newPassword, setNewPassword] = useState('');
@@ -218,7 +217,6 @@ export function DoctorDashboard({
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      setShowSettings(false);
       
       // Refresh the page to reflect changes
       window.location.reload();
@@ -440,6 +438,7 @@ export function DoctorDashboard({
     { id: 'financial', label: 'Financial Report', icon: PesoSign, color: 'from-emerald-500 to-teal-600' },
     { id: 'announcements', label: 'Announcements', icon: Megaphone, color: 'from-cyan-600 to-teal-500' },
     { id: 'services-offered', label: 'Services Offered', icon: Sparkles, color: 'from-cyan-600 to-teal-500' },
+    { id: 'profile', label: 'My Profile', icon: UserIcon, color: 'from-teal-500 to-cyan-600' },
   ];
 
   return (
@@ -539,6 +538,12 @@ export function DoctorDashboard({
               <p className="text-sm text-slate-500">Manage clinic announcements and updates</p>
             </div>
           )}
+          {activeTab === 'profile' && (
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 font-poppins">My Profile</h2>
+              <p className="text-sm text-slate-500">Manage your account and security settings</p>
+            </div>
+          )}
         </div>
         <div className="relative z-10 ml-auto">
           <Notifications
@@ -587,7 +592,7 @@ export function DoctorDashboard({
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
-                onClick={() => setShowSettings(true)}
+                onClick={() => setActiveTab('profile')}
               >
                 <div className="min-w-0">
                   <h1 className="text-lg font-semibold text-gray-800 whitespace-nowrap overflow-hidden text-ellipsis">
@@ -892,9 +897,9 @@ export function DoctorDashboard({
                           </button>
                         </div>
                       </div>
-                      <div className="space-y-3 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-teal-500 scrollbar-track-slate-100 hover:scrollbar-thumb-teal-600">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[600px] overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-teal-500 scrollbar-track-slate-100 hover:scrollbar-thumb-teal-600">
                         {(viewAllPhotos 
-                          ? photos.reverse().filter(photo => {
+                          ? [...photos].reverse().filter(photo => {
                               const patient = patients.find(p => String(p.id) === String(photo.patientId));
                               return patient?.name.toLowerCase().includes(photoSearchQuery.toLowerCase());
                             }).sort((a, b) => {
@@ -917,43 +922,80 @@ export function DoctorDashboard({
                         ).map(photo => {
                           const patient = patients.find(p => String(p.id) === String(photo.patientId));
                           return (
-                            <div key={photo.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200 flex justify-between items-start gap-3">
-                              <div className="flex-1">
-                                <p className="font-medium">{patient?.name || 'Unknown Patient'}</p>
-                                <p className="text-sm text-gray-600 capitalize">{photo.type} - {formatToDD_MM_YYYY(photo.date)}</p>
-                                {photo.notes && <p className="text-sm text-gray-700 mt-1">{photo.notes}</p>}
+                            <motion.div
+                              key={photo.id}
+                              initial={{ opacity: 0, scale: 0.95 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              className="group relative bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col"
+                            >
+                              {/* Photo Preview - User side style */}
+                              <div 
+                                className="aspect-square bg-gray-100 flex items-center justify-center cursor-pointer overflow-hidden relative"
+                                onClick={() => setSelectedPhotoForView(photo)}
+                              >
+                                <img
+                                  src={photo.url}
+                                  alt={photo.type}
+                                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                  style={{ imageRendering: 'crisp-edges' }}
+                                />
+                                {/* Overlay with details like user side */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                                  <div className="text-white text-xs">
+                                    <p className="font-bold capitalize">{photo.type}</p>
+                                    <p>{formatToDD_MM_YYYY(photo.date)}</p>
+                                  </div>
+                                </div>
+                                <div className="absolute top-2 right-2 px-2 py-0.5 bg-teal-500 text-white text-[10px] rounded-full capitalize font-bold shadow-sm">
+                                  {photo.type}
+                                </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => setSelectedPhotoForView(photo)}
-                                  className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors flex items-center gap-1 text-sm"
-                                  title="View photo"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                  View
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setShowReplacePhotoModal(photo.id);
-                                    setReplacePhotoUrl('');
-                                    setReplacePhotoFile(null);
-                                  }}
-                                  className="px-3 py-1.5 bg-amber-100 text-amber-700 rounded hover:bg-amber-200 transition-colors flex items-center gap-1 text-sm"
-                                  title="Replace photo"
-                                >
-                                  <RotateCcw className="w-4 h-4" />
-                                  Replace
-                                </button>
-                                <button
-                                  onClick={() => setShowDeletePhotoConfirm(photo.id)}
-                                  className="px-3 py-1.5 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors flex items-center gap-1 text-sm"
-                                  title="Delete photo"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                  Delete
-                                </button>
+
+                              {/* Details */}
+                              <div className="p-3 flex-1 flex flex-col">
+                                <p className="font-bold text-slate-800 text-sm truncate" title={patient?.name}>
+                                  {patient?.name || 'Unknown Patient'}
+                                </p>
+                                <p className="text-[11px] text-gray-500 mb-2">
+                                  {formatToDD_MM_YYYY(photo.date)}
+                                </p>
+                                
+                                {photo.notes && (
+                                  <p className="text-xs text-gray-600 line-clamp-2 mb-3 bg-gray-50 p-1.5 rounded italic">
+                                    "{photo.notes}"
+                                  </p>
+                                )}
+
+                                {/* Actions */}
+                                <div className="mt-auto pt-2 border-t border-gray-100 flex items-center justify-between gap-1">
+                                  <button
+                                    onClick={() => setSelectedPhotoForView(photo)}
+                                    className="flex-1 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors flex items-center justify-center gap-1 text-[10px] font-bold"
+                                  >
+                                    <Eye className="w-3 h-3" />
+                                    VIEW
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setShowReplacePhotoModal(photo.id);
+                                      setReplacePhotoUrl('');
+                                      setReplacePhotoFile(null);
+                                    }}
+                                    className="flex-1 py-1.5 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 transition-colors flex items-center justify-center gap-1 text-[10px] font-bold"
+                                  >
+                                    <RotateCcw className="w-3 h-3" />
+                                    REPLACE
+                                  </button>
+                                  <button
+                                    onClick={() => setShowDeletePhotoConfirm(photo.id)}
+                                    className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                                    title="Delete"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
                               </div>
-                            </div>
+                            </motion.div>
                           );
                         })}
                       </div>
@@ -1019,6 +1061,137 @@ export function DoctorDashboard({
                   setServices={setServices}
                 />
               )}
+              {activeTab === 'profile' && (
+                <div className="p-8 max-w-4xl mx-auto w-full">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-white rounded-[32px] border border-slate-100 shadow-xl overflow-hidden w-full"
+                  >
+                    <div className="p-8 space-y-8">
+                      {/* Personal Information Section */}
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <UserIcon className="w-5 h-5 text-teal-600" />
+                          <h4 className="font-bold text-slate-900">Personal Information</h4>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-slate-700 mb-2">Full Name</label>
+                          <input
+                            type="text"
+                            value={newFullName}
+                            onChange={(e) => setNewFullName(e.target.value)}
+                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 transition-all font-medium"
+                            placeholder="Your full name"
+                          />
+                        </div>
+                      </div>
+
+                      <hr className="border-slate-100" />
+
+                      {/* Security Section */}
+                      <div className="space-y-6">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Shield className="w-5 h-5 text-teal-600" />
+                          <h4 className="font-bold text-slate-900">Security & Credentials</h4>
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-semibold text-slate-700 mb-2">Username</label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={newUsername}
+                              onChange={(e) => handleUsernameChange(e.target.value)}
+                              className={`w-full px-4 py-3 bg-slate-50 border rounded-xl focus:ring-2 focus:ring-teal-500 transition-all font-medium ${
+                                usernameAvailable === true ? 'border-emerald-200 ring-emerald-100' :
+                                usernameAvailable === false ? 'border-red-200 ring-red-100' : 'border-slate-200'
+                              }`}
+                              placeholder="Change username"
+                            />
+                            {checkingUsername && (
+                              <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                <div className="w-4 h-4 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+                              </div>
+                            )}
+                            {!checkingUsername && usernameAvailable === true && newUsername !== currentUser.username && (
+                              <Check className="w-4 h-4 text-emerald-500 absolute right-4 top-1/2 -translate-y-1/2" />
+                            )}
+                            {!checkingUsername && usernameAvailable === false && (
+                              <X className="w-4 h-4 text-red-500 absolute right-4 top-1/2 -translate-y-1/2" />
+                            )}
+                          </div>
+                          {usernameAvailable === false && (
+                            <p className="text-[10px] text-red-500 font-bold mt-1 uppercase tracking-wider px-1">Username is already taken</p>
+                          )}
+                          {usernameAvailable === true && newUsername !== currentUser.username && (
+                            <p className="text-[10px] text-emerald-500 font-bold mt-1 uppercase tracking-wider px-1">Username is available</p>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">New Password</label>
+                            <div className="relative">
+                              <input
+                                type={showNewPassword ? "text" : "password"}
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 transition-all"
+                                placeholder="Min. 8 characters"
+                              />
+                              <button onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                                {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              </button>
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Confirm New Password</label>
+                            <div className="relative">
+                              <input
+                                type={showConfirmPassword ? "text" : "password"}
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 transition-all"
+                                placeholder="Confirm new password"
+                              />
+                              <button onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="pt-4 p-4 bg-amber-50 rounded-2xl border border-amber-100">
+                          <label className="block text-xs font-bold text-amber-700 uppercase tracking-widest mb-2">Current Password</label>
+                          <p className="text-[10px] text-amber-600 mb-3 font-medium">Required to save any changes to your security settings</p>
+                          <div className="relative">
+                            <input
+                              type={showCurrentPassword ? "text" : "password"}
+                              value={currentPassword}
+                              onChange={(e) => setCurrentPassword(e.target.value)}
+                              className="w-full px-4 py-3 bg-white border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 transition-all shadow-sm"
+                              placeholder="Verify your identity"
+                            />
+                            <button onClick={() => setShowCurrentPassword(!showCurrentPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-400">
+                              {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3 pt-4">
+                        <button
+                          onClick={handleSaveSettings}
+                          className="flex-1 py-4 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-2xl font-bold shadow-lg shadow-teal-500/20 hover:shadow-teal-500/40 hover:-translate-y-0.5 transition-all"
+                        >
+                          Save Changes
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
+              )}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -1031,7 +1204,7 @@ export function DoctorDashboard({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
             onClick={() => setSelectedPhotoForView(null)}
           >
             <motion.div
@@ -1040,7 +1213,7 @@ export function DoctorDashboard({
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               className="relative bg-white rounded-xl overflow-hidden flex flex-col shadow-2xl"
-              style={{ width: '90vw', height: '90vh', maxWidth: '1200px', maxHeight: '800px' }}
+              style={{ width: '90vw', height: '85vh', maxWidth: '1200px', maxHeight: '800px' }}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
@@ -1083,17 +1256,13 @@ export function DoctorDashboard({
               </div>
 
               {/* Image Container */}
-              <div className="flex-1 bg-gradient-to-br from-white via-cyan-50/30 to-teal-50/20 p-4 flex items-center justify-center overflow-hidden" style={{ minHeight: '600px' }}>
+              <div className="flex-1 bg-gradient-to-br from-white via-cyan-50/30 to-teal-50/20 p-4 flex items-center justify-center overflow-auto">
                 <div className="relative w-full h-full flex items-center justify-center">
                   <img
                     src={selectedPhotoForView.url}
                     alt={selectedPhotoForView.type}
-                    className="rounded-xl shadow-2xl"
+                    className="rounded-xl shadow-2xl w-full h-full object-contain"
                     style={{ 
-                      width: '100%',
-                      height: '100%',
-                      maxHeight: '85vh',
-                      objectFit: 'contain',
                       imageRendering: 'crisp-edges'
                     }}
                   />
@@ -1115,7 +1284,7 @@ export function DoctorDashboard({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
             onClick={() => setShowReplacePhotoModal(null)}
           >
             <motion.div
@@ -1215,7 +1384,7 @@ export function DoctorDashboard({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black bg-opacity-50 z-[110] flex items-center justify-center p-4"
             onClick={() => setShowDeletePhotoConfirm(null)}
           >
             <motion.div
@@ -1247,223 +1416,6 @@ export function DoctorDashboard({
                   className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isDeletingPhoto ? 'Deleting...' : 'Delete'}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Settings Modal */}
-      <AnimatePresence>
-        {showSettings && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setShowSettings(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
-            >
-              {/* Header */}
-              <div className="bg-gradient-to-r from-[rgb(45,200,194)] to-[rgb(45,200,194)] p-6 text-white">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                      <Settings className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold">Account Settings</h2>
-                      <p className="text-sm text-white">Manage your profile</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setShowSettings(false)}
-                    className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Body */}
-              <div className="p-6 space-y-5">
-                {/* Full Name Field */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    value={newFullName}
-                    onChange={(e) => setNewFullName(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[rgb(45,200,194)] focus:border-transparent transition-all"
-                    placeholder="Enter your full name"
-                  />
-                </div>
-
-                {/* Username Field */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Username
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={newUsername}
-                      onChange={(e) => handleUsernameChange(e.target.value)}
-                      className={`w-full px-4 py-2.5 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                        usernameAvailable === false ? 'border-red-500' : usernameAvailable === true ? 'border-green-500' : 'border-gray-300'
-                      }`}
-                      placeholder="Enter your username"
-                    />
-                    {checkingUsername && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                        <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                      </div>
-                    )}
-                    {!checkingUsername && usernameAvailable === true && newUsername !== currentUser.username && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500">
-                        <Check className="w-5 h-5" />
-                      </div>
-                    )}
-                    {!checkingUsername && usernameAvailable === false && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500">
-                        <X className="w-5 h-5" />
-                      </div>
-                    )}
-                  </div>
-                  {usernameAvailable === false && (
-                    <p className="text-sm text-red-600 mt-1">Username is already taken</p>
-                  )}
-                  {usernameAvailable === true && newUsername !== currentUser.username && (
-                    <p className="text-sm text-green-600 mt-1">Username is available</p>
-                  )}
-                  {newUsername.trim().length > 0 && newUsername.trim().length < 3 && (
-                    <p className="text-sm text-gray-600 mt-1">Username must be at least 3 characters</p>
-                  )}
-                </div>
-
-                {/* Current Password */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Current Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showCurrentPassword ? "text" : "password"}
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      className="w-full px-4 py-2.5 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder="Enter current password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
-                    >
-                      {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* New Password */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    New Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showNewPassword ? "text" : "password"}
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full px-4 py-2.5 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder="Enter new password (leave blank to keep current)"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowNewPassword(!showNewPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
-                    >
-                      {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Confirm Password */}
-                {newPassword && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Confirm New Password
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showConfirmPassword ? "text" : "password"}
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full px-4 py-2.5 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        placeholder="Confirm new password"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
-                      >
-                        {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-                    {newPassword !== confirmPassword && confirmPassword && (
-                      <p className="text-sm text-red-600 mt-1">Passwords do not match</p>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Footer */}
-              <div className="px-6 pb-6 flex gap-3">
-                <button
-                  onClick={() => {
-                    setShowSettings(false);
-                    setNewFullName(currentUser.fullName);
-                    setNewUsername(currentUser.username);
-                    setNewPassword('');
-                    setConfirmPassword('');
-                    setCurrentPassword('');
-                    setShowCurrentPassword(false);
-                    setShowNewPassword(false);
-                    setShowConfirmPassword(false);
-                  }}
-                  className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    if (newPassword && newPassword !== confirmPassword) {
-                      alert('Passwords do not match!');
-                      return;
-                    }
-                    if (usernameAvailable === false) {
-                      alert('Username is already taken. Please choose a different username.');
-                      return;
-                    }
-                    if (newUsername.trim().length < 3) {
-                      alert('Username must be at least 3 characters long.');
-                      return;
-                    }
-                    handleSaveSettings();
-                  }}
-                  disabled={checkingUsername || (newUsername !== currentUser.username && usernameAvailable === false)}
-                  className="flex-1 px-4 py-2.5 bg-[rgb(8,182,204)] hover:bg-[#0a97b0] text-white rounded-lg transition-all font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Check className="w-4 h-4" />
-                  Save Changes
                 </button>
               </div>
             </motion.div>

@@ -35,7 +35,7 @@ try {
     }
 
     $otp = (string)rand(100000, 999999);
-    $expiresAt = date('Y-m-d H:i:s', strtotime('+10 minutes'));
+    $expiresAt = gmdate('Y-m-d H:i:s', strtotime('+10 minutes'));
 
     // Clear old OTPs for this phone
     $stmt = $db->prepare("DELETE FROM otp_verifications WHERE phone = ?");

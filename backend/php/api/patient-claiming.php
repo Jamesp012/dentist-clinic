@@ -41,7 +41,7 @@ try {
         }
         elseif ($path === 'api/patient-claiming/send-otp' || $path === 'api/patient-claiming/resend-otp') {
             $otp = rand(100000, 999999);
-            $expires = date('Y-m-d H:i:s', strtotime('+10 minutes'));
+            $expires = gmdate('Y-m-d H:i:s', strtotime('+10 minutes'));
             
             $stmt = $db->prepare("SELECT phone FROM patients WHERE id = ?");
             $stmt->execute([$data->patientId]);
@@ -60,7 +60,7 @@ try {
         }
         elseif ($path === 'api/patient-claiming/verify-and-link') {
             $db->beginTransaction();
-            $stmt = $db->prepare("SELECT * FROM otp_verifications WHERE patientId = ? AND otp = ? AND expiresAt > NOW() AND verified = 0");
+            $stmt = $db->prepare("SELECT * FROM otp_verifications WHERE patientId = ? AND otp = ? AND expiresAt > UTC_TIMESTAMP() AND verified = 0");
             $stmt->execute([$data->patientId, $data->otp]);
             if (!$stmt->fetch()) throw new Exception("Invalid or expired OTP");
 

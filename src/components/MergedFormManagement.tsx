@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Patient, Referral, Payment, TreatmentRecord } from '../App';
 import { referralAPI } from '../api';
 import { generateReferralPDF } from '../utils/referralPdfGenerator';
-import { clinicLogo } from '../assets';
+import { clinicLogo } from '../assets/index';
 import { getSafeFileUrl } from '../utils/fileUtils';
 import { timeAgo } from '../utils/dateHelpers';
 

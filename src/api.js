@@ -99,6 +99,26 @@ export const authAPI = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, otp, newPassword }),
     }).then((r) => r.json()),
+
+  checkUsername: (username) =>
+    fetch(`${API_BASE}/auth/check-username?username=${encodeURIComponent(username)}`).then((r) => r.json()),
+
+  checkEmail: (email) =>
+    fetch(`${API_BASE}/auth/check-email?email=${encodeURIComponent(email)}`).then((r) => r.json()),
+
+  requestSignupOTP: (email) =>
+    fetch(`${API_BASE}/auth/request-signup-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    }).then((r) => r.json()),
+
+  verifySignupOTP: (email, otp) =>
+    fetch(`${API_BASE}/auth/verify-signup-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otp }),
+    }).then((r) => r.json()),
 };
 
 // Patient APIs

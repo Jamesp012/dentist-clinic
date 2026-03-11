@@ -130,7 +130,11 @@ export const generateReceipt = (
     doc.text(`PHP ${Number(record.amountPaid || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, pageWidth - 15, summaryY + 7, { align: 'right' });
 
     const balance = Number(record.remainingBalance || 0);
-    doc.setTextColor(balance <= 0 ? [0, 128, 0] : [200, 0, 0]);
+    if (balance <= 0) {
+      doc.setTextColor(0, 128, 0);
+    } else {
+      doc.setTextColor(200, 0, 0);
+    }
     doc.text('Remaining Balance:', 15, summaryY + 14);
     doc.text(`PHP ${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, pageWidth - 15, summaryY + 14, { align: 'right' });
 
@@ -228,7 +232,11 @@ export const generatePatientHistoryPDF = (
     doc.text(`PHP ${totalPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, pageWidth - 15, finalY + 17, { align: 'right' });
 
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(totalBalance > 0 ? [200, 0, 0] : [0, 128, 0]);
+    if (totalBalance > 0) {
+      doc.setTextColor(200, 0, 0);
+    } else {
+      doc.setTextColor(0, 128, 0);
+    }
     doc.text(`Overall Remaining Balance:`, 15, finalY + 24);
     doc.text(`PHP ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, pageWidth - 15, finalY + 24, { align: 'right' });
 
@@ -248,7 +256,7 @@ export const generatePatientHistoryPDF = (
 
 export const generateFinancialPDF = (
   summary: any,
-  monthlyRevenue: number,
+  monthlyEarnings: number,
   totalOutstanding: number,
   breakdown: any
 ) => {
@@ -277,10 +285,10 @@ export const generateFinancialPDF = (
     doc.text('KEY PERFORMANCE INDICATORS', 15, 45);
 
     const metricsData = [
-      ['Total Revenue (Paid)', `PHP ${summary.totalRevenue.toLocaleString()}`],
+      ['Total Service Earnings (Paid)', `PHP ${(summary.totalServiceEarnings || summary.totalRevenue).toLocaleString()}`],
       ['Total Billed Services', `PHP ${summary.totalBilled.toLocaleString()}`],
       ['Outstanding Balance', `PHP ${totalOutstanding.toLocaleString()}`],
-      ['Current Monthly Revenue', `PHP ${monthlyRevenue.toLocaleString()}`]
+      ['Current Monthly Earnings', `PHP ${monthlyEarnings.toLocaleString()}`]
     ];
 
     autoTable(doc, {
@@ -288,25 +296,25 @@ export const generateFinancialPDF = (
       body: metricsData,
       theme: 'grid',
       styles: { fontSize: 11, cellPadding: 5 },
-      columnStyles: { 0: { fontStyle: 'bold', width: 80 } }
+      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 80 } }
     });
 
     // Treatment Breakdown
     const finalY = (doc as any).lastAutoTable.finalY + 15;
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text('REVENUE BY TREATMENT TYPE', 15, finalY);
+    doc.text('EARNINGS BY TREATMENT TYPE', 15, finalY);
 
     const breakdownData = Object.entries(breakdown).map(([type, data]: [string, any]) => [
       type,
       data.count,
-      `PHP ${data.revenue.toLocaleString()}`,
-      `${((data.revenue / summary.totalBilled) * 100).toFixed(1)}%`
+      `PHP ${(data.earnings || data.revenue).toLocaleString()}`,
+      `${(((data.earnings || data.revenue) / summary.totalBilled) * 100).toFixed(1)}%`
     ]);
 
     autoTable(doc, {
       startY: finalY + 5,
-      head: [['Treatment', 'Procedures', 'Revenue', 'Share']],
+      head: [['Treatment', 'Procedures', 'Earnings', 'Share']],
       body: breakdownData,
       theme: 'striped',
       headStyles: { fillColor: [0, 102, 204] }
@@ -618,7 +626,7 @@ export const generateDetailedReceiptPDF = (
       body: summaryData,
       theme: 'plain',
       styles: { fontSize: 10 },
-      columnStyles: { 0: { fontStyle: 'bold', width: 100 }, 1: { halign: 'right' } }
+      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 100 }, 1: { halign: 'right' } }
     });
 
     // Footer - position at safe location

@@ -29,9 +29,15 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // Static file serving for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Health check - no database required
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK' });
+// Health check - with database
+app.get('/api/health-db', async (req, res) => {
+  try {
+    const pool = require('./config/database');
+    const [rows] = await pool.query('SELECT 1 as result');
+    res.json({ status: 'OK', database: 'Connected', data: rows });
+  } catch (error) {
+    res.status(500).json({ status: 'Error', error: error.message, stack: error.stack });
+  }
 });
 
 // Routes - These will connect to database when first request comes in

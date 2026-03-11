@@ -270,7 +270,7 @@ export function PhotoManagement({ photos, patients, onDataChanged }: PhotoManage
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4"
+              className="fixed inset-0 bg-black bg-opacity-75 z-[100] flex items-center justify-center p-4"
               onClick={() => setSelectedPhoto(null)}
             >
               <motion.div
@@ -278,7 +278,7 @@ export function PhotoManagement({ photos, patients, onDataChanged }: PhotoManage
                 animate={{ scale: 1 }}
                 exit={{ scale: 0.8 }}
                 className="relative bg-white rounded-xl overflow-hidden flex flex-col"
-                style={{ width: '90vw', height: '90vh', maxWidth: '1200px', maxHeight: '800px' }}
+                style={{ width: '90vw', height: '85vh', maxWidth: '1200px', maxHeight: '800px' }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
@@ -306,11 +306,11 @@ export function PhotoManagement({ photos, patients, onDataChanged }: PhotoManage
                   </button>
                 </div>
 
-                <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 overflow-hidden">
+                <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 overflow-auto">
                   <img
                     src={selectedPhoto.url}
                     alt={selectedPhoto.type}
-                    className="w-full h-full object-scale-down"
+                    className="w-full h-full object-contain"
                     style={{ imageRendering: 'crisp-edges', WebkitFontSmoothing: 'antialiased' }}
                   />
                 </div>
@@ -334,7 +334,7 @@ export function PhotoManagement({ photos, patients, onDataChanged }: PhotoManage
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+              className="fixed inset-0 bg-black bg-opacity-50 z-[110] flex items-center justify-center p-4"
               onClick={() => setShowDeleteConfirm(null)}
             >
               <motion.div
@@ -385,7 +385,7 @@ export function PhotoManagement({ photos, patients, onDataChanged }: PhotoManage
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+              className="fixed inset-0 bg-black bg-opacity-50 z-[110] flex items-center justify-center p-4"
               onClick={() => setShowReplaceModal(null)}
             >
               <motion.div

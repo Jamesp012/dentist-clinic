@@ -102,6 +102,7 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
       const title = (formData.get('title') as string)?.trim();
       const message = (formData.get('message') as string)?.trim();
       const type = formData.get('type') as Announcement['type'];
+      const duration = formData.get('duration') as string;
 
       if (!title || !message) {
         toast.error('Title and message are required');
@@ -109,11 +110,24 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
         return;
       }
 
+      let expiresAt: string | null = null;
+      if (duration && duration !== 'never') {
+        const now = new Date();
+        if (duration === '1day') now.setDate(now.getDate() + 1);
+        else if (duration === '3days') now.setDate(now.getDate() + 3);
+        else if (duration === '1week') now.setDate(now.getDate() + 7);
+        else if (duration === '1month') now.setMonth(now.getMonth() + 1);
+        
+        // Use UTC for consistency
+        expiresAt = now.toISOString().slice(0, 19).replace('T', ' ');
+      }
+
       const createdAnnouncement = await announcementAPI.create({
         title,
         message,
         type,
         date: new Date().toISOString().split('T')[0],
+        expiresAt: expiresAt || undefined,
       });
       
       toast.success('Announcement posted successfully');
@@ -347,24 +361,31 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
                     </div>
                     <p className="text-gray-700 leading-relaxed mb-4 text-sm whitespace-pre-wrap">{announcement.message}</p>
                     <div className="flex items-center justify-between pt-4 border-t border-gray-200/50">
-                      <span className="px-3 py-1 rounded-full text-xs font-bold capitalize" style={{
-                        backgroundColor: announcement.type === 'important' 
-                          ? '#E8F0F2' :
-                          announcement.type === 'promo' 
-                          ? '#E0FCFA' :
-                          announcement.type === 'closure' 
-                          ? '#F0F7E0' :
-                          '#E6F5F1',
-                        color: announcement.type === 'important' 
-                          ? '#005461' :
-                          announcement.type === 'promo' 
-                          ? '#6AECE1' :
-                          announcement.type === 'closure' 
-                          ? '#A7E399' :
-                          '#3BC1A8'
-                      }}>
-                        {announcement.type}
-                      </span>
+                      <div className="flex gap-2">
+                        <span className="px-3 py-1 rounded-full text-xs font-bold capitalize" style={{
+                          backgroundColor: announcement.type === 'important' 
+                            ? '#E8F0F2' :
+                            announcement.type === 'promo' 
+                            ? '#E0FCFA' :
+                            announcement.type === 'closure' 
+                            ? '#F0F7E0' :
+                            '#E6F5F1',
+                          color: announcement.type === 'important' 
+                            ? '#005461' :
+                            announcement.type === 'promo' 
+                            ? '#6AECE1' :
+                            announcement.type === 'closure' 
+                            ? '#A7E399' :
+                            '#3BC1A8'
+                        }}>
+                          {announcement.type}
+                        </span>
+                        {announcement.expiresAt && new Date(announcement.expiresAt) < new Date() && (
+                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-600">
+                            Expired
+                          </span>
+                        )}
+                      </div>
                       <span className="text-xs text-gray-500 font-medium hidden">ID: {String(announcement.id).substring(0, 8)}</span>
                     </div>
                   </div>
@@ -409,9 +430,9 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
                       className="w-full px-4 py-3 border border-cyan-200/60 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all hover:border-cyan-300 text-gray-800 placeholder-gray-500 font-medium"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                     <div>
-                      <label className="block text-sm font-bold mb-3 text-gray-800 uppercase tracking-wider">Announcement Type <span className="text-red-500">*</span></label>
+                      <label className="block text-sm font-bold mb-3 text-gray-800 uppercase tracking-wider">Type <span className="text-red-500">*</span></label>
                       <select
                         name="type"
                         required
@@ -422,6 +443,21 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
                         <option value="promo">🎉 Promotion</option>
                         <option value="closure">🚫 Closure Notice</option>
                         <option value="important">⚠️ Important</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold mb-3 text-gray-800 uppercase tracking-wider">Duration</label>
+                      <select
+                        name="duration"
+                        required
+                        className="w-full px-4 py-3 border border-cyan-200/60 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all hover:border-cyan-300 appearance-none cursor-pointer text-gray-800 font-medium"
+                        style={{backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2314b8a6' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', paddingRight: '2.5rem'}}
+                      >
+                        <option value="never">♾️ Never Expires</option>
+                        <option value="1day">🕐 1 Day</option>
+                        <option value="3days">🗓️ 3 Days</option>
+                        <option value="1week">📅 1 Week</option>
+                        <option value="1month">🌙 1 Month</option>
                       </select>
                     </div>
                     <div>

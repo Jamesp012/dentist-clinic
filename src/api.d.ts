@@ -90,6 +90,7 @@ export interface Announcement {
   type: 'promo' | 'closure' | 'general' | 'important';
   date: string;
   createdBy: string;
+  expiresAt?: string;
 }
 
 export interface PatientNotification {
@@ -102,6 +103,7 @@ export interface PatientNotification {
   isRead: boolean;
   createdAt: string;
   readAt?: string;
+  expiresAt?: string;
 }
 
 export interface TreatmentRecord {
@@ -169,6 +171,20 @@ export const authAPI: {
   login: (username: string, password: string) => Promise<AuthResponse>;
   register: (userData: any) => Promise<any>;
   changePassword: (userId: string | number, newPassword: string) => Promise<any>;
+  forgotPassword: (username: string) => Promise<any>;
+  verifyOTP: (username: string, otp: string) => Promise<any>;
+  resetPassword: (username: string, otp: string, newPassword: string) => Promise<any>;
+  checkUsername: (username: string) => Promise<any>;
+  checkEmail: (email: string) => Promise<any>;
+  requestSignupOTP: (email: string) => Promise<any>;
+  verifySignupOTP: (email: string, otp: string) => Promise<any>;
+};
+
+export const serviceAPI: {
+  getAll: () => Promise<any[]>;
+  create: (data: any) => Promise<any>;
+  update: (id: string | number, data: any) => Promise<any>;
+  delete: (id: string | number) => Promise<any>;
 };
 
 export const patientAPI: {

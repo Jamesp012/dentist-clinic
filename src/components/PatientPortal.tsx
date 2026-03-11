@@ -102,12 +102,12 @@ export function PatientPortal({
   userRole 
 }: PatientPortalProps) {
   const birthdatePickerRef = useRef<HTMLInputElement | null>(null);
-  const [activeTab, setActiveTab] = useState<'home' | 'profile' | 'appointments' | 'records' | 'photos' | 'balance' | 'care-guide' | 'announcements' | 'services-offered' | 'forms' | 'settings'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'profile' | 'appointments' | 'records' | 'photos' | 'balance' | 'care-guide' | 'announcements' | 'services-offered' | 'forms'>('home');
   const [announcementSubTab, setAnnouncementSubTab] = useState<'announcements' | 'services'>('announcements');
   const [isEditing, setIsEditing] = useState(false);
   const [editedPatient, setEditedPatient] = useState<Patient>(patient);
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoUpload | null>(null);
-  const [showSettings, setShowSettings] = useState(false);
+  // Profile settings state
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 1024);
   const [newFullName, setNewFullName] = useState(patient.name);
   const [newUsername, setNewUsername] = useState('');
@@ -553,7 +553,6 @@ export function PatientPortal({
     { id: 'services-offered', label: 'Services Offered', icon: Sparkles, color: 'from-cyan-600 to-teal-500' },
     { id: 'announcements', label: 'Announcements', icon: Megaphone, color: 'from-cyan-600 to-teal-500' },
     { id: 'profile', label: 'My Profile', icon: UserIcon, color: 'from-teal-500 to-cyan-600' },
-    { id: 'settings', label: 'Account Settings', icon: Settings, color: 'from-slate-600 to-slate-700' },
   ] as const;
 
   const upcomingAppointments = patientAppointments.filter(apt => {
@@ -1001,9 +1000,6 @@ export function PatientPortal({
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
                 onClick={() => {
-                  if (item.id === 'settings') {
-                    setShowSettings(true);
-                  }
                   setActiveTab(item.id);
                   if (window.innerWidth <= 1024) setSidebarOpen(false);
                 }}
@@ -1144,12 +1140,6 @@ export function PatientPortal({
               <div>
                 <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Referrals & Forms</h2>
                 <p className="text-slate-500 mt-1.5 text-sm font-medium">View and upload your dental referral documents</p>
-              </div>
-            )}
-            {activeTab === 'settings' && (
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Account Settings</h2>
-                <p className="text-slate-500 mt-1.5 text-sm font-medium">Manage your security and account preferences</p>
               </div>
             )}
           </div>
@@ -1641,6 +1631,139 @@ export function PatientPortal({
                       </div>
                     </div>
                   </div>
+                    </div>
+                    
+                    {/* Account Settings Section */}
+                    <div className="mt-12 pt-8 border-t border-slate-100">
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center">
+                          <Settings className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h4 className="text-xl font-bold text-slate-900">Account Settings</h4>
+                          <p className="text-sm text-slate-500 font-medium">Manage your security and account preferences</p>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-white rounded-[32px] border border-slate-100 shadow-xl overflow-hidden w-full">
+                        <div className="p-8 space-y-8">
+                          {/* Full Name Section */}
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <UserIcon className="w-5 h-5 text-teal-600" />
+                              <h4 className="font-bold text-slate-900">Personal Information</h4>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-semibold text-slate-700 mb-2">Full Name</label>
+                              <input
+                                type="text"
+                                value={newFullName}
+                                onChange={(e) => setNewFullName(e.target.value)}
+                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 transition-all font-medium"
+                                placeholder="Your full name"
+                              />
+                            </div>
+                          </div>
+
+                          <hr className="border-slate-100" />
+
+                          {/* Security Section */}
+                          <div className="space-y-6">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Shield className="w-5 h-5 text-teal-600" />
+                              <h4 className="font-bold text-slate-900">Security & Credentials</h4>
+                            </div>
+                            
+                            <div>
+                              <label className="block text-sm font-semibold text-slate-700 mb-2">New Username (Optional)</label>
+                              <div className="relative">
+                                <input
+                                  type="text"
+                                  value={newUsername}
+                                  onChange={(e) => handleUsernameChange(e.target.value)}
+                                  className={`w-full px-4 py-3 bg-slate-50 border rounded-xl focus:ring-2 focus:ring-teal-500 transition-all font-medium ${
+                                    usernameAvailable === true ? 'border-emerald-200 ring-emerald-100' :
+                                    usernameAvailable === false ? 'border-red-200 ring-red-100' : 'border-slate-200'
+                                  }`}
+                                  placeholder="Change username"
+                                />
+                                {checkingUsername && (
+                                  <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                    <div className="w-4 h-4 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+                                  </div>
+                                )}
+                                {!checkingUsername && usernameAvailable === true && (
+                                  <Check className="w-4 h-4 text-emerald-500 absolute right-4 top-1/2 -translate-y-1/2" />
+                                )}
+                                {!checkingUsername && usernameAvailable === false && (
+                                  <XCircle className="w-4 h-4 text-red-500 absolute right-4 top-1/2 -translate-y-1/2" />
+                                )}
+                              </div>
+                              {usernameAvailable === false && (
+                                <p className="text-[10px] text-red-500 font-bold mt-1 uppercase tracking-wider px-1">Username is already taken</p>
+                              )}
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-2">New Password</label>
+                                <div className="relative">
+                                  <input
+                                    type={showNewPassword ? "text" : "password"}
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 transition-all"
+                                    placeholder="Min. 8 characters"
+                                  />
+                                  <button onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                                    {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                  </button>
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-2">Confirm New Password</label>
+                                <div className="relative">
+                                  <input
+                                    type={showConfirmPassword ? "text" : "password"}
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 transition-all"
+                                  />
+                                  <button onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="pt-4 p-4 bg-amber-50 rounded-2xl border border-amber-100">
+                              <label className="block text-xs font-bold text-amber-700 uppercase tracking-widest mb-2">Current Password</label>
+                              <p className="text-[10px] text-amber-600 mb-3 font-medium">Required to save any changes to your security settings</p>
+                              <div className="relative">
+                                <input
+                                  type={showCurrentPassword ? "text" : "password"}
+                                  value={currentPassword}
+                                  onChange={(e) => setCurrentPassword(e.target.value)}
+                                  className="w-full px-4 py-3 bg-white border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 transition-all shadow-sm"
+                                  placeholder="Verify your identity"
+                                />
+                                <button onClick={() => setShowCurrentPassword(!showCurrentPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-400">
+                                  {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex gap-3 pt-4">
+                            <button
+                              onClick={handleSaveSettings}
+                              className="flex-1 py-4 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-2xl font-bold shadow-lg shadow-teal-500/20 hover:shadow-teal-500/40 hover:-translate-y-0.5 transition-all"
+                            >
+                              Save Changes
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -2534,30 +2657,30 @@ export function PatientPortal({
 
             {/* Treatment Photo Modal */}
             {selectedPhoto && (
-              <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
+              <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.9, y: 20 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                  className="relative max-w-[95vw] max-h-[95vh] flex flex-col items-center"
+                  className="relative w-[90vw] h-[85vh] max-w-[1200px] max-h-[800px] flex flex-col items-center bg-white/5 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-md"
                 >
                   <button 
                     onClick={() => setSelectedPhoto(null)} 
-                    className="absolute -top-12 right-0 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all hover:scale-110 active:scale-95"
+                    className="absolute top-4 right-4 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all hover:scale-110 active:scale-95 z-20"
                   >
                     <X className="w-6 h-6" />
                   </button>
                   
-                  <div className="overflow-hidden rounded-2xl shadow-2xl bg-white/5 p-1 ring-1 ring-white/20">
+                  <div className="flex-1 w-full overflow-auto p-4 flex items-center justify-center">
                     <img 
                       src={selectedPhoto.url} 
                       alt={selectedPhoto.type} 
-                      className="max-w-full max-h-[80vh] object-contain rounded-xl shadow-2xl"
+                      className="w-full h-full object-contain rounded-xl shadow-2xl"
                       style={{ imageRendering: 'auto' }}
                     />
                   </div>
                   
-                  <div className="mt-6 text-center space-y-1">
+                  <div className="w-full p-6 text-center space-y-1 bg-black/40 border-t border-white/10">
                     <h3 className="text-white text-2xl font-bold capitalize tracking-tight">{selectedPhoto.type}</h3>
                     <div className="flex items-center justify-center space-x-2 text-cyan-200/80">
                       <Calendar className="w-4 h-4" />
@@ -3143,134 +3266,6 @@ export function PatientPortal({
               </div>
             )}
 
-            {/* Account Settings Tab */}
-            {activeTab === 'settings' && (
-              <div className="p-6 space-y-6">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-[32px] border border-slate-100 shadow-xl overflow-hidden w-full"
-                >
-                  <div className="p-8 space-y-8">
-                    {/* Full Name Section */}
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <UserIcon className="w-5 h-5 text-teal-600" />
-                        <h4 className="font-bold text-slate-900">Personal Information</h4>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">Full Name</label>
-                        <input
-                          type="text"
-                          value={newFullName}
-                          onChange={(e) => setNewFullName(e.target.value)}
-                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 transition-all font-medium"
-                          placeholder="Your full name"
-                        />
-                      </div>
-                    </div>
-
-                    <hr className="border-slate-100" />
-
-                    {/* Security Section */}
-                    <div className="space-y-6">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Shield className="w-5 h-5 text-teal-600" />
-                        <h4 className="font-bold text-slate-900">Security & Credentials</h4>
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">New Username (Optional)</label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            value={newUsername}
-                            onChange={(e) => handleUsernameChange(e.target.value)}
-                            className={`w-full px-4 py-3 bg-slate-50 border rounded-xl focus:ring-2 focus:ring-teal-500 transition-all font-medium ${
-                              usernameAvailable === true ? 'border-emerald-200 ring-emerald-100' :
-                              usernameAvailable === false ? 'border-red-200 ring-red-100' : 'border-slate-200'
-                            }`}
-                            placeholder="Change username"
-                          />
-                          {checkingUsername && (
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                              <div className="w-4 h-4 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-                            </div>
-                          )}
-                          {!checkingUsername && usernameAvailable === true && (
-                            <Check className="w-4 h-4 text-emerald-500 absolute right-4 top-1/2 -translate-y-1/2" />
-                          )}
-                          {!checkingUsername && usernameAvailable === false && (
-                            <XCircle className="w-4 h-4 text-red-500 absolute right-4 top-1/2 -translate-y-1/2" />
-                          )}
-                        </div>
-                        {usernameAvailable === false && (
-                          <p className="text-[10px] text-red-500 font-bold mt-1 uppercase tracking-wider px-1">Username is already taken</p>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-semibold text-slate-700 mb-2">New Password</label>
-                          <div className="relative">
-                            <input
-                              type={showNewPassword ? "text" : "password"}
-                              value={newPassword}
-                              onChange={(e) => setNewPassword(e.target.value)}
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 transition-all"
-                              placeholder="Min. 8 characters"
-                            />
-                            <button onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
-                              {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            </button>
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-semibold text-slate-700 mb-2">Confirm New Password</label>
-                          <div className="relative">
-                            <input
-                              type={showConfirmPassword ? "text" : "password"}
-                              value={confirmPassword}
-                              onChange={(e) => setConfirmPassword(e.target.value)}
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 transition-all"
-                            />
-                            <button onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
-                              {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="pt-4 p-4 bg-amber-50 rounded-2xl border border-amber-100">
-                        <label className="block text-xs font-bold text-amber-700 uppercase tracking-widest mb-2">Current Password</label>
-                        <p className="text-[10px] text-amber-600 mb-3 font-medium">Required to save any changes to your security settings</p>
-                        <div className="relative">
-                          <input
-                            type={showCurrentPassword ? "text" : "password"}
-                            value={currentPassword}
-                            onChange={(e) => setCurrentPassword(e.target.value)}
-                            className="w-full px-4 py-3 bg-white border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 transition-all shadow-sm"
-                            placeholder="Verify your identity"
-                          />
-                          <button onClick={() => setShowCurrentPassword(!showCurrentPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-400">
-                            {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3 pt-4">
-                      <button
-                        onClick={handleSaveSettings}
-                        className="flex-1 py-4 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-2xl font-bold shadow-lg shadow-teal-500/20 hover:shadow-teal-500/40 hover:-translate-y-0.5 transition-all"
-                      >
-                        Save Changes
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
-            )}
           </motion.div>
         </AnimatePresence>
       </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import logo from '../assets/dental_clinic_logo.png';
+import { dentalClinicLogo as logo } from '../assets/index';
 
 interface LoadingScreenProps {
   isLoading: boolean;

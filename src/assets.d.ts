@@ -25,10 +25,3 @@ declare module '*.svg' {
 
 export type AssetModule = string;
 
-// Provide named exports from the assets barrel for TypeScript module resolution
-declare module '../assets' {
-  export const redorLogo: string;
-  export const clinicLogo: string;
-  export const clinicMap: string;
-  export const xrayClinic: string;
-}

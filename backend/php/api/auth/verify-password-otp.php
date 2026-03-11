@@ -28,19 +28,13 @@ try {
     $phone = $user['phone'];
 
     // Check OTP
-    $stmt = $db->prepare("SELECT id, expiresAt FROM otp_verifications WHERE phone = ? AND otp = ? AND verified = 0");
+    $stmt = $db->prepare("SELECT id, expiresAt FROM otp_verifications WHERE phone = ? AND otp = ? AND verified = 0 AND expiresAt > UTC_TIMESTAMP()");
     $stmt->execute([$phone, $data->otp]);
     $otpRecord = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$otpRecord) {
         http_response_code(400);
-        echo json_encode(["error" => "Invalid or already used OTP"]);
-        exit();
-    }
-
-    if (new DateTime() > new DateTime($otpRecord['expiresAt'])) {
-        http_response_code(400);
-        echo json_encode(["error" => "OTP has expired"]);
+        echo json_encode(["error" => "Invalid or expired OTP"]);
         exit();
     }
 

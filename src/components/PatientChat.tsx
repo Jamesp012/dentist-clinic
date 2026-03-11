@@ -36,14 +36,14 @@ export function PatientChat({ patients, chatMessages, setChatMessages, currentUs
     : [];
 
   // Get unread count for each patient
-  const getUnreadCount = (patientId: string) => {
+  const getUnreadCount = (patientId: string | number) => {
     return chatMessages.filter(
       msg => String(msg.patientId) === String(patientId) && !msg.read && msg.senderRole === 'patient'
     ).length;
   };
 
   // Mark messages as read when viewing
-  const markAsRead = (patientId: string) => {
+  const markAsRead = (patientId: string | number) => {
     setChatMessages(
       chatMessages.map(msg =>
         String(msg.patientId) === String(patientId) && msg.senderRole === 'patient'
@@ -53,8 +53,8 @@ export function PatientChat({ patients, chatMessages, setChatMessages, currentUs
     );
   };
 
-  const handleSelectPatient = (patientId: string) => {
-    setSelectedPatientId(patientId);
+  const handleSelectPatient = (patientId: string | number) => {
+    setSelectedPatientId(String(patientId));
     markAsRead(patientId);
   };
 

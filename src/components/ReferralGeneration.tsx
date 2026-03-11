@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { timeAgo } from '../utils/dateHelpers';
 
 // Import image assets
-import { clinicLogo, clinicMap, redorLogo, xrayClinic } from '../assets';
+import { clinicLogo, clinicMap, redorLogo, xrayClinic } from '../assets/index';
 
 type ReferralType = 'doctor' | 'xray' | null;
 
@@ -1850,7 +1850,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
                         <div className="text-base font-bold text-slate-900 flex-1">
                           {selectedReferral.referralType === 'incoming' 
                             ? selectedReferral.referringDentist 
-                            : selectedReferral.referredToClinic}
+                            : selectedReferral.referredTo}
                         </div>
                       </div>
                       <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200">

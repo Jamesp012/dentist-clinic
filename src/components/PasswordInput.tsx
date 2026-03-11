@@ -34,7 +34,9 @@ export function PasswordInput({
         required={required}
         placeholder={placeholder}
         autoComplete={autoComplete}
-        className={`w-full pl-11 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all ${className}`}
+        className={`w-full pl-11 pr-12 py-3 bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all ${
+          className.includes('border-red-500') ? 'border-red-500 ring-red-500/20' : 'border-slate-200'
+        } ${className}`}
       />
       <button
         type="button"

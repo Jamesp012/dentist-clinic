@@ -21,7 +21,7 @@ export const PatientDashboard: React.FC = () => {
       trend: "+12%",
     },
     {
-      label: "Monthly Revenue",
+      label: "Monthly Earnings",
       value: "$42,500",
       icon: TrendingUp,
       color: "bg-green-500",
