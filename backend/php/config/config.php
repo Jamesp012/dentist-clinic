@@ -25,6 +25,13 @@ function loadEnv($path) {
 
 // Try different possible locations for .env
 $envPaths = [
+    // Check for .env.production first in common locations
+    dirname(dirname(dirname(__DIR__))) . '/backend/.env.production',
+    dirname(dirname(dirname(__DIR__))) . '/.env.production',
+    __DIR__ . '/../../.env.production',
+    dirname(BASE_PATH) . '/.env.production',
+    
+    // Fallback to regular .env
     dirname(dirname(dirname(__DIR__))) . '/backend/.env',
     dirname(dirname(dirname(__DIR__))) . '/.env',
     __DIR__ . '/../../.env',

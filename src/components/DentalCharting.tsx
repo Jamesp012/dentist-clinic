@@ -416,10 +416,10 @@ export function DentalCharting({ patients }: DentalChartingProps) {
         )}
 
         {/* Main Chart Area */}
-        <div className="flex-1 flex items-center justify-center bg-white p-8 overflow-auto">
-          <div className="relative max-w-5xl w-full flex flex-col items-center gap-6">
+        <div className="flex-1 flex items-start justify-center bg-white overflow-hidden">
+          <div className="relative w-full h-full flex flex-col items-center overflow-y-auto px-8 py-8">
             {/* Modern Legends Container */}
-            <div className="relative w-full max-w-4xl p-10 mb-6 rounded-3xl bg-white/70 backdrop-blur-xl border border-slate-200/50 shadow-lg overflow-hidden group">
+            <div className="sticky top-0 z-20 w-full max-w-4xl p-6 mb-8 rounded-3xl bg-white/90 backdrop-blur-xl border border-slate-200/50 shadow-md overflow-hidden group">
 
   {/* Top Gradient Glow */}
   <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[28rem] h-[16rem] 

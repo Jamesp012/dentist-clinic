@@ -13,10 +13,10 @@ $path = trim($path, "/ \t\n\r\0\x0B");
 $method = $_SERVER['REQUEST_METHOD'];
 
 // Debug routing
-// error_log("Request URI: " . $_SERVER['REQUEST_URI']);
-// error_log("Base Path: " . $base_path);
-// error_log("Calculated Path: " . $path);
-// error_log("Method: " . $method);
+error_log("Request URI: " . $_SERVER['REQUEST_URI']);
+error_log("Base Path: " . $base_path);
+error_log("Calculated Path: " . $path);
+error_log("Method: " . $method);
 
 function matches($pattern, $path) {
     return preg_match("#^" . $pattern . "$#", $path, $matches) ? $matches : false;

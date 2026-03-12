@@ -1,6 +1,8 @@
 const https = require('https');
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+const env = (process.env.NODE_ENV || 'development').trim();
+const envFile = env === 'test' ? '.env.test' : (env === 'production' ? '.env.production' : '.env');
+require('dotenv').config({ path: path.join(__dirname, '..', envFile) });
 
 /**
  * Send SMS using PhilSMS API

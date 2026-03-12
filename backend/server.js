@@ -1,7 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+const env = (process.env.NODE_ENV || 'development').trim();
+const envFile = env === 'test' ? '.env.test' : (env === 'production' ? '.env.production' : '.env');
+require('dotenv').config({ path: path.join(__dirname, envFile) });
 
 const authRoutes = require('./routes/auth');
 const patientsRoutes = require('./routes/patients');

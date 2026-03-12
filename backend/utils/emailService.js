@@ -1,6 +1,8 @@
 const nodemailer = require('nodemailer');
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+const env = (process.env.NODE_ENV || 'development').trim();
+const envFile = env === 'test' ? '.env.test' : (env === 'production' ? '.env.production' : '.env');
+require('dotenv').config({ path: path.join(__dirname, '..', envFile) });
 
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
@@ -50,7 +52,7 @@ const sendPatientCredentials = async (email, fullName, username, password) => {
         <p>For security reasons, we recommend that you change your password after your first login.</p>
         
         <div style="text-align: center; margin-top: 30px;">
-          <a href="http://localhost:5173" style="background-color: #14b8a6; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Login to Patient Portal</a>
+          <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}" style="background-color: #14b8a6; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Login to Patient Portal</a>
         </div>
         
         <hr style="margin-top: 30px; border: 0; border-top: 1px solid #eee;" />

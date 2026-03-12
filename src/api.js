@@ -1,14 +1,41 @@
 const getApiBase = () => {
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    // If we're on localhost or an IP, use the same host for the API
-    return `http://${hostname}:5000/api`;
+  // Check if an explicit API URL is provided via environment variables (Vite)
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
   }
-  return 'http://localhost:5000/api';
+
+  if (typeof window !== 'undefined') {
+    const { hostname, protocol, port, pathname } = window.location;
+    
+    // PHP backend is located at /backend/php/index.php
+    // We assume the frontend is in the root or same subdirectory level
+    
+    // Get the base path (excluding the filename if index.html is in URL)
+    const basePath = pathname.endsWith('/') ? pathname : pathname.substring(0, pathname.lastIndexOf('/') + 1);
+    
+    // For localhost development using Vite (port 5173), the PHP backend 
+    // is usually served by Apache (XAMPP) on port 80 or another port.
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      // If we are on Vite port 5173, we likely need to point to Apache's port (default 80)
+      if (port === '5173') {
+        // If the project is in XAMPP htdocs, we need to include the folder name
+        // Usually localhost/dentist-clinic/backend/php
+        return `http://${hostname}/dentist-clinic/backend/php/api`;
+      }
+    }
+    
+    // PHP backend URL for live or if served directly by the same server
+    // Added /api prefix as required by backend/php/index.php routing
+    return `${protocol}//${hostname}${port ? `:${port}` : ''}${basePath}backend/php/api`;
+  }
+  return '/backend/php/api';
 };
 
 export const API_BASE = getApiBase();
-export const SERVER_URL = API_BASE.replace('/api', '');
+// SERVER_URL is used for static files (uploads). It should point to the root backend/ directory.
+export const SERVER_URL = API_BASE.includes('/backend/php/api') 
+  ? API_BASE.replace('/php/api', '') 
+  : API_BASE.replace('/api', '');
 
 let authToken = localStorage.getItem('token');
 let isUnauthorized = false;
@@ -23,6 +50,7 @@ export const getAuthToken = () => authToken;
 
 const fetchWithAuth = async (url, options = {}) => {
   if (isUnauthorized) {
+    console.error('API call blocked: User is unauthorized', { url });
     throw new Error('API Error: 401');
   }
 
@@ -36,20 +64,47 @@ const fetchWithAuth = async (url, options = {}) => {
     const response = await fetch(url, { ...options, headers });
     if (!response.ok) {
       if (response.status === 401) {
+        console.warn('API 401 Unauthorized:', { url });
         isUnauthorized = true;
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/'; // Redirect to home/login
       }
-      const errorData = await response.json().catch(() => ({}));
+      
+      let errorData = {};
+      try {
+        errorData = await response.json();
+      } catch (e) {
+        console.error('Failed to parse error response as JSON:', { 
+          url, 
+          status: response.status,
+          statusText: response.statusText
+        });
+        // Try to get text to see if it's an HTML error page
+        const text = await response.text().catch(() => 'No response text');
+        console.error('Raw response body (first 200 chars):', text.substring(0, 200));
+      }
+
       const errorMessage = errorData.error || `API Error: ${response.status}`;
       const err = new Error(errorMessage);
       err.status = response.status;
       err.details = errorData;
       throw err;
     }
-    return await response.json();
+
+    try {
+      return await response.json();
+    } catch (e) {
+      console.error('Failed to parse successful response as JSON:', { 
+        url, 
+        status: response.status 
+      });
+      const text = await response.text().catch(() => 'No response text');
+      console.error('Raw response body (first 200 chars):', text.substring(0, 200));
+      throw new Error('Invalid JSON response from server');
+    }
   } catch (error) {
+    console.error('Fetch Error:', { url, error: error.message });
     if (error.message?.includes('401')) {
       isUnauthorized = true;
     }
@@ -59,12 +114,32 @@ const fetchWithAuth = async (url, options = {}) => {
 
 // Auth APIs
 export const authAPI = {
-  login: (username, password) =>
-    fetch(`${API_BASE}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    }).then((r) => r.json()),
+  login: async (username, password) => {
+    const url = `${API_BASE}/auth/login`;
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      
+      if (!response.ok) {
+        console.error('Login request failed:', { status: response.status, url });
+        const text = await response.text().catch(() => 'No text');
+        console.error('Login error body (first 200 chars):', text.substring(0, 200));
+        try {
+          return JSON.parse(text);
+        } catch (e) {
+          return { error: `Server Error: ${response.status}` };
+        }
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Login Fetch Error:', { error: error.message, url });
+      throw error;
+    }
+  },
 
   register: (userData) =>
     fetch(`${API_BASE}/auth/register`, {

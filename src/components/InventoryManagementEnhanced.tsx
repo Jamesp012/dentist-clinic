@@ -308,7 +308,7 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
       console.error('Error creating rule:', error);
       const errorMsg = (error as Error).message;
       if (errorMsg.includes('Failed to fetch')) {
-        toast.error('Cannot connect to backend. Is the server running on localhost:5000?');
+        toast.error('Cannot connect to backend. Please check if the server is running.');
       } else {
         toast.error('Failed to create rule: ' + errorMsg);
       }

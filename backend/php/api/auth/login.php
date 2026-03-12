@@ -1,4 +1,4 @@
-<?php
+<?php 
 // backend/php/api/auth/login.php
 require_once dirname(dirname(dirname(__DIR__))) . '/php/config/database.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/php/utils/jwt_helper.php';
