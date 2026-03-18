@@ -10,10 +10,10 @@ class Database {
     public $conn;
 
     public function __construct() {
-        $this->host = $_ENV['DB_HOST'] ?? $_SERVER['DB_HOST'] ?? getenv('DB_HOST') ?? 'srv1846.hstgr.io';
-        $this->db_name = $_ENV['DB_NAME'] ?? $_SERVER['DB_NAME'] ?? getenv('DB_NAME') ?? 'u940592735_dental_clinic';
-        $this->username = $_ENV['DB_USER'] ?? $_SERVER['DB_USER'] ?? getenv('DB_USER') ?? 'u940592735_dentalclinic';
-        $this->password = $_ENV['DB_PASSWORD'] ?? $_SERVER['DB_PASSWORD'] ?? getenv('DB_PASSWORD') ?? 'Dent4lcl!n!c';
+        $this->host = ($_ENV['DB_HOST'] ?? $_SERVER['DB_HOST'] ?? getenv('DB_HOST')) ?: 'srv1846.hstgr.io';
+        $this->db_name = ($_ENV['DB_NAME'] ?? $_SERVER['DB_NAME'] ?? getenv('DB_NAME')) ?: 'u940592735_dental_clinic';
+        $this->username = ($_ENV['DB_USER'] ?? $_SERVER['DB_USER'] ?? getenv('DB_USER')) ?: 'u940592735_dentalclinic';
+        $this->password = ($_ENV['DB_PASSWORD'] ?? $_SERVER['DB_PASSWORD'] ?? getenv('DB_PASSWORD') ?? $_ENV['DB_PASS'] ?? $_SERVER['DB_PASS'] ?? getenv('DB_PASS')) ?: 'Dent4lcl!n!c';
     }
 
     public function getConnection() {

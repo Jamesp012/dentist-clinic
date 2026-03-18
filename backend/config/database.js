@@ -7,10 +7,10 @@ require('dotenv').config({ path: path.join(__dirname, '..', envFile) });
 console.log(`Database Config: Connecting to ${process.env.DB_HOST} with database ${process.env.DB_NAME} (Env: ${env})`);
 
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'dental_clinic',
+  host: process.env.DB_HOST || 'srv1846.hstgr.io',
+  user: process.env.DB_USER || 'u940592735_drjoseph',
+  password: process.env.DB_PASSWORD || 'Dent4lcl!n!c',
+  database: process.env.DB_NAME || 'u940592735_dental_clinic',
   port: Number(process.env.DB_PORT) || 3306,
   charset: 'utf8mb4',
   waitForConnections: true,
