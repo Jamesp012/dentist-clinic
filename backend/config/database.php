@@ -12,7 +12,7 @@ class Database {
         // Load environment variables
         $this->host = getenv('DB_HOST') ?: 'srv1846.hstgr.io';
         $this->db_name = getenv('DB_NAME') ?: 'u940592735_dental_clinic';
-        $this->username = getenv('DB_USER') ?: 'u940592735_dentalclinic';
+        $this->username = getenv('DB_USER') ?: 'u940592735_drjoseph';
         $this->password = getenv('DB_PASSWORD') ?: getenv('DB_PASS') ?: 'Dent4lcl!n!c';
     }
 
