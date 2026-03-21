@@ -4,13 +4,13 @@ const getApiBase = () => {
     const protocol = window.location.protocol;
     const port = window.location.port;
     
-    // If we're on a live site or using the PHP backend
-    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-      return `${protocol}//${hostname}${port ? `:${port}` : ''}/backend/php/api`;
+    // Use the same structure for both live and local
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return `http://${hostname}${port ? `:${port}` : ''}/dentist-clinic/backend/php/api`;
     }
     
-    // For local development with XAMPP
-    return `http://${hostname}${port ? `:${port}` : ''}/dentist-clinic/backend/php/api`;
+    // Live site
+    return `${protocol}//${hostname}${port ? `:${port}` : ''}/backend/php/api`;
   }
   return 'http://localhost/dentist-clinic/backend/php/api';
 };
@@ -86,6 +86,27 @@ export const authAPI = {
       method: 'POST',
       body: JSON.stringify({ userId, newPassword }),
     }),
+
+  sendPasswordOTP: (username) =>
+    fetch(`${API_BASE}/auth/send-password-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username }),
+    }).then((r) => r.json()),
+
+  verifyPasswordOTP: (username, otp) =>
+    fetch(`${API_BASE}/auth/verify-password-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, otp }),
+    }).then((r) => r.json()),
+
+  resetPasswordForgot: (username, otp, newPassword) =>
+    fetch(`${API_BASE}/auth/reset-password-forgot`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, otp, newPassword }),
+    }).then((r) => r.json()),
 };
 
 // Patient APIs

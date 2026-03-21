@@ -9,16 +9,16 @@ $db = $database->getConnection();
 
 $data = json_decode(file_get_contents("php://input"));
 
-if (!isset($data->userId)) {
+if (!isset($data->username)) {
     http_response_code(400);
-    echo json_encode(["error" => "userId is required"]);
+    echo json_encode(["error" => "username is required"]);
     exit();
 }
 
 try {
     // Get user phone
-    $stmt = $db->prepare("SELECT phone FROM users WHERE id = ?");
-    $stmt->execute([$data->userId]);
+    $stmt = $db->prepare("SELECT phone FROM users WHERE username = ?");
+    $stmt->execute([$data->username]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$user) {

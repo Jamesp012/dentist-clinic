@@ -7,16 +7,16 @@ $db = $database->getConnection();
 
 $data = json_decode(file_get_contents("php://input"));
 
-if (!isset($data->userId) || !isset($data->otp)) {
+if (!isset($data->username) || !isset($data->otp)) {
     http_response_code(400);
-    echo json_encode(["error" => "userId and otp are required"]);
+    echo json_encode(["error" => "username and otp are required"]);
     exit();
 }
 
 try {
     // Get user phone
-    $stmt = $db->prepare("SELECT phone FROM users WHERE id = ?");
-    $stmt->execute([$data->userId]);
+    $stmt = $db->prepare("SELECT phone FROM users WHERE username = ?");
+    $stmt->execute([$data->username]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$user) {

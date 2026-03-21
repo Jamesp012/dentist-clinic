@@ -52,6 +52,7 @@ try {
         'api/auth/check-username' => ['GET' => 'api/auth/check-username.php'],
         'api/auth/send-password-otp' => ['POST' => 'api/auth/send-password-otp.php'],
         'api/auth/verify-password-otp' => ['POST' => 'api/auth/verify-password-otp.php'],
+        'api/auth/reset-password-forgot' => ['POST' => 'api/auth/reset-password-forgot.php'],
         'api/auth/update-settings' => ['PUT' => 'api/auth/update-settings.php'],
         'api/patients' => [
             'GET' => 'api/patients/get_all.php',

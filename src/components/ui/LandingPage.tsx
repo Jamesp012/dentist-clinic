@@ -1,7 +1,9 @@
 import { motion } from 'motion/react';
 import { Stethoscope, Users, Award, Heart, MapPin, Phone, Mail, ChevronLeft, ChevronRight, User, Lock, LogIn, UserPlus, Calendar, Eye, EyeOff } from 'lucide-react';
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { toast } from 'sonner';
 import { convertToDBDate, convertToDisplayDate, formatDateInput } from '../../utils/dateHelpers';
+import { authAPI } from '../../api';
 
 export type LandingPageProps = {
   onGetStarted?: () => void;
@@ -34,6 +36,111 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
     password: '',
     role: 'patient' as const
   });
+
+  // Forgot password flow
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordStep, setForgotPasswordStep] = useState<'username' | 'otp' | 'reset'>('username');
+  const [resetUsername, setResetUsername] = useState('');
+  const [resetOtp, setResetOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [maskedPhone, setMaskedPhone] = useState('');
+  const [cooldown, setCooldown] = useState(0);
+  const [isResetLoading, setIsResetLoading] = useState(false);
+  const [resetShowPassword, setResetShowPassword] = useState(false);
+
+  useEffect(() => {
+    let timer: any;
+    if (cooldown > 0) {
+      timer = setInterval(() => {
+        setCooldown(prev => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [cooldown]);
+
+  const validatePassword = (pass: string) => {
+    if (pass.length < 8) return "Password must be at least 8 characters long";
+    if (!/[A-Z]/.test(pass)) return "Password must contain at least one uppercase letter";
+    if (!/[a-z]/.test(pass)) return "Password must contain at least one lowercase letter";
+    if (!/[0-9]/.test(pass)) return "Password must contain at least one number";
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(pass)) return "Password must contain at least one special character";
+    return null;
+  };
+
+  const handleSendOTP = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!resetUsername) return toast.error('Please enter your username');
+    
+    setIsResetLoading(true);
+    try {
+      const resp = await authAPI.sendPasswordOTP(resetUsername);
+      if (resp.success) {
+        setMaskedPhone(resp.phone);
+        setForgotPasswordStep('otp');
+        setCooldown(60);
+        toast.success('OTP sent to your registered phone');
+      } else {
+        toast.error(resp.error || 'Failed to send OTP');
+      }
+    } catch (err) {
+      toast.error('Error sending OTP');
+    } finally {
+      setIsResetLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetOtp) return toast.error('Please enter the OTP');
+
+    setIsResetLoading(true);
+    try {
+      const resp = await authAPI.verifyPasswordOTP(resetUsername, resetOtp);
+      if (resp.success) {
+        setForgotPasswordStep('reset');
+        toast.success('OTP verified. Please set your new password.');
+      } else {
+        toast.error(resp.error || 'Invalid OTP');
+      }
+    } catch (err) {
+      toast.error('Error verifying OTP');
+    } finally {
+      setIsResetLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const passError = validatePassword(newPassword);
+    if (passError) return toast.error(passError);
+    if (newPassword !== confirmNewPassword) return toast.error('Passwords do not match');
+
+    setIsResetLoading(true);
+    try {
+      const resp = await authAPI.resetPasswordForgot(resetUsername, resetOtp, newPassword);
+      if (resp.success) {
+        toast.success('Password reset successfully! Please sign in.');
+        setShowForgotPassword(false);
+        resetForgotFlow();
+      } else {
+        toast.error(resp.error || 'Failed to reset password');
+      }
+    } catch (err) {
+      toast.error('Error resetting password');
+    } finally {
+      setIsResetLoading(false);
+    }
+  };
+
+  const resetForgotFlow = () => {
+    setForgotPasswordStep('username');
+    setResetUsername('');
+    setResetOtp('');
+    setNewPassword('');
+    setConfirmNewPassword('');
+    setCooldown(0);
+  };
 
   const formatPhoneNumber = (value: string) => {
     // Remove all non-digit characters
@@ -161,9 +268,18 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
                 <input id="login-password" name="password" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Enter password" className="w-full pl-10 sm:pl-11 pr-11 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm sm:text-base" />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 sm:right-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">{showPassword ? <EyeOff className="w-4 sm:w-5 h-4 sm:h-5" /> : <Eye className="w-4 sm:w-5 h-4 sm:h-5" />}</button>
               </div>
+              <div className="flex justify-start mt-2 px-1">
+                <button 
+                  type="button" 
+                  onClick={() => setShowForgotPassword(true)} 
+                  className="text-xs text-teal-600 hover:text-teal-700 underline font-medium"
+                >
+                  Forgot password?
+                </button>
+              </div>
             </div>
 
-            <button type="submit" className="w-full py-2.5 sm:py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl font-semibold mt-6 sm:mt-8 text-sm sm:text-base"><LogIn className="w-4 sm:w-5 h-4 sm:h-5" />Sign In</button>
+            <button type="submit" className="w-full py-2.5 sm:py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl font-semibold mt-4 sm:mt-6 text-sm sm:text-base"><LogIn className="w-4 sm:w-5 h-4 sm:h-5" />Sign In</button>
           </form>
         ) : (
           /* Signup Form - Scrollable */
@@ -245,6 +361,124 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
           </div>
         )}
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <div className="fixed inset-0 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm z-[100] p-4">
+          <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-md border border-slate-100">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-xl text-slate-800">Reset Password</h3>
+              <button 
+                onClick={() => { setShowForgotPassword(false); resetForgotFlow(); }}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {forgotPasswordStep !== 'reset' ? (
+              <form onSubmit={forgotPasswordStep === 'username' ? handleSendOTP : handleVerifyOTP} className="space-y-4">
+                <p className="text-sm text-slate-500">
+                  {forgotPasswordStep === 'username' 
+                    ? 'Enter your username to receive a verification code via SMS.' 
+                    : `We've sent a 6-digit code to your phone ${maskedPhone}.`}
+                </p>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    {forgotPasswordStep === 'username' ? 'Username' : 'Enter OTP'}
+                  </label>
+                  <div className="relative">
+                    <input 
+                      value={forgotPasswordStep === 'username' ? resetUsername : resetOtp} 
+                      onChange={e => forgotPasswordStep === 'username' ? setResetUsername(e.target.value) : setResetOtp(e.target.value)} 
+                      placeholder={forgotPasswordStep === 'username' ? "Enter your username" : "6-digit code"}
+                      className={`w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-teal-500 outline-none ${forgotPasswordStep === 'otp' ? 'text-center text-xl tracking-widest font-bold pr-20' : ''}`}
+                      maxLength={forgotPasswordStep === 'otp' ? 6 : undefined}
+                      required
+                    />
+                    {forgotPasswordStep === 'otp' && (
+                      <button 
+                        type="button" 
+                        onClick={handleSendOTP}
+                        disabled={cooldown > 0 || isResetLoading}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-teal-600 hover:text-teal-700 disabled:text-slate-400 bg-teal-50 hover:bg-teal-100 px-2 py-1 rounded transition-colors"
+                      >
+                        {cooldown > 0 ? `RESEND (${cooldown}s)` : 'RESEND'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button 
+                    type="button" 
+                    onClick={() => { setShowForgotPassword(false); resetForgotFlow(); }} 
+                    className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors text-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    disabled={isResetLoading}
+                    className="bg-teal-600 hover:bg-teal-700 text-white px-8 py-2 rounded-lg font-semibold transition-colors shadow-md disabled:opacity-70 text-sm"
+                  >
+                    {isResetLoading ? 'Processing...' : (forgotPasswordStep === 'username' ? 'Send OTP' : 'Confirm')}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handleResetPassword} className="space-y-4">
+                <p className="text-sm text-slate-500">Success! Now set a new secure password for your account.</p>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">New Password</label>
+                  <div className="relative">
+                    <Lock className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                    <input 
+                      type={resetShowPassword ? 'text' : 'password'}
+                      value={newPassword} 
+                      onChange={e => setNewPassword(e.target.value)} 
+                      placeholder="Min. 8 characters with symbols" 
+                      className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                    />
+                    <button type="button" onClick={() => setResetShowPassword(!resetShowPassword)} className="absolute right-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">{resetShowPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}</button>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Confirm New Password</label>
+                  <div className="relative">
+                    <Lock className="w-5 h-5 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                    <input 
+                      type={resetShowPassword ? 'text' : 'password'}
+                      value={confirmNewPassword} 
+                      onChange={e => setConfirmNewPassword(e.target.value)} 
+                      placeholder="Repeat new password" 
+                      className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                </div>
+                
+                <div className="text-xs text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-100 space-y-1">
+                  <p className="font-semibold text-slate-700">Password requirements:</p>
+                  <ul className="list-disc list-inside grid grid-cols-1 gap-1">
+                    <li>At least 8 characters</li>
+                    <li>One uppercase & one lowercase letter</li>
+                    <li>One number & one special character</li>
+                  </ul>
+                </div>
+
+                <button 
+                  type="submit" 
+                  disabled={isResetLoading}
+                  className="w-full bg-teal-600 hover:bg-teal-700 text-white py-2.5 rounded-lg font-semibold transition-colors shadow-md disabled:opacity-70"
+                >
+                  {isResetLoading ? 'Updating...' : 'Update Password'}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 

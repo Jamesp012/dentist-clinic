@@ -347,11 +347,13 @@ export default function App() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
+    
     if (token && user) {
       try {
         setAuthToken(token);
         const userData = JSON.parse(user);
         setCurrentUser({ ...userData, id: String(userData.id) } as AuthUser);
+        setShowLandingPage(false);
       } catch (error) {
         console.error('Failed to load user session:', error);
         localStorage.removeItem('token');
@@ -448,12 +450,14 @@ export default function App() {
         // Check if first-time login
         if (userData.isFirstLogin) {
           setCurrentUser({ ...userData, id: String(userData.id) } as AuthUser);
-          // User will be prompted to change password in AuthPage
+          setShowLandingPage(false);
+          // User will be prompted to change password in PasswordChangePage via render logic
           return;
         }
         
         // Set user and let useDataSync handle data loading
         setCurrentUser({ ...userData, id: String(userData.id) } as AuthUser);
+        setShowLandingPage(false);
         toast.success(`Welcome, ${userData.fullName}`);
       } else {
         toast.error(response.error || 'Login failed');
