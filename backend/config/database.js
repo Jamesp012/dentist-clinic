@@ -7,7 +7,7 @@ require('dotenv').config({ path: path.join(__dirname, '..', envFile) });
 console.log(`Database Config: Connecting to ${process.env.DB_HOST} with database ${process.env.DB_NAME} (Env: ${env})`);
 
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'srv1846.hstgr.io',
+  host: process.env.DB_HOST || '127.0.0.1',
   user: process.env.DB_USER || 'u940592735_drjoseph',
   password: process.env.DB_PASSWORD || 'Dent4lcl!n!c',
   database: process.env.DB_NAME || 'u940592735_dental_clinic',

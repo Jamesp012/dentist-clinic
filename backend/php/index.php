@@ -1,5 +1,25 @@
 <?php
 // backend/php/index.php
+error_reporting(E_ALL);
+ini_set('display_errors', 0); // Don't display to output, we'll catch it
+
+set_error_handler(function($severity, $message, $file, $line) {
+    throw new ErrorException($message, 0, $severity, $file, $line);
+});
+
+register_shutdown_function(function() {
+    $error = error_get_last();
+    if ($error && ($error['type'] === E_ERROR || $error['type'] === E_PARSE || $error['type'] === E_CORE_ERROR || $error['type'] === E_COMPILE_ERROR)) {
+        http_response_code(500);
+        echo json_encode([
+            "error" => "Fatal Error",
+            "message" => $error['message'],
+            "file" => $error['file'],
+            "line" => $error['line']
+        ]);
+    }
+});
+
 require_once __DIR__ . '/config/config.php';
 
 $request = $_SERVER['REQUEST_URI'];

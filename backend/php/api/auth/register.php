@@ -1,7 +1,7 @@
 <?php
 // backend/php/api/auth/register.php
-require_once dirname(dirname(dirname(__DIR__))) . '/php/config/database.php';
-require_once dirname(dirname(dirname(__DIR__))) . '/php/utils/email_helper.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../utils/email_helper.php';
 
 $database = new Database();
 $db = $database->getConnection();

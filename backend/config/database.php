@@ -10,7 +10,7 @@ class Database {
 
     public function __construct() {
         // Load environment variables
-        $this->host = getenv('DB_HOST') ?: 'srv1846.hstgr.io';
+        $this->host = getenv('DB_HOST') ?: '127.0.0.1';
         $this->db_name = getenv('DB_NAME') ?: 'u940592735_dental_clinic';
         $this->username = getenv('DB_USER') ?: 'u940592735_drjoseph';
         $this->password = getenv('DB_PASSWORD') ?: getenv('DB_PASS') ?: 'Dent4lcl!n!c';

@@ -16,8 +16,16 @@ class Database {
         $this->password = ($_ENV['DB_PASSWORD'] ?? $_SERVER['DB_PASSWORD'] ?? getenv('DB_PASSWORD') ?? $_ENV['DB_PASS'] ?? $_SERVER['DB_PASS'] ?? getenv('DB_PASS')) ?: 'Dent4lcl!n!c';
     }
 
+    private function log($message) {
+        $logFile = dirname(__DIR__) . '/logs/database_debug.log';
+        $timestamp = date('Y-m-d H:i:s');
+        $formattedMessage = "[$timestamp] $message\n";
+        file_put_contents($logFile, $formattedMessage, FILE_APPEND);
+    }
+
     public function getConnection() {
         $this->conn = null;
+        $this->log("Attempting to connect to database: $this->db_name on host: $this->host");
 
         try {
             $this->conn = new PDO(
@@ -31,9 +39,12 @@ class Database {
                     PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4; SET time_zone = '+00:00';"
                 ]
             );
+            $this->log("Database connection successful.");
         } catch(PDOException $exception) {
             // Log connection error to standard error log
-            error_log("Connection error: " . $exception->getMessage());
+            $errorMessage = "Connection error: " . $exception->getMessage();
+            error_log($errorMessage);
+            $this->log("FAILED: $errorMessage");
             
             http_response_code(500);
             echo json_encode([

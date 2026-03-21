@@ -1,10 +1,18 @@
 const getApiBase = () => {
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
-    // If we're on localhost or an IP, use the same host for the API
-    return `http://${hostname}:5000/api`;
+    const protocol = window.location.protocol;
+    const port = window.location.port;
+    
+    // If we're on a live site or using the PHP backend
+    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+      return `${protocol}//${hostname}${port ? `:${port}` : ''}/backend/php/api`;
+    }
+    
+    // For local development with XAMPP
+    return `http://${hostname}${port ? `:${port}` : ''}/dentist-clinic/backend/php/api`;
   }
-  return 'http://localhost:5000/api';
+  return 'http://localhost/dentist-clinic/backend/php/api';
 };
 
 export const API_BASE = getApiBase();
