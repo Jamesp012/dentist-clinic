@@ -664,7 +664,7 @@ export function DoctorDashboard({
         </motion.div>
         
         {/* Main Content Area with Animation */}
-        <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-teal-500 scrollbar-track-slate-100 hover:scrollbar-thumb-teal-600">
+        <div className="flex-1 overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}

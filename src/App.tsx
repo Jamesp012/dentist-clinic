@@ -348,19 +348,22 @@ export default function App() {
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
     
-    if (token && user) {
-      try {
-        setAuthToken(token);
-        const userData = JSON.parse(user);
-        setCurrentUser({ ...userData, id: String(userData.id) } as AuthUser);
-        setShowLandingPage(false);
-      } catch (error) {
-        console.error('Failed to load user session:', error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+    try {
+      const userData = JSON.parse(user);
+
+      if (!userData.id || !userData.role) {
+        throw new Error("Invalid user data");
       }
+
+      setAuthToken(token);
+      setCurrentUser({ ...userData, id: String(userData.id) } as AuthUser);
+      setShowLandingPage(false);
+    } catch (error) {
+      console.error('Invalid session:', error);
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
     }
-  }, []);
+  }, []);;
 
   // Refresh data from database when user is authenticated
   useEffect(() => {
@@ -414,9 +417,9 @@ export default function App() {
   }, [services]);
 
   const handleLogout = () => {
+    localStorage.clear(); // optional but clean
     setCurrentUser(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    setShowLandingPage(true);
   };
 
   const handleLogin = async (username: string, password: string) => {
@@ -485,7 +488,14 @@ export default function App() {
   if (currentUser?.isFirstLogin) {
     return (
       <>
-        <PasswordChangePage user={currentUser} />
+        <PasswordChangePage 
+          user={currentUser} 
+          onPasswordChange={(updatedUser: AuthUser) => {
+            setCurrentUser(updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            toast.success('Password changed successfully!');
+          }}
+        />
         <Toaster 
           position="top-center" 
           richColors

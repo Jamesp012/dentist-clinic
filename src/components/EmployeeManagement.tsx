@@ -340,7 +340,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
         <div className="flex-1 flex flex-col min-h-0 px-6 py-6 gap-6 overflow-hidden">
           {sortedEmployees.length === 0 ? (
             <div className="flex-1 flex items-center justify-center border border-dashed border-slate-200 bg-white w-full">
-              <div className="text-center py-16 px-6">
+              {/* <div className="text-center py-16 px-6">
                 <div className="w-20 h-20 rounded-full bg-gradient-to-br from-teal-100 to-cyan-100 flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl font-bold text-teal-600">EM</span>
                 </div>
@@ -350,12 +350,13 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                 <p className="text-slate-600 text-sm mb-6">
                   {searchTerm ? 'Try adjusting your search criteria' : 'Add your first team member to get started'}
                 </p>
-              </div>
+              </div> */}
             </div>
           ) : (
             <div className="flex-1 min-h-0 border border-slate-200 bg-white rounded-none flex flex-col overflow-hidden">
-              <div className="bg-white shadow-[0_2px_5px_rgba(0,0,0,0.05)] z-20 flex-none">
-                <table className="w-full table-fixed text-sm">
+              {/* Table Header */}
+              <div className="bg-white shadow-[0_2px_5px_rgba(0,0,0,0.05)] z-20 flex-none overflow-x-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent">
+                <table className="w-full min-w-[700px] table-fixed text-sm">
                   <colgroup>
                     {columnWidths.map((width, index) => (
                       <col key={`col-${index}`} style={{ width }} />
@@ -374,8 +375,10 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                   </thead>
                 </table>
               </div>
-              <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent">
-                <table className="w-full table-fixed text-sm">
+
+              {/* Scrollable Table Body */}
+              <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent max-h-[60vh]">
+                <table className="w-full min-w-[700px] table-fixed text-sm">
                   <colgroup>
                     {columnWidths.map((width, index) => (
                       <col key={`col-${index}`} style={{ width }} />
@@ -393,6 +396,7 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                           className="transition-colors border-b border-slate-100 last:border-0 odd:bg-white even:bg-[rgba(26,188,156,0.08)] hover:bg-[rgba(26,188,156,0.18)]"
                           style={{ minHeight: '60px' }}
                         >
+                          {/* Name */}
                           <td className="px-3 py-3 align-middle text-left">
                             <div className="leading-tight">
                               <p className="text-sm font-semibold text-slate-900 whitespace-nowrap overflow-hidden text-ellipsis" title={formatEmployeeName(employee.name)}>
@@ -403,6 +407,8 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                               </p>
                             </div>
                           </td>
+
+                          {/* Email */}
                           <td className="px-3 py-3 align-middle text-left">
                             <p
                               className="text-sm text-slate-700 whitespace-nowrap overflow-hidden text-ellipsis"
@@ -412,14 +418,20 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                               {employee.email}
                             </p>
                           </td>
+
+                          {/* Phone */}
                           <td className="px-3 py-3 align-middle text-left whitespace-nowrap">
                             <p className="text-sm font-medium text-slate-900 tracking-wide overflow-hidden text-ellipsis" title={employee.phone}>
                               {employee.phone}
                             </p>
                           </td>
+
+                          {/* Date Hired */}
                           <td className="px-3 py-3 align-middle text-left whitespace-nowrap">
                             <span className="text-sm font-semibold text-slate-900">{formatToDD_MM_YYYY(employee.dateHired)}</span>
                           </td>
+
+                          {/* Access Level */}
                           <td className="px-3 py-3 align-middle text-left">
                             <div className={`flex flex-col text-[11px] font-semibold uppercase leading-tight ${accessConfig.className}`}>
                               {accessConfig.label.split(' ').map((word, index) => (
@@ -429,11 +441,15 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                               ))}
                             </div>
                           </td>
+
+                          {/* Status */}
                           <td className="px-3 py-3 align-middle text-left whitespace-nowrap">
                             <span className={`text-[11px] font-semibold uppercase ${statusConfig.className}`}>
                               {statusConfig.label}
                             </span>
                           </td>
+
+                           {/* Actions */}
                           <td className="px-3 py-3 align-middle text-center" style={{ width: '120px' }}>
                             <div className="flex justify-center items-center gap-2">
                               {shouldShowKeyAction ? (

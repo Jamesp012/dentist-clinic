@@ -6,9 +6,10 @@ import { User } from './AuthPage';
 
 type PasswordChangePageProps = {
   user: User;
+  onPasswordChange: (user: User ) => void;
 };
 
-export function PasswordChangePage({ user }: PasswordChangePageProps) {
+export function PasswordChangePage({ user, onPasswordChange }: PasswordChangePageProps) {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -30,12 +31,14 @@ export function PasswordChangePage({ user }: PasswordChangePageProps) {
     try {
       await authAPI.changePassword(user.id, newPassword);
       
-      // Update local storage user object
       const updatedUser = { ...user, isFirstLogin: false };
       localStorage.setItem('user', JSON.stringify(updatedUser));
-      
+
       toast.success('Password updated successfully!');
-      setTimeout(() => window.location.reload(), 400);
+
+      // 🔥 instead of reload
+      onPasswordChange(updatedUser);
+
     } catch (err: any) {
       setError(err.message || 'Failed to update password');
     } finally {

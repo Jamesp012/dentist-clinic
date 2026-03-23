@@ -215,7 +215,7 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
 
   return (
     <div
-      className="flex flex-col flex-1 min-h-0 relative overflow-hidden bg-gradient-to-br from-[#f5fbff] via-white to-[#ecfff8]"
+      className="flex flex-col flex-1 min-h-0 relative bg-gradient-to-br from-[#f5fbff] via-white to-[#ecfff8] overflow-auto scrollbar-thin scrollbar-thumb-teal-500 scrollbar-track-slate-100 hover:scrollbar-thumb-teal-600"
     >
       <div
         className="pointer-events-none absolute inset-0 opacity-80"
@@ -226,40 +226,29 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
         }}
       />
       <div className="relative flex flex-col flex-1 min-h-0 overflow-hidden px-6 py-6 sm:px-10 sm:py-10 gap-8">
-        {/* Search & Add Button */}
-        <div className="relative rounded-3xl border border-white/70 bg-white/90 px-6 py-6 sm:px-8 sm:py-8 shadow-[0_35px_80px_rgba(15,23,42,0.08)] backdrop-blur-xl overflow-hidden">
-          <div className="absolute inset-y-0 right-[-80px] w-[260px] bg-gradient-to-b from-teal-50/60 to-cyan-100/30 blur-3xl opacity-60" aria-hidden="true"></div>
-          <div className="relative flex flex-col gap-2">
-            <span className="text-xs font-semibold uppercase tracking-[0.4em] text-slate-400">Home • Patient Portal</span>
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div className="max-w-2xl">
-                <h1 className="text-3xl font-bold text-slate-900 leading-tight">Patient Directory Overview</h1>
-                <p className="text-sm text-slate-500 mt-2">
-                  Search, review, and manage every patient record inside a calming clinical workspace.
-                </p>
-              </div>
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="relative group bg-gradient-to-r from-teal-500 via-emerald-500 to-cyan-500 text-white px-7 py-3.5 rounded-2xl font-semibold tracking-wide shadow-[0_20px_45px_rgba(14,165,233,0.35)] transition-all duration-300 flex items-center gap-2.5 whitespace-nowrap hover:-translate-y-0.5 hover:shadow-[0_30px_60px_rgba(14,165,233,0.35)]"
-              >
-                <Plus className="w-5 h-5" />
-                <span>Add Patient</span>
-                <div className="absolute inset-0 rounded-2xl bg-white/0 group-hover:bg-white/10 transition-colors duration-300"></div>
-              </button>
-            </div>
+        {/* Search & Add Button Responsive */}
+        <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          {/* Search Input */}
+          <div className="flex-1 relative">
+            {/* Search Icon */}
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search patients by name, email, or phone..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 rounded-2xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-400 text-slate-900 placeholder:text-slate-400 transition-all duration-300"
+            />
           </div>
-          <div className="relative mt-6">
-            <div className="relative flex-1 min-w-0 group">
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-teal-500 transition-colors" />
-              <input
-                type="text"
-                placeholder="Search patients by name, email, or phone..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-14 pr-4 py-4 bg-white/70 border border-white/70 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 placeholder:text-slate-400 text-slate-900 shadow-inner hover:shadow-[inset_0_0_0_rgba(0,0,0,0)]"
-              />
-            </div>
-          </div>
+
+          {/* Add Patient Button */}
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-teal-500 via-emerald-500 to-cyan-500 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-300"
+          >
+            <Plus className="w-5 h-5" />
+            <span>Add Patient</span>
+          </button>
         </div>
 
         {/* Patients Table */}
@@ -281,28 +270,24 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
               </div>
             </div>
           ) : (
-            <div className="flex-1 min-h-0 border border-white/70 bg-white/95 rounded-3xl flex flex-col overflow-hidden shadow-[0_40px_90px_rgba(15,23,42,0.08)] backdrop-blur-xl">
-              <div className="bg-gradient-to-r from-white/80 via-teal-50/60 to-white/80 border-b border-white/60 z-20 flex-none sticky top-0">
-                <table className="w-full table-fixed text-sm">
-                  <thead className="text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-500">
+            <div className="flex-1 min-h-0 overflow-auto max-h-[70vh] scrollbar-thin scrollbar-thumb-teal-300 border border-slate-200 bg-white rounded-none">
+              <div className='min-w-full overflow-x-auto '>
+                <table className='min-w-full table-auto text-sm'>
+                  {/* HEADER */}
+                  <thead className="text-xs font-semibold uppercase tracking-widest text-slate-500 shadow-[0_2px_5px_rgba(0,0,0,0.05)]">
                     <tr>
-                      <th scope="col" className="px-6 py-5 text-left align-middle">Name</th>
-                      <th scope="col" className="px-4 py-5 text-center align-middle w-20">Age</th>
-                      <th scope="col" className="px-4 py-5 text-left align-middle w-32">Birthdate</th>
-                      <th scope="col" className="px-4 py-5 text-left align-middle w-64">Email</th>
-                      <th scope="col" className="px-4 py-5 text-left align-middle w-40">Phone</th>
-                      <th scope="col" className="px-4 py-5 text-left align-middle w-[240px]">Address</th>
-                      <th scope="col" className="px-4 py-5 text-center align-middle w-[140px]">Actions</th>
+                      <th className="px-6 py-4 text-left">Name</th>
+                      <th className="px-4 py-4 text-center">Age</th>
+                      <th className="px-4 py-4 text-left">Birthdate</th>
+                      <th className="px-4 py-4 text-left">Email</th>
+                      <th className="px-4 py-4 text-left">Phone</th>
+                      <th className="px-4 py-4 text-left">Address</th>
+                      <th className="px-4 py-4 text-center">Actions</th>
                     </tr>
                   </thead>
-                </table>
-              </div>
-              <div
-                className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-teal-200/80 scrollbar-track-transparent"
-                style={{ maxHeight: 'calc(100vh - 340px)' }}
-              >
-                <table className="w-full table-fixed text-sm">
+                  {/* BODY */}
                   <tbody className="text-sm text-slate-700">
+
                     {sortedPatients.map((patient) => {
                       const ageValue = patient.dateOfBirth ? calculateAge(patient.dateOfBirth) : NaN;
                       const hasAge = Number.isFinite(ageValue);
@@ -312,76 +297,80 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
                       return (
                         <tr
                           key={patient.id}
-                          className="relative transition-all duration-300 border-b border-white/70 last:border-0 odd:bg-white even:bg-teal-50/40 hover:bg-white"
-                          style={{ minHeight: '68px' }}
+                          className="border-b border-slate-100 
+                                    odd:bg-white 
+                                    even:bg-[rgba(26,188,156,0.08)] 
+                                    hover:bg-[rgba(26,188,156,0.18)] 
+                                    transition-colors"
                         >
-                          <td className="px-6 py-5 align-middle text-left">
-                            <div className="text-base font-semibold text-slate-900 tracking-tight break-words">{formatPatientName(patient.name)}</div>
-                            <div className="text-xs font-medium text-slate-400 mt-1">{sexLabel}</div>
+
+                          {/* NAME */}
+                          <td className="px-6 py-4">
+                            <p className="font-semibold text-slate-900 truncate">
+                              {formatPatientName(patient.name)}
+                            </p>
+                            <p className="text-xs text-slate-500">{sexLabel}</p>
                           </td>
-                          <td className="px-4 py-5 align-middle text-center whitespace-nowrap">
+
+                          {/* AGE */}
+                          <td className="px-4 py-4 text-center">
                             {hasAge ? (
                               <>
-                                <span className="text-xl font-semibold text-slate-900">{ageValue}</span>
+                                <span className="text-lg font-semibold">{ageValue}</span>
                                 <span className="text-xs text-slate-400 ml-1">yrs</span>
                               </>
                             ) : (
                               <span className="text-sm text-slate-400">N/A</span>
                             )}
                           </td>
-                          <td className="px-4 py-5 align-middle whitespace-nowrap text-left">
+
+                          {/* DOB */}
+                          <td className="px-4 py-4 whitespace-nowrap">
                             <span className="text-sm font-semibold text-slate-900">{dobLabel}</span>
                           </td>
-                          <td className="px-4 py-5 align-middle text-left whitespace-nowrap">
-                            <p className="text-sm text-slate-600 break-words leading-relaxed">{patient.email}</p>
-                          </td>
-                          <td className="px-4 py-5 align-middle whitespace-nowrap text-left">
-                            <p className="text-sm font-semibold text-slate-900 tracking-wide">{patient.phone}</p>
-                          </td>
-                          <td className="px-4 py-5 align-middle text-left" style={{ width: '240px' }}>
-                            <p
-                              className="text-sm text-slate-500 leading-relaxed"
-                              style={{
-                                whiteSpace: 'normal',
-                                wordBreak: 'break-word',
-                                overflowWrap: 'break-word',
-                                display: '-webkit-box',
-                                WebkitLineClamp: 2,
-                                WebkitBoxOrient: 'vertical',
-                                overflow: 'hidden',
-                              }}
-                            >
+
+                          {/* EMAIL */}
+                          <td className="px-4 py-4 truncate">{patient.email}</td>
+
+                          {/* PHONE */}
+                          <td className="px-4 py-4">{patient.phone}</td>
+
+                          {/* ADDRESS */}
+                          <td className="px-4 py-4">
+                            <p className="text-sm text-slate-500 line-clamp-2">
                               {patient.address}
                             </p>
                           </td>
-                          <td className="px-4 py-5 align-middle text-center whitespace-nowrap" style={{ width: '140px' }}>
-                            <div className="flex justify-center items-center gap-3 flex-nowrap" style={{ whiteSpace: 'nowrap' }}>
+
+                          {/* ACTIONS */}
+                          <td className="px-4 py-4 text-center align-middle">
+                            <div className="flex justify-center gap-2">
                               <button
                                 onClick={() => setViewingPatient(patient)}
-                                className="w-10 h-10 flex items-center justify-center rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
-                                title="View Patient"
+                                className="w-8 h-8 flex items-center justify-center rounded-full text-emerald-600 hover:bg-slate-100"
                               >
-                                <Eye className="w-5 h-5" />
+                                <Eye className="w-4 h-4" />
                               </button>
+
                               <button
                                 onClick={() => setEditingPatient(patient)}
-                                className="w-10 h-10 flex items-center justify-center rounded-full bg-sky-50 text-sky-600 border border-sky-100 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
-                                title="Edit Patient"
+                                className="w-8 flex items-center justify-center h-8 rounded-full text-blue-600 hover:bg-slate-100"
                               >
-                                <Edit className="w-5 h-5" />
+                                <Edit className="w-4 h-4" />
                               </button>
+
                               <button
                                 onClick={() => setDeletingPatient(patient)}
-                                className="w-10 h-10 flex items-center justify-center rounded-full bg-rose-50 text-rose-600 border border-rose-100 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
-                                title="Delete Patient"
+                                className="w-8 h-8 flex items-center justify-center rounded-full text-rose-600 hover:bg-slate-100"
                               >
-                                <Trash2 className="w-5 h-5" />
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
                           </td>
                         </tr>
                       );
                     })}
+
                   </tbody>
                 </table>
               </div>

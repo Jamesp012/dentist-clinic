@@ -762,24 +762,24 @@ export function DentalChartWebsite() {
 
   // Legend items to display on the left of the chart
   const LEGEND_ITEMS: { key: string; label: string }[] = [
-    { key: 'caries', label: 'Caries' },
+    { key: 'caries', label: 'Dental Caries' },
     { key: 'cavity', label: 'Cavity' },
-    { key: 'decay', label: 'Decay' },
-    { key: 'abscess', label: 'Abscess' },
-    { key: 'non_vital', label: 'Non-vital' },
-    { key: 'broken', label: 'Broken' },
-    { key: 'loose', label: 'Loose' },
-    { key: 'cracked', label: 'Cracked' },
-    { key: 'chipped', label: 'Chipped' },
+    { key: 'decay', label: 'Tooth Decay' },
+    { key: 'abscess', label: 'Tooth Abscess' },
+    { key: 'non_vital', label: 'Non-vital tooth' },
+    { key: 'broken', label: 'Broken tooth' },
+    { key: 'loose', label: 'Loose tooth' },
+    { key: 'cracked', label: 'Cracked tooth' },
+    { key: 'chipped', label: 'Chipped tooth' },
     { key: 'retained_root', label: 'Retained root' },
-    { key: 'impacted', label: 'Impacted' },
+    { key: 'impacted', label: 'Impacted tooth' },
     { key: 'erosion', label: 'Erosion' },
-    { key: 'discolored', label: 'Discolored' },
-    { key: 'stained', label: 'Stained' },
+    { key: 'discolored', label: 'Discolored tooth' },
+    { key: 'stained', label: 'Stained tooth' },
     { key: 'needs_filling', label: 'Needs filling' },
     { key: 'needs_root_canal', label: 'Needs root canal' },
     { key: 'needs_extraction', label: 'Needs extraction' },
-    { key: 'missing', label: 'Missing' },
+    { key: 'missing', label: 'Missing tooth' },
   ];
 
   return (
@@ -869,192 +869,163 @@ export function DentalChartWebsite() {
         </div>
       </div>
 
-      <div className="flex-1 flex items-start gap-3 p-2 bg-white h-full">
-        {/* Legend column */}
-        <div ref={legendRef} className="w-64 pr-4 flex flex-col gap-4" style={{ height: legendHeight ? `${legendHeight}px` : 'auto' }}>
-          <div className="text-base font-semibold mb-2 text-slate-700">Legend</div>
-          <div className="flex-1 overflow-auto pr-2">
-            <div className="grid grid-cols-2 gap-3">
-              {LEGEND_ITEMS.map((it) => (
-                <div key={it.key} className="flex items-center gap-3">
-                  <div className="relative w-10 h-10 flex-shrink-0">
-                    <img src="/all-teeth/1.png" alt="tooth" className="w-full h-full object-contain select-none pointer-events-none" draggable={false} />
-                    {renderConditionOverlays('1', it.key)}
-                  </div>
-                  <div className="text-sm text-slate-700">{it.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Chart area */}
-        <div className="flex-1 flex flex-col items-center justify-center p-2 gap-3">
+      <div className="flex flex-col md:flex-row h-full gap-3 p-2 bg-white">
+  {/* Legend Column */}
+  <div
+    ref={legendRef}
+    className="w-full md:w-64 bg-gray-100 rounded-xl p-4 flex flex-col gap-3 shadow-sm flex-shrink-0"
+    style={{ maxHeight: '80vh' }}
+  >
+    <div className="text-base font-semibold text-slate-700 border-b border-slate-300 pb-2">
+      Legend
+    </div>
+    <div className="flex-1 overflow-auto pr-2">
+      <div className="grid grid-cols-1 gap-2">
+        {LEGEND_ITEMS.map((it) => (
           <div
-            ref={containerRef}
-            className="relative inline-block overflow-hidden"
-            onMouseLeave={() => setHovered(false)}
-            onMouseEnter={() => setHovered(true)}
-            onClick={handleContainerClick}
+            key={it.key}
+            className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-200 transition"
           >
-            {/* Background image defines the exact field size */}
-            <img
-              src="/backgroundngipin.png"
-              alt="Dental chart background"
-              className="block w-[550px] max-w-full h-auto select-none pointer-events-none"
-              draggable={false}
-            />
-            {layout.map((tooth) => {
-            const numericId = getToothNumericId(tooth.id);
-            const toothData = numericId ? teeth[numericId] : undefined;
-            const conditions: string[] = toothData?.conditions && toothData.conditions.length > 0
+            <div className="relative w-10 h-10 flex-shrink-0">
+              <img
+                src="/all-teeth/1.png"
+                alt="tooth"
+                className="w-full h-full object-contain select-none pointer-events-none"
+                draggable={false}
+              />
+              {renderConditionOverlays('1', it.key)}
+            </div>
+            <div className="text-sm text-slate-700 break-words">{it.label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  {/* Chart Area */}
+  <div className="flex-1 flex flex-col items-center justify-start p-2 gap-3 overflow-auto">
+    <div
+      ref={containerRef}
+      className="relative w-full max-w-full overflow-auto scrollbar-thin scrollbar-thumb-teal-500 scrollbar-track-slate-100 hover:scrollbar-thumb-teal-600"
+      style={{ minHeight: '400px' }} // ensure some minimum height
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={handleContainerClick}
+    >
+      <div className="relative w-full">
+        <img
+          src="/backgroundngipin.png"
+          alt="Dental chart background"
+          className="block w-full h-auto select-none pointer-events-none"
+          draggable={false}
+        />
+
+        {layout.map((tooth) => {
+          const numericId = getToothNumericId(tooth.id);
+          const toothData = numericId ? teeth[numericId] : undefined;
+          const conditions =
+            toothData?.conditions?.length > 0
               ? toothData.conditions
               : toothData?.generalCondition
-                ? [toothData.generalCondition]
-                : [];
-            const primaryCondition = conditions[0] ?? 'healthy';
-            const isMissing = conditions.includes('missing');
-            const color = primaryCondition !== 'healthy' ? CONDITION_COLORS[primaryCondition as any] : undefined;
+              ? [toothData.generalCondition]
+              : [];
+          const primaryCondition = conditions[0] ?? 'healthy';
 
-            const zIndex = 10 + (Math.round(tooth.topPct) % 30) + (conditions.includes('loose') ? 50 : 0); // raise loose teeth above others
+          const zIndex =
+            10 + (Math.round(tooth.topPct) % 30) + (conditions.includes('loose') ? 50 : 0);
+
+          return (
+            <div
+              key={tooth.id}
+              className={`absolute ${selectedPatientObj ? 'cursor-pointer' : 'cursor-default'} group`}
+              style={{
+                left: `${tooth.leftPct}%`,
+                top: `${tooth.topPct}%`,
+                width: `${tooth.widthPct}%`,
+                transform: `translate(-50%, ${conditions.includes('loose') ? '-60%' : '-50%'})`,
+                zIndex,
+              }}
+            >
+              {conditions.includes('loose') && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: '50%',
+                    top: '78%',
+                    transform: 'translate(-50%, -50%)',
+                    width: '60%',
+                    height: '18%',
+                    background: 'rgba(0,0,0,0.36)',
+                    borderRadius: '50%',
+                    filter: 'blur(8px)',
+                    zIndex: 1,
+                    pointerEvents: 'none',
+                  }}
+                />
+              )}
+
+              <img
+                src={`/all-teeth/${tooth.id}.png`}
+                alt={`Tooth ${tooth.id}`}
+                className={`w-full select-none pointer-events-none ${
+                  conditions.includes('loose') ? 'floatLooseAnim' : ''
+                }`}
+                style={conditions.includes('loose') ? { zIndex: 2 } : undefined}
+                draggable={false}
+              />
+
+              {renderConditionOverlays(tooth.id, conditions.length ? conditions : primaryCondition)}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  </div>
+
+  {/* History Panel */}
+  <div
+    ref={historyRef}
+    className="w-full md:w-80 bg-white p-2 flex-shrink-0 flex flex-col gap-3 overflow-auto"
+    style={{ maxHeight: '80vh' }}
+  >
+    <h3 className="text-sm font-semibold mb-3 text-slate-700">Chart History</h3>
+    {selectedPatientObj ? (
+      <div className="space-y-2">
+        {chartHistory.filter((c) => c.patientId === selectedPatientObj.id).length === 0 && (
+          <div className="text-sm text-slate-500">No history for this patient</div>
+        )}
+        {chartHistory
+          .filter((c) => c.patientId === selectedPatientObj.id)
+          .map((c) => {
+            const date = new Date(c.createdAt);
             return (
               <div
-                key={tooth.id}
-                className={`absolute ${selectedPatientObj ? 'cursor-pointer' : 'cursor-default'} group`}
-                style={{
-                  left: `${tooth.leftPct}%`,
-                  top: `${tooth.topPct}%`,
-                  width: `${tooth.widthPct}%`,
-                  transform: `translate(-50%, ${conditions.includes('loose') ? '-60%' : '-50%'})`,
-                  zIndex,
-                }}
-                // Clicks are handled at container level to avoid overlap/hitbox issues
+                key={c.id}
+                className="mb-2 p-3 bg-white border border-slate-100 rounded-md hover:shadow-sm cursor-pointer"
               >
-                {conditions.includes('loose') && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      left: '50%',
-                      top: '78%',
-                      transform: 'translate(-50%, -50%)',
-                      width: '60%',
-                      height: '18%',
-                      background: 'rgba(0,0,0,0.36)',
-                      borderRadius: '50%',
-                      filter: 'blur(8px)',
-                      zIndex: 1,
-                      pointerEvents: 'none',
-                    }}
-                  />
-                )}
-
-                <img
-                  src={`/all-teeth/${tooth.id}.png`}
-                  alt={`Tooth ${tooth.id}`}
-                  className={`w-full select-none pointer-events-none ${conditions.includes('loose') ? 'floatLooseAnim' : ''}`}
-                  style={conditions.includes('loose') ? { zIndex: 2, transition: 'transform 180ms ease' } : undefined}
-                  draggable={false}
-                />
-
-                {/* Per-condition SVG overlays (exact size/mask, preserves layout and click behaviour) */}
-                {renderConditionOverlays(tooth.id, conditions.length ? conditions : primaryCondition)}
-                  {/* Always-visible corner badges for important markers */}
-                  {conditions.includes('abscess') && (
-                    <div style={{ position: 'absolute', right: '-6%', top: '-6%', width: '18%', height: '18%', pointerEvents: 'none', zIndex: 90 }}>
-                      <svg viewBox="0 0 24 24" className="w-full h-full">
-                        <circle cx="12" cy="12" r="10" fill="#8DB600" />
-                        <circle cx="12" cy="12" r="6" fill="#5b8a00" />
-                        <circle cx="12" cy="12" r="11" fill="none" stroke="#d1f39a" strokeWidth="0.8" opacity="0.45" />
-                      </svg>
-                    </div>
-                  )}
-                  {conditions.includes('broken') && (
-                    <div style={{ position: 'absolute', left: '-6%', top: '-6%', width: '18%', height: '18%', pointerEvents: 'none', zIndex: 90 }}>
-                      <svg viewBox="0 0 24 24" className="w-full h-full">
-                        <circle cx="12" cy="12" r="10" fill="#fff5f5" />
-                        <circle cx="16" cy="12" r="5" fill="#ef4444" />
-                        <path d="M10 8 L14 16" stroke="#7f1d1d" strokeWidth="1.2" strokeLinecap="round" />
-                      </svg>
-                    </div>
-                  )}
-                {/* Icons are fixed size and position (non-draggable, non-resizable) */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-medium text-slate-800">{c.patientName}</div>
+                    <div className="text-xs text-slate-400">{date.toLocaleString()}</div>
+                  </div>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => loadChartSnapshot(c)}
+                      className="text-xs px-2 py-1 bg-slate-100 text-slate-700 rounded"
+                    >
+                      Load
+                    </button>
+                  </div>
+                </div>
               </div>
             );
           })}
-            {/* Unmasked badges rendered after tooth images so they are always visible */}
-            {layout.map((tooth) => {
-              const numericId = getToothNumericId(tooth.id);
-              const toothData = numericId ? teeth[numericId] : undefined;
-              const condition = toothData?.generalCondition ?? 'healthy';
-              if (condition !== 'abscess' && condition !== 'broken') return null;
-
-              const left = `${tooth.leftPct}%`;
-              const top = `${tooth.topPct}%`;
-              const size = Math.max(22, tooth.widthPct * 0.9);
-
-              return (
-                <div
-                  key={`badge-${tooth.id}`}
-                  style={{ position: 'absolute', left, top, transform: 'translate(-50%, -50%)', width: `${size}px`, height: `${size}px`, pointerEvents: 'none', zIndex: 999 }}
-                >
-                  {condition === 'abscess' && (
-                    <svg viewBox="0 0 24 24" className="w-full h-full">
-                      <circle cx="12" cy="12" r="10" fill="#8DB600" />
-                      <circle cx="12" cy="12" r="6" fill="#5b8a00" />
-                      <circle cx="12" cy="12" r="11" fill="none" stroke="#d1f39a" strokeWidth="0.6" opacity="0.45" />
-                    </svg>
-                  )}
-                  {condition === 'broken' && (
-                    <svg viewBox="0 0 24 24" className="w-full h-full">
-                      <circle cx="12" cy="12" r="10" fill="#fff5f5" />
-                      <circle cx="16" cy="12" r="6" fill="#ef4444" />
-                      <path d="M10 8 L14 16" stroke="#7f1d1d" strokeWidth="1.4" strokeLinecap="round" />
-                    </svg>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* History side panel */}
-        <div ref={historyRef} className="w-80 pl-4 bg-white h-full">
-          <h3 className="text-sm font-semibold mb-3 text-slate-700">Chart History</h3>
-          {selectedPatientObj ? (
-            <div className="space-y-2">
-              {chartHistory.filter((c) => c.patientId === selectedPatientObj.id).length === 0 && (
-                <div className="text-sm text-slate-500">No history for this patient</div>
-              )}
-
-              {chartHistory
-                .filter((c) => c.patientId === selectedPatientObj.id)
-                .map((c) => {
-                  const date = new Date(c.createdAt);
-                  return (
-                    <div key={c.id} className="mb-2 p-3 bg-white border border-slate-100 rounded-md hover:shadow-sm cursor-pointer">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-sm font-medium text-slate-800">{c.patientName}</div>
-                          <div className="text-xs text-slate-400">{date.toLocaleString()}</div>
-                        </div>
-                        <div className="flex gap-1">
-                          <button
-                            onClick={() => loadChartSnapshot(c)}
-                            className="text-xs px-2 py-1 bg-slate-100 text-slate-700 rounded"
-                          >
-                            Load
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-          ) : (
-            <div className="text-sm text-slate-500">Select a patient to view history</div>
-          )}
-        </div>
       </div>
+    ) : (
+      <div className="text-sm text-slate-500">Select a patient to view history</div>
+    )}
+  </div>
+</div>
 
       <ToothDetailsSidebar
         isOpen={isSidebarOpen}
