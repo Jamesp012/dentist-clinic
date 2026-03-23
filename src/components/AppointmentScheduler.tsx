@@ -546,9 +546,9 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
               {viewMode === 'thisWeek' ? 'This Week' : 'All Appointments'} • {sortedAppointments.length} {sortedAppointments.length === 1 ? 'appointment' : 'appointments'}
             </h2>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50/80 border-b border-slate-200/60">
+          <div className="overflow-x-auto max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-teal-400 scrollbar-track-slate-200">
+            <table className="w-full min-w-[700px]">
+              <thead className="bg-slate-50/80 border-b border-slate-200/60 sticky top-0">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-semibold tracking-widest uppercase text-slate-600">Date & Time</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold tracking-widest uppercase text-slate-600">Patient</th>
@@ -659,50 +659,52 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
               {/* Schedule Period Selection (AM/PM Queue) */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Select Queue *</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {/* AM Schedule */}
-                  <label className="cursor-pointer">
-                    <input
-                      type="radio"
-                      name="schedulePeriod"
-                      value="am"
-                      required
-                      className="peer sr-only"
-                    />
-                    <div className="p-3.5 rounded-xl border-2 transition-all text-left border-slate-200 bg-white/70 hover:border-emerald-400 peer-checked:border-emerald-500 peer-checked:bg-emerald-50">
-                      <p className="font-semibold text-slate-900 text-sm">Morning</p>
-                      <p className="text-xs text-slate-600 mb-1">8:00 AM - 12:00 PM</p>
-                      <p className="text-base font-bold text-emerald-600">{(() => {
-                        const rawDate = (document.querySelector('input[name="date"]') as HTMLInputElement)?.value || convertToDisplayDate(selectedDate);
-                        const date = convertToDBDate(rawDate);
-                        return getBookingCountForPeriod(date, 'am');
-                      })()}
-                      <span className="text-xs font-normal text-slate-600"> patients</span></p>
-                      <p className="text-xs text-slate-600">in line</p>
-                    </div>
-                  </label>
+                <div className='max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-400 scrollbar-track-slate-200 p-1 rounded-lg'> 
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* AM Schedule */}
+                    <label className="cursor-pointer">
+                      <input
+                        type="radio"
+                        name="schedulePeriod"
+                        value="am"
+                        required
+                        className="peer sr-only"
+                      />
+                      <div className="p-3.5 rounded-xl border-2 transition-all text-left border-slate-200 bg-white/70 hover:border-emerald-400 peer-checked:border-emerald-500 peer-checked:bg-emerald-50">
+                        <p className="font-semibold text-slate-900 text-sm">Morning</p>
+                        <p className="text-xs text-slate-600 mb-1">8:00 AM - 12:00 PM</p>
+                        <p className="text-base font-bold text-emerald-600">{(() => {
+                          const rawDate = (document.querySelector('input[name="date"]') as HTMLInputElement)?.value || convertToDisplayDate(selectedDate);
+                          const date = convertToDBDate(rawDate);
+                          return getBookingCountForPeriod(date, 'am');
+                        })()}
+                        <span className="text-xs font-normal text-slate-600"> patients</span></p>
+                        <p className="text-xs text-slate-600">in line</p>
+                      </div>
+                    </label>
 
-                  {/* PM Schedule */}
-                  <label className="cursor-pointer">
-                    <input
-                      type="radio"
-                      name="schedulePeriod"
-                      value="pm"
-                      required
-                      className="peer sr-only"
-                    />
-                    <div className="p-3.5 rounded-xl border-2 transition-all text-left border-slate-200 bg-white/70 hover:border-orange-400 peer-checked:border-orange-500 peer-checked:bg-orange-50">
-                      <p className="font-semibold text-slate-900 text-sm">Afternoon</p>
-                      <p className="text-xs text-slate-600 mb-1">12:30 PM - 8:00 PM</p>
-                      <p className="text-base font-bold text-orange-600">{(() => {
-                        const rawDate = (document.querySelector('input[name="date"]') as HTMLInputElement)?.value || convertToDisplayDate(selectedDate);
-                        const date = convertToDBDate(rawDate);
-                        return getBookingCountForPeriod(date, 'pm');
-                      })()}
-                      <span className="text-xs font-normal text-slate-600"> patients</span></p>
-                      <p className="text-xs text-slate-600">in line</p>
-                    </div>
-                  </label>
+                    {/* PM Schedule */}
+                    <label className="cursor-pointer">
+                      <input
+                        type="radio"
+                        name="schedulePeriod"
+                        value="pm"
+                        required
+                        className="peer sr-only"
+                      />
+                      <div className="p-3.5 rounded-xl border-2 transition-all text-left border-slate-200 bg-white/70 hover:border-orange-400 peer-checked:border-orange-500 peer-checked:bg-orange-50">
+                        <p className="font-semibold text-slate-900 text-sm">Afternoon</p>
+                        <p className="text-xs text-slate-600 mb-1">12:30 PM - 8:00 PM</p>
+                        <p className="text-base font-bold text-orange-600">{(() => {
+                          const rawDate = (document.querySelector('input[name="date"]') as HTMLInputElement)?.value || convertToDisplayDate(selectedDate);
+                          const date = convertToDBDate(rawDate);
+                          return getBookingCountForPeriod(date, 'pm');
+                        })()}
+                        <span className="text-xs font-normal text-slate-600"> patients</span></p>
+                        <p className="text-xs text-slate-600">in line</p>
+                      </div>
+                    </label>
+                  </div>
                 </div>
               </div>
 
