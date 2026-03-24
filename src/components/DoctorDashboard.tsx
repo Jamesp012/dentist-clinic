@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Menu, Users, Calendar, ClipboardList, FileText, LayoutDashboard, Stethoscope, LogOut, Sparkles, UserCog, Settings, X, Check, Eye, EyeOff, Megaphone, Camera, Package, Upload, Trash2, RotateCcw, AlertCircle } from 'lucide-react';
 import { PesoSign } from './icons/PesoSign';
 import { Dashboard } from './Dashboard';
@@ -109,8 +109,20 @@ export function DoctorDashboard({
   onDataChanged
 }: DoctorDashboardProps) {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 1024);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [showSettings, setShowSettings] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (mobile) setSidebarOpen(false);
+      else setSidebarOpen(true);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [newFullName, setNewFullName] = useState(currentUser.fullName);
   const [newUsername, setNewUsername] = useState(currentUser.username);
   const [newPassword, setNewPassword] = useState('');
@@ -443,12 +455,18 @@ export function DoctorDashboard({
   ];
 
   return (
-    <div className="flex h-screen bg-slate-50">{/* Sidebar - Modern Dark Purple Design */}
+    <div className="flex h-[100dvh] bg-slate-50 overflow-hidden relative">{/* Sidebar - Modern Dark Purple Design */}
       <motion.div 
-        initial={{ x: -100, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
+        initial={false}
+        animate={{ 
+          x: sidebarOpen ? 0 : (isMobile ? -300 : 0),
+          width: sidebarOpen ? (isMobile ? 280 : 288) : (isMobile ? 0 : 80),
+          opacity: sidebarOpen || !isMobile ? 1 : 0
+        }}
         id="app-sidebar"
-        className={`${sidebarOpen ? 'w-72' : 'w-20'} bg-[#e2fcfb] text-gray-800 transition-all duration-300 flex flex-col shadow-2xl relative overflow-hidden scrollbar-light`}
+        className={`bg-[#e2fcfb] text-gray-800 transition-all duration-300 flex flex-col shadow-2xl relative z-[60] overflow-hidden scrollbar-light ${
+          isMobile ? 'fixed inset-y-0 left-0 h-full' : ''
+        }`}
       >
         {/* Decorative gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-transparent to-cyan-500/5 pointer-events-none"></div>
@@ -492,7 +510,10 @@ export function DoctorDashboard({
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  if (isMobile) setSidebarOpen(false);
+                }}
                 className={`flex items-center gap-3 transition-all duration-300 group relative overflow-visible ${
                   sidebarOpen 
                     ? 'w-full px-4 py-3 rounded-full' 
@@ -561,94 +582,118 @@ export function DoctorDashboard({
         </div>
       </motion.div>
 
+      {isMobile && sidebarOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-50 lg:hidden"
+        />
+      )}
+
       {/* Main Content */}
-      <div className={`flex-1 overflow-auto flex flex-col ${activeTab === 'charting' ? 'bg-white' : 'bg-gradient-to-br from-slate-50 via-slate-25 to-[#C4FFF9]/20'} scrollbar-thin scrollbar-thumb-teal-500 scrollbar-track-slate-100 hover:scrollbar-thumb-teal-600`}>
+      <div className={`flex-1 overflow-hidden flex flex-col ${activeTab === 'charting' ? 'bg-white' : 'bg-gradient-to-br from-slate-50 via-slate-25 to-[#C4FFF9]/20'} scrollbar-thin scrollbar-thumb-teal-500 scrollbar-track-slate-100 hover:scrollbar-thumb-teal-600`}>
         {/* Header with Notifications - Premium Design */}
         <motion.div 
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className={`bg-white/80 backdrop-blur-md border-b border-white/40 px-8 py-6 ${sidebarOpen ? 'min-h-[104px]' : 'min-h-[100px]'} flex justify-between items-center shadow-sm relative`}
+          initial={false}
+          animate={{ 
+            paddingLeft: isMobile ? 16 : 32,
+            paddingRight: isMobile ? 16 : 32,
+            height: isMobile ? 64 : (sidebarOpen ? 104 : 100)
+          }}
+          className="bg-white/80 backdrop-blur-md border-b border-white/40 flex justify-between items-center shadow-sm relative z-40 overflow-hidden"
         >
+          {/* Menu Toggle for Mobile */}
+          {isMobile && (
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2.5 mr-2 hover:bg-teal-100 rounded-lg transition-all text-gray-700 bg-teal-50 shadow-sm"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          )}
+
           {/* Divider between sidebar and header for visual separation */}
-          <div aria-hidden className="absolute top-0 bottom-0 pointer-events-none transition-all duration-300" style={{ left: sidebarOpen ? '18rem' : '5rem', width: '1px', backgroundColor: 'rgba(2,6,23,0.06)', boxShadow: sidebarOpen ? '1px 0 8px rgba(2,6,23,0.06)' : '1px 0 6px rgba(2,6,23,0.04)' }} />
+          {!isMobile && <div aria-hidden className="absolute top-0 bottom-0 pointer-events-none transition-all duration-300" style={{ left: sidebarOpen ? '18rem' : '5rem', width: '1px', backgroundColor: 'rgba(2,6,23,0.06)', boxShadow: sidebarOpen ? '1px 0 8px rgba(2,6,23,0.06)' : '1px 0 6px rgba(2,6,23,0.04)' }} />}
           <div className="absolute inset-0 bg-gradient-to-r from-[#9CEAEF]/30 via-transparent to-[#68D8D6]/20 pointer-events-none"></div>
-          <div className="relative z-10 flex-1">
+          <div className="relative z-10 flex-1 min-w-0">
             {activeTab === 'dashboard' && (
               <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Dashboard</h2>
-                <p className="text-sm text-slate-500">Overview of clinic operations</p>
+                <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-slate-900 font-poppins truncate`}>Dashboard</h2>
+                {!isMobile && <p className="text-sm text-slate-500">Overview of clinic operations</p>}
               </div>
             )}
             {activeTab === 'patients' && (
               <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Patient Management</h2>
-                <p className="text-sm text-slate-500">Manage patient records and medical information</p>
+                <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-slate-900 font-poppins truncate`}>Patients</h2>
+                {!isMobile && <p className="text-sm text-slate-500">Manage patient records and medical information</p>}
               </div>
             )}
             {activeTab === 'employees' && (
               <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Employee Management</h2>
-                <p className="text-sm text-slate-500">Manage clinic staff and their access credentials</p>
+                <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-slate-900 font-poppins truncate`}>Employees</h2>
+                {!isMobile && <p className="text-sm text-slate-500">Manage clinic staff and their access credentials</p>}
               </div>
             )}
             {activeTab === 'appointments' && (
               <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Appointments</h2>
-                <p className="text-sm text-slate-500">Schedule and manage patient appointments</p>
+                <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-slate-900 font-poppins truncate`}>Appointments</h2>
+                {!isMobile && <p className="text-sm text-slate-500">Schedule and manage patient appointments</p>}
               </div>
             )}
             {activeTab === 'charting' && (
               <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Dental Charting</h2>
-                <p className="text-sm text-slate-500">Track dental conditions and treatments</p>
+                <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-slate-900 font-poppins truncate`}>Dental Charting</h2>
+                {!isMobile && <p className="text-sm text-slate-500">Track dental conditions and treatments</p>}
               </div>
             )}
             {activeTab === 'photos' && (
               <div>
-                <h3 className="text-xl font-bold text-slate-900 font-poppins">Upload Patient Photo</h3>
-                <p className="text-sm text-slate-500">Add treatment photos to patient records</p>
+                <h3 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-slate-900 font-poppins truncate`}>Patient Photos</h3>
+                {!isMobile && <p className="text-sm text-slate-500">Add treatment photos to patient records</p>}
               </div>
             )}
             {activeTab === 'braces' && (
               <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Braces Charting</h2>
-                <p className="text-sm text-slate-500">Track and manage patient braces records</p>
+                <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-slate-900 font-poppins truncate`}>Braces Charting</h2>
+                {!isMobile && <p className="text-sm text-slate-500">Track and manage patient braces records</p>}
               </div>
             )}
             {activeTab === 'referrals' && (
               <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Referrals</h2>
-                <p className="text-sm text-slate-500">Generate and manage patient referrals</p>
+                <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-slate-900 font-poppins truncate`}>Referrals</h2>
+                {!isMobile && <p className="text-sm text-slate-500">Generate and manage patient referrals</p>}
               </div>
             )}
             {activeTab === 'services' && (
               <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Services Forms</h2>
-                <p className="text-sm text-slate-500">Manage clinic services and treatments</p>
+                <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-slate-900 font-poppins truncate`}>Services Forms</h2>
+                {!isMobile && <p className="text-sm text-slate-500">Manage clinic services and treatments</p>}
               </div>
             )}
             {activeTab === 'services-offered' && (
               <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Services Offered</h2>
-                <p className="text-sm text-slate-500">Browse available services and pricing</p>
+                <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-slate-900 font-poppins truncate`}>Services Offered</h2>
+                {!isMobile && <p className="text-sm text-slate-500">Browse available services and pricing</p>}
               </div>
             )}
             {activeTab === 'inventory' && (
               <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Inventory Management</h2>
-                <p className="text-sm text-slate-500">Track supplies and manage inventory</p>
+                <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-slate-900 font-poppins truncate`}>Inventory</h2>
+                {!isMobile && <p className="text-sm text-slate-500">Track supplies and manage inventory</p>}
               </div>
             )}
             {activeTab === 'financial' && (
               <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Financial Report</h2>
-                <p className="text-sm text-slate-500">View financial data and reports</p>
+                <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-slate-900 font-poppins truncate`}>Financial Report</h2>
+                {!isMobile && <p className="text-sm text-slate-500">View financial data and reports</p>}
               </div>
             )}
             {activeTab === 'announcements' && (
               <div>
-                <h2 className="text-xl font-bold text-slate-900 font-poppins">Announcements</h2>
-                <p className="text-sm text-slate-500">Manage clinic announcements and updates</p>
+                <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-slate-900 font-poppins truncate`}>Announcements</h2>
+                {!isMobile && <p className="text-sm text-slate-500">Manage clinic announcements and updates</p>}
               </div>
             )}
           </div>
@@ -708,15 +753,15 @@ export function DoctorDashboard({
                 />
               )}
               {activeTab === 'photos' && (
-                <div className="p-6 space-y-6 max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-teal-500 scrollbar-track-slate-100 hover:scrollbar-thumb-teal-600">
+                <div className={`${isMobile ? 'p-4' : 'p-6'} space-y-6 max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-teal-500 scrollbar-track-slate-100 hover:scrollbar-thumb-teal-600`}>
                   {/* Upload Form */}
-                  <div className="bg-white rounded-xl shadow-lg p-8 space-y-6">
+                  <div className={`bg-white rounded-xl shadow-lg ${isMobile ? 'p-5' : 'p-8'} space-y-6`}>
                     {/* Header */}
                     <div className="flex items-center gap-3 mb-6">
                       {/* Header text moved to top bar */}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-6`}>
                       {/* Patient Selection - Searchable */}
                       <div className="space-y-2 relative">
                         <label className="block text-sm font-semibold text-slate-700">
@@ -848,14 +893,14 @@ export function DoctorDashboard({
                   {/* Recent Photos or All Patients Photos */}
                   {photos.length > 0 && (
                     <div className="bg-white rounded-xl shadow-lg p-6">
-                      <div className="flex justify-between items-center mb-4 gap-4">
+                      <div className={`flex ${isMobile ? 'flex-col sm:flex-row' : 'justify-between'} items-center mb-4 gap-4`}>
                         <h3 className="text-lg font-semibold text-slate-800">
                           {viewAllPhotos ? 'All Patients Photos' : 'Recent Patient Photos'}
                         </h3>
-                        <div className="flex items-center gap-3 flex-1 max-w-sm">
+                        <div className={`flex items-center gap-3 flex-1 ${isMobile ? 'w-full' : 'max-w-sm'}`}>
                           <input
                             type="text"
-                            placeholder="Search photos by patient name..."
+                            placeholder="Search photos..."
                             value={photoSearchQuery}
                             onChange={(e) => setPhotoSearchQuery(e.target.value)}
                             className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm"
@@ -864,7 +909,7 @@ export function DoctorDashboard({
                             onClick={() => setViewAllPhotos(!viewAllPhotos)}
                             className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors text-sm font-medium whitespace-nowrap"
                           >
-                            {viewAllPhotos ? 'View Recent' : 'View All Patients'}
+                            {viewAllPhotos ? 'View Recent' : 'View All'}
                           </button>
                         </div>
                       </div>
@@ -893,20 +938,20 @@ export function DoctorDashboard({
                         ).map(photo => {
                           const patient = patients.find(p => String(p.id) === String(photo.patientId));
                           return (
-                            <div key={photo.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200 flex justify-between items-start gap-3">
+                            <div key={photo.id} className={`p-4 bg-gray-50 rounded-lg border border-gray-200 flex ${isMobile ? 'flex-col' : 'justify-between'} items-start gap-3`}>
                               <div className="flex-1">
                                 <p className="font-medium">{patient?.name || 'Unknown Patient'}</p>
                                 <p className="text-sm text-gray-600 capitalize">{photo.type} - {formatToDD_MM_YYYY(photo.date)}</p>
                                 {photo.notes && <p className="text-sm text-gray-700 mt-1">{photo.notes}</p>}
                               </div>
-                              <div className="flex items-center gap-2">
+                              <div className={`flex items-center gap-2 ${isMobile ? 'w-full justify-end' : ''}`}>
                                 <button
                                   onClick={() => setSelectedPhotoForView(photo)}
-                                  className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors flex items-center gap-1 text-sm"
+                                  className={`px-3 py-1.5 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors flex items-center gap-1 text-sm ${isMobile ? 'flex-1 justify-center' : ''}`}
                                   title="View photo"
                                 >
                                   <Eye className="w-4 h-4" />
-                                  View
+                                  {!isMobile && 'View'}
                                 </button>
                                 <button
                                   onClick={() => {
@@ -914,19 +959,19 @@ export function DoctorDashboard({
                                     setReplacePhotoUrl('');
                                     setReplacePhotoFile(null);
                                   }}
-                                  className="px-3 py-1.5 bg-amber-100 text-amber-700 rounded hover:bg-amber-200 transition-colors flex items-center gap-1 text-sm"
+                                  className={`px-3 py-1.5 bg-amber-100 text-amber-700 rounded hover:bg-amber-200 transition-colors flex items-center gap-1 text-sm ${isMobile ? 'flex-1 justify-center' : ''}`}
                                   title="Replace photo"
                                 >
                                   <RotateCcw className="w-4 h-4" />
-                                  Replace
+                                  {!isMobile && 'Replace'}
                                 </button>
                                 <button
                                   onClick={() => setShowDeletePhotoConfirm(photo.id)}
-                                  className="px-3 py-1.5 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors flex items-center gap-1 text-sm"
+                                  className={`px-3 py-1.5 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors flex items-center gap-1 text-sm ${isMobile ? 'flex-1 justify-center' : ''}`}
                                   title="Delete photo"
                                 >
                                   <Trash2 className="w-4 h-4" />
-                                  Delete
+                                  {!isMobile && 'Delete'}
                                 </button>
                               </div>
                             </div>
