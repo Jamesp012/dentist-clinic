@@ -435,14 +435,16 @@ export function BracesCharting({ patients }: BracesChartingProps) {
     return (
       <div className="p-6 bg-white">
         {/* Patient Selection */}
-        <label className="block text-xs mb-1 font-medium text-gray-700">Select Patient</label>
-        <PatientSearch
-          patients={patients}
-          selectedPatient={selectedPatient}
-          onSelectPatient={setSelectedPatient}
-          placeholder="Search for a patient..."
-          inputClassName="pl-9 pr-8 py-1.5 text-sm mt-2 mb-4"
-        />
+        <div className='relative flex-1 min-w-0 group'>
+          {/* <label className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-teal-500 transition-colors">Select Patient</label> */}
+          <PatientSearch
+            patients={patients}
+            selectedPatient={selectedPatient}
+            onSelectPatient={setSelectedPatient}
+            placeholder="Search for a patient..."
+            inputClassName="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 placeholder:text-slate-400 text-slate-900 shadow-sm hover:shadow-md mt-2 mb-4 text-sm"
+          />
+        </div>
 
         {/* When no patient selected, show the braces chart and palette but disable interactions */}
         {!selectedPatient && (

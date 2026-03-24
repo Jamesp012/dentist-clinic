@@ -1347,7 +1347,7 @@ export function ReferralGeneration({ referrals, setReferrals, patients }: Referr
         </div>
 
         {/* Referrals List */}
-        <div className="w-full bg-white px-0 sm:px-4 lg:px-8 pt-2 pb-6 flex flex-col gap-3">
+        <div className="w-full bg-white px-0 sm:px-4 lg:px-8 pt-2 pb-6 flex flex-col gap-3 h-[70vh]">
           <div className="flex justify-end">
             <span className="px-4 py-1.5 bg-teal-50 text-teal-700 rounded-xl text-xs font-bold">
               {sortedReferrals?.length || 0} Records

@@ -438,172 +438,173 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
             </button>
           </div>
         </div>
-
-        {/* Recent Receipts - Premium Card Design */}
-        <div className="relative group">
-          <div className="absolute -inset-1 bg-gradient-to-r from-teal-500 via-cyan-500 to-blue-500 rounded-3xl opacity-20 group-hover:opacity-30 blur transition-all duration-500"></div>
-          <div className="relative bg-white/90 backdrop-blur-xl p-6 rounded-3xl shadow-xl border border-slate-200/60 hover:shadow-2xl transition-all duration-500">
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-lg flex items-center justify-center shadow">
-                  <CreditCard className="w-4 h-4 text-white" />
+        <div className='h-[70vh] overflow-y-auto scrollbar-thin pr-3 flex flex-col gap-3'>
+          {/* Recent Receipts - Premium Card Design */}
+          <div className="relative group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-teal-500 via-cyan-500 to-blue-500 rounded-3xl opacity-20 group-hover:opacity-30 blur transition-all duration-500"></div>
+            <div className="relative bg-white/90 backdrop-blur-xl p-6 rounded-3xl shadow-xl border border-slate-200/60 hover:shadow-2xl transition-all duration-500">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-lg flex items-center justify-center shadow">
+                    <CreditCard className="w-4 h-4 text-white" />
+                  </div>
+                  <h2 className="text-2xl font-semibold text-slate-900">Recent Receipts</h2>
                 </div>
-                <h2 className="text-2xl font-semibold text-slate-900">Recent Receipts</h2>
+                <span className="px-4 py-2 bg-teal-50 text-teal-700 rounded-xl text-sm font-bold">
+                  {treatmentRecords.length} Total
+                </span>
               </div>
-              <span className="px-4 py-2 bg-teal-50 text-teal-700 rounded-xl text-sm font-bold">
-                {treatmentRecords.length} Total
-              </span>
+              
+              <div className="space-y-3 max-h-[380px] overflow-y-auto scrollbar-thin pr-2">
+                {[...treatmentRecords]
+                  .slice()
+                  .sort((a, b) => new Date((b as any).createdAt || b.date || 0).getTime() - new Date((a as any).createdAt || a.date || 0).getTime())
+                  .map((record) => {
+                  const patient = patients.find(p => String(p.id) === String(record.patientId));
+                  return (
+                    <div key={record.id} className="group/item relative p-4 border border-slate-100 rounded-xl hover:border-cyan-300/60 transition-all duration-300 bg-gradient-to-br from-white via-slate-50/30 to-cyan-50/20 hover:shadow-md hover:scale-[1.01]">
+                      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-teal-500/5 rounded-2xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-300"></div>
+                      
+                      <div className="relative flex justify-between items-start gap-6">
+                        <div className="flex-1 space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-md flex items-center justify-center font-bold text-cyan-700 text-xs">
+                              {patient?.name?.charAt(0)}
+                            </div>
+                            <div>
+                              <p className="text-lg font-semibold text-slate-900">{patient?.name}</p>
+                              <p className="text-xs text-slate-500 mt-0.5">{formatToDD_MM_YYYY((record as any).createdAt || record.date)} • Dr. {record.dentist}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2 pl-1">
+                            <span className="w-1.5 h-1.5 bg-cyan-500 rounded-full"></span>
+                            <p className="text-sm text-slate-700 font-medium">{record.treatment} {record.tooth ? `- Tooth ${record.tooth}` : ''}</p>
+                          </div>
+                          
+                          <div className="flex gap-3 flex-wrap items-center">
+                            <span className="text-xl font-extrabold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
+                              ₱{Number(record.cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                            {record.paymentType && (
+                              <>
+                                <span className={`px-4 py-1.5 rounded-xl font-bold text-xs tracking-wider shadow-sm ${record.paymentType === 'full' ? 'bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-700' : 'bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700'}`}>
+                                  {record.paymentType === 'full' ? '✓ FULL PAYMENT' : '⚡ INSTALLMENT'}
+                                </span>
+                                {record.amountPaid !== undefined && record.amountPaid > 0 && (
+                                  <span className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-xs">
+                                    Paid: ₱{Number(record.amountPaid).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  </span>
+                                )}
+                                {record.remainingBalance !== undefined && record.remainingBalance > 0 && (
+                                  <span className="px-3 py-1.5 bg-gradient-to-r from-orange-100 to-red-100 text-orange-700 rounded-xl font-bold text-xs shadow-sm">
+                                    Balance: ₱{Number(record.remainingBalance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  </span>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              setViewingReceipt(record);
+                            }}
+                            className="group/btn px-4 py-2 bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white rounded-lg hover:shadow-md hover:shadow-cyan-500/30 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 font-semibold text-xs duration-300"
+                          >
+                            <CreditCard className="w-4 h-4" />
+                            View
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {treatmentRecords.length === 0 && (
+                  <div className="text-center py-16">
+                    <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <CreditCard className="w-10 h-10 text-slate-400" />
+                    </div>
+                    <p className="text-slate-500 text-lg font-medium">No receipts recorded yet</p>
+                    <p className="text-slate-400 text-sm mt-2">Click "New Receipt" to create your first record</p>
+                  </div>
+                )}
+              </div>
             </div>
-            
-            <div className="space-y-3 max-h-[380px] overflow-y-auto scrollbar-thin pr-2">
-              {[...treatmentRecords]
-                .slice()
-                .sort((a, b) => new Date((b as any).createdAt || b.date || 0).getTime() - new Date((a as any).createdAt || a.date || 0).getTime())
-                .map((record) => {
-                const patient = patients.find(p => String(p.id) === String(record.patientId));
-                return (
-                  <div key={record.id} className="group/item relative p-4 border border-slate-100 rounded-xl hover:border-cyan-300/60 transition-all duration-300 bg-gradient-to-br from-white via-slate-50/30 to-cyan-50/20 hover:shadow-md hover:scale-[1.01]">
-                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-teal-500/5 rounded-2xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-300"></div>
+          </div>
+
+          {/* Recent Prescriptions - Premium Card Design */}
+          <div className="relative group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-3xl opacity-20 group-hover:opacity-30 blur transition-all duration-500"></div>
+            <div className="relative bg-white/90 backdrop-blur-xl p-6 rounded-3xl shadow-xl border border-slate-200/60 hover:shadow-2xl transition-all duration-500">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-4">
+                  <div className="w-9 h-9 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center shadow">
+                    <FileText className="w-4 h-4 text-white" />
+                  </div>
+                  <h2 className="text-2xl font-semibold text-slate-900">Recent Prescriptions</h2>
+                </div>
+                <span className="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-xl text-sm font-bold">
+                  {prescriptions.length} Total
+                </span>
+              </div>
+              
+              <div className="space-y-3 max-h-[380px] overflow-y-auto scrollbar-thin pr-2">
+                {[...prescriptions]
+                  .slice()
+                  .sort((a, b) => new Date((b as any).createdAt || b.date || 0).getTime() - new Date((a as any).createdAt || a.date || 0).getTime())
+                  .map((prescription) => (
+                  <div key={prescription.id} className="group/item relative p-4 border border-slate-100 rounded-xl hover:border-emerald-300/60 transition-all duration-300 bg-gradient-to-br from-white via-slate-50/30 to-emerald-50/20 hover:shadow-md hover:scale-[1.01]">
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-teal-500/5 rounded-2xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-300"></div>
                     
                     <div className="relative flex justify-between items-start gap-6">
                       <div className="flex-1 space-y-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-md flex items-center justify-center font-bold text-cyan-700 text-xs">
-                            {patient?.name?.charAt(0)}
+                          <div className="w-8 h-8 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-md flex items-center justify-center font-bold text-emerald-700 text-xs">
+                            {prescription.patientName?.charAt(0)}
                           </div>
                           <div>
-                            <p className="text-lg font-semibold text-slate-900">{patient?.name}</p>
-                            <p className="text-xs text-slate-500 mt-0.5">{formatToDD_MM_YYYY((record as any).createdAt || record.date)} • Dr. {record.dentist}</p>
+                            <p className="text-lg font-semibold text-slate-900">{prescription.patientName}</p>
+                            <p className="text-xs text-slate-500 mt-0.5">{formatToDD_MM_YYYY((prescription as any).createdAt || prescription.date)} • Dr. {prescription.dentist}</p>
                           </div>
                         </div>
                         
                         <div className="flex items-center gap-2 pl-1">
-                          <span className="w-1.5 h-1.5 bg-cyan-500 rounded-full"></span>
-                          <p className="text-sm text-slate-700 font-medium">{record.treatment} {record.tooth ? `- Tooth ${record.tooth}` : ''}</p>
-                        </div>
-                        
-                        <div className="flex gap-3 flex-wrap items-center">
-                          <span className="text-xl font-extrabold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
-                            ₱{Number(record.cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </span>
-                          {record.paymentType && (
-                            <>
-                              <span className={`px-4 py-1.5 rounded-xl font-bold text-xs tracking-wider shadow-sm ${record.paymentType === 'full' ? 'bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-700' : 'bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700'}`}>
-                                {record.paymentType === 'full' ? '✓ FULL PAYMENT' : '⚡ INSTALLMENT'}
-                              </span>
-                              {record.amountPaid !== undefined && record.amountPaid > 0 && (
-                                <span className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-xs">
-                                  Paid: ₱{Number(record.amountPaid).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                </span>
-                              )}
-                              {record.remainingBalance !== undefined && record.remainingBalance > 0 && (
-                                <span className="px-3 py-1.5 bg-gradient-to-r from-orange-100 to-red-100 text-orange-700 rounded-xl font-bold text-xs shadow-sm">
-                                  Balance: ₱{Number(record.remainingBalance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                </span>
-                              )}
-                            </>
-                          )}
+                          <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+                          <p className="text-sm text-slate-700 font-medium">{prescription.medications.length} medication(s) prescribed</p>
                         </div>
                       </div>
                       
-                      <div className="flex gap-2">
+                      <div className="flex gap-3">
                         <button
-                          onClick={() => {
-                            setViewingReceipt(record);
-                          }}
-                          className="group/btn px-4 py-2 bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white rounded-lg hover:shadow-md hover:shadow-cyan-500/30 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 font-semibold text-xs duration-300"
+                          onClick={() => setViewingPrescription(prescription)}
+                          className="group/btn px-4 py-2 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white rounded-lg hover:shadow-md hover:shadow-emerald-500/30 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 font-semibold text-xs duration-300"
                         >
-                          <CreditCard className="w-4 h-4" />
+                          <FileText className="w-4 h-4" />
                           View
+                        </button>
+                        <button
+                          onClick={() => printPrescription(prescription)}
+                          className="px-3 py-2 bg-gradient-to-br from-slate-600 to-slate-700 text-white rounded-lg hover:shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-2 font-semibold text-xs duration-300"
+                          title="Print Prescription"
+                        >
+                          <Download className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
                   </div>
-                );
-              })}
-              {treatmentRecords.length === 0 && (
-                <div className="text-center py-16">
-                  <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CreditCard className="w-10 h-10 text-slate-400" />
+                ))}
+                {prescriptions.length === 0 && (
+                  <div className="text-center py-16">
+                    <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <FileText className="w-10 h-10 text-slate-400" />
+                    </div>
+                    <p className="text-slate-500 text-lg font-medium">No prescriptions created yet</p>
+                    <p className="text-slate-400 text-sm mt-2">Click "Create Prescription" to start</p>
                   </div>
-                  <p className="text-slate-500 text-lg font-medium">No receipts recorded yet</p>
-                  <p className="text-slate-400 text-sm mt-2">Click "New Receipt" to create your first record</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Prescriptions - Premium Card Design */}
-        <div className="relative group">
-          <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-3xl opacity-20 group-hover:opacity-30 blur transition-all duration-500"></div>
-          <div className="relative bg-white/90 backdrop-blur-xl p-6 rounded-3xl shadow-xl border border-slate-200/60 hover:shadow-2xl transition-all duration-500">
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-4">
-                <div className="w-9 h-9 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center shadow">
-                  <FileText className="w-4 h-4 text-white" />
-                </div>
-                <h2 className="text-2xl font-semibold text-slate-900">Recent Prescriptions</h2>
+                )}
               </div>
-              <span className="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-xl text-sm font-bold">
-                {prescriptions.length} Total
-              </span>
-            </div>
-            
-            <div className="space-y-3 max-h-[380px] overflow-y-auto scrollbar-thin pr-2">
-              {[...prescriptions]
-                .slice()
-                .sort((a, b) => new Date((b as any).createdAt || b.date || 0).getTime() - new Date((a as any).createdAt || a.date || 0).getTime())
-                .map((prescription) => (
-                <div key={prescription.id} className="group/item relative p-4 border border-slate-100 rounded-xl hover:border-emerald-300/60 transition-all duration-300 bg-gradient-to-br from-white via-slate-50/30 to-emerald-50/20 hover:shadow-md hover:scale-[1.01]">
-                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-teal-500/5 rounded-2xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-300"></div>
-                  
-                  <div className="relative flex justify-between items-start gap-6">
-                    <div className="flex-1 space-y-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-md flex items-center justify-center font-bold text-emerald-700 text-xs">
-                          {prescription.patientName?.charAt(0)}
-                        </div>
-                        <div>
-                          <p className="text-lg font-semibold text-slate-900">{prescription.patientName}</p>
-                          <p className="text-xs text-slate-500 mt-0.5">{formatToDD_MM_YYYY((prescription as any).createdAt || prescription.date)} • Dr. {prescription.dentist}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-2 pl-1">
-                        <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
-                        <p className="text-sm text-slate-700 font-medium">{prescription.medications.length} medication(s) prescribed</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => setViewingPrescription(prescription)}
-                        className="group/btn px-4 py-2 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white rounded-lg hover:shadow-md hover:shadow-emerald-500/30 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 font-semibold text-xs duration-300"
-                      >
-                        <FileText className="w-4 h-4" />
-                        View
-                      </button>
-                      <button
-                        onClick={() => printPrescription(prescription)}
-                        className="px-3 py-2 bg-gradient-to-br from-slate-600 to-slate-700 text-white rounded-lg hover:shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-2 font-semibold text-xs duration-300"
-                        title="Print Prescription"
-                      >
-                        <Download className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {prescriptions.length === 0 && (
-                <div className="text-center py-16">
-                  <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <FileText className="w-10 h-10 text-slate-400" />
-                  </div>
-                  <p className="text-slate-500 text-lg font-medium">No prescriptions created yet</p>
-                  <p className="text-slate-400 text-sm mt-2">Click "Create Prescription" to start</p>
-                </div>
-              )}
             </div>
           </div>
         </div>

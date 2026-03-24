@@ -270,7 +270,7 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
             </div>
           </div>
 
-          <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden transition-all duration-500 hover:shadow-2xl hover:shadow-gray-200/50">
+          <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm h-[65vh] transition-all duration-500 hover:shadow-2xl hover:shadow-gray-200/50">
             <div className="p-10 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-8 bg-gradient-to-b from-gray-50/50 to-white">
               <h3 className="text-lg font-bold text-gray-900">Inventory Items</h3>
               <div className="relative max-w-md w-full">
@@ -285,14 +285,14 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
               </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50/50 border-b border-gray-100">
+            <div className="overflow-auto h-[70vh] w-full scrollbar-thin border rounded">
+              <table className="w-full table-fixed border-collapse">
+                <thead className="bg-gray-50/50 border-b border-gray-100 sticky top-0 z-10">
                   <tr>
-                    <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Item Details</th>
-                    <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Current Stock</th>
-                    <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
-                    <th className="px-8 py-5 text-right text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Actions</th>
+                    <th className="w-[30%] px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Item Details</th>
+                    <th className="w-[30%] px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Current Stock</th>
+                    <th className="w-[20%] px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
+                    <th className="w-[20%] px-8 py-5 text-right text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -321,7 +321,7 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                               <Package className="w-6 h-6 text-cyan-600" />
                             </div>
                             <div>
-                              <span className="font-black text-gray-900 text-base block group-hover:text-cyan-600 transition-colors">{item.name}</span>
+                              <span className="font-black text-gray-900 text-base block truncate group-hover:text-cyan-600 transition-colors">{item.name}</span>
                               <span className="px-2 py-0.5 bg-gray-100 text-[10px] font-bold text-gray-500 rounded-md uppercase tracking-wider">{item.category}</span>
                             </div>
                           </div>

@@ -170,51 +170,53 @@ export default function ServicesManagement({ services = [], setServices, onDataC
       </div>
 
       {displayServices && displayServices.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
-          {displayServices.map((service) => (
-            <motion.div key={service.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-to-br from-white via-cyan-50/30 to-teal-50/20 rounded-2xl border border-cyan-200/60 shadow-md hover:shadow-2xl hover:border-teal-300 transition-all duration-300 p-7 group overflow-hidden relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-teal-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="relative">
-                <div className="flex justify-between items-start mb-5">
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-teal-700 transition-colors">{service.serviceName}</h3>
-                    <div className="flex gap-2 mb-1">
-                      <span className="px-4 py-1.5 bg-gradient-to-r from-cyan-100 to-teal-100 text-teal-700 rounded-full text-xs font-semibold border border-teal-200">{service.category}</span>
+        <div className='h-[70vh] overflow-y-auto pr-2'>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+            {displayServices.map((service) => (
+              <motion.div key={service.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-to-br from-white via-cyan-50/30 to-teal-50/20 rounded-2xl border border-cyan-200/60 shadow-md hover:shadow-2xl hover:border-teal-300 transition-all duration-300 p-7 group overflow-hidden relative flex flex-col h-full">
+                <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-teal-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative">
+                  <div className="flex justify-between items-start mb-5">
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-gray-900 mb-2 truncate group-hover:text-teal-700 transition-colors">{service.serviceName}</h3>
+                      <div className="flex gap-2 mb-1">
+                        <span className="px-4 py-1.5 bg-gradient-to-r from-cyan-100 to-teal-100 text-teal-700 rounded-full text-xs font-semibold border border-teal-200">{service.category}</span>
+                      </div>
                     </div>
+                  </div>
+
+                  {service.description && service.description.length > 0 && (
+                    <div className="mb-6 bg-gradient-to-br from-cyan-50/40 to-teal-50/40 rounded-xl p-5 border border-cyan-200/60">
+                      <p className="text-xs font-bold text-teal-700 mb-3 uppercase tracking-widest">Service Includes:</p>
+                      <ul className="space-y-2.5">
+                        {service.description.map((desc, idx) => (
+                          <li key={idx} className="flex items-start gap-3 text-sm text-gray-700">
+                            <span className="text-teal-600 font-bold mt-0.5 flex-shrink-0">✓</span>
+                            <span>{desc}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <div className="border-t border-gray-200 pt-5 mb-5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-gray-500">Price starts at</span>
+                        <span className="text-lg font-black text-teal-600 whitespace-pre-line">{service.price || 'Price may vary'}</span>
+                      </div>
+                      <div className="mt-3">
+                        <p className="text-xs text-emerald-800 font-semibold bg-emerald-100 rounded-lg p-3 border border-emerald-300">💡 Pricing varies depending on the complexity of your case</p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 justify-end pt-4 border-t border-cyan-200/50">
+                    <button onClick={() => handleOpenServiceEditor(service.id)} className="px-4 py-2 bg-gradient-to-r from-cyan-600 to-teal-600 text-white rounded-lg transition-all duration-200 font-semibold text-sm hover:from-cyan-700 hover:to-teal-700 hover:shadow-md flex items-center gap-2"><Edit className="w-4 h-4"/>Edit</button>
+                    <button onClick={() => handleDeleteService(service.id)} className="px-4 py-2 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-lg transition-all duration-200 font-semibold text-sm hover:from-red-600 hover:to-pink-600 hover:shadow-md flex items-center gap-2"><Trash2 className="w-4 h-4"/>Delete</button>
                   </div>
                 </div>
-
-                {service.description && service.description.length > 0 && (
-                  <div className="mb-6 bg-gradient-to-br from-cyan-50/40 to-teal-50/40 rounded-xl p-5 border border-cyan-200/60">
-                    <p className="text-xs font-bold text-teal-700 mb-3 uppercase tracking-widest">Service Includes:</p>
-                    <ul className="space-y-2.5">
-                      {service.description.map((desc, idx) => (
-                        <li key={idx} className="flex items-start gap-3 text-sm text-gray-700">
-                          <span className="text-teal-600 font-bold mt-0.5 flex-shrink-0">✓</span>
-                          <span>{desc}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                <div className="border-t border-gray-200 pt-5 mb-5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-gray-500">Price starts at</span>
-                      <span className="text-lg font-black text-teal-600 whitespace-pre-line">{service.price || 'Price may vary'}</span>
-                    </div>
-                    <div className="mt-3">
-                      <p className="text-xs text-emerald-800 font-semibold bg-emerald-100 rounded-lg p-3 border border-emerald-300">💡 Pricing varies depending on the complexity of your case</p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3 justify-end pt-4 border-t border-cyan-200/50">
-                  <button onClick={() => handleOpenServiceEditor(service.id)} className="px-4 py-2 bg-gradient-to-r from-cyan-600 to-teal-600 text-white rounded-lg transition-all duration-200 font-semibold text-sm hover:from-cyan-700 hover:to-teal-700 hover:shadow-md flex items-center gap-2"><Edit className="w-4 h-4"/>Edit</button>
-                  <button onClick={() => handleDeleteService(service.id)} className="px-4 py-2 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-lg transition-all duration-200 font-semibold text-sm hover:from-red-600 hover:to-pink-600 hover:shadow-md flex items-center gap-2"><Trash2 className="w-4 h-4"/>Delete</button>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            ))}
+          </div>
         </div>
       ) : (
         <div className="text-center py-20 px-8 bg-gradient-to-br from-cyan-50/40 to-teal-50/40 rounded-2xl border-2 border-dashed border-cyan-300/50 shadow-sm">
