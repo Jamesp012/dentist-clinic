@@ -285,133 +285,117 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
         {viewType === 'summary' && (
           <div className="space-y-8">
             {/* Key Metrics - Premium Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {/* Total Revenue Card */}
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {/* Card */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="group relative bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden"
+                className="bg-white rounded-xl border shadow-sm hover:shadow-md transition-all p-4 flex items-center justify-between"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="relative p-6 sm:p-8">
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-emerald-100 to-emerald-50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <PesoSign className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-600" />
-                    </div>
-                    <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 rounded-full">
-                      <TrendingUp className="w-4 h-4 text-emerald-600" />
-                      <span className="text-xs font-semibold text-emerald-600">+12%</span>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                    <PesoSign className="w-5 h-5 text-emerald-600" />
                   </div>
-                  <p className="text-emerald-600 text-sm font-medium mb-2 uppercase tracking-wider">Total Revenue</p>
-                  <p className="text-3xl sm:text-4xl font-bold text-emerald-600 mb-1">₱{totalRevenue.toLocaleString('en-US')}</p>
-                  <p className="text-sm text-gray-500">All time paid amount</p>
+                  <div>
+                    <p className="text-[10px] font-semibold text-gray-500 uppercase">Revenue</p>
+                    <p className="text-lg font-bold text-gray-900">₱{totalRevenue.toLocaleString()}</p>
+                  </div>
                 </div>
-                <div className="h-1 bg-gradient-to-r from-emerald-400 to-teal-400" />
+                <span className="text-xs font-semibold text-emerald-600">+12%</span>
               </motion.div>
 
-              {/* Total Billed Card */}
+              {/* Card */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="group relative bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden"
+                className="bg-white rounded-xl border shadow-sm hover:shadow-md transition-all p-4 flex items-center justify-between"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-teal-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="relative p-6 sm:p-8">
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-teal-100 to-teal-50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <PesoSign className="w-7 h-7 sm:w-8 sm:h-8 text-teal-600" />
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-teal-600">{totalBilled > 0 ? ((totalRevenue / totalBilled) * 100).toFixed(1) : '0'}%</p>
-                      <p className="text-xs text-gray-500">collection rate</p>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
+                    <PesoSign className="w-5 h-5 text-teal-600" />
                   </div>
-                  <p className="text-teal-600 text-sm font-medium mb-2 uppercase tracking-wider">Total Billed</p>
-                  <p className="text-3xl sm:text-4xl font-bold text-teal-600 mb-1">₱{totalBilled.toLocaleString('en-US')}</p>
-                  <p className="text-sm text-gray-500">Total charged amount</p>
+                  <div>
+                    <p className="text-[10px] font-semibold text-gray-500 uppercase">Billed</p>
+                    <p className="text-lg font-bold text-gray-900">₱{totalBilled.toLocaleString()}</p>
+                  </div>
                 </div>
-                <div className="h-1 bg-gradient-to-r from-teal-400 to-emerald-400" />
+                <span className="text-xs text-teal-600 font-semibold">
+                  {totalBilled > 0 ? ((totalRevenue / totalBilled) * 100).toFixed(0) : 0}%
+                </span>
               </motion.div>
 
-              {/* Outstanding Balance Card */}
+              {/* Card */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="group relative bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden"
+                className="bg-white rounded-xl border shadow-sm hover:shadow-md transition-all p-4 flex items-center justify-between"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-cyan-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="relative p-6 sm:p-8">
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-cyan-100 to-cyan-50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <TrendingDown className="w-7 h-7 sm:w-8 sm:h-8 text-cyan-600" />
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-cyan-600">{patientBalances.filter(pb => pb.balance > 0).length}</p>
-                      <p className="text-xs text-gray-500">pending</p>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center">
+                    <TrendingDown className="w-5 h-5 text-cyan-600" />
                   </div>
-                  <p className="text-cyan-600 text-sm font-medium mb-2 uppercase tracking-wider">Outstanding Balance</p>
-                  <p className="text-3xl sm:text-4xl font-bold text-cyan-600 mb-1">₱{totalOutstanding.toLocaleString('en-US')}</p>
-                  <p className="text-sm text-gray-500">Awaiting payment</p>
+                  <div>
+                    <p className="text-[10px] font-semibold text-gray-500 uppercase">Balance</p>
+                    <p className="text-lg font-bold text-gray-900">₱{totalOutstanding.toLocaleString()}</p>
+                  </div>
                 </div>
-                <div className="h-1 bg-gradient-to-r from-cyan-400 to-teal-400" />
+                <span className="text-xs text-cyan-600 font-semibold">
+                  {patientBalances.filter(pb => pb.balance > 0).length}
+                </span>
               </motion.div>
 
-              {/* Monthly Revenue Card */}
+              {/* Card */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="group relative bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden"
+                className="bg-white rounded-xl border shadow-sm hover:shadow-md transition-all p-4 flex items-center justify-between"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="relative p-6 sm:p-8">
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-emerald-100 to-emerald-50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <Calendar className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-600" />
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-emerald-600">{monthlyTransactions}</p>
-                      <p className="text-xs text-gray-500">transactions</p>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                    <Calendar className="w-5 h-5 text-emerald-600" />
                   </div>
-                  <p className="text-emerald-600 text-sm font-medium mb-2 uppercase tracking-wider">Monthly Revenue</p>
-                  <p className="text-3xl sm:text-4xl font-bold text-emerald-600 mb-1">₱{monthlyRevenue.toLocaleString('en-US')}</p>
-                  <p className="text-sm text-gray-500">This month only</p>
+                  <div>
+                    <p className="text-[10px] font-semibold text-gray-500 uppercase">Monthly</p>
+                    <p className="text-lg font-bold text-gray-900">₱{monthlyRevenue.toLocaleString()}</p>
+                  </div>
                 </div>
-                <div className="h-1 bg-gradient-to-r from-emerald-400 to-teal-400" />
+                <span className="text-xs text-emerald-600 font-semibold">
+                  {monthlyTransactions}
+                </span>
               </motion.div>
             </div>
 
             {/* Controls Section */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 bg-white rounded-2xl p-6 sm:p-8 shadow-md border border-gray-100">
-              <div className="w-full sm:w-auto">
-                <label className="block text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">
-                  📅 Select Month for Report
-                </label>
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white border rounded-xl px-4 py-3 shadow-sm">
+  
+            {/* Left: Month Picker */}
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <span className="text-xs font-semibold text-gray-500 whitespace-nowrap">
+                  📅 Month
+                </span>
                 <input
                   type="month"
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:outline-none transition-colors w-full sm:w-auto"
+                  className="px-2 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 w-full sm:w-auto"
                 />
               </div>
-              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+
+              {/* Right: Actions */}
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button
-                  onClick={() => generateFinancialPDF(
-                    { totalRevenue, totalBilled },
-                    monthlyRevenue,
-                    totalOutstanding,
-                    treatmentBreakdown
-                  )}
-                  className="px-6 py-3 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+                  onClick={() =>
+                    generateFinancialPDF(
+                      { totalRevenue, totalBilled },
+                      monthlyRevenue,
+                      totalOutstanding,
+                      treatmentBreakdown
+                    )
+                  }
+                  className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all w-full sm:w-auto"
                 >
-                  <Printer className="w-5 h-5" />
-                  <span className="hidden sm:inline">Print PDF</span>
-                  <span className="sm:hidden">PDF</span>
+                  <Printer className="w-4 h-4" />
+                  <span>PDF</span>
                 </button>
               </div>
             </div>
@@ -431,7 +415,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                   <p className="text-sm text-gray-500">Revenue by service type</p>
                 </div>
               </div>
-              <div className="space-y-4 max-h-[70vh] overflow-y-auto scrollbar-thin">
+              <div className="space-y-4 max-h-[50vh] overflow-y-auto scrollbar-thin">
                 {Object.entries(treatmentBreakdown)
                   .sort(([, a], [, b]) => b.revenue - a.revenue)
                   .map(([treatment, data], index) => {
@@ -554,121 +538,147 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
 
         {/* Patient Balances View */}
         {viewType === 'patients' && (
-          <div className="space-y-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl shadow-md p-6 sm:p-8 border border-gray-100"
-            >
-              <div className="flex items-center gap-3 mb-8">
-                <div className="w-12 h-12 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-xl flex items-center justify-center">
-                  <FileText className="w-6 h-6 text-emerald-600" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Patient Account Balances</h2>
-                  <p className="text-sm text-gray-500">Overview of all patient accounts</p>
-                </div>
+          <div className="h-screen flex flex-col overflow-hidden bg-gray-50">
+
+            {/* 🔹 TOP SECTION (cards, filters, etc.) */}
+            <div className="flex-shrink-0 p-4 space-y-4">
+              
+              {/* Example: Your compact controls */}
+              <div className="bg-white border rounded-xl px-4 py-3 shadow-sm flex justify-between items-center">
+                <span className="text-sm font-semibold text-gray-600">Dashboard</span>
               </div>
-              <div className="space-y-4 max-h-[70vh] overflow-y-auto scrollbar-thin">
-                {patientBalances.filter(pb => pb.balance > 0).length === 0 ? (
-                  <div className="text-center py-16 text-gray-500">
-                    <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                    <p className="text-lg font-medium">No outstanding patient balances</p>
+
+              {/* Example: Stats row */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="bg-white p-3 rounded-lg shadow-sm">Card 1</div>
+                <div className="bg-white p-3 rounded-lg shadow-sm">Card 2</div>
+                <div className="bg-white p-3 rounded-lg shadow-sm">Card 3</div>
+                <div className="bg-white p-3 rounded-lg shadow-sm">Card 4</div>
+              </div>
+
+            </div>
+
+            {/* 🔹 MAIN CONTENT (THIS FIXES OVERFLOW) */}
+            <div className="flex-1 min-h-0 px-4 pb-4">
+              
+              <div className="h-full flex flex-col min-h-0">
+                
+                {/* CARD CONTAINER */}
+                <div className="flex flex-col flex-1 min-h-0 bg-white rounded-xl border shadow-sm overflow-hidden">
+                  
+                  {/* HEADER */}
+                  <div className="flex items-center gap-3 p-4 border-b flex-shrink-0">
+                    <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <h2 className="text-lg font-bold text-gray-900 truncate">
+                        Patient Balances
+                      </h2>
+                      <p className="text-xs text-gray-500 truncate">
+                        Account overview
+                      </p>
+                    </div>
                   </div>
-                ) : (
-                  patientBalances
-                    .filter(pb => pb.balance > 0)
-                    .sort((a, b) => b.balance - a.balance)
-                    .map((pb, index) => {
-                      const balanceStatus = pb.balance > 0 ? 'overdue' : 'paid';
-                      return (
-                        <motion.div
-                          key={pb.patientId}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                          className="group relative bg-white rounded-xl p-5 sm:p-6 border-2 border-gray-100 hover:border-emerald-200 transition-all duration-300 overflow-hidden"
-                        >
-                          <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-full -mr-12 -mt-12 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                          <div className="relative">
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
+
+                  {/* 🔥 SCROLLABLE CONTENT */}
+                  <div className="flex-1 overflow-y-auto min-h-0 p-3 space-y-3">
+
+                    {patientBalances.filter(pb => pb.balance > 0).length === 0 ? (
+                      <div className="text-center py-10 text-gray-500">
+                        <FileText className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+                        <p className="text-sm">No outstanding balances</p>
+                      </div>
+                    ) : (
+                      patientBalances
+                        .filter(pb => pb.balance > 0)
+                        .sort((a, b) => b.balance - a.balance)
+                        .map((pb, index) => {
+                          const progress =
+                            pb.totalBilled > 0
+                              ? (pb.totalPaid / pb.totalBilled) * 100
+                              : 0;
+
+                          return (
+                            <div
+                              key={pb.patientId}
+                              className="bg-gray-50 rounded-lg p-3 border flex flex-col gap-3"
+                            >
+
+                              {/* TOP ROW */}
+                              <div className="flex justify-between items-start gap-2 flex-wrap">
+                                <div className="min-w-0">
+                                  <p className="font-semibold text-sm text-gray-900 truncate">
+                                    {pb.patientName}
+                                  </p>
+                                  <p className="text-[10px] text-gray-500 truncate">
+                                    ID: {pb.patientId}
+                                  </p>
+                                </div>
+
+                                <div className="text-right">
+                                  <p className="text-sm font-bold text-amber-600">
+                                    ₱{pb.balance.toLocaleString()}
+                                  </p>
+                                  <p className="text-[10px] text-gray-400">
+                                    Pending
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* STATS */}
+                              <div className="grid grid-cols-2 gap-2 text-xs">
+                                <div className="bg-blue-50 rounded p-2">
+                                  <p className="text-gray-500">Billed</p>
+                                  <p className="font-semibold text-blue-700">
+                                    ₱{pb.totalBilled.toLocaleString()}
+                                  </p>
+                                </div>
+                                <div className="bg-green-50 rounded p-2">
+                                  <p className="text-gray-500">Paid</p>
+                                  <p className="font-semibold text-green-700">
+                                    ₱{pb.totalPaid.toLocaleString()}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* PROGRESS */}
                               <div>
-                                <p className="font-bold text-gray-900 text-lg">{pb.patientName}</p>
-                                <div className="flex items-center gap-2 mt-2">
-                                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">ID:</span>
-                                  <span className="text-sm font-mono text-gray-600">{pb.patientId}</span>
+                                <div className="flex justify-between text-[10px] mb-1">
+                                  <span>Progress</span>
+                                  <span>{progress.toFixed(0)}%</span>
+                                </div>
+                                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full bg-emerald-500"
+                                    style={{ width: `${progress}%` }}
+                                  />
                                 </div>
                               </div>
-                              <div className="text-right">
-                                <div className={`text-sm font-bold uppercase tracking-wider px-3 py-1 rounded-full inline-block ${
-                                  balanceStatus === 'paid'
-                                    ? 'bg-green-100 text-green-700'
-                                    : 'bg-amber-100 text-amber-700'
-                                }`}>
-                                  {balanceStatus === 'paid' ? '✓ Paid Up' : '⚠ Pending'}
-                                </div>
-                                <p className={`text-3xl font-bold mt-2 ${pb.balance > 0 ? 'text-amber-600' : 'text-green-600'}`}>
-                                  ₱{Math.abs(pb.balance).toLocaleString('en-US')}
-                                </p>
-                                <p className="text-xs text-gray-500 mt-1">{pb.balance > 0 ? 'Awaiting' : 'Settled'}</p>
-                              </div>
-                            </div>
-                            
-                            {/* Balance Breakdown Grid */}
-                            <div className="grid grid-cols-2 gap-3 mb-5">
-                              <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-100">
-                                <p className="text-xs text-gray-600 mb-2 uppercase font-semibold tracking-wider">Billed</p>
-                                <p className="text-xl font-bold text-blue-700">₱{pb.totalBilled.toLocaleString('en-US')}</p>
-                              </div>
-                              <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-100">
-                                <p className="text-xs text-gray-600 mb-2 uppercase font-semibold tracking-wider">Paid</p>
-                                <p className="text-xl font-bold text-green-700">₱{pb.totalPaid.toLocaleString('en-US')}</p>
-                              </div>
-                            </div>
 
-                            {/* Progress Bar */}
-                            <div className="mb-5">
-                              <div className="flex justify-between items-center mb-2">
-                                <span className="text-xs font-semibold text-gray-600">Collection Progress</span>
-                                <span className="text-xs font-bold text-emerald-600">{pb.totalBilled > 0 ? ((pb.totalPaid / pb.totalBilled) * 100).toFixed(1) : '0'}%</span>
-                              </div>
-                              <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
-                                <motion.div
-                                  initial={{ width: 0 }}
-                                  animate={{ width: `${pb.totalBilled > 0 ? (pb.totalPaid / pb.totalBilled) * 100 : 0}%` }}
-                                  transition={{ duration: 0.8, ease: 'easeOut' }}
-                                  className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
-                                />
-                              </div>
-                            </div>
+                              {/* BUTTON */}
+                              {pb.balance > 0 && (
+                                <button
+                                  onClick={() => {
+                                    setSelectedPatientId(pb.patientId);
+                                    setShowPaymentForm(true);
+                                    window.scrollTo({ top: 0, behavior: "smooth" });
+                                  }}
+                                  className="text-xs py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md"
+                                >
+                                  Pay
+                                </button>
+                              )}
 
-                            {/* Action Button */}
-                            {pb.balance > 0 && (
-                              <motion.button
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={() => {
-                                  setSelectedPatientId(pb.patientId);
-                                  setSelectedTreatmentId('');
-                                  setPaymentAmount('');
-                                  setPaymentNotes('');
-                                  setShowPaymentForm(true);
-                                  setViewType('payments');
-                                  // Scroll to top to see the form
-                                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                                }}
-                                className="w-full px-4 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-lg font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
-                              >
-                                💳 Record Payment
-                              </motion.button>
-                            )}
-                          </div>
-                        </motion.div>
-                      );
-                    })
-                )}
+                            </div>
+                          );
+                        })
+                    )}
+
+                  </div>
+                </div>
               </div>
-            </motion.div>
+            </div>
           </div>
         )}
 
