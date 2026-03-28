@@ -184,30 +184,30 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
   const outOfStockItems = inventory.filter(item => getBaseQuantity(item) === 0);
 
   return (
-    <div className="p-6 max-w-[1920px] mx-auto space-y-8">
+    <div className="md:p-6 p-3 max-w-[1920px] mx-auto md:space-y-8 space-y-4">
       {/* Tab Navigation */}
-      <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="bg-white p-1.5 rounded-2xl shadow-sm border border-gray-200/60 inline-flex gap-1">
+      <div className="md:mb-8 mb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="bg-white md:p-1.5 p-1 rounded-xl md:rounded-2xl shadow-sm border border-gray-200/60 inline-flex gap-1">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
+            className={`px-3 md:px-5 py-1.5 md:py-2.5 rounded-lg md:rounded-xl font-medium text-xs md:text-sm transition-all duration-200 flex items-center gap-1.5 md:gap-2 ${
               activeTab === 'overview'
                 ? 'bg-gradient-to-r from-cyan-600 to-teal-600 text-white shadow-lg shadow-cyan-500/30'
                 : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
             }`}
           >
-            <Eye className="w-4 h-4" />
+            <Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />
             Inventory List
           </button>
           <button
             onClick={() => setActiveTab('history')}
-            className={`px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
+            className={`px-3 md:px-5 py-1.5 md:py-2.5 rounded-lg md:rounded-xl font-medium text-xs md:text-sm transition-all duration-200 flex items-center gap-1.5 md:gap-2 ${
               activeTab === 'history'
                 ? 'bg-gradient-to-r from-cyan-600 to-teal-600 text-white shadow-lg shadow-cyan-500/30'
                 : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
             }`}
           >
-            <History className="w-4 h-4" />
+            <History className="w-3.5 h-3.5 md:w-4 md:h-4" />
             Stock History
           </button>
         </div>
@@ -215,10 +215,10 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
         {activeTab === 'overview' && (
           <button
             onClick={() => setShowAddModal(true)}
-            className="group px-5 py-2.5 bg-gradient-to-r from-cyan-600 to-teal-600 text-white rounded-xl hover:from-cyan-700 hover:to-teal-700 transition-all duration-300 shadow-lg shadow-cyan-500/20 flex items-center gap-2 font-medium"
+            className="group w-full md:w-auto px-4 md:px-5 py-2 md:py-2.5 bg-gradient-to-r from-cyan-600 to-teal-600 text-white rounded-lg md:rounded-xl hover:from-cyan-700 hover:to-teal-700 transition-all duration-300 shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2 font-medium text-xs md:text-sm"
           >
             <div className="bg-white/20 rounded-lg p-1 group-hover:scale-110 transition-transform">
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3.5 h-3.5 md:w-4 md:h-4" />
             </div>
             Add New Item
           </button>
@@ -226,73 +226,73 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
       </div>
 
       {activeTab === 'overview' && (
-        <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="md:space-y-8 space-y-4 animate-in fade-in duration-500">
           {/* Summary Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-6 group hover:border-cyan-200 hover:shadow-xl hover:shadow-cyan-500/5 transition-all duration-500">
-               <div className="p-4 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-2xl shadow-lg shadow-cyan-200 group-hover:scale-110 transition-transform duration-500">
-                 <Package className="w-6 h-6 text-white" />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+            <div className="bg-white p-3 md:p-6 rounded-2xl md:rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-3 md:gap-6 group hover:border-cyan-200 transition-all duration-500">
+               <div className="p-2.5 md:p-4 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-xl md:rounded-2xl shadow-lg shadow-cyan-200 group-hover:scale-110 transition-transform duration-500">
+                 <Package className="w-4 h-4 md:w-6 md:h-6 text-white" />
                </div>
                <div>
-                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Items</p>
-                 <p className="text-3xl font-black text-gray-900 leading-none">{inventory.length}</p>
+                 <p className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5 md:mb-1">Total Items</p>
+                 <p className="text-lg md:text-3xl font-black text-gray-900 leading-none">{inventory.length}</p>
                </div>
             </div>
 
-            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-6 group hover:border-emerald-200 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-500">
-               <div className="p-4 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl shadow-lg shadow-emerald-200 group-hover:scale-110 transition-transform duration-500">
-                 <TrendingUp className="w-6 h-6 text-white" />
+            <div className="bg-white p-3 md:p-6 rounded-2xl md:rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-3 md:gap-6 group hover:border-emerald-200 transition-all duration-500">
+               <div className="p-2.5 md:p-4 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl md:rounded-2xl shadow-lg shadow-emerald-200 group-hover:scale-110 transition-transform duration-500">
+                 <TrendingUp className="w-4 h-4 md:w-6 md:h-6 text-white" />
                </div>
                <div>
-                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">In Stock</p>
-                 <p className="text-3xl font-black text-gray-900 leading-none">{inventory.filter(i => getBaseQuantity(i) > 0).length}</p>
+                 <p className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5 md:mb-1">In Stock</p>
+                 <p className="text-lg md:text-3xl font-black text-gray-900 leading-none">{inventory.filter(i => getBaseQuantity(i) > 0).length}</p>
                </div>
             </div>
 
-            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-6 group hover:border-amber-200 hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-500">
-               <div className="p-4 bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl shadow-lg shadow-amber-200 group-hover:scale-110 transition-transform duration-500">
-                 <AlertCircle className="w-6 h-6 text-white" />
+            <div className="bg-white p-3 md:p-6 rounded-2xl md:rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-3 md:gap-6 group hover:border-amber-200 transition-all duration-500">
+               <div className="p-2.5 md:p-4 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl md:rounded-2xl shadow-lg shadow-amber-200 group-hover:scale-110 transition-transform duration-500">
+                 <AlertCircle className="w-4 h-4 md:w-6 md:h-6 text-white" />
                </div>
                <div>
-                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Low Stock</p>
-                 <p className="text-3xl font-black text-gray-900 leading-none">{criticalItems.length}</p>
+                 <p className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5 md:mb-1">Low Stock</p>
+                 <p className="text-lg md:text-3xl font-black text-gray-900 leading-none">{criticalItems.length}</p>
                </div>
             </div>
 
-            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-6 group hover:border-red-200 hover:shadow-xl hover:shadow-red-500/5 transition-all duration-500">
-               <div className="p-4 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl shadow-lg shadow-red-200 group-hover:scale-110 transition-transform duration-500">
-                 <X className="w-6 h-6 text-white" />
+            <div className="bg-white p-3 md:p-6 rounded-2xl md:rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-3 md:gap-6 group hover:border-red-200 transition-all duration-500">
+               <div className="p-2.5 md:p-4 bg-gradient-to-br from-red-500 to-red-600 rounded-xl md:rounded-2xl shadow-lg shadow-red-200 group-hover:scale-110 transition-transform duration-500">
+                 <X className="w-4 h-4 md:w-6 md:h-6 text-white" />
                </div>
                <div>
-                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Out of Stock</p>
-                 <p className="text-3xl font-black text-gray-900 leading-none">{outOfStockItems.length}</p>
+                 <p className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5 md:mb-1">Out of Stock</p>
+                 <p className="text-lg md:text-3xl font-black text-gray-900 leading-none">{outOfStockItems.length}</p>
                </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm h-[65vh] transition-all duration-500 hover:shadow-2xl hover:shadow-gray-200/50">
-            <div className="p-10 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-8 bg-gradient-to-b from-gray-50/50 to-white">
-              <h3 className="text-lg font-bold text-gray-900">Inventory Items</h3>
+          <div className="bg-white rounded-2xl md:rounded-[2.5rem] border border-gray-100 shadow-sm h-auto md:h-[65vh] transition-all duration-500 hover:shadow-xl">
+            <div className="p-4 md:p-8 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-8 bg-gradient-to-b from-gray-50/50 to-white">
+              <h3 className="text-base md:text-lg font-bold text-gray-900">Inventory Items</h3>
               <div className="relative max-w-md w-full">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Search className="w-3.5 h-3.5 md:w-4 md:h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search inventory items..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-transparent focus:bg-white focus:border-cyan-500 rounded-xl transition-all text-sm font-medium"
+                  className="w-full pl-9 md:pl-10 pr-4 py-2 md:py-2.5 bg-gray-50 border border-transparent focus:bg-white focus:border-cyan-500 rounded-lg md:rounded-xl transition-all text-[10px] md:text-sm font-medium"
                 />
               </div>
             </div>
 
-            <div className="overflow-auto h-[70vh] w-full scrollbar-thin border rounded">
+            <div className="overflow-auto max-h-[50vh] md:h-[70vh] w-full scrollbar-thin border rounded">
               <table className="w-full table-fixed border-collapse">
                 <thead className="bg-gray-50/50 border-b border-gray-100 sticky top-0 z-10">
                   <tr>
-                    <th className="w-[30%] px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Item Details</th>
-                    <th className="w-[30%] px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Current Stock</th>
-                    <th className="w-[20%] px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
-                    <th className="w-[20%] px-8 py-5 text-right text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Actions</th>
+                    <th className="w-[45%] md:w-[30%] px-3 md:px-8 py-3 md:py-5 text-left text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest">Item Details</th>
+                    <th className="w-[30%] px-3 md:px-8 py-3 md:py-5 text-left text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest">Stock</th>
+                    <th className="w-[20%] px-3 md:px-8 py-3 md:py-5 text-left text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest hidden md:table-cell">Status</th>
+                    <th className="w-[25%] md:w-[20%] px-3 md:px-8 py-3 md:py-5 text-right text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -301,73 +301,69 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                     const basePieces = getBaseQuantity(item);
                     let statusColor = 'bg-emerald-50 text-emerald-600 border-emerald-100';
                     let statusLabel = 'In Stock';
-                    let statusIcon = <div className="w-2 h-2 rounded-full bg-emerald-500 mr-2 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />;
+                    let statusIcon = <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-emerald-500 mr-1.5 md:mr-2 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />;
                     
                     if (basePieces === 0) {
                       statusColor = 'bg-red-50 text-red-600 border-red-100';
                       statusLabel = 'Out of Stock';
-                      statusIcon = <div className="w-2 h-2 rounded-full bg-red-500 mr-2 shadow-[0_0_8px_rgba(239,68,68,0.5)]" />;
+                      statusIcon = <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-red-500 mr-1.5 md:mr-2 shadow-[0_0_8px_rgba(239,68,68,0.5)]" />;
                     } else if (basePieces <= minLevel) {
                       statusColor = 'bg-amber-50 text-amber-600 border-amber-100';
                       statusLabel = 'Low Stock';
-                      statusIcon = <div className="w-2 h-2 rounded-full bg-amber-500 mr-2 shadow-[0_0_8px_rgba(245,158,11,0.5)] animate-pulse" />;
+                      statusIcon = <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-amber-500 mr-1.5 md:mr-2 shadow-[0_0_8px_rgba(245,158,11,0.5)] animate-pulse" />;
                     }
 
                     return (
                       <tr key={item.id} className="group hover:bg-gray-50/80 transition-all duration-300">
-                        <td className="px-8 py-6">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-white border-2 border-gray-100 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300">
-                              <Package className="w-6 h-6 text-cyan-600" />
+                        <td className="px-3 md:px-8 py-3 md:py-6">
+                          <div className="flex items-center gap-2 md:gap-4">
+                            <div className="w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-2xl bg-white border border-gray-100 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300">
+                              <Package className="w-4 h-4 md:w-6 md:h-6 text-cyan-600" />
                             </div>
-                            <div>
-                              <span className="font-black text-gray-900 text-base block truncate group-hover:text-cyan-600 transition-colors">{item.name}</span>
-                              <span className="px-2 py-0.5 bg-gray-100 text-[10px] font-bold text-gray-500 rounded-md uppercase tracking-wider">{item.category}</span>
+                            <div className="min-w-0">
+                              <span className="font-black text-gray-900 text-[10px] md:text-base block truncate group-hover:text-cyan-600 transition-colors">{item.name}</span>
+                              <span className="px-1.5 py-0.5 bg-gray-100 text-[8px] md:text-[10px] font-bold text-gray-500 rounded-md uppercase tracking-wider">{item.category}</span>
                             </div>
                           </div>
                         </td>
-                        <td className="px-8 py-6">
+                        <td className="px-3 md:px-8 py-3 md:py-6">
                           <div className="flex flex-col">
-                            <span className="font-black text-gray-800 text-lg">{formatQuantityDisplay(item)}</span>
+                            <span className="font-black text-gray-800 text-xs md:text-lg">{formatQuantityDisplay(item)}</span>
                             {item.main_unit && (
-                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                Total: {basePieces} {item.base_unit || 'pieces'}
+                              <span className="text-[8px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest truncate">
+                                Total: {basePieces} {item.base_unit || 'pcs'}
                               </span>
                             )}
                           </div>
                         </td>
-                        <td className="px-8 py-6">
-                          <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.1em] border ${statusColor}`}>
+                        <td className="px-3 md:px-8 py-3 md:py-6 hidden md:table-cell">
+                          <span className={`inline-flex items-center px-3 md:px-4 py-1 md:py-1.5 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest border ${statusColor}`}>
                             {statusIcon}
                             {statusLabel}
                           </span>
                         </td>
-                        <td className="px-8 py-6 text-right">
-                          <div className="flex items-center justify-end gap-3">
+                        <td className="px-3 md:px-8 py-3 md:py-6 text-right">
+                          <div className="flex items-center justify-end gap-1.5 md:gap-3">
                             <button
                               onClick={() => {
                                 setStockItem(item);
                                 setStockUnitType(item.main_unit || item.mainUnit || 'pcs');
                               }}
-                              className="group relative p-3 bg-cyan-50 text-cyan-600 hover:bg-cyan-600 hover:text-white rounded-2xl transition-all duration-300 shadow-sm overflow-hidden"
+                              className="group relative p-1.5 md:p-3 bg-cyan-50 text-cyan-600 hover:bg-cyan-600 hover:text-white rounded-lg md:rounded-2xl transition-all duration-300 shadow-sm overflow-hidden"
                             >
-                              <div className="absolute inset-0 bg-cyan-400/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                              <Plus className="w-5 h-5 relative z-10" />
-                              <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Update Stock</span>
+                              <Plus className="w-3.5 h-3.5 md:w-5 md:h-5 relative z-10" />
                             </button>
                             <button
                               onClick={() => setEditingItem(item)}
-                              className="group relative p-3 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-2xl transition-all duration-300 shadow-sm"
+                              className="group relative p-1.5 md:p-3 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg md:rounded-2xl transition-all duration-300 shadow-sm"
                             >
-                              <Edit className="w-5 h-5" />
-                              <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Edit Details</span>
+                              <Edit className="w-3.5 h-3.5 md:w-5 md:h-5" />
                             </button>
                             <button
                               onClick={() => deleteItem(item.id)}
-                              className="group relative p-3 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-2xl transition-all duration-300 shadow-sm"
+                              className="group relative p-1.5 md:p-3 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-lg md:rounded-2xl transition-all duration-300 shadow-sm"
                             >
-                              <Trash2 className="w-5 h-5" />
-                              <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Delete</span>
+                              <Trash2 className="w-3.5 h-3.5 md:w-5 md:h-5" />
                             </button>
                           </div>
                         </td>
@@ -382,41 +378,50 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
       )}
 
       {activeTab === 'history' && (
-        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden animate-in fade-in duration-500">
-          <div className="p-10 border-b border-gray-100 bg-gradient-to-b from-gray-50/50 to-white flex justify-between items-center">
+        <div className="bg-white rounded-2xl md:rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden animate-in fade-in duration-500">
+          <div className="p-4 md:p-10 border-b border-gray-100 bg-gradient-to-b from-gray-50/50 to-white flex justify-between items-center">
             <div>
-              <h3 className="text-2xl font-black text-gray-900">Stock Update History</h3>
-              <p className="text-gray-500 font-medium text-sm">Detailed log of all inventory movements and manual adjustments.</p>
+              <h3 className="text-base md:text-2xl font-black text-gray-900">Stock Update History</h3>
+              <p className="text-gray-500 font-medium text-[10px] md:text-sm">Detailed log of all inventory movements and manual adjustments.</p>
             </div>
-            <div className="p-4 bg-cyan-50 rounded-2xl">
-              <History className="w-6 h-6 text-cyan-600" />
+            <div className="p-2 md:p-4 bg-cyan-50 rounded-lg md:rounded-2xl">
+              <History className="w-4 h-4 md:w-6 md:h-6 text-cyan-600" />
             </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50/50 border-b border-gray-100">
                 <tr>
-                  <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Timestamp</th>
-                  <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Item Name</th>
-                  <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Action</th>
-                  <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Adjustment</th>
-                  <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Updated By</th>
-                  <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Reason</th>
+                  <th className="px-3 md:px-8 py-3 md:py-5 text-left text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest">Timestamp</th>
+                  <th className="px-3 md:px-8 py-3 md:py-5 text-left text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest">Item Name</th>
+                  <th className="px-3 md:px-8 py-3 md:py-5 text-left text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest hidden md:table-cell">Action</th>
+                  <th className="px-3 md:px-8 py-3 md:py-5 text-left text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest">Adjustment</th>
+                  <th className="px-3 md:px-8 py-3 md:py-5 text-left text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest hidden lg:table-cell">Updated By</th>
+                  <th className="px-3 md:px-8 py-3 md:py-5 text-left text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest hidden md:table-cell">Reason</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {inventoryHistory.map(record => (
                   <tr key={record.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-8 py-6">
+                    <td className="px-3 md:px-8 py-3 md:py-6">
                       <div className="flex flex-col">
-                        <span className="text-sm font-bold text-gray-900">{new Date(record.created_at).toLocaleDateString()}</span>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase">{new Date(record.created_at).toLocaleTimeString()}</span>
+                        <span className="text-[10px] md:text-sm font-bold text-gray-900">{new Date(record.created_at).toLocaleDateString()}</span>
+                        <span className="text-[8px] md:text-[10px] font-bold text-gray-400 uppercase">{new Date(record.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
                     </td>
-                    <td className="px-8 py-6">
-                      <span className="text-sm font-black text-gray-900 uppercase tracking-tight">{record.item_name}</span>
+                    <td className="px-3 md:px-8 py-3 md:py-6">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] md:text-sm font-black text-gray-900 uppercase tracking-tight truncate max-w-[100px] md:max-w-none">{record.item_name}</span>
+                        <span className={`md:hidden inline-flex items-center px-1.5 py-0.5 rounded text-[7px] font-black uppercase tracking-widest w-fit ${
+                          record.action_type === 'add' ? 'bg-emerald-50 text-emerald-600' : 
+                          record.action_type === 'subtract' ? 'bg-red-50 text-red-600' : 
+                          'bg-blue-50 text-blue-600'
+                        }`}>
+                          {record.action_type}
+                        </span>
+                      </div>
                     </td>
-                    <td className="px-8 py-6">
+                    <td className="px-3 md:px-8 py-3 md:py-6 hidden md:table-cell">
                       <span className={`inline-flex items-center px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${
                         record.action_type === 'add' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
                         record.action_type === 'subtract' ? 'bg-red-50 text-red-600 border-red-100' : 
@@ -426,36 +431,36 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
                         {record.action_type}
                       </span>
                     </td>
-                    <td className="px-8 py-6">
+                    <td className="px-3 md:px-8 py-3 md:py-6">
                       <div className="flex flex-col">
-                        <span className={`text-base font-black ${
+                        <span className={`text-xs md:text-base font-black ${
                           record.action_type === 'add' ? 'text-emerald-600' : 
                           record.action_type === 'subtract' ? 'text-red-600' : 
                           'text-blue-600'
                         }`}>
                           {record.action_type === 'subtract' ? '-' : '+'}{record.change_amount}
                         </span>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{record.unit_type}</span>
+                        <span className="text-[8px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest">{record.unit_type}</span>
                       </div>
                     </td>
-                    <td className="px-8 py-6">
+                    <td className="px-3 md:px-8 py-3 md:py-6 hidden lg:table-cell">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-cyan-100 flex items-center justify-center text-[10px] font-black text-cyan-700">
+                        <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-cyan-100 flex items-center justify-center text-[8px] md:text-[10px] font-black text-cyan-700">
                           {record.updated_by?.substring(0, 2).toUpperCase()}
                         </div>
-                        <span className="text-sm font-bold text-gray-600">{record.updated_by}</span>
+                        <span className="text-xs md:text-sm font-bold text-gray-600">{record.updated_by}</span>
                       </div>
                     </td>
-                    <td className="px-8 py-6">
+                    <td className="px-3 md:px-8 py-3 md:py-6 hidden md:table-cell">
                       <span className="text-sm font-medium text-gray-500 italic">"{record.reason || 'No reason provided'}"</span>
                     </td>
                   </tr>
                 ))}
                 {inventoryHistory.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-8 py-20 text-center">
-                      <History className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-                      <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No history records found</p>
+                    <td colSpan={6} className="px-3 md:px-8 py-10 md:py-20 text-center">
+                      <History className="w-8 h-8 md:w-12 md:h-12 text-gray-200 mx-auto mb-4" />
+                      <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px] md:text-xs">No history records found</p>
                     </td>
                   </tr>
                 )}

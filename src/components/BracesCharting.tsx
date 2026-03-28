@@ -13,7 +13,8 @@ import {
   Move,
   Calendar,
   Sparkles,
-  Star
+  Star,
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
@@ -24,6 +25,7 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import { DentalChart } from './Orthodontic/DentalChart';
 import { ColorPalette } from './Orthodontic/ColorPalette';
 import { ColorHistory } from './Orthodontic/ColorHistory';
+import { useIsMobile } from './ui/use-mobile';
 
 type BracesChartingProps = {
   patients: Patient[];
@@ -152,6 +154,7 @@ const rubberBandColorOptions = [
 ];
 
 export function BracesCharting({ patients }: BracesChartingProps) {
+  const isMobile = useIsMobile();
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [bracesData, setBracesData] = useState<{ [patientId: string]: BracesData }>({});
   const [selectedColor, setSelectedColor] = useState(COLORS[0]);
@@ -165,6 +168,9 @@ export function BracesCharting({ patients }: BracesChartingProps) {
   const [lowerPositions] = useState(FIXED_LOWER_POSITIONS);
   const [bracketVisibility, setBracketVisibility] = useState<boolean[]>(new Array(32).fill(true));
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showColorModal, setShowColorModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [currentToothIdx, setCurrentToothIdx] = useState<number | null>(null);
 
   // No normalization needed; positions are static
 
@@ -300,6 +306,11 @@ export function BracesCharting({ patients }: BracesChartingProps) {
   // applyColors removed — preview changes are live and saved only when Save is clicked
 
   const toggleToothSelection = (index: number) => {
+    if (isMobile) {
+      setCurrentToothIdx(index);
+      setShowColorModal(true);
+      return;
+    }
     if (selectionMode === "all") {
       setSelectionMode("single");
       setSelectedIndices([index]);
@@ -322,6 +333,17 @@ export function BracesCharting({ patients }: BracesChartingProps) {
       });
       setPreviewColors(newPreview);
     }
+  };
+
+  const handleMobileColorSelect = (color: typeof COLORS[0]) => {
+    if (currentToothIdx === null) return;
+    
+    const newPreview = [...previewColors];
+    newPreview[currentToothIdx] = color.value;
+    setPreviewColors(newPreview);
+    setSelectedColor(color);
+    setShowColorModal(false);
+    setCurrentToothIdx(null);
   };
 
 
@@ -507,39 +529,41 @@ export function BracesCharting({ patients }: BracesChartingProps) {
               </button>
             </div>
 
-            <div className="lg:w-96 bg-white rounded-xl shadow-lg border border-cyan-100 backdrop-blur-sm bg-opacity-90 flex flex-col">
-              <div className="flex p-3 bg-cyan-50/30 border-b border-cyan-100 rounded-t-xl">
-                <div className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-xs text-slate-400">PALETTE</div>
-                <div className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-xs text-slate-400">HISTORY</div>
+            {!isMobile && (
+              <div className="lg:w-96 bg-white rounded-xl shadow-lg border border-cyan-100 backdrop-blur-sm bg-opacity-90 flex flex-col">
+                <div className="flex p-3 bg-cyan-50/30 border-b border-cyan-100 rounded-t-xl">
+                  <div className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-xs text-slate-400">PALETTE</div>
+                  <div className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-xs text-slate-400">HISTORY</div>
+                </div>
+                <div className="flex-1 min-h-0 overflow-y-auto">
+                  <AnimatePresence mode="wait">
+                    {activeTab === "palette" ? (
+                      <ColorPalette
+                        key="palette"
+                        colors={COLORS}
+                        selectedColor={selectedColor}
+                        onColorSelect={() => toast.error('Please select a patient first')}
+                        showSpecs={false}
+                      />
+                    ) : (
+                      <ColorHistory
+                        key="history"
+                        history={(getPatientBracesData().colorHistory || []).map(entry => ({
+                          color: { name: entry.colorName || 'Chart Snapshot', value: entry.colorValue || '#E5E7EB' },
+                          timestamp: new Date(entry.date).toLocaleString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            month: 'short',
+                            day: 'numeric'
+                          })
+                        }))}
+                        onSelectItem={() => toast.error('Please select a patient first')}
+                      />
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
-              <div className="flex-1 min-h-0 overflow-y-auto">
-                <AnimatePresence mode="wait">
-                  {activeTab === "palette" ? (
-                    <ColorPalette
-                      key="palette"
-                      colors={COLORS}
-                      selectedColor={selectedColor}
-                      onColorSelect={() => toast.error('Please select a patient first')}
-                      showSpecs={false}
-                    />
-                  ) : (
-                    <ColorHistory
-                      key="history"
-                      history={(getPatientBracesData().colorHistory || []).map(entry => ({
-                        color: { name: entry.colorName || 'Chart Snapshot', value: entry.colorValue || '#E5E7EB' },
-                        timestamp: new Date(entry.date).toLocaleString('en-US', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          month: 'short',
-                          day: 'numeric'
-                        })
-                      }))}
-                      onSelectItem={() => toast.error('Please select a patient first')}
-                    />
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -556,38 +580,47 @@ export function BracesCharting({ patients }: BracesChartingProps) {
                 <div className="flex items-center justify-between mb-2">
                   {/* title removed as requested */}
                   
-                  <div className="flex bg-cyan-50 p-1.5 rounded-2xl">
+                  <div className="flex bg-cyan-50 p-1.5 rounded-2xl overflow-x-auto no-scrollbar">
                     <button 
                       onClick={() => setSelectionMode("all")}
-                      className={`flex items-center gap-2.5 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+                      className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] md:text-xs font-bold transition-all ${
                         selectionMode === "all" ? "bg-white text-cyan-800 shadow-md" : "text-slate-500 hover:text-slate-700"
                       }`}
                     >
-                      <LayoutGrid className="w-4 h-4" />
+                      <LayoutGrid className="w-3.5 h-3.5 md:w-4 md:h-4" />
                       SELECT ALL
                     </button>
                     <button 
                       onClick={() => setSelectionMode("single")}
-                      className={`flex items-center gap-2.5 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+                      className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] md:text-xs font-bold transition-all ${
                         selectionMode === "single" ? "bg-white text-cyan-800 shadow-md" : "text-slate-500 hover:text-slate-700"
                       }`}
                     >
-                      <MousePointer2 className="w-4 h-4" />
+                      <MousePointer2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
                       PRECISION
                     </button>
+                    {isMobile && (
+                      <button 
+                        onClick={() => setShowHistoryModal(true)}
+                        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] md:text-xs font-bold transition-all text-slate-500 hover:text-slate-700"
+                      >
+                        <History className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                        HISTORY
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                <div className="flex gap-3 mt-4">
+                <div className="flex gap-2 md:gap-3 mt-4">
                   <button
                     onClick={handleRemoveBrackets}
-                    className="flex items-center gap-2 px-4 py-2 border-2 border-red-200 rounded-lg hover:bg-red-50 transition-all text-red-600 text-xs font-bold"
+                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 md:px-4 md:py-2 border-2 border-red-200 rounded-lg hover:bg-red-50 transition-all text-red-600 text-[10px] md:text-xs font-bold"
                   >
                     REMOVE BRACKET
                   </button>
                   <button
                     onClick={handleAddBrackets}
-                    className="flex items-center gap-2 px-4 py-2 border-2 border-cyan-200 rounded-lg hover:bg-cyan-50 transition-all text-cyan-600 text-xs font-bold"
+                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 md:px-4 md:py-2 border-2 border-cyan-200 rounded-lg hover:bg-cyan-50 transition-all text-cyan-600 text-[10px] md:text-xs font-bold"
                   >
                     ADD BRACKET
                   </button>
@@ -612,70 +645,173 @@ export function BracesCharting({ patients }: BracesChartingProps) {
               <button
                 onClick={saveChanges}
                 disabled={!hasUnsavedChanges}
-                className={`w-full py-2 px-4 rounded-md font-semibold text-sm transition-all shadow-md ${hasUnsavedChanges ? 'bg-gradient-to-r from-cyan-600 to-teal-500 hover:from-cyan-700 hover:to-teal-600 text-white' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}
+                className={`w-full py-2 md:py-2 px-4 rounded-lg font-bold text-[11px] md:text-sm transition-all shadow-md ${hasUnsavedChanges ? 'bg-gradient-to-r from-cyan-600 to-teal-500 hover:from-cyan-700 hover:to-teal-600 text-white shadow-teal-500/20' : 'bg-gray-100 text-slate-400 cursor-not-allowed'}`}
               >
-                <Save className="w-4 h-4 inline mr-2" />
-                SAVE
+                <Save className="w-3.5 h-3.5 md:w-4 md:h-4 inline mr-2" />
+                SAVE CHANGES
               </button>
 
             </motion.div>
 
-            {/* Color Palette Sidebar */}
-            <motion.div 
-              className="lg:w-96 bg-white rounded-xl shadow-lg border border-cyan-100 backdrop-blur-sm bg-opacity-90 flex flex-col"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <div className="flex p-3 bg-cyan-50/30 border-b border-cyan-100 rounded-t-xl">
-                <button 
-                  onClick={() => setActiveTab("palette")}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-xs transition-all ${
-                    activeTab === "palette" ? "bg-white text-cyan-700 shadow-md" : "text-slate-400 hover:text-slate-600"
-                  }`}
-                >
-                  <Palette className="w-4 h-4" />
-                  PALETTE
-                </button>
-                <button 
-                  onClick={() => setActiveTab("history")}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-xs transition-all ${
-                    activeTab === "history" ? "bg-white text-cyan-700 shadow-md" : "text-slate-400 hover:text-slate-600"
-                  }`}
-                >
-                  <History className="w-4 h-4" />
-                  HISTORY
-                </button>
-              </div>
+            {/* Color Palette Sidebar - Hidden on mobile */}
+            {!isMobile && (
+              <motion.div 
+                className="lg:w-96 bg-white rounded-xl shadow-lg border border-cyan-100 backdrop-blur-sm bg-opacity-90 flex flex-col"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <div className="flex p-3 bg-cyan-50/30 border-b border-cyan-100 rounded-t-xl">
+                  <button 
+                    onClick={() => setActiveTab("palette")}
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-xs transition-all ${
+                      activeTab === "palette" ? "bg-white text-cyan-700 shadow-md" : "text-slate-400 hover:text-slate-600"
+                    }`}
+                  >
+                    <Palette className="w-4 h-4" />
+                    PALETTE
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab("history")}
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-xs transition-all ${
+                      activeTab === "history" ? "bg-white text-cyan-700 shadow-md" : "text-slate-400 hover:text-slate-600"
+                    }`}
+                  >
+                    <History className="w-4 h-4" />
+                    HISTORY
+                  </button>
+                </div>
 
-              <div className="flex-1 min-h-0 overflow-y-auto">
-                <AnimatePresence mode="wait">
-                  {activeTab === "palette" ? (
-                    <ColorPalette 
-                      key="palette"
-                      colors={COLORS}
-                      selectedColor={selectedColor}
-                      onColorSelect={handleColorSelect}
-                      showSpecs={false}
-                    />
-                  ) : (
-                    <ColorHistory
-                      key="history"
-                      history={(getPatientBracesData().colorHistory || []).map(entry => ({
-                        color: { name: entry.colorName || 'Chart Snapshot', value: entry.colorValue || '#E5E7EB' },
-                        timestamp: new Date(entry.date).toLocaleString('en-US', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          month: 'short',
-                          day: 'numeric'
-                        })
-                      }))}
-                      onSelectItem={handleSnapshotSelect}
-                    />
-                  )}
-                </AnimatePresence>
-              </div>
-            </motion.div>
+                <div className="flex-1 min-h-0 overflow-y-auto">
+                  <AnimatePresence mode="wait">
+                    {activeTab === "palette" ? (
+                      <ColorPalette 
+                        key="palette"
+                        colors={COLORS}
+                        selectedColor={selectedColor}
+                        onColorSelect={handleColorSelect}
+                        showSpecs={false}
+                      />
+                    ) : (
+                      <ColorHistory
+                        key="history"
+                        history={(getPatientBracesData().colorHistory || []).map(entry => ({
+                          color: { name: entry.colorName || 'Chart Snapshot', value: entry.colorValue || '#E5E7EB' },
+                          timestamp: new Date(entry.date).toLocaleString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            month: 'short',
+                            day: 'numeric'
+                          })
+                        }))}
+                        onSelectItem={handleSnapshotSelect}
+                      />
+                    )}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Mobile Color Selection Modal */}
+            <AnimatePresence>
+              {isMobile && showColorModal && (
+                <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm p-4">
+                  <motion.div 
+                    className="bg-white w-full rounded-t-3xl p-6 shadow-2xl space-y-4"
+                    initial={{ y: "100%" }}
+                    animate={{ y: 0 }}
+                    exit={{ y: "100%" }}
+                    transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="font-bold text-slate-800 text-sm">Select Rubber Band Color</h3>
+                      <button 
+                        onClick={() => setShowColorModal(false)}
+                        className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                      >
+                        <X className="w-5 h-5 text-slate-500" />
+                      </button>
+                    </div>
+                    
+                    <div className="overflow-x-auto pb-4 scrollbar-none">
+                      <div className="flex gap-4 min-w-max px-2">
+                        {COLORS.map((color) => (
+                          <button
+                            key={color.name}
+                            onClick={() => handleMobileColorSelect(color)}
+                            className={`flex flex-col items-center gap-2 group transition-all transform active:scale-95`}
+                          >
+                            <div 
+                              className={`w-14 h-14 rounded-full border-4 shadow-sm transition-all ${
+                                selectedColor.name === color.name ? 'border-teal-500 scale-110' : 'border-slate-100'
+                              }`}
+                              style={{ 
+                                backgroundColor: color.value,
+                                backgroundImage: color.value === 'transparent' 
+                                  ? 'linear-gradient(45deg, #ddd 25%, transparent 25%), linear-gradient(-45deg, #ddd 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ddd 75%), linear-gradient(-45deg, transparent 75%, #ddd 75%)'
+                                  : 'none',
+                                backgroundSize: '10px 10px',
+                                backgroundPosition: '0 0, 0 5px, 5px -5px, -5px 0px'
+                              }}
+                            />
+                            <span className={`text-[10px] font-bold ${
+                              selectedColor.name === color.name ? 'text-teal-600' : 'text-slate-500'
+                            }`}>
+                              {color.name.toUpperCase()}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
+              )}
+            </AnimatePresence>
+
+            {/* Mobile Color History Modal */}
+            <AnimatePresence>
+              {isMobile && showHistoryModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                  <motion.div 
+                    className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-4 max-h-[80vh] flex flex-col"
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.9, opacity: 0 }}
+                  >
+                    <div className="flex justify-between items-center mb-2 border-b pb-3">
+                      <div className="flex items-center gap-2">
+                        <History className="w-5 h-5 text-teal-600" />
+                        <h3 className="font-bold text-slate-800">Color History</h3>
+                      </div>
+                      <button 
+                        onClick={() => setShowHistoryModal(false)}
+                        className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                      >
+                        <X className="w-5 h-5 text-slate-500" />
+                      </button>
+                    </div>
+                    
+                    <div className="flex-1 overflow-y-auto pr-1">
+                      <ColorHistory
+                        history={(getPatientBracesData().colorHistory || []).map(entry => ({
+                          color: { name: entry.colorName || 'Chart Snapshot', value: entry.colorValue || '#E5E7EB' },
+                          timestamp: new Date(entry.date).toLocaleString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            month: 'short',
+                            day: 'numeric'
+                          })
+                        }))}
+                        onSelectItem={(idx) => {
+                          handleSnapshotSelect(idx);
+                          setShowHistoryModal(false);
+                        }}
+                      />
+                    </div>
+                  </motion.div>
+                </div>
+              )}
+            </AnimatePresence>
           </div>
         )}
       </div>

@@ -173,42 +173,42 @@ Generated on: ${new Date().toLocaleString()}
   );
 
   const UnderlineInput = ({ label, value, onChange, className = '' }: { label: string; value: string; onChange: (v: string) => void; className?: string }) => (
-    <div className={`flex items-center gap-2 ${className}`}>
-      <span className="text-sm whitespace-nowrap font-semibold">{label}</span>
+    <div className={`flex flex-col md:flex-row md:items-center gap-1 md:gap-2 ${className}`}>
+      <span className="text-[10px] md:text-sm whitespace-nowrap font-semibold uppercase md:normal-case">{label}</span>
       <input 
         type="text" 
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="flex-1 border-b-2 border-slate-400 focus:outline-none focus:border-yellow-500 focus:bg-yellow-50 bg-white px-2 py-1 text-sm transition-colors" 
-        style={{ minHeight: '32px' }}
+        className="flex-1 border-b-2 border-slate-400 focus:outline-none focus:border-yellow-500 focus:bg-yellow-50 bg-white px-2 py-1 text-xs md:text-sm transition-colors" 
+        style={{ minHeight: '28px' }}
       />
     </div>
   );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white w-full max-w-4xl rounded-lg shadow-2xl my-8">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 md:p-4 p-2 overflow-y-auto">
+      <div className="bg-white w-full max-w-4xl rounded-lg shadow-2xl my-4 md:my-8">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-gradient-to-r from-yellow-50 to-slate-50">
-          <h1 className="text-2xl font-bold text-slate-900">Dental Referral Form</h1>
+        <div className="flex items-center justify-between md:p-6 p-4 border-b border-slate-200 bg-gradient-to-r from-yellow-50 to-slate-50">
+          <h1 className="md:text-2xl text-lg font-bold text-slate-900">Referral Form</h1>
           <button
             onClick={onClose}
             className="p-2 hover:bg-slate-200 rounded-full transition-colors"
           >
-            <X size={24} />
+            <X className="md:w-6 md:h-6 w-5 h-5" />
           </button>
         </div>
 
         {/* Form Content */}
-        <div className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent">
-          <div className="space-y-6">
+        <div className="md:p-8 p-4 max-h-[calc(100vh-160px)] overflow-y-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent">
+          <div className="md:space-y-6 space-y-4">
             {/* Patient Information */}
-            <div className="space-y-4 pb-6 border-b border-slate-200">
-              <h2 className="text-lg font-bold text-slate-900 uppercase">Patient Information</h2>
+            <div className="md:space-y-4 space-y-3 md:pb-6 pb-4 border-b border-slate-200">
+              <h2 className="md:text-lg text-sm font-bold text-slate-900 uppercase">Patient Information</h2>
               
-              <div className="space-y-3">
+              <div className="md:space-y-3 space-y-2">
                 <div>
-                  <label className="block text-sm font-bold mb-2">Search Patient</label>
+                  <label className="block md:text-sm text-[10px] font-bold mb-1.5 uppercase">Search Patient</label>
                   <PatientSearchInput
                     patients={patients}
                     selectedPatientId={formData.patientId}
@@ -218,7 +218,7 @@ Generated on: ${new Date().toLocaleString()}
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3 md:gap-4">
                   <UnderlineInput 
                     label="Patient's Name:" 
                     value={formData.patientName}
@@ -229,41 +229,44 @@ Generated on: ${new Date().toLocaleString()}
                     label="Contact No.:" 
                     value={formData.contactNo}
                     onChange={(v) => handleInputChange('contactNo', v)}
+                    className="col-span-2 md:col-span-1"
                   />
                   <UnderlineInput 
                     label="Date:" 
                     value={formData.date}
                     onChange={(v) => handleInputChange('date', v)}
+                    className="col-span-2 md:col-span-1"
                   />
                 </div>
 
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-4 gap-2 md:gap-3">
                   <UnderlineInput 
                     label="Age:" 
                     value={formData.age}
                     onChange={(v) => handleInputChange('age', v)}
+                    className="col-span-2 md:col-span-1"
                   />
                   <UnderlineInput 
                     label="Sex:" 
                     value={formData.sex}
                     onChange={(v) => handleInputChange('sex', v)}
-                    className="col-span-1"
+                    className="col-span-2 md:col-span-1"
                   />
                   <UnderlineInput 
                     label="DOB:" 
                     value={formData.dateOfBirth}
                     onChange={(v) => handleInputChange('dateOfBirth', v)}
-                    className="col-span-2"
+                    className="col-span-4 md:col-span-2"
                   />
                 </div>
               </div>
             </div>
 
             {/* Referring Dentist */}
-            <div className="space-y-4 pb-6 border-b border-slate-200">
-              <h2 className="text-lg font-bold text-slate-900 uppercase">Referring Dentist</h2>
+            <div className="md:space-y-4 space-y-3 md:pb-6 pb-4 border-b border-slate-200">
+              <h2 className="md:text-lg text-sm font-bold text-slate-900 uppercase">Referring Dentist</h2>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3 md:gap-4">
                 <UnderlineInput 
                   label="Name:" 
                   value={formData.referredBy}
@@ -274,22 +277,24 @@ Generated on: ${new Date().toLocaleString()}
                   label="Contact No.:" 
                   value={formData.referredByContact}
                   onChange={(v) => handleInputChange('referredByContact', v)}
+                  className="col-span-2 md:col-span-1"
                 />
                 <UnderlineInput 
                   label="Email:" 
                   value={formData.referredByEmail}
                   onChange={(v) => handleInputChange('referredByEmail', v)}
+                  className="col-span-2 md:col-span-1"
                 />
               </div>
             </div>
 
             {/* Specialist Information */}
-            <div className="space-y-4 pb-6 border-b border-slate-200">
-              <h2 className="text-lg font-bold text-slate-900 uppercase">Referral Details</h2>
+            <div className="md:space-y-4 space-y-3 md:pb-6 pb-4 border-b border-slate-200">
+              <h2 className="md:text-lg text-sm font-bold text-slate-900 uppercase">Referral Details</h2>
               
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-bold mb-2">Referral Type</label>
+              <div className="grid grid-cols-2 gap-3 md:gap-4">
+                <div className="col-span-2 md:col-span-1">
+                  <label className="block md:text-sm text-[10px] font-bold mb-1.5 uppercase">Referral Type</label>
                   <div className="flex gap-4">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
@@ -300,7 +305,7 @@ Generated on: ${new Date().toLocaleString()}
                         onChange={() => setReferralType('doctor')}
                         className="w-4 h-4"
                       />
-                      <span className="capitalize font-semibold">Doctor</span>
+                      <span className="capitalize font-semibold text-xs md:text-sm">Doctor</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
@@ -311,7 +316,7 @@ Generated on: ${new Date().toLocaleString()}
                         onChange={() => setReferralType('xray')}
                         className="w-4 h-4"
                       />
-                      <span className="capitalize font-semibold">X-Ray</span>
+                      <span className="capitalize font-semibold text-xs md:text-sm">X-Ray</span>
                     </label>
                   </div>
                 </div>
@@ -319,17 +324,19 @@ Generated on: ${new Date().toLocaleString()}
                   label="Referred To:" 
                   value={formData.referredTo}
                   onChange={(v) => handleInputChange('referredTo', v)}
+                  className="col-span-2 md:col-span-1"
                 />
                 <UnderlineInput 
                   label="Specialty:" 
                   value={formData.specialty}
                   onChange={(v) => handleInputChange('specialty', v)}
+                  className="col-span-2"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-bold mb-2">Urgency Level</label>
-                <div className="flex gap-4">
+                <label className="block md:text-sm text-[10px] font-bold mb-1.5 uppercase">Urgency Level</label>
+                <div className="flex flex-wrap gap-3 md:gap-4">
                   {['routine', 'urgent', 'emergency'].map(level => (
                     <label key={level} className="flex items-center gap-2 cursor-pointer">
                       <input
@@ -337,10 +344,10 @@ Generated on: ${new Date().toLocaleString()}
                         name="urgency"
                         value={level}
                         checked={formData.urgency === level}
-                        onChange={(e) => handleInputChange('urgency', e.target.value)}
+                        onChange={(e) => handleInputChange('urgency', (e.target as HTMLInputElement).value)}
                         className="w-4 h-4"
                       />
-                      <span className="capitalize font-semibold">{level}</span>
+                      <span className="capitalize font-semibold text-xs md:text-sm">{level}</span>
                     </label>
                   ))}
                 </div>
@@ -348,35 +355,39 @@ Generated on: ${new Date().toLocaleString()}
             </div>
 
             {/* Diagnostic Services */}
-            <div className="space-y-4 pb-6 border-b border-slate-200">
-              <h2 className="text-lg font-bold text-slate-900 uppercase">Diagnostic Services</h2>
+            <div className="md:space-y-4 space-y-3 md:pb-6 pb-4 border-b border-slate-200">
+              <h2 className="md:text-lg text-sm font-bold text-slate-900 uppercase">Diagnostic Services</h2>
               
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <h3 className="font-bold text-slate-700">Imaging</h3>
-                  <ServiceItem label="STANDARD PANORAMIC" id="pano" />
-                  <ServiceItem label="TMJ (OPEN & CLOSE)" id="tmj" />
-                  <ServiceItem label="SINUS PA" id="sinus" />
-                  <ServiceItem label="BITEWING LEFT SIDE" id="bite-l" />
-                  <ServiceItem label="BITEWING RIGHT SIDE" id="bite-r" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                <div className="md:space-y-3 space-y-2">
+                  <h3 className="font-bold text-slate-700 text-xs md:text-sm uppercase tracking-wide">Imaging</h3>
+                  <div className="grid grid-cols-1 gap-2">
+                    <ServiceItem label="STANDARD PANORAMIC" id="pano" />
+                    <ServiceItem label="TMJ (OPEN & CLOSE)" id="tmj" />
+                    <ServiceItem label="SINUS PA" id="sinus" />
+                    <ServiceItem label="BITEWING LEFT SIDE" id="bite-l" />
+                    <ServiceItem label="BITEWING RIGHT SIDE" id="bite-r" />
+                  </div>
                 </div>
 
-                <div className="space-y-3">
-                  <h3 className="font-bold text-slate-700">Other Services</h3>
-                  <ServiceItem label="DIAGNOSTIC MODEL CAST" id="model" />
-                  <ServiceItem label="INTRAORAL PHOTOGRAPH" id="intra" />
-                  <ServiceItem label="EXTRAORAL PHOTOGRAPH" id="extra" />
+                <div className="md:space-y-3 space-y-2">
+                  <h3 className="font-bold text-slate-700 text-xs md:text-sm uppercase tracking-wide">Other Services</h3>
+                  <div className="grid grid-cols-1 gap-2">
+                    <ServiceItem label="DIAGNOSTIC MODEL CAST" id="model" />
+                    <ServiceItem label="INTRAORAL PHOTOGRAPH" id="intra" />
+                    <ServiceItem label="EXTRAORAL PHOTOGRAPH" id="extra" />
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Reason for Referral */}
-            <div className="space-y-4 pb-6">
-              <label className="block text-lg font-bold text-slate-900 uppercase">Reason for Referral</label>
+            <div className="md:space-y-4 space-y-2 md:pb-6 pb-2">
+              <label className="block md:text-lg text-sm font-bold text-slate-900 uppercase">Reason for Referral</label>
               <textarea
                 value={formData.reason}
                 onChange={(e) => handleInputChange('reason', e.target.value)}
-                className="w-full border-2 border-slate-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 min-h-24"
+                className="w-full border-2 border-slate-300 rounded-lg px-3 py-2 md:px-4 md:py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 min-h-20 md:min-h-24 text-xs md:text-sm"
                 placeholder="Describe the reason for this referral..."
               />
             </div>
@@ -384,23 +395,23 @@ Generated on: ${new Date().toLocaleString()}
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 p-6 border-t border-slate-200 bg-slate-50">
+        <div className="flex flex-wrap gap-2 md:p-6 p-4 border-t border-slate-200 bg-slate-50">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-100 transition-colors font-semibold"
+            className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-100 transition-colors font-semibold text-xs md:text-sm"
           >
             Cancel
           </button>
           <button
             onClick={downloadForm}
-            className="flex-1 px-4 py-2 flex items-center justify-center gap-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors font-semibold"
+            className="flex-1 px-4 py-2 flex items-center justify-center gap-1.5 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors font-semibold text-xs md:text-sm"
           >
-            <Download size={18} />
-            Download
+            <Download size={16} />
+            Save
           </button>
           <button
             onClick={handleSubmit}
-            className="flex-1 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors font-semibold"
+            className="w-full md:flex-1 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors font-semibold text-xs md:text-sm"
           >
             Create Referral
           </button>

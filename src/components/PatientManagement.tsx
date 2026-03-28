@@ -213,81 +213,64 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
     }
   };
 
+  const columnWidths = ['220px', '80px', '140px', '200px', '140px', '250px', '120px'];
+
   return (
     <div
-      className="flex flex-col flex-1 min-h-0 relative bg-gradient-to-br from-[#f5fbff] via-white to-[#ecfff8] overflow-auto scrollbar-thin scrollbar-thumb-teal-500 scrollbar-track-slate-100 hover:scrollbar-thumb-teal-600"
+      className="flex flex-col h-full bg-transparent overflow-hidden"
     >
-      <div
-        className="pointer-events-none absolute inset-0 opacity-80"
-        aria-hidden="true"
-        style={{
-          backgroundImage:
-            'radial-gradient(circle at 20% 20%, rgba(45, 212, 191, 0.35), transparent 45%), radial-gradient(circle at 80% 0%, rgba(14, 165, 233, 0.25), transparent 35%)',
-        }}
-      />
-      <div className="relative flex flex-col flex-1 min-h-0 overflow-hidden px-6 py-6 sm:px-10 sm:py-10 gap-8">
+      <div className="relative flex flex-col h-full overflow-hidden gap-0">
         {/* Search & Add Button Responsive */}
-        <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          {/* Search Input */}
-          <div className="flex-1 relative">
-            {/* Search Icon */}
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+        <div className="relative flex items-center gap-2 md:gap-4 border-b border-slate-200/70 bg-transparent px-3 md:px-6 py-3 md:py-4 flex-none">
+          <div className="relative flex-1 group">
+            <Search className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 md:w-5 md:h-5 group-focus-within:text-teal-500 transition-colors" />
             <input
               type="text"
-              placeholder="Search patients by name, email, or phone..."
+              placeholder="Search patients..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 rounded-2xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-400 text-slate-900 placeholder:text-slate-400 transition-all duration-300"
+              className="w-full pl-9 md:pl-12 pr-4 py-2 md:py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 placeholder:text-slate-400 text-xs md:text-sm text-slate-900 shadow-sm hover:shadow-md"
             />
           </div>
-
-          {/* Add Patient Button */}
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-teal-500 via-emerald-500 to-cyan-500 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-300"
+            className="relative group bg-gradient-to-r from-teal-500 to-cyan-500 text-white p-2.5 md:px-6 md:py-3.5 rounded-xl hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-teal-500/20 flex items-center gap-2 whitespace-nowrap font-semibold text-xs md:text-sm tracking-wide transform hover:scale-105 active:scale-95 flex-none"
+            type="button"
+            title="Add Patient"
           >
             <Plus className="w-5 h-5" />
-            <span>Add Patient</span>
+            <span className="hidden md:inline">Add Patient</span>
+            <div className="absolute inset-0 rounded-xl bg-white/0 group-hover:bg-white/10 transition-colors duration-300" aria-hidden="true"></div>
           </button>
         </div>
 
-        {/* Patients Table */}
-        <div className="flex-1 flex flex-col min-h-0 gap-6 overflow-hidden pb-6">
+        {/* Patients Table Container */}
+        <div className="flex-1 flex flex-col min-h-0 px-3 md:px-6 py-4 md:py-6 overflow-hidden">
           {sortedPatients.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center py-16 px-8 bg-white/90 backdrop-blur-xl rounded-3xl border border-white/70 shadow-[0_30px_70px_rgba(15,23,42,0.08)] max-w-xl">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-teal-100 to-cyan-100 flex items-center justify-center mx-auto mb-5 shadow-inner shadow-white/60">
-                  <Users className="w-10 h-10 text-teal-600" />
-                </div>
-                <h3 className="text-2xl font-semibold text-slate-900 mb-3">
-                  {searchTerm ? 'No patients found' : 'No patients added yet'}
-                </h3>
-                <p className="text-slate-500 text-sm">
-                  {searchTerm
-                    ? 'Adjust your search to explore more patient profiles.'
-                    : 'Add your first patient to unlock a full view of the directory.'}
-                </p>
-              </div>
+            <div className="flex-1 flex items-center justify-center border border-dashed border-slate-200 bg-white w-full rounded-xl">
+              <p className="text-slate-500 text-sm">No patients found</p>
             </div>
           ) : (
-            <div className="flex-1 min-h-0 overflow-auto max-h-[70vh] scrollbar-thin scrollbar-thumb-teal-300 border border-slate-200 bg-white rounded-none">
-              <div className='min-w-full overflow-x-auto '>
-                <table className='min-w-full table-auto text-sm'>
-                  {/* HEADER */}
-                  <thead className="text-xs font-semibold uppercase tracking-widest text-slate-500 shadow-[0_2px_5px_rgba(0,0,0,0.05)]">
+            <div className="flex-1 flex flex-col min-h-0 border border-slate-200 bg-white rounded-xl overflow-hidden shadow-sm">
+              <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent">
+                <table className="w-full min-w-[1050px] table-fixed text-sm border-collapse">
+                  <colgroup>
+                    {columnWidths.map((width, index) => (
+                      <col key={`col-${index}`} style={{ width }} />
+                    ))}
+                  </colgroup>
+                  <thead className="sticky top-0 z-20 bg-white shadow-[0_2px_5px_rgba(0,0,0,0.05)] text-[10px] md:text-xs font-semibold uppercase tracking-widest text-slate-500">
                     <tr>
-                      <th className="px-6 py-4 text-left">Name</th>
-                      <th className="px-4 py-4 text-center">Age</th>
-                      <th className="px-4 py-4 text-left">Birthdate</th>
-                      <th className="px-4 py-4 text-left">Email</th>
-                      <th className="px-4 py-4 text-left">Phone</th>
-                      <th className="px-4 py-4 text-left">Address</th>
-                      <th className="px-4 py-4 text-center">Actions</th>
+                      <th scope="col" className="px-3 md:px-5 py-3 md:py-4 text-left align-middle bg-slate-50/80 backdrop-blur-sm">Name</th>
+                      <th scope="col" className="px-3 md:px-5 py-3 md:py-4 text-center align-middle bg-slate-50/80 backdrop-blur-sm">Age</th>
+                      <th scope="col" className="px-3 md:px-5 py-3 md:py-4 text-left align-middle bg-slate-50/80 backdrop-blur-sm">Birthdate</th>
+                      <th scope="col" className="px-3 md:px-5 py-3 md:py-4 text-left align-middle bg-slate-50/80 backdrop-blur-sm">Email</th>
+                      <th scope="col" className="px-3 md:px-5 py-3 md:py-4 text-left align-middle bg-slate-50/80 backdrop-blur-sm">Phone</th>
+                      <th scope="col" className="px-3 md:px-5 py-3 md:py-4 text-left align-middle bg-slate-50/80 backdrop-blur-sm">Address</th>
+                      <th scope="col" className="px-3 md:px-5 py-3 md:py-4 text-center align-middle bg-slate-50/80 backdrop-blur-sm">Actions</th>
                     </tr>
                   </thead>
-                  {/* BODY */}
-                  <tbody className="text-sm text-slate-700">
-
+                  <tbody className="text-[11px] md:text-sm text-slate-700">
                     {sortedPatients.map((patient) => {
                       const ageValue = patient.dateOfBirth ? calculateAge(patient.dateOfBirth) : NaN;
                       const hasAge = Number.isFinite(ageValue);
@@ -297,80 +280,85 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
                       return (
                         <tr
                           key={patient.id}
-                          className="border-b border-slate-100 
-                                    odd:bg-white 
-                                    even:bg-[rgba(26,188,156,0.08)] 
-                                    hover:bg-[rgba(26,188,156,0.18)] 
-                                    transition-colors"
+                          className="transition-colors border-b border-slate-100 last:border-0 odd:bg-white even:bg-[rgba(26,188,156,0.04)] hover:bg-[rgba(26,188,156,0.12)]"
                         >
-
                           {/* NAME */}
-                          <td className="px-6 py-4">
-                            <p className="font-semibold text-slate-900 truncate">
-                              {formatPatientName(patient.name)}
-                            </p>
-                            <p className="text-xs text-slate-500">{sexLabel}</p>
+                          <td className="px-3 md:px-5 py-2 md:py-3 align-middle text-left">
+                            <div className="leading-tight">
+                              <p className="text-[11px] md:text-sm font-semibold text-slate-900 whitespace-nowrap overflow-hidden text-ellipsis" title={formatPatientName(patient.name)}>
+                                {formatPatientName(patient.name)}
+                              </p>
+                              <p className="text-[10px] md:text-[11px] text-slate-500 whitespace-nowrap overflow-hidden text-ellipsis">{sexLabel}</p>
+                            </div>
                           </td>
 
                           {/* AGE */}
-                          <td className="px-4 py-4 text-center">
+                          <td className="px-3 md:px-5 py-2 md:py-3 text-center align-middle">
                             {hasAge ? (
-                              <>
-                                <span className="text-lg font-semibold">{ageValue}</span>
-                                <span className="text-xs text-slate-400 ml-1">yrs</span>
-                              </>
+                              <div className="flex items-baseline justify-center gap-0.5">
+                                <span className="text-[11px] md:text-sm font-semibold">{ageValue}</span>
+                                <span className="text-[9px] md:text-[10px] text-slate-400">yr</span>
+                              </div>
                             ) : (
-                              <span className="text-sm text-slate-400">N/A</span>
+                              <span className="text-[10px] md:text-xs text-slate-400">N/A</span>
                             )}
                           </td>
 
                           {/* DOB */}
-                          <td className="px-4 py-4 whitespace-nowrap">
-                            <span className="text-sm font-semibold text-slate-900">{dobLabel}</span>
+                          <td className="px-3 md:px-5 py-2 md:py-3 align-middle text-left whitespace-nowrap">
+                            <span className="text-[11px] md:text-sm font-semibold text-slate-900">{dobLabel}</span>
                           </td>
 
                           {/* EMAIL */}
-                          <td className="px-4 py-4 truncate">{patient.email}</td>
+                          <td className="px-3 md:px-5 py-2 md:py-3 align-middle text-left">
+                            <p className="text-[11px] md:text-sm text-slate-700 whitespace-nowrap overflow-hidden text-ellipsis" title={patient.email}>
+                              {patient.email}
+                            </p>
+                          </td>
 
                           {/* PHONE */}
-                          <td className="px-4 py-4">{patient.phone}</td>
+                          <td className="px-3 md:px-5 py-2 md:py-3 align-middle text-left whitespace-nowrap">
+                            <p className="text-[11px] md:text-sm font-medium text-slate-900 tracking-wide overflow-hidden text-ellipsis" title={patient.phone}>
+                              {patient.phone}
+                            </p>
+                          </td>
 
                           {/* ADDRESS */}
-                          <td className="px-4 py-4">
-                            <p className="text-sm text-slate-500 line-clamp-2">
+                          <td className="px-3 md:px-5 py-2 md:py-3 align-middle text-left">
+                            <p className="text-[11px] md:text-sm text-slate-500 whitespace-nowrap overflow-hidden text-ellipsis" title={patient.address}>
                               {patient.address}
                             </p>
                           </td>
 
                           {/* ACTIONS */}
-                          <td className="px-4 py-4 text-center align-middle">
-                            <div className="flex justify-center gap-2">
+                          <td className="px-3 md:px-5 py-2 md:py-3 align-middle text-center">
+                            <div className="flex justify-center items-center gap-1 md:gap-2">
                               <button
                                 onClick={() => setViewingPatient(patient)}
-                                className="w-8 h-8 flex items-center justify-center rounded-full text-emerald-600 hover:bg-slate-100"
+                                className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full text-emerald-600 hover:bg-slate-100 transition-colors"
+                                title="View Patient"
                               >
-                                <Eye className="w-4 h-4" />
+                                <Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />
                               </button>
-
                               <button
                                 onClick={() => setEditingPatient(patient)}
-                                className="w-8 flex items-center justify-center h-8 rounded-full text-blue-600 hover:bg-slate-100"
+                                className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full text-blue-600 hover:bg-slate-100 transition-colors"
+                                title="Edit Patient"
                               >
-                                <Edit className="w-4 h-4" />
+                                <Edit className="w-3.5 h-3.5 md:w-4 md:h-4" />
                               </button>
-
                               <button
                                 onClick={() => setDeletingPatient(patient)}
-                                className="w-8 h-8 flex items-center justify-center rounded-full text-rose-600 hover:bg-slate-100"
+                                className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full text-rose-600 hover:bg-slate-100 transition-colors"
+                                title="Delete Patient"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
                               </button>
                             </div>
                           </td>
                         </tr>
                       );
                     })}
-
                   </tbody>
                 </table>
               </div>

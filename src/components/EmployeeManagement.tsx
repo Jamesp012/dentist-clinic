@@ -310,81 +310,61 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
     }
   };
 
-  const columnWidths = ['25%', '20%', '15%', '12%', '10%', '8%', '120px'];
+  const columnWidths = ['200px', '180px', '140px', '120px', '120px', '100px', '110px'];
 
   return (
     <div className="flex flex-col flex-1 min-h-0 bg-transparent overflow-hidden">
       <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-        <div className="relative flex flex-wrap items-center gap-4 border-b border-slate-200/70 bg-transparent px-6 py-4">
-          <div className="relative flex-1 min-w-0 group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-teal-500 transition-colors" />
+        <div className="relative flex items-center gap-2 md:gap-4 border-b border-slate-200/70 bg-transparent px-3 md:px-6 py-3 md:py-4">
+          <div className="relative flex-1 group">
+            <Search className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 md:w-5 md:h-5 group-focus-within:text-teal-500 transition-colors" />
             <input
               type="text"
-              placeholder="Search employees by name, position, or email..."
+              placeholder="Search employees..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 placeholder:text-slate-400 text-slate-900 shadow-sm hover:shadow-md"
+              className="w-full pl-9 md:pl-12 pr-4 py-2 md:py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 placeholder:text-slate-400 text-xs md:text-sm text-slate-900 shadow-sm hover:shadow-md"
             />
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="relative group bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-6 py-3.5 rounded-xl hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-teal-500/20 flex items-center gap-2.5 whitespace-nowrap font-semibold text-sm tracking-wide transform hover:scale-105 active:scale-95"
+            className="relative group bg-gradient-to-r from-teal-500 to-cyan-500 text-white p-2.5 md:px-6 md:py-3.5 rounded-xl hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-teal-500/20 flex items-center gap-2 whitespace-nowrap font-semibold text-xs md:text-sm tracking-wide transform hover:scale-105 active:scale-95"
             type="button"
+            title="Add Employee"
           >
             <Plus className="w-5 h-5" />
-            <span>Add Employee</span>
+            <span className="hidden md:inline">Add Employee</span>
             <div className="absolute inset-0 rounded-xl bg-white/0 group-hover:bg-white/10 transition-colors duration-300" aria-hidden="true"></div>
           </button>
         </div>
 
-        <div className="flex-1 flex flex-col min-h-0 px-6 py-6 gap-6 overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0 px-3 md:px-6 py-4 md:py-6 gap-4 md:gap-6 overflow-hidden">
           {sortedEmployees.length === 0 ? (
             <div className="flex-1 flex items-center justify-center border border-dashed border-slate-200 bg-white w-full">
-              {/* <div className="text-center py-16 px-6">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-teal-100 to-cyan-100 flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl font-bold text-teal-600">EM</span>
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2">
-                  {searchTerm ? 'No employees found' : 'No employees added yet'}
-                </h3>
-                <p className="text-slate-600 text-sm mb-6">
-                  {searchTerm ? 'Try adjusting your search criteria' : 'Add your first team member to get started'}
-                </p>
-              </div> */}
+               <p className="text-slate-500 text-sm">No employees found</p>
             </div>
           ) : (
             <div className="flex-1 min-h-0 border border-slate-200 bg-white rounded-none flex flex-col overflow-hidden">
-              {/* Table Header */}
-              <div className="bg-white shadow-[0_2px_5px_rgba(0,0,0,0.05)] z-20 flex-none overflow-x-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent">
-                <table className="w-full min-w-[700px] table-fixed text-sm">
+              {/* Sticky Header and Scrollable Body integrated */}
+              <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent">
+                <table className="w-full min-w-[980px] table-fixed text-sm border-collapse">
                   <colgroup>
                     {columnWidths.map((width, index) => (
                       <col key={`col-${index}`} style={{ width }} />
                     ))}
                   </colgroup>
-                  <thead className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+                  <thead className="sticky top-0 z-20 bg-white shadow-[0_2px_5px_rgba(0,0,0,0.05)] text-[10px] md:text-xs font-semibold uppercase tracking-widest text-slate-500">
                     <tr>
-                      <th scope="col" className="px-5 py-4 text-left align-middle">Name</th>
-                      <th scope="col" className="px-5 py-4 text-left align-middle">Email</th>
-                      <th scope="col" className="px-5 py-4 text-left align-middle">Phone</th>
-                      <th scope="col" className="px-5 py-4 text-left align-middle">Date Hired</th>
-                      <th scope="col" className="px-5 py-4 text-left align-middle">Access</th>
-                      <th scope="col" className="px-5 py-4 text-left align-middle">Status</th>
-                      <th scope="col" className="px-5 py-4 text-center align-middle" style={{ width: '120px' }}>Actions</th>
+                      <th scope="col" className="px-3 md:px-5 py-3 md:py-4 text-left align-middle bg-white">Name</th>
+                      <th scope="col" className="px-3 md:px-5 py-3 md:py-4 text-left align-middle bg-white">Email</th>
+                      <th scope="col" className="px-3 md:px-5 py-3 md:py-4 text-left align-middle bg-white">Phone</th>
+                      <th scope="col" className="px-3 md:px-5 py-3 md:py-4 text-left align-middle bg-white">Date Hired</th>
+                      <th scope="col" className="px-3 md:px-5 py-3 md:py-4 text-left align-middle bg-white">Access</th>
+                      <th scope="col" className="px-3 md:px-5 py-3 md:py-4 text-left align-middle bg-white">Status</th>
+                      <th scope="col" className="px-3 md:px-5 py-3 md:py-4 text-center align-middle bg-white" style={{ width: '110px' }}>Actions</th>
                     </tr>
                   </thead>
-                </table>
-              </div>
-
-              {/* Scrollable Table Body */}
-              <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent max-h-[60vh]">
-                <table className="w-full min-w-[700px] table-fixed text-sm">
-                  <colgroup>
-                    {columnWidths.map((width, index) => (
-                      <col key={`col-${index}`} style={{ width }} />
-                    ))}
-                  </colgroup>
-                  <tbody className="text-sm text-slate-700">
+                  <tbody className="text-[11px] md:text-sm text-slate-700">
                     {sortedEmployees.map((employee) => {
                       const shouldShowKeyAction = !employee.user_id || employee.accountStatus === 'pending' || !employee.isCodeUsed;
                       const accessConfig = getAccessConfig(employee.accessLevel);
@@ -393,47 +373,45 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                       return (
                         <tr
                           key={employee.id}
-                          className="transition-colors border-b border-slate-100 last:border-0 odd:bg-white even:bg-[rgba(26,188,156,0.08)] hover:bg-[rgba(26,188,156,0.18)]"
-                          style={{ minHeight: '60px' }}
+                          className="transition-colors border-b border-slate-100 last:border-0 odd:bg-white even:bg-[rgba(26,188,156,0.04)] hover:bg-[rgba(26,188,156,0.12)]"
                         >
                           {/* Name */}
-                          <td className="px-3 py-3 align-middle text-left">
+                          <td className="px-3 md:px-5 py-2 md:py-3 align-middle text-left">
                             <div className="leading-tight">
-                              <p className="text-sm font-semibold text-slate-900 whitespace-nowrap overflow-hidden text-ellipsis" title={formatEmployeeName(employee.name)}>
+                              <p className="text-[11px] md:text-sm font-semibold text-slate-900 whitespace-nowrap overflow-hidden text-ellipsis" title={formatEmployeeName(employee.name)}>
                                 {formatEmployeeName(employee.name)}
                               </p>
-                              <p className="text-[11px] text-slate-500 whitespace-nowrap overflow-hidden text-ellipsis" title={employee.position}>
+                              <p className="text-[10px] md:text-[11px] text-slate-500 whitespace-nowrap overflow-hidden text-ellipsis" title={employee.position}>
                                 {employee.position || '—'}
                               </p>
                             </div>
                           </td>
 
                           {/* Email */}
-                          <td className="px-3 py-3 align-middle text-left">
+                          <td className="px-3 md:px-5 py-2 md:py-3 align-middle text-left">
                             <p
-                              className="text-sm text-slate-700 whitespace-nowrap overflow-hidden text-ellipsis"
+                              className="text-[11px] md:text-sm text-slate-700 whitespace-nowrap overflow-hidden text-ellipsis"
                               title={employee.email}
-                              style={{ maxWidth: '220px' }}
                             >
                               {employee.email}
                             </p>
                           </td>
 
                           {/* Phone */}
-                          <td className="px-3 py-3 align-middle text-left whitespace-nowrap">
-                            <p className="text-sm font-medium text-slate-900 tracking-wide overflow-hidden text-ellipsis" title={employee.phone}>
+                          <td className="px-3 md:px-5 py-2 md:py-3 align-middle text-left whitespace-nowrap">
+                            <p className="text-[11px] md:text-sm font-medium text-slate-900 tracking-wide overflow-hidden text-ellipsis" title={employee.phone}>
                               {employee.phone}
                             </p>
                           </td>
 
                           {/* Date Hired */}
-                          <td className="px-3 py-3 align-middle text-left whitespace-nowrap">
-                            <span className="text-sm font-semibold text-slate-900">{formatToDD_MM_YYYY(employee.dateHired)}</span>
+                          <td className="px-3 md:px-5 py-2 md:py-3 align-middle text-left whitespace-nowrap">
+                            <span className="text-[11px] md:text-sm font-semibold text-slate-900">{formatToDD_MM_YYYY(employee.dateHired)}</span>
                           </td>
 
                           {/* Access Level */}
-                          <td className="px-3 py-3 align-middle text-left">
-                            <div className={`flex flex-col text-[11px] font-semibold uppercase leading-tight ${accessConfig.className}`}>
+                          <td className="px-3 md:px-5 py-2 md:py-3 align-middle text-left">
+                            <div className={`flex flex-col text-[10px] md:text-[11px] font-semibold uppercase leading-tight ${accessConfig.className}`}>
                               {accessConfig.label.split(' ').map((word, index) => (
                                 <span key={`${employee.id}-access-${index}`} className="whitespace-nowrap">
                                   {word}
@@ -443,45 +421,45 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
                           </td>
 
                           {/* Status */}
-                          <td className="px-3 py-3 align-middle text-left whitespace-nowrap">
-                            <span className={`text-[11px] font-semibold uppercase ${statusConfig.className}`}>
+                          <td className="px-3 md:px-5 py-2 md:py-3 align-middle text-left whitespace-nowrap">
+                            <span className={`text-[10px] md:text-[11px] font-semibold uppercase ${statusConfig.className}`}>
                               {statusConfig.label}
                             </span>
                           </td>
 
                            {/* Actions */}
-                          <td className="px-3 py-3 align-middle text-center" style={{ width: '120px' }}>
-                            <div className="flex justify-center items-center gap-2">
+                          <td className="px-3 md:px-5 py-2 md:py-3 align-middle text-center" style={{ width: '110px' }}>
+                            <div className="flex justify-center items-center gap-1 md:gap-2">
                               {shouldShowKeyAction ? (
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleGenerateCredentials(employee.id);
                                   }}
-                                  className="w-8 h-8 flex items-center justify-center rounded-full text-emerald-600 hover:text-emerald-800 hover:bg-slate-100 transition-colors"
+                                  className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full text-emerald-600 hover:text-emerald-800 hover:bg-slate-100 transition-colors"
                                   title={employee.accountStatus === 'pending' ? 'Regenerate Login Credentials' : 'Generate Login Credentials'}
                                   type="button"
                                 >
-                                  <Key className="w-4 h-4" />
+                                  <Key className="w-3.5 h-3.5 md:w-4 md:h-4" />
                                 </button>
                               ) : (
-                                <span className="w-8 h-8 inline-flex items-center justify-center" aria-hidden="true"></span>
+                                <span className="w-7 h-7 md:w-8 md:h-8 inline-flex items-center justify-center" aria-hidden="true"></span>
                               )}
                               <button
                                 onClick={() => setEditingEmployee(employee)}
-                                className="w-8 h-8 flex items-center justify-center rounded-full text-blue-600 hover:text-blue-800 hover:bg-slate-100 transition-colors"
+                                className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full text-blue-600 hover:text-blue-800 hover:bg-slate-100 transition-colors"
                                 title="Edit Employee"
                                 type="button"
                               >
-                                <Edit className="w-4 h-4" />
+                                <Edit className="w-3.5 h-3.5 md:w-4 md:h-4" />
                               </button>
                               <button
                                 onClick={() => setDeletingEmployee(employee)}
-                                className="w-8 h-8 flex items-center justify-center rounded-full text-rose-600 hover:text-rose-800 hover:bg-slate-100 transition-colors"
+                                className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full text-rose-600 hover:text-rose-800 hover:bg-slate-100 transition-colors"
                                 title="Delete Employee"
                                 type="button"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
                               </button>
                             </div>
                           </td>

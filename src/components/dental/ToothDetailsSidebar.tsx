@@ -44,31 +44,40 @@ export function ToothDetailsSidebar({
 
   const type = getToothType(selectedTooth);
 
-  // Helper to format numbers (FDI)
-  const getFDINumber = (id: number) => {
-    if (id >= 1 && id <= 8) return `1${9 - id}`;
-    if (id >= 9 && id <= 16) return `2${id - 8}`;
-    if (id >= 17 && id <= 24) return `3${25 - id}`;
-    if (id >= 25 && id <= 32) return `4${id - 24}`;
-    return id.toString();
+  // Helper to get Label from ID (for primary teeth)
+  const getToothLabel = (id: number) => {
+    const PRIMARY_LABELS: Record<number, string> = {
+      101: 'A', 102: 'B', 103: 'C', 104: 'D', 105: 'E',
+      106: 'F', 107: 'G', 108: 'H', 109: 'I', 110: 'J',
+      111: 'K', 112: 'L', 113: 'M', 114: 'N', 115: 'O',
+      116: 'P', 117: 'Q', 118: 'R', 119: 'S', 120: 'T',
+    };
+    return id > 32 ? PRIMARY_LABELS[id] || id.toString() : id.toString();
   };
 
   const handleSetCondition = (condition: ToothData['generalCondition'], label: string) => {
     // Toggle membership in the `conditions` array (multi-select). Maintain `generalCondition` as a fallback.
     const existing = toothData.conditions && toothData.conditions.length > 0 ? toothData.conditions.slice() : [toothData.generalCondition];
-    const idx = existing.indexOf(condition as any);
+    
+    // Normalize existing conditions to handle cases where it might contain 'healthy'
+    const cleanExisting = existing.filter(c => c !== 'healthy');
+    
+    const idx = cleanExisting.indexOf(condition as any);
+    let normalized: any[];
+    
     if (idx >= 0) {
-      existing.splice(idx, 1);
+      cleanExisting.splice(idx, 1);
+      normalized = cleanExisting.length > 0 ? cleanExisting : ['healthy'];
     } else {
-      existing.push(condition as any);
+      cleanExisting.push(condition as any);
+      normalized = cleanExisting;
     }
 
-    const normalized = existing.length > 0 ? existing : ['healthy' as ToothData['generalCondition']];
-    const notes = idx >= 0 ? toothData.notes : label;
+    const notes = idx >= 0 ? toothData.notes : (toothData.notes ? `${toothData.notes}, ${label}` : label);
 
     onUpdateTooth(selectedTooth, {
       conditions: normalized as any,
-      generalCondition: (normalized[0] as any) || 'healthy',
+      generalCondition: (normalized[normalized.length - 1] as any) || 'healthy',
       notes,
     });
   };
@@ -105,7 +114,7 @@ export function ToothDetailsSidebar({
             animate={{ opacity: 0.3 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black z-40"
+            className="fixed inset-0 bg-black z-[9998]"
           />
           
           {/* Sidebar Panel */}
@@ -114,73 +123,73 @@ export function ToothDetailsSidebar({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="absolute right-0 top-0 bottom-0 w-[900px] max-w-[90vw] bg-white z-50 shadow-2xl flex overflow-hidden border-l border-slate-200"
+            className="fixed right-0 top-0 bottom-0 w-[900px] max-w-[95vw] sm:max-w-[90vw] bg-white z-[9999] shadow-2xl flex overflow-hidden border-l border-slate-200"
           >
             {/* Main Content Area */}
-            <div className="flex-1 flex flex-col bg-white">
+            <div className="flex-1 flex flex-col bg-white overflow-hidden">
                {/* Header Section with Back Button */}
-               <div className="bg-white p-8 border-b border-slate-200">
+               <div className="bg-white p-4 sm:p-8 border-b border-slate-200 flex-shrink-0">
                   <div className="flex items-center justify-between mb-4">
                      <button
                        onClick={onClose}
                        className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors"
                      >
-                       <ArrowLeft className="w-5 h-5" />
-                       <span className="font-medium">Back to Chart</span>
+                       <ArrowLeft className="w-4 sm:w-5 h-4 sm:h-5" />
+                       <span className="font-medium text-sm sm:text-base">Back</span>
                      </button>
-                     <h2 className="text-3xl font-light text-slate-700">
-                       Tooth {selectedTooth}
+                     <h2 className="text-xl sm:text-3xl font-light text-slate-700">
+                       Tooth {getToothLabel(selectedTooth)}
                      </h2>
                   </div>
 
                   {/* Permanent/Temporary Toggle (or fixed label) */}
                   {typeof fixedIsPermanent === 'boolean' ? (
-                    <div className="mt-6 flex items-center justify-center">
+                    <div className="mt-4 sm:mt-6 flex items-center justify-center">
                       <span
                         className={cn(
-                          "px-6 py-3 rounded-lg border-2 font-medium",
+                          "px-4 py-2 sm:px-6 sm:py-3 rounded-lg border-2 font-medium text-xs sm:text-base",
                           fixedIsPermanent
                             ? "border-black bg-black text-white"
                             : "border-slate-400 bg-slate-400 text-white"
                         )}
                       >
-                        {fixedIsPermanent ? 'Permanent Tooth' : 'Temporary Tooth'}
+                        {fixedIsPermanent ? 'Permanent' : 'Temporary'}
                       </span>
                     </div>
                   ) : (
-                    <div className="mt-6 flex items-center justify-center gap-4">
+                    <div className="mt-4 sm:mt-6 flex items-center justify-center gap-2 sm:gap-4">
                       <button
                         onClick={() => onUpdateTooth(selectedTooth, { isPermanent: true })}
                         className={cn(
-                          "px-6 py-3 rounded-lg border-2 font-medium transition-all",
+                          "px-4 py-2 sm:px-6 sm:py-3 rounded-lg border-2 font-medium transition-all text-xs sm:text-base",
                           toothData.isPermanent
                             ? "border-black bg-black text-white"
                             : "border-slate-300 text-slate-600 hover:border-slate-400"
                         )}
                       >
-                        Permanent Tooth
+                        Permanent
                       </button>
                       <button
                         onClick={() => onUpdateTooth(selectedTooth, { isPermanent: false })}
                         className={cn(
-                          "px-6 py-3 rounded-lg border-2 font-medium transition-all",
+                          "px-4 py-2 sm:px-6 sm:py-3 rounded-lg border-2 font-medium transition-all text-xs sm:text-base",
                           !toothData.isPermanent
                             ? "border-slate-400 bg-slate-400 text-white"
                             : "border-slate-300 text-slate-600 hover:border-slate-400"
                         )}
                       >
-                        Temporary Tooth
+                        Temporary
                       </button>
                     </div>
                   )}
                </div>
 
                {/* Tooth Conditions Section */}
-               <div className="flex-1 p-8 overflow-y-auto">
-                  <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-100">
-                     <h3 className="text-2xl font-light text-slate-600 mb-6">Tooth Conditions</h3>
+               <div className="flex-1 p-4 sm:p-8 overflow-y-auto">
+                  <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-slate-100">
+                     <h3 className="text-xl sm:text-2xl font-light text-slate-600 mb-6">Tooth Conditions</h3>
                      
-                     <div className="grid grid-cols-3 gap-4">
+                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4">
                         {allConditions.map((condition, index) => {
                           const isActive = (toothData.conditions && toothData.conditions.includes(condition.value as any)) || toothData.generalCondition === condition.value;
                           return (
@@ -188,9 +197,9 @@ export function ToothDetailsSidebar({
                               key={index}
                               onClick={() => handleSetCondition(condition.value, condition.label)}
                               className={cn(
-                                "p-4 rounded-lg border-2 text-center transition-all font-medium",
+                                "p-2 sm:p-3 rounded-lg border-2 text-center transition-all font-medium text-[11px] sm:text-sm leading-tight min-h-[44px] sm:min-h-[50px] flex items-center justify-center",
                                 isActive
-                                  ? "border-sky-500 bg-sky-50 text-sky-700"
+                                  ? "border-sky-500 bg-sky-50 text-sky-700 shadow-sm"
                                   : "border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700"
                               )}
                             >
@@ -217,54 +226,5 @@ export function ToothDetailsSidebar({
         </>
       )}
     </AnimatePresence>
-  );
-}
-
-function ActionButton({ icon: Icon, label, active, onClick }: any) {
-  return (
-    <button 
-      onClick={onClick}
-      className={cn(
-        "flex items-center gap-2 font-bold text-xs tracking-wider transition-colors",
-        active ? "text-red-500" : "text-sky-500 hover:text-sky-600"
-      )}
-    >
-      <div className={cn(
-        "p-1 rounded-full border-2",
-        active ? "border-red-500" : "border-sky-500"
-      )}>
-        <Icon className="w-4 h-4" />
-      </div>
-      {label}
-    </button>
-  );
-}
-
-function EndoItem({ icon: Icon, label }: any) {
-  return (
-    <div className="flex items-center justify-between py-4">
-       <div className="flex items-center gap-3 text-slate-600 font-medium">
-         <Icon className="w-5 h-5 text-slate-400" />
-         {label}
-       </div>
-       <button className="flex items-center gap-1 text-slate-400 text-sm hover:text-sky-500">
-         Test <ChevronRight className="w-4 h-4" />
-       </button>
-    </div>
-  );
-}
-
-function ProbingInput({ label }: any) {
-  return (
-    <div className="border border-slate-200 rounded-lg p-4 flex flex-col items-center gap-2 relative">
-       <div className="text-4xl font-light text-slate-600">0</div>
-       <div className="absolute top-1/2 -translate-y-1/2 w-full h-px bg-slate-100 -z-0" />
-       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wide bg-white px-2 z-10">
-         {label}
-       </div>
-       <div className="absolute top-8 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-slate-50 border border-slate-100 text-[10px] text-slate-300">
-         0
-       </div>
-    </div>
   );
 }

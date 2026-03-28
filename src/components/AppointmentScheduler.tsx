@@ -60,6 +60,13 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
   const [closedSchedules, setClosedSchedules] = useState<Set<string>>(new Set(
     JSON.parse(localStorage.getItem('closedSchedules') || '[]')
   ));
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 1024);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const getScheduleKey = (date: string, period: 'am' | 'pm') => `${date}-${period}`;
 
@@ -258,14 +265,14 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-cyan-50/40 flex flex-col flex-1">
-      <div className="p-4 space-y-4 flex flex-col flex-1">
+    <div className="min-h-screen bg-transparent flex flex-col flex-1">
+      <div className="p-3 md:p-6 space-y-4 flex flex-col flex-1">
 
-        {/* Controls */}
-        <div className="relative bg-white/70 backdrop-blur-md py-3 px-5 rounded-2xl shadow-md border border-slate-200/60 overflow-x-auto">
-          <div className="flex gap-3 items-center whitespace-nowrap">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-slate-500" />
+        {/* Controls - Compact for Mobile */}
+        <div className="relative bg-white/70 backdrop-blur-md py-1.5 px-2 md:py-3 md:px-5 rounded-xl md:rounded-2xl shadow-md border border-slate-200/60 overflow-x-auto scrollbar-none">
+          <div className="flex gap-1.5 md:gap-4 items-center whitespace-nowrap">
+            <div className="flex items-center gap-1 flex-1 min-w-0 md:flex-none">
+              <Calendar className="w-3 h-3 md:w-5 md:h-5 text-slate-500 flex-shrink-0" />
               <input
                 type="text"
                 value={selectedDateInput}
@@ -277,260 +284,246 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                   }
                 }}
                 placeholder="DD/MM/YYYY"
-                className="w-32 px-2.5 py-2 bg-white border border-slate-200/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm"
+                className="w-full md:w-32 px-1 py-1 md:px-2.5 md:py-2 bg-white border border-slate-200/60 rounded-md md:rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-[9px] md:text-sm text-slate-900 placeholder:text-slate-400 shadow-sm"
               />
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-1 md:gap-2 flex-shrink-0">
               <button
                 onClick={() => setViewMode('day')}
-                className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 ${
+                className={`px-1.5 py-1 md:px-4 md:py-2.5 rounded-md md:rounded-xl font-semibold text-[9px] md:text-sm transition-all duration-300 ${
                   viewMode === 'day'
                     ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
-                Day View
+                Day
               </button>
               <button
                 onClick={() => setViewMode('thisWeek')}
-                className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 ${
+                className={`px-1.5 py-1 md:px-4 md:py-2.5 rounded-md md:rounded-xl font-semibold text-[9px] md:text-sm transition-all duration-300 ${
                   viewMode === 'thisWeek'
                     ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
-                This Week
+                Week
               </button>
               <button
                 onClick={() => setViewMode('viewAll')}
-                className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 ${
+                className={`px-1.5 py-1 md:px-4 md:py-2.5 rounded-md md:rounded-xl font-semibold text-[9px] md:text-sm transition-all duration-300 ${
                   viewMode === 'viewAll'
                     ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
-                View All
+                All
               </button>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Filter className="w-5 h-5 text-slate-500" />
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <Filter className="w-3 h-3 md:w-5 md:h-5 text-slate-500" />
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3.5 py-2.5 bg-white border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 shadow-sm"
+                className="px-1 py-1 md:px-3.5 md:py-2.5 bg-white border border-slate-200/60 rounded-md md:rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-[9px] md:text-sm text-slate-900 shadow-sm cursor-pointer"
               >
-                <option value="all">All Status</option>
-                <option value="scheduled">Scheduled</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
+                <option value="all">St</option>
+                <option value="scheduled">S</option>
+                <option value="completed">D</option>
+                <option value="cancelled">X</option>
               </select>
             </div>
 
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-1 flex-shrink-0">
               <button
                 onClick={() => setShowAddModal(true)}
-                className="relative group bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-6 py-2.5 rounded-xl hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-teal-500/20 flex items-center gap-2 whitespace-nowrap font-semibold text-sm tracking-wide transform hover:scale-105 active:scale-95"
+                className="relative group bg-gradient-to-r from-teal-500 to-cyan-500 text-white p-1 md:px-6 md:py-2.5 rounded-md md:rounded-xl hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-teal-500/20 flex items-center gap-1 whitespace-nowrap font-semibold text-[9px] md:text-sm tracking-wide transform hover:scale-105 active:scale-95"
               >
-                <Plus className="w-5 h-5" />
-                <span>New Appointment</span>
-                <div className="absolute inset-0 rounded-xl bg-white/0 group-hover:bg-white/10 transition-colors duration-300"></div>
+                <Plus className="w-3.5 h-3.5 md:w-5 md:h-5" />
+                <span className="hidden md:inline">New Appointment</span>
+                <div className="absolute inset-0 rounded-md md:rounded-xl bg-white/0 group-hover:bg-white/10 transition-colors duration-300"></div>
               </button>
             </div>
           </div>
         </div>
 
-        {/* Day View - Queue System */}
+        {/* Day View - Queue System - Compact for Mobile */}
         {viewMode === 'day' && (
         <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/60 overflow-hidden">
-          <div className="p-6 bg-gradient-to-r from-teal-50 via-cyan-50 to-sky-50 border-b border-slate-200/60">
-            <h2 className="text-2xl font-bold text-slate-900">
+          <div className="p-3 md:p-6 bg-gradient-to-r from-teal-50 via-cyan-50 to-sky-50 border-b border-slate-200/60">
+            <h2 className="text-[14px] md:text-2xl font-bold text-slate-900">
               {(() => {
                 const dateObj = new Date(selectedDate + 'T00:00:00Z');
                 const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
                 const dateStr = dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-                return `${dayName} • ${dateStr}`;
+                return isMobile ? `${dayName.substring(0, 3)} • ${dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : `${dayName} • ${dateStr}`;
               })()}
             </h2>
           </div>
-          <div className="p-6 space-y-8">
+          <div className="p-3 md:p-6 space-y-4 md:space-y-8">
             {/* MORNING QUEUE */}
             <div className={`rounded-2xl border transition-all flex flex-col overflow-hidden ${isScheduleClosed(selectedDate, 'am') ? 'border-red-300/70 bg-red-50/70' : 'border-emerald-200/70 bg-emerald-50/60'}`}>
-              <div className="p-5 bg-gradient-to-r from-emerald-100/80 to-teal-100/80 border-b border-emerald-200/70 flex items-center justify-between rounded-t flex-shrink-0">
+              <div className="p-2 md:p-5 bg-gradient-to-r from-emerald-100/80 to-teal-100/80 border-b border-emerald-200/70 flex items-center justify-between rounded-t flex-shrink-0">
                 <div>
-                  <h3 className="text-lg font-bold text-emerald-900">Morning Queue</h3>
-                  <p className="text-sm text-emerald-700">8:00 AM - 12:00 PM</p>
+                  <h3 className="text-[12px] md:text-lg font-bold text-emerald-900">Morning Queue</h3>
+                  <p className="text-[9px] md:text-sm text-emerald-700 font-medium">8:30 AM - 12:00 PM</p>
                 </div>
                 <div className="text-right">
-                  <div className="text-4xl font-bold text-emerald-900">{getBookingCountForPeriod(selectedDate, 'am')}</div>
-                  <p className="text-xs text-emerald-700">in queue</p>
+                  <div className="text-xl md:text-4xl font-bold text-emerald-900 leading-none">{getBookingCountForPeriod(selectedDate, 'am')}</div>
+                  <p className="text-[8px] md:text-xs text-emerald-700 font-bold uppercase tracking-tight">in queue</p>
                 </div>
               </div>
-              <div className="p-5 flex flex-col overflow-hidden">
+              <div className="p-2 md:p-5 flex flex-col overflow-hidden">
                 {isScheduleClosed(selectedDate, 'am') && (
-                  <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-2 rounded mb-4 text-sm font-semibold">
+                  <div className="bg-red-100 border border-red-300 text-red-700 px-2 py-1 rounded mb-2 text-[9px] md:text-sm font-semibold text-center">
                     ⛔ Schedule Closed
                   </div>
                 )}
                 
                 {/* Queue List */}
-                <div className="space-y-3 mb-4 overflow-y-auto scrollbar-thumb-emerald-300 scrollbar-track-transparent" style={{ maxHeight: '400px' }}>
+                <div className="space-y-1.5 md:space-y-3 mb-3 overflow-y-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent" style={{ maxHeight: isMobile ? '200px' : '300px' }}>
                   {appointments.filter(apt => {
                     const aptDate = getDateString(apt.date);
                     if (aptDate !== selectedDate || apt.status === 'cancelled') return false;
                     const [hours] = (apt.time || '09:00').split(':').map(Number);
                     return hours < 12;
                   }).map((apt, index) => (
-                    <div key={apt.id} className="flex items-start gap-3 p-4 bg-white/80 rounded-xl border border-emerald-200/60 shadow-sm hover:shadow-md transition-all">
-                      <div className="flex-shrink-0 w-9 h-9 bg-gradient-to-br from-emerald-500 to-teal-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                    <div key={apt.id} className="flex items-start gap-1.5 md:gap-3 p-1.5 md:p-4 bg-white/80 rounded-lg md:rounded-xl border border-emerald-200/60 shadow-sm hover:shadow-md transition-all">
+                      <div className="flex-shrink-0 w-5 h-5 md:w-9 md:h-9 bg-gradient-to-br from-emerald-500 to-teal-500 text-white rounded-full flex items-center justify-center font-bold text-[9px] md:text-sm">
                         {index + 1}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="font-semibold text-slate-900">{apt.patientName}</p>
+                        <div className="flex items-center gap-1">
+                          <p className="font-semibold text-slate-900 text-[10px] md:text-base truncate leading-tight">{apt.patientName}</p>
                           {getPatientRecordStatus(String(apt.patientId), treatmentRecords) === 'no-record' && (
-                            <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">No Record</span>
+                            <span className="px-1 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-[7px] md:text-xs font-semibold whitespace-nowrap">New</span>
                           )}
                         </div>
-                        <p className="text-sm text-slate-600">{apt.type}</p>
-                        {apt.notes && <p className="text-xs text-slate-500 mt-1">{apt.notes}</p>}
+                        <p className="text-[9px] md:text-sm text-slate-600 truncate leading-tight">{apt.type}</p>
                       </div>
-                      <div className="flex-shrink-0 flex gap-2 items-center">
+                      <div className="flex-shrink-0 flex gap-1 md:gap-2 items-center">
                         {apt.status === 'scheduled' && (
                           <>
                             <button
                               onClick={() => handleDoneClick(apt)}
-                              className="px-2.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs rounded-lg hover:from-emerald-700 hover:to-teal-700 transition-all font-semibold"
+                              className="px-1.5 py-0.5 md:px-2.5 md:py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-[8px] md:text-xs rounded-md md:rounded-lg hover:from-emerald-700 hover:to-teal-700 transition-all font-semibold"
                             >
                               Done
                             </button>
                             <button
                               onClick={() => updateAppointmentStatus(apt.id, 'cancelled')}
-                              className="px-2.5 py-1.5 bg-gradient-to-r from-red-600 to-pink-600 text-white text-xs rounded-lg hover:from-red-700 hover:to-pink-700 transition-all font-semibold"
+                              className="px-1.5 py-0.5 md:px-2.5 md:py-1.5 bg-gradient-to-r from-red-600 to-pink-600 text-white text-[8px] md:text-xs rounded-md md:rounded-lg hover:from-red-700 hover:to-pink-700 transition-all font-semibold"
                             >
-                              Cancel
+                              X
                             </button>
                           </>
                         )}
                         {apt.status === 'completed' && (
-                          <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 text-xs rounded-lg font-semibold">✓ Completed</span>
+                          <span className="px-1 py-0.5 bg-emerald-100 text-emerald-700 text-[8px] md:text-xs rounded-md font-semibold">✓</span>
                         )}
-                        <button
-                          onClick={() => deleteAppointment(apt.id)}
-                          className="px-2.5 py-1.5 bg-slate-600 text-white text-xs rounded-lg hover:bg-slate-700 transition-colors font-semibold"
-                        >
-                          Delete
-                        </button>
                       </div>
                     </div>
                   ))}
                   {getBookingCountForPeriod(selectedDate, 'am') === 0 && (
-                    <div className="text-center py-8 text-gray-400">
-                      <p className="text-sm">No appointments in queue</p>
+                    <div className="text-center py-2 text-gray-400">
+                      <p className="text-[10px] md:text-sm italic">No entries</p>
                     </div>
                   )}
                 </div>
 
                 <button
                   onClick={() => toggleScheduleClosed(selectedDate, 'am')}
-                  className={`w-full py-2.5 rounded-xl font-semibold transition-colors ${
+                  className={`w-full py-1.5 md:py-2.5 rounded-lg md:rounded-xl font-bold text-[10px] md:text-sm transition-all shadow-sm active:scale-95 ${
                     isScheduleClosed(selectedDate, 'am')
                       ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
                       : 'bg-red-600 hover:bg-red-700 text-white'
                   }`}
                 >
-                  {isScheduleClosed(selectedDate, 'am') ? '✓ Reopen Morning Schedule' : '✕ Close Morning Schedule'}
+                  {isScheduleClosed(selectedDate, 'am') ? 'Reopen Morning' : 'Close Morning'}
                 </button>
               </div>
             </div>
 
             {/* AFTERNOON QUEUE */}
             <div className={`rounded-2xl border transition-all flex flex-col overflow-hidden ${isScheduleClosed(selectedDate, 'pm') ? 'border-red-300/70 bg-red-50/70' : 'border-orange-200/70 bg-orange-50/60'}`}>
-              <div className="p-5 bg-gradient-to-r from-orange-100/80 to-amber-100/80 border-b border-orange-200/70 flex items-center justify-between rounded-t flex-shrink-0">
+              <div className="p-2 md:p-5 bg-gradient-to-r from-orange-100/80 to-amber-100/80 border-b border-orange-200/70 flex items-center justify-between rounded-t flex-shrink-0">
                 <div>
-                  <h3 className="text-lg font-bold text-orange-900">Afternoon Queue</h3>
-                  <p className="text-sm text-orange-700">12:30 PM - 8:00 PM</p>
+                  <h3 className="text-[12px] md:text-lg font-bold text-orange-900">Afternoon Queue</h3>
+                  <p className="text-[9px] md:text-sm text-orange-700 font-medium">12:30 PM - 8:00 PM</p>
                 </div>
                 <div className="text-right">
-                  <div className="text-4xl font-bold text-orange-900">{getBookingCountForPeriod(selectedDate, 'pm')}</div>
-                  <p className="text-xs text-orange-700">in queue</p>
+                  <div className="text-xl md:text-4xl font-bold text-orange-900 leading-none">{getBookingCountForPeriod(selectedDate, 'pm')}</div>
+                  <p className="text-[8px] md:text-xs text-orange-700 font-bold uppercase tracking-tight">in queue</p>
                 </div>
               </div>
-              <div className="p-5 flex flex-col overflow-hidden">
+              <div className="p-2 md:p-5 flex flex-col overflow-hidden">
                 {isScheduleClosed(selectedDate, 'pm') && (
-                  <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-2 rounded mb-4 text-sm font-semibold">
+                  <div className="bg-red-100 border border-red-300 text-red-700 px-2 py-1 rounded mb-2 text-[9px] md:text-sm font-semibold text-center">
                     ⛔ Schedule Closed
                   </div>
                 )}
                 
                 {/* Queue List */}
-                <div className="space-y-3 mb-4 overflow-y-auto scrollbar-thumb-orange-300 scrollbar-track-transparent" style={{ maxHeight: '400px' }}>
+                <div className="space-y-1.5 md:space-y-3 mb-3 overflow-y-auto scrollbar-thin scrollbar-thumb-orange-300 scrollbar-track-transparent" style={{ maxHeight: isMobile ? '200px' : '300px' }}>
                   {appointments.filter(apt => {
                     const aptDate = getDateString(apt.date);
                     if (aptDate !== selectedDate || apt.status === 'cancelled') return false;
                     const [hours] = (apt.time || '09:00').split(':').map(Number);
                     return hours >= 12;
                   }).map((apt, index) => (
-                    <div key={apt.id} className="flex items-start gap-3 p-4 bg-white/80 rounded-xl border border-orange-200/60 shadow-sm hover:shadow-md transition-all">
-                      <div className="flex-shrink-0 w-9 h-9 bg-gradient-to-br from-orange-500 to-amber-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                    <div key={apt.id} className="flex items-start gap-1.5 md:gap-3 p-1.5 md:p-4 bg-white/80 rounded-lg md:rounded-xl border border-orange-200/60 shadow-sm hover:shadow-md transition-all">
+                      <div className="flex-shrink-0 w-5 h-5 md:w-9 md:h-9 bg-gradient-to-br from-orange-500 to-amber-500 text-white rounded-full flex items-center justify-center font-bold text-[9px] md:text-sm">
                         {index + 1}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="font-semibold text-slate-900">{apt.patientName}</p>
+                        <div className="flex items-center gap-1">
+                          <p className="font-semibold text-slate-900 text-[10px] md:text-base truncate leading-tight">{apt.patientName}</p>
                           {getPatientRecordStatus(String(apt.patientId), treatmentRecords) === 'no-record' && (
-                            <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">No Record</span>
+                            <span className="px-1 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-[7px] md:text-xs font-semibold whitespace-nowrap">New</span>
                           )}
                         </div>
-                        <p className="text-sm text-slate-600">{apt.type}</p>
-                        {apt.notes && <p className="text-xs text-slate-500 mt-1">{apt.notes}</p>}
+                        <p className="text-[9px] md:text-sm text-slate-600 truncate leading-tight">{apt.type}</p>
                       </div>
-                      <div className="flex-shrink-0 flex gap-2 items-center">
+                      <div className="flex-shrink-0 flex gap-1 md:gap-2 items-center">
                         {apt.status === 'scheduled' && (
                           <>
                             <button
                               onClick={() => handleDoneClick(apt)}
-                              className="px-2.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs rounded-lg hover:from-emerald-700 hover:to-teal-700 transition-all font-semibold"
+                              className="px-1.5 py-0.5 md:px-2.5 md:py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-[8px] md:text-xs rounded-md md:rounded-lg hover:from-emerald-700 hover:to-teal-700 transition-all font-semibold"
                             >
                               Done
                             </button>
                             <button
                               onClick={() => updateAppointmentStatus(apt.id, 'cancelled')}
-                              className="px-2.5 py-1.5 bg-gradient-to-r from-red-600 to-pink-600 text-white text-xs rounded-lg hover:from-red-700 hover:to-pink-700 transition-all font-semibold"
+                              className="px-1.5 py-0.5 md:px-2.5 md:py-1.5 bg-gradient-to-r from-red-600 to-pink-600 text-white text-[8px] md:text-xs rounded-md md:rounded-lg hover:from-red-700 hover:to-pink-700 transition-all font-semibold"
                             >
-                              Cancel
+                              X
                             </button>
                           </>
                         )}
                         {apt.status === 'completed' && (
-                          <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 text-xs rounded-lg font-semibold">✓ Completed</span>
+                          <span className="px-1 py-0.5 bg-emerald-100 text-emerald-700 text-[8px] md:text-xs rounded-md font-semibold">✓</span>
                         )}
-                        <button
-                          onClick={() => deleteAppointment(apt.id)}
-                          className="px-2.5 py-1.5 bg-slate-600 text-white text-xs rounded-lg hover:bg-slate-700 transition-colors font-semibold"
-                        >
-                          Delete
-                        </button>
                       </div>
                     </div>
                   ))}
                   {getBookingCountForPeriod(selectedDate, 'pm') === 0 && (
-                    <div className="text-center py-8 text-gray-400">
-                      <p className="text-sm">No appointments in queue</p>
+                    <div className="text-center py-2 text-gray-400">
+                      <p className="text-[10px] md:text-sm italic">No entries</p>
                     </div>
                   )}
                 </div>
 
                 <button
                   onClick={() => toggleScheduleClosed(selectedDate, 'pm')}
-                  className={`w-full py-2.5 rounded-xl font-semibold transition-colors ${
+                  className={`w-full py-1.5 md:py-2.5 rounded-lg md:rounded-xl font-bold text-[10px] md:text-sm transition-all shadow-sm active:scale-95 ${
                     isScheduleClosed(selectedDate, 'pm')
                       ? 'bg-orange-600 hover:bg-orange-700 text-white'
                       : 'bg-red-600 hover:bg-red-700 text-white'
                   }`}
                 >
-                  {isScheduleClosed(selectedDate, 'pm') ? '✓ Reopen Afternoon Schedule' : '✕ Close Afternoon Schedule'}
+                  {isScheduleClosed(selectedDate, 'pm') ? 'Reopen Afternoon' : 'Close Afternoon'}
                 </button>
               </div>
             </div>
@@ -546,92 +539,138 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
               {viewMode === 'thisWeek' ? 'This Week' : 'All Appointments'} • {sortedAppointments.length} {sortedAppointments.length === 1 ? 'appointment' : 'appointments'}
             </h2>
           </div>
-          <div className="overflow-x-auto max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-teal-400 scrollbar-track-slate-200">
-            <table className="w-full min-w-[700px]">
-              <thead className="bg-slate-50/80 border-b border-slate-200/60 sticky top-0">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold tracking-widest uppercase text-slate-600">Date & Time</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold tracking-widest uppercase text-slate-600">Patient</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold tracking-widest uppercase text-slate-600">Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold tracking-widest uppercase text-slate-600">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold tracking-widest uppercase text-slate-600">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200/60">
+          <div className="overflow-x-auto max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-teal-400 scrollbar-track-slate-200">
+            {isMobile ? (
+              <div className="p-3 space-y-3">
                 {sortedAppointments.length > 0 ? (
                   sortedAppointments.map((apt) => (
-                    <tr key={apt.id} className="hover:bg-teal-50/60 transition-colors">
-                      <td className="px-6 py-4">
-                        <div>
-                          <p className="font-semibold text-slate-900">{getDateString(apt.date)}</p>
-                          <p className="text-sm text-slate-600">{formatTime(String(apt.time).substring(0, 5))}</p>
+                    <div key={apt.id} className="bg-white/80 p-3 rounded-xl border border-slate-200/60 shadow-sm space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div className="min-w-0">
+                          <p className="font-bold text-slate-900 text-[13px] truncate">{apt.patientName}</p>
+                          <p className="text-[11px] text-slate-600">{getDateString(apt.date)} • {formatTime(String(apt.time).substring(0, 5))}</p>
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-slate-900">{apt.patientName}</span>
-                          {getPatientRecordStatus(String(apt.patientId), treatmentRecords) === 'no-record' && (
-                            <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">No Record</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-slate-700">{apt.type}</td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${statusColors[apt.status]}`}>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border flex-shrink-0 ${statusColors[apt.status]}`}>
                           {apt.status}
                         </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex gap-2">
-                          {apt.status === 'scheduled' && (
-                            <>
-                              <button
-                                onClick={() => handleDoneClick(apt)}
-                                className="text-xs px-2.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg hover:from-emerald-700 hover:to-teal-700 transition-all font-semibold"
-                              >
-                                Done
-                              </button>
-                              <button
-                                onClick={() => updateAppointmentStatus(apt.id, 'cancelled')}
-                                className="text-xs px-2.5 py-1.5 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-lg hover:from-red-700 hover:to-pink-700 transition-all font-semibold"
-                              >
-                                Cancel
-                              </button>
-                            </>
-                          )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-[11px] text-slate-700 truncate"><span className="font-semibold">Type:</span> {apt.type}</p>
+                        {getPatientRecordStatus(String(apt.patientId), treatmentRecords) === 'no-record' && (
+                          <span className="px-1.5 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-[9px] font-semibold whitespace-nowrap">New</span>
+                        )}
+                      </div>
+                      {apt.status === 'scheduled' && (
+                        <div className="flex gap-2 pt-1">
+                          <button
+                            onClick={() => handleDoneClick(apt)}
+                            className="flex-1 text-[10px] py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg font-bold shadow-sm"
+                          >
+                            Done
+                          </button>
+                          <button
+                            onClick={() => updateAppointmentStatus(apt.id, 'cancelled')}
+                            className="flex-1 text-[10px] py-1.5 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-lg font-bold shadow-sm"
+                          >
+                            Cancel
+                          </button>
                         </div>
-                      </td>
-                    </tr>
+                      )}
+                    </div>
                   ))
                 ) : (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-10 text-center text-slate-500">
-                      No appointments found for this period
-                    </td>
-                  </tr>
+                  <div className="text-center py-10 text-slate-500 text-sm">
+                    No appointments found for this period
+                  </div>
                 )}
-              </tbody>
-            </table>
+              </div>
+            ) : (
+              <table className="w-full min-w-[700px]">
+                <thead className="bg-slate-50/80 border-b border-slate-200/60 sticky top-0">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-semibold tracking-widest uppercase text-slate-600">Date & Time</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold tracking-widest uppercase text-slate-600">Patient</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold tracking-widest uppercase text-slate-600">Type</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold tracking-widest uppercase text-slate-600">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold tracking-widest uppercase text-slate-600">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200/60">
+                  {sortedAppointments.length > 0 ? (
+                    sortedAppointments.map((apt) => (
+                      <tr key={apt.id} className="hover:bg-teal-50/60 transition-colors">
+                        <td className="px-6 py-4">
+                          <div>
+                            <p className="font-semibold text-slate-900">{getDateString(apt.date)}</p>
+                            <p className="text-sm text-slate-600">{formatTime(String(apt.time).substring(0, 5))}</p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-slate-900">{apt.patientName}</span>
+                            {getPatientRecordStatus(String(apt.patientId), treatmentRecords) === 'no-record' && (
+                              <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">No Record</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-slate-700">{apt.type}</td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${statusColors[apt.status]}`}>
+                            {apt.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex gap-2">
+                            {apt.status === 'scheduled' && (
+                              <>
+                                <button
+                                  onClick={() => handleDoneClick(apt)}
+                                  className="text-xs px-2.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg hover:from-emerald-700 hover:to-teal-700 transition-all font-semibold"
+                                >
+                                  Done
+                                </button>
+                                <button
+                                  onClick={() => updateAppointmentStatus(apt.id, 'cancelled')}
+                                  className="text-xs px-2.5 py-1.5 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-lg hover:from-red-700 hover:to-pink-700 transition-all font-semibold"
+                                >
+                                  Cancel
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-10 text-center text-slate-500">
+                        No appointments found for this period
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       )}
 
       {/* Add Appointment Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white/95 backdrop-blur-md rounded-2xl p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent shadow-2xl border border-white/40">
-            <div className="flex justify-between items-center mb-6">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4">
+          <div className="bg-white/95 backdrop-blur-md rounded-2xl p-5 md:p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent shadow-2xl border border-white/40">
+            <div className="flex justify-between items-center mb-4 md:mb-6">
               <div>
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-teal-700 bg-clip-text text-transparent">New Appointment</h2>
-                <p className="text-slate-600 text-sm mt-1">Join the queue for a selected time period</p>
+                <h2 className="text-lg md:text-2xl font-bold bg-gradient-to-r from-slate-900 to-teal-700 bg-clip-text text-transparent">New Appointment</h2>
+                <p className="text-slate-600 text-[11px] md:text-sm mt-0.5 md:mt-1">Join the queue for a selected time period</p>
               </div>
-              <button onClick={() => setShowAddModal(false)} className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all duration-300 hover:scale-110 active:scale-95">
-                <X className="w-5 h-5" />
+              <button onClick={() => setShowAddModal(false)} className="p-1.5 md:p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all duration-300 hover:scale-110 active:scale-95">
+                <X className="w-4 h-4 md:w-5 md:h-5" />
               </button>
             </div>
-            <form onSubmit={handleAddAppointment} className="space-y-4">
+            <form onSubmit={handleAddAppointment} className="space-y-3 md:space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Patient *</label>
+                <label className="block text-[10px] md:text-xs font-bold text-slate-700 uppercase tracking-widest mb-1.5 md:mb-2">Patient *</label>
                 <input type="hidden" name="patientId" value={selectedPatientId} required />
                 <PatientSearchInput
                   patients={patients}
@@ -642,7 +681,7 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Appointment Date *</label>
+                <label className="block text-[10px] md:text-xs font-bold text-slate-700 uppercase tracking-widest mb-1.5 md:mb-2">Appointment Date *</label>
                 <input
                   type="text"
                   name="date"
@@ -652,7 +691,7 @@ export function AppointmentScheduler({ appointments, setAppointments, patients, 
                     e.currentTarget.value = formatDateInput(e.currentTarget.value);
                   }}
                   placeholder="DD/MM/YYYY"
-                  className="w-full px-4 py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-slate-900 placeholder:text-slate-400 shadow-sm"
+                  className="w-full px-3 py-2.5 md:px-4 md:py-3 bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 transition-all duration-300 text-xs md:text-sm text-slate-900 placeholder:text-slate-400 shadow-sm"
                 />
               </div>
 

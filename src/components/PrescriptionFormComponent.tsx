@@ -575,11 +575,11 @@ Generated on: ${new Date().toLocaleString()}
 
   // Print Preview Component
   const PrintPreview = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white w-full max-w-4xl rounded-lg shadow-2xl max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 md:p-4 p-2">
+      <div className="bg-white w-full max-w-4xl rounded-lg shadow-2xl md:max-h-[90vh] max-h-[95vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-300 bg-slate-100">
-          <h1 className="text-2xl font-bold text-slate-900">Print Preview</h1>
+        <div className="flex items-center justify-between md:p-6 p-4 border-b border-slate-300 bg-slate-100">
+          <h1 className="md:text-2xl text-lg font-bold text-slate-900">Print Preview</h1>
           <button
             onClick={() => setShowPrintPreview(false)}
             className="p-2 hover:bg-slate-200 rounded-full transition-colors"
@@ -589,13 +589,13 @@ Generated on: ${new Date().toLocaleString()}
         </div>
 
         {/* Preview Content */}
-        <div className="flex-1 overflow-y-auto p-8 bg-slate-50">
-          <div className="bg-white p-8 rounded-lg shadow mx-auto" style={{ width: '8.5in', fontFamily: "'Times New Roman', Times, serif" }}>
+        <div className="flex-1 overflow-y-auto md:p-8 p-4 bg-slate-50 scrollbar-thin">
+          <div className="bg-white md:p-8 p-4 rounded-lg shadow mx-auto max-w-full" style={{ width: '8.5in', fontFamily: "'Times New Roman', Times, serif", minWidth: 'min-content' }}>
             {/* Header */}
-            <div className="text-center mb-8 border-b-2 border-black pb-4">
-              <h2 className="text-lg font-bold tracking-widest">{clinic.doctorName}</h2>
-              <p className="text-xs font-bold uppercase tracking-widest text-gray-600 mt-1">{clinic.specialty}</p>
-              <div className="mt-3 text-xs text-gray-600 space-y-1">
+            <div className="text-center md:mb-8 mb-4 border-b-2 border-black md:pb-4 pb-2">
+              <h2 className="md:text-lg text-sm font-bold tracking-widest">{clinic.doctorName}</h2>
+              <p className="md:text-xs text-[10px] font-bold uppercase tracking-widest text-gray-600 mt-1">{clinic.specialty}</p>
+              <div className="mt-3 md:text-xs text-[10px] text-gray-600 space-y-1">
                 <p>{clinic.address}</p>
                 <p>Tel # {clinic.phone}</p>
                 <p>License No.: {clinic.licenseNo}{clinic.ptrNo ? ` | PTR No.: ${clinic.ptrNo}` : ''}</p>
@@ -603,50 +603,50 @@ Generated on: ${new Date().toLocaleString()}
             </div>
 
             {/* Patient Info */}
-            <div className="space-y-2 mb-8 text-xs">
+            <div className="md:space-y-2 space-y-1 md:mb-8 mb-4 md:text-xs text-[10px]">
               <div className="flex">
-                <span className="font-bold w-20">NAME:</span>
+                <span className="font-bold md:w-20 w-16">NAME:</span>
                 <span className="flex-1 border-b border-black ml-2">{formData.patientName}</span>
               </div>
-              <div className="flex gap-8">
-                <div className="flex flex-1">
-                  <span className="font-bold w-16">AGE:</span>
+              <div className="flex md:gap-8 gap-4 flex-wrap">
+                <div className="flex flex-1 min-w-[100px]">
+                  <span className="font-bold md:w-16 w-12">AGE:</span>
                   <span className="flex-1 border-b border-black ml-2">{formData.age}</span>
                 </div>
-                <div className="flex flex-1">
-                  <span className="font-bold w-16">SEX:</span>
+                <div className="flex flex-1 min-w-[100px]">
+                  <span className="font-bold md:w-16 w-12">SEX:</span>
                   <span className="flex-1 border-b border-black ml-2">{formData.sex}</span>
                 </div>
               </div>
               <div className="flex">
-                <span className="font-bold w-20">ADDRESS:</span>
+                <span className="font-bold md:w-20 w-16">ADDRESS:</span>
                 <span className="flex-1 border-b border-black ml-2">{formData.address}</span>
               </div>
               <div className="flex">
-                <span className="font-bold w-20">DATE:</span>
-                <span className="flex-1 border-b border-black ml-2 w-40">{formData.date}</span>
+                <span className="font-bold md:w-20 w-16">DATE:</span>
+                <span className="flex-1 border-b border-black ml-2 md:w-40 w-24">{formData.date}</span>
               </div>
             </div>
 
             {/* Rx Symbol */}
-            <div className="text-5xl font-serif italic mb-4 opacity-70">Rx</div>
+            <div className="md:text-5xl text-3xl font-serif italic md:mb-4 mb-2 opacity-70">Rx</div>
 
             {/* Medications */}
-            <div className="ml-8 space-y-6">
+            <div className="md:ml-8 ml-4 md:space-y-6 space-y-4">
               {medications.filter(med => med.name).map(med => (
-                <div key={med.id} className="border-b border-gray-300 pb-4">
-                  <div className="font-bold text-xs tracking-widest uppercase border-b border-black pb-1 mb-3">{med.name}</div>
-                  <div className="ml-4 space-y-1 text-xs">
+                <div key={med.id} className="border-b border-gray-300 md:pb-4 pb-2">
+                  <div className="font-bold md:text-xs text-[10px] tracking-widest uppercase border-b border-black pb-1 md:mb-3 mb-2">{med.name}</div>
+                  <div className="md:ml-4 ml-2 space-y-1 md:text-xs text-[10px]">
                     <div className="flex">
-                      <span className="font-bold w-12">Dose:</span>
+                      <span className="font-bold md:w-12 w-10">Dose:</span>
                       <span className="flex-1 border-b border-dotted border-gray-400 ml-2">{med.doses.length > 0 ? med.doses.join(', ') : ''}</span>
                     </div>
                     <div className="flex">
-                      <span className="font-bold w-12">Qty #:</span>
+                      <span className="font-bold md:w-12 w-10">Qty #:</span>
                       <span className="flex-1 border-b border-dotted border-gray-400 ml-2">{med.quantity}</span>
                     </div>
                     <div className="flex">
-                      <span className="font-bold w-12">Sig:</span>
+                      <span className="font-bold md:w-12 w-10">Sig:</span>
                       <span className="flex-1 border-b border-dotted border-gray-400 ml-2 italic">{med.sig}</span>
                     </div>
                   </div>
@@ -655,37 +655,37 @@ Generated on: ${new Date().toLocaleString()}
             </div>
 
             {/* Signature Section */}
-            <div className="mt-12 flex justify-between">
-              <div className="text-center w-40">
-                <div className="border-t border-black h-12 mb-2"></div>
-                <p className="text-xs font-bold">PHYSICIAN'S SIGNATURE</p>
+            <div className="md:mt-12 mt-8 flex justify-between">
+              <div className="text-center md:w-40 w-32">
+                <div className="border-t border-black md:h-12 h-8 mb-2"></div>
+                <p className="md:text-xs text-[9px] font-bold uppercase">Physician's Signature</p>
               </div>
-              <div className="text-center w-40">
-                <div className="border-t border-black h-12 mb-2"></div>
-                <p className="text-xs font-bold">DATE</p>
+              <div className="text-center md:w-40 w-32">
+                <div className="border-t border-black md:h-12 h-8 mb-2"></div>
+                <p className="md:text-xs text-[9px] font-bold uppercase">Date</p>
               </div>
             </div>
 
-            <div className="text-center mt-8 text-xs text-gray-500">
+            <div className="text-center md:mt-8 mt-4 md:text-xs text-[9px] text-gray-500">
               <p>Generated on: {new Date().toLocaleString()}</p>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 p-6 border-t border-slate-300 bg-white">
+        <div className="flex gap-3 md:p-6 p-4 border-t border-slate-300 bg-white">
           <button
             onClick={() => setShowPrintPreview(false)}
-            className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-100 transition-colors font-semibold"
+            className="flex-1 md:px-4 md:py-2 px-3 py-1.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-100 transition-colors md:text-base text-sm font-semibold"
           >
             Close
           </button>
           <button
             onClick={handlePrint}
-            className="flex-1 px-4 py-2 flex items-center justify-center gap-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+            className="flex-1 md:px-4 md:py-2 px-3 py-1.5 flex items-center justify-center gap-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors md:text-base text-sm font-semibold"
           >
-            <Printer size={18} />
-            Print Now
+            <Printer size={18} className="md:w-5 md:h-5 w-4 h-4" />
+            Print
           </button>
         </div>
       </div>
@@ -696,12 +696,12 @@ Generated on: ${new Date().toLocaleString()}
 
   const UnderlineInput = ({ label, value, onChange, className = '' }: { label: string; value: string; onChange: (v: string) => void; className?: string }) => (
     <div className={`flex items-end ${className}`}>
-      <span className="text-xs font-bold uppercase mr-2">{label}:</span>
+      <span className="md:text-xs text-[10px] font-bold uppercase mr-2">{label}:</span>
       <input 
         type="text" 
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="flex-1 border-b border-slate-400 focus:outline-none focus:border-slate-600 bg-transparent px-1 h-[18px] mb-[-1px] font-sans text-sm" 
+        className="flex-1 border-b border-slate-400 focus:outline-none focus:border-slate-600 bg-transparent px-1 h-[18px] mb-[-1px] font-sans md:text-sm text-xs" 
       />
     </div>
   );
@@ -709,37 +709,37 @@ Generated on: ${new Date().toLocaleString()}
   return (
     <>
       {showPrintPreview && <PrintPreview />}
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-        <div className="bg-slate-50 w-full max-w-3xl rounded-lg shadow-2xl my-8">
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 md:p-4 p-2 overflow-y-auto">
+        <div className="bg-slate-50 w-full max-w-3xl rounded-lg shadow-2xl my-4 md:my-8">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-slate-300 bg-white">
-            <h1 className="text-2xl font-bold text-slate-900">Prescription Form</h1>
+          <div className="flex items-center justify-between md:p-6 p-4 border-b border-slate-300 bg-white">
+            <h1 className="md:text-2xl text-lg font-bold text-slate-900">Prescription Form</h1>
             <button
               onClick={onClose}
               className="p-2 hover:bg-slate-200 rounded-full transition-colors"
             >
-              <X size={24} />
+              <X className="md:w-6 md:h-6 w-5 h-5" />
             </button>
           </div>
 
           {/* Form Content */}
-          <div className="p-8 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent scrollbar-visible">
+          <div className="md:p-8 p-4 max-h-[calc(100vh-160px)] overflow-y-auto scrollbar-thin scrollbar-thumb-teal-300 scrollbar-track-transparent">
             {/* Clinic Header */}
-            <div className="text-center mb-8 border-b border-slate-300 pb-4">
-              <h2 className="text-2xl font-bold tracking-widest text-slate-900">{clinic.doctorName}</h2>
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mt-1">{clinic.specialty}</p>
-              <div className="flex justify-center items-center gap-2 mt-4 text-[10px] text-slate-600 font-sans">
+            <div className="text-center md:mb-8 mb-4 border-b border-slate-300 md:pb-4 pb-2">
+              <h2 className="md:text-2xl text-lg font-bold tracking-widest text-slate-900">{clinic.doctorName}</h2>
+              <p className="md:text-xs text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-1">{clinic.specialty}</p>
+              <div className="flex justify-center items-center gap-2 md:mt-4 mt-2 md:text-[10px] text-[9px] text-slate-600 font-sans">
                 <p>{clinic.address}</p>
               </div>
-              <div className="mt-4 flex flex-col items-center gap-1 text-[9px] font-bold text-slate-500 font-sans">
+              <div className="md:mt-4 mt-2 flex flex-col items-center gap-1 md:text-[9px] text-[8px] font-bold text-slate-500 font-sans">
                 <p>Tel # {clinic.phone}</p>
               </div>
             </div>
 
             {/* Patient Info Fields */}
-            <div className="space-y-4 mb-8 bg-white p-6 rounded-lg border border-slate-200">
+            <div className="md:space-y-4 space-y-3 md:mb-8 mb-4 bg-white md:p-6 p-4 rounded-lg border border-slate-200">
               <div>
-                <label className="block text-sm font-bold mb-2">Search Patient</label>
+                <label className="block md:text-sm text-xs font-bold mb-1.5">Search Patient</label>
                 <PatientSearchInput
                   patients={patients}
                   selectedPatientId={formData.patientId}
@@ -749,24 +749,24 @@ Generated on: ${new Date().toLocaleString()}
                 />
               </div>
 
-              <div className="grid grid-cols-12 gap-4">
+              <div className="grid grid-cols-12 gap-y-3 gap-x-2">
                 <UnderlineInput 
                   label="NAME" 
                   value={formData.patientName}
                   onChange={(v) => handleInputChange('patientName', v)}
-                  className="col-span-6"
+                  className="md:col-span-6 col-span-12"
                 />
                 <UnderlineInput 
                   label="AGE" 
                   value={formData.age}
                   onChange={(v) => handleInputChange('age', v)}
-                  className="col-span-3"
+                  className="md:col-span-3 col-span-6"
                 />
                 <UnderlineInput 
                   label="SEX" 
                   value={formData.sex}
                   onChange={(v) => handleInputChange('sex', v)}
-                  className="col-span-3"
+                  className="md:col-span-3 col-span-6"
                 />
                 <UnderlineInput 
                   label="ADDRESS" 
@@ -784,41 +784,41 @@ Generated on: ${new Date().toLocaleString()}
             </div>
 
             {/* Rx Section */}
-            <div className="bg-white p-6 rounded-lg border border-slate-200">
-              <div className="mb-8">
-                <span className="text-6xl font-serif italic text-slate-900 opacity-80">Rx</span>
+            <div className="bg-white md:p-6 p-4 rounded-lg border border-slate-200">
+              <div className="md:mb-8 mb-4">
+                <span className="md:text-6xl text-4xl font-serif italic text-slate-900 opacity-80">Rx</span>
               </div>
 
-              <div className="space-y-8 pl-8">
+              <div className="md:space-y-8 space-y-6 md:pl-8 pl-4">
                 {medications.map((med, idx) => (
-                  <div key={med.id} className="pb-8 border-b border-slate-200 last:border-0">
-                    <div className="flex items-start justify-between mb-4">
+                  <div key={med.id} className="md:pb-8 pb-4 border-b border-slate-200 last:border-0">
+                    <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
                         <input
                           type="text"
                           placeholder="Medication name"
                           value={med.name}
                           onChange={(e) => updateMedication(med.id, 'name', e.target.value)}
-                          className="text-lg font-bold tracking-wide uppercase border-b border-slate-300 focus:outline-none focus:border-slate-600 bg-transparent w-full pb-1"
+                          className="md:text-lg text-sm font-bold tracking-wide uppercase border-b border-slate-300 focus:outline-none focus:border-slate-600 bg-transparent w-full pb-1"
                         />
                       </div>
                       {idx > 2 && (
                         <button
                           onClick={() => removeMedication(med.id)}
-                          className="ml-4 p-1 text-red-500 hover:bg-red-50 rounded"
+                          className="ml-2 p-1 text-red-500 hover:bg-red-50 rounded"
                         >
-                          <Trash2 size={18} />
+                          <Trash2 size={16} />
                         </button>
                       )}
                     </div>
 
-                    <div className="pl-4 space-y-3">
-                      <div className="flex gap-4 items-start">
+                    <div className="md:pl-4 pl-2 md:space-y-3 space-y-2">
+                      <div className="flex flex-col md:flex-row gap-2 md:items-start">
                         <div className="flex-1">
-                          <label className="text-xs font-bold text-slate-600 block mb-1">Doses</label>
+                          <label className="text-[10px] font-bold text-slate-600 block mb-1">Doses</label>
                           <div className="flex gap-4">
                             {['250mg', '500mg', '1g'].map(dose => (
-                              <label key={dose} className="flex items-center gap-2 cursor-pointer">
+                              <label key={dose} className="flex items-center gap-1.5 cursor-pointer">
                                 <input
                                   type="checkbox"
                                   checked={med.doses.includes(dose)}
@@ -828,28 +828,86 @@ Generated on: ${new Date().toLocaleString()}
                                       : med.doses.filter(d => d !== dose);
                                     updateMedication(med.id, 'doses', JSON.stringify(doses));
                                   }}
-                                  className="w-4 h-4"
+                                  className="w-3.5 h-3.5"
                                 />
-                                <span className="text-sm font-bold">{dose}</span>
+                                <span className="text-[10px] font-bold">{dose}</span>
                               </label>
                             ))}
                           </div>
                         </div>
                       </div>
 
-                      <div>
-                        <label className="text-xs font-bold text-slate-600 block mb-1"># (Quantity)</label>
-                        <input 
-                          type="text" 
-                          value={med.quantity}
-                          onChange={(e) => updateMedication(med.id, 'quantity', e.target.value)}
-                          className="w-24 border-b border-slate-400 focus:outline-none focus:border-slate-600 bg-transparent text-center font-sans text-sm"
-                          placeholder="e.g., 10 caps"
-                        />
-                      </div>
+                      <div className="flex flex-wrap gap-4">
+                        <div className="flex-1 min-w-[100px]">
+                          <label className="text-[10px] font-bold text-slate-600 block mb-1"># (Quantity)</label>
+                          <input 
+                            type="text" 
+                            value={med.quantity}
+                            onChange={(e) => updateMedication(med.id, 'quantity', e.target.value)}
+                            className="w-full md:w-24 border-b border-slate-400 focus:outline-none focus:border-slate-600 bg-transparent font-sans text-[10px] md:text-sm"
+                            placeholder="e.g., 10 caps"
+                          />
+                        </div>
 
-                      <div>
-                        <label className="text-xs font-bold text-slate-600 block mb-1">Sig (Directions)</label>
+                        <div className="flex-[2] min-w-[150px]">
+                          <label className="text-[10px] font-bold text-slate-600 block mb-1">Sig (Directions)</label>
+                          <input 
+                            type="text" 
+                            value={med.sig}
+                            onChange={(e) => updateMedication(med.id, 'sig', e.target.value)}
+                            className="w-full border-b border-slate-400 focus:outline-none focus:border-slate-600 bg-transparent italic font-sans text-[10px] md:text-sm"
+                            placeholder="e.g., Take 1 cap 3x a day after meals"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={addMedication}
+                className="mt-6 w-full py-2 border-2 border-dashed border-slate-300 text-slate-500 rounded-lg hover:border-slate-400 hover:text-slate-600 transition-all flex items-center justify-center gap-2 md:text-sm text-xs font-semibold"
+              >
+                <Plus size={16} />
+                Add Medication
+              </button>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:p-6 p-4 border-t border-slate-300 bg-white">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-100 transition-colors md:text-base text-xs font-semibold"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={downloadForm}
+              className="px-4 py-2 flex items-center justify-center gap-1 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors md:text-base text-xs font-semibold"
+            >
+              <Download size={16} />
+              Save
+            </button>
+            <button
+              onClick={() => setShowPrintPreview(true)}
+              className="px-4 py-2 flex items-center justify-center gap-1 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors md:text-base text-xs font-semibold"
+            >
+              <Printer size={16} />
+              Preview
+            </button>
+            <button
+              onClick={handleSubmit}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors md:text-base text-xs font-semibold col-span-2 md:col-span-1"
+            >
+              Submit
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );tions)</label>
                         <input 
                           type="text" 
                           value={med.sig}

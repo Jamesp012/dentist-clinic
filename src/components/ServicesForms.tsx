@@ -412,108 +412,108 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 flex flex-col flex-1">
-      <div className="p-10 space-y-10 flex flex-col flex-1 max-w-[1600px] mx-auto w-full">
+      <div className="p-4 md:p-10 space-y-6 md:space-y-10 flex flex-col flex-1 max-w-[1600px] mx-auto w-full">
         {/* Premium Header Section */}
         <div className="relative flex items-center justify-end">
           <div className="absolute -top-4 -left-4 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl"></div>
           <div className="absolute -bottom-4 -right-4 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"></div>
           
           {/* Action Buttons - Right Side */}
-          <div className="flex gap-4">
+          <div className="flex gap-2 md:gap-4">
             <button
               onClick={() => setActiveForm('service')}
-              className="group relative px-5 py-2.5 bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white rounded-xl hover:shadow-lg hover:shadow-cyan-500/20 hover:scale-102 active:scale-95 transition-all duration-200 flex items-center gap-2 font-semibold text-sm overflow-hidden"
+              className="group relative px-3 py-2 md:px-5 md:py-2.5 bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white rounded-lg md:rounded-xl hover:shadow-lg hover:shadow-cyan-500/20 hover:scale-102 active:scale-95 transition-all duration-200 flex items-center gap-1.5 md:gap-2 font-semibold text-xs md:text-sm overflow-hidden"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <Plus className="w-5 h-5 relative z-10" />
+              <Plus className="w-4 h-4 md:w-5 md:h-5 relative z-10" />
               <span className="relative z-10">New Receipt</span>
             </button>
             <button
               onClick={() => setActiveForm('prescription')}
-              className="group relative px-5 py-2.5 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white rounded-xl hover:shadow-lg hover:shadow-emerald-500/20 hover:scale-102 active:scale-95 transition-all duration-200 flex items-center gap-2 font-semibold text-sm overflow-hidden"
+              className="group relative px-3 py-2 md:px-5 md:py-2.5 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white rounded-lg md:rounded-xl hover:shadow-lg hover:shadow-emerald-500/20 hover:scale-102 active:scale-95 transition-all duration-200 flex items-center gap-1.5 md:gap-2 font-semibold text-xs md:text-sm overflow-hidden"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <FileText className="w-5 h-5 relative z-10" />
-              <span className="relative z-10">Create Prescription</span>
+              <FileText className="w-4 h-4 md:w-5 md:h-5 relative z-10" />
+              <span className="relative z-10">Prescription</span>
             </button>
           </div>
         </div>
-        <div className='h-[70vh] overflow-y-auto scrollbar-thin pr-3 flex flex-col gap-3'>
+        <div className='h-[70vh] overflow-y-auto scrollbar-thin pr-1 md:pr-3 flex flex-col gap-3 md:gap-4'>
           {/* Recent Receipts - Premium Card Design */}
           <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-teal-500 via-cyan-500 to-blue-500 rounded-3xl opacity-20 group-hover:opacity-30 blur transition-all duration-500"></div>
-            <div className="relative bg-white/90 backdrop-blur-xl p-6 rounded-3xl shadow-xl border border-slate-200/60 hover:shadow-2xl transition-all duration-500">
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-lg flex items-center justify-center shadow">
-                    <CreditCard className="w-4 h-4 text-white" />
+            <div className="absolute -inset-1 bg-gradient-to-r from-teal-500 via-cyan-500 to-blue-500 rounded-2xl md:rounded-3xl opacity-20 group-hover:opacity-30 blur transition-all duration-500"></div>
+            <div className="relative bg-white/90 backdrop-blur-xl p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-xl border border-slate-200/60 hover:shadow-2xl transition-all duration-500">
+              <div className="flex items-center justify-between mb-4 md:mb-8">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <div className="w-7 h-7 md:w-9 md:h-9 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-lg flex items-center justify-center shadow">
+                    <CreditCard className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
                   </div>
-                  <h2 className="text-2xl font-semibold text-slate-900">Recent Receipts</h2>
+                  <h2 className="text-lg md:text-2xl font-semibold text-slate-900">Recent Receipts</h2>
                 </div>
-                <span className="px-4 py-2 bg-teal-50 text-teal-700 rounded-xl text-sm font-bold">
+                <span className="px-3 py-1 md:px-4 md:py-2 bg-teal-50 text-teal-700 rounded-lg md:rounded-xl text-[10px] md:text-sm font-bold">
                   {treatmentRecords.length} Total
                 </span>
               </div>
               
-              <div className="space-y-3 max-h-[380px] overflow-y-auto scrollbar-thin pr-2">
+              <div className="space-y-2 md:space-y-3 max-h-[380px] overflow-y-auto scrollbar-thin pr-1 md:pr-2">
                 {[...treatmentRecords]
                   .slice()
                   .sort((a, b) => new Date((b as any).createdAt || b.date || 0).getTime() - new Date((a as any).createdAt || a.date || 0).getTime())
                   .map((record) => {
                   const patient = patients.find(p => String(p.id) === String(record.patientId));
                   return (
-                    <div key={record.id} className="group/item relative p-4 border border-slate-100 rounded-xl hover:border-cyan-300/60 transition-all duration-300 bg-gradient-to-br from-white via-slate-50/30 to-cyan-50/20 hover:shadow-md hover:scale-[1.01]">
-                      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-teal-500/5 rounded-2xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-300"></div>
+                    <div key={record.id} className="group/item relative p-3 md:p-4 border border-slate-100 rounded-xl hover:border-cyan-300/60 transition-all duration-300 bg-gradient-to-br from-white via-slate-50/30 to-cyan-50/20 hover:shadow-md hover:scale-[1.01]">
+                      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-teal-500/5 rounded-xl md:rounded-2xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-300"></div>
                       
-                      <div className="relative flex justify-between items-start gap-6">
-                        <div className="flex-1 space-y-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-md flex items-center justify-center font-bold text-cyan-700 text-xs">
+                      <div className="relative flex justify-between items-start gap-3 md:gap-6">
+                        <div className="flex-1 space-y-2 md:space-y-3">
+                          <div className="flex items-center gap-2 md:gap-3">
+                            <div className="w-7 h-7 md:w-8 md:h-8 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-md flex items-center justify-center font-bold text-cyan-700 text-[10px] md:text-xs">
                               {patient?.name?.charAt(0)}
                             </div>
-                            <div>
-                              <p className="text-lg font-semibold text-slate-900">{patient?.name}</p>
-                              <p className="text-xs text-slate-500 mt-0.5">{formatToDD_MM_YYYY((record as any).createdAt || record.date)} • Dr. {record.dentist}</p>
+                            <div className="min-w-0">
+                              <p className="text-sm md:text-lg font-semibold text-slate-900 truncate">{patient?.name}</p>
+                              <p className="text-[9px] md:text-xs text-slate-500 mt-0.5">{formatToDD_MM_YYYY((record as any).createdAt || record.date)} • Dr. {record.dentist}</p>
                             </div>
                           </div>
                           
-                          <div className="flex items-center gap-2 pl-1">
-                            <span className="w-1.5 h-1.5 bg-cyan-500 rounded-full"></span>
-                            <p className="text-sm text-slate-700 font-medium">{record.treatment} {record.tooth ? `- Tooth ${record.tooth}` : ''}</p>
+                          <div className="flex items-center gap-1.5 md:gap-2 pl-0.5 md:pl-1">
+                            <span className="w-1 md:w-1.5 h-1 md:h-1.5 bg-cyan-500 rounded-full flex-shrink-0"></span>
+                            <p className="text-[11px] md:text-sm text-slate-700 font-medium line-clamp-1">{record.treatment} {record.tooth ? `- Tooth ${record.tooth}` : ''}</p>
                           </div>
                           
-                          <div className="flex gap-3 flex-wrap items-center">
-                            <span className="text-xl font-extrabold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
+                          <div className="flex gap-2 md:gap-3 flex-wrap items-center">
+                            <span className="text-base md:text-xl font-extrabold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
                               ₱{Number(record.cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                             {record.paymentType && (
-                              <>
-                                <span className={`px-4 py-1.5 rounded-xl font-bold text-xs tracking-wider shadow-sm ${record.paymentType === 'full' ? 'bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-700' : 'bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700'}`}>
-                                  {record.paymentType === 'full' ? '✓ FULL PAYMENT' : '⚡ INSTALLMENT'}
+                              <div className="flex flex-wrap gap-1.5 md:gap-2">
+                                <span className={`px-2 py-0.5 md:px-4 md:py-1.5 rounded-lg md:rounded-xl font-bold text-[8px] md:text-xs tracking-wider shadow-sm ${record.paymentType === 'full' ? 'bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-700' : 'bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700'}`}>
+                                  {record.paymentType === 'full' ? '✓ FULL' : '⚡ INST'}
                                 </span>
                                 {record.amountPaid !== undefined && record.amountPaid > 0 && (
-                                  <span className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-xs">
-                                    Paid: ₱{Number(record.amountPaid).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  <span className="px-2 py-0.5 md:px-3 md:py-1.5 bg-slate-100 text-slate-700 rounded-lg md:rounded-xl font-bold text-[8px] md:text-xs">
+                                    Paid: ₱{Math.round(record.amountPaid).toLocaleString()}
                                   </span>
                                 )}
                                 {record.remainingBalance !== undefined && record.remainingBalance > 0 && (
-                                  <span className="px-3 py-1.5 bg-gradient-to-r from-orange-100 to-red-100 text-orange-700 rounded-xl font-bold text-xs shadow-sm">
-                                    Balance: ₱{Number(record.remainingBalance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  <span className="px-2 py-0.5 md:px-3 md:py-1.5 bg-gradient-to-r from-orange-100 to-red-100 text-orange-700 rounded-lg md:rounded-xl font-bold text-[8px] md:text-xs shadow-sm">
+                                    Bal: ₱{Math.round(record.remainingBalance).toLocaleString()}
                                   </span>
                                 )}
-                              </>
+                              </div>
                             )}
                           </div>
                         </div>
                         
-                        <div className="flex gap-2">
+                        <div className="flex flex-col gap-1.5 md:gap-2 flex-shrink-0">
                           <button
                             onClick={() => {
                               setViewingReceipt(record);
                             }}
-                            className="group/btn px-4 py-2 bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white rounded-lg hover:shadow-md hover:shadow-cyan-500/30 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 font-semibold text-xs duration-300"
+                            className="group/btn px-3 py-1.5 md:px-4 md:py-2 bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white rounded-lg hover:shadow-md hover:shadow-cyan-500/30 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-1.5 md:gap-2 font-semibold text-[10px] md:text-xs duration-300"
                           >
-                            <CreditCard className="w-4 h-4" />
+                            <CreditCard className="w-3 h-3 md:w-4 md:h-4" />
                             View
                           </button>
                         </div>
@@ -522,12 +522,12 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                   );
                 })}
                 {treatmentRecords.length === 0 && (
-                  <div className="text-center py-16">
-                    <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <CreditCard className="w-10 h-10 text-slate-400" />
+                  <div className="text-center py-10 md:py-16">
+                    <div className="w-14 h-14 md:w-20 md:h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
+                      <CreditCard className="w-7 h-7 md:w-10 md:h-10 text-slate-400" />
                     </div>
-                    <p className="text-slate-500 text-lg font-medium">No receipts recorded yet</p>
-                    <p className="text-slate-400 text-sm mt-2">Click "New Receipt" to create your first record</p>
+                    <p className="text-slate-500 text-base md:text-lg font-medium">No receipts recorded</p>
+                    <p className="text-slate-400 text-xs md:text-sm mt-1 md:mt-2">Click "New Receipt" to start</p>
                   </div>
                 )}
               </div>
@@ -536,72 +536,72 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
 
           {/* Recent Prescriptions - Premium Card Design */}
           <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-3xl opacity-20 group-hover:opacity-30 blur transition-all duration-500"></div>
-            <div className="relative bg-white/90 backdrop-blur-xl p-6 rounded-3xl shadow-xl border border-slate-200/60 hover:shadow-2xl transition-all duration-500">
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-4">
-                  <div className="w-9 h-9 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center shadow">
-                    <FileText className="w-4 h-4 text-white" />
+            <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-2xl md:rounded-3xl opacity-20 group-hover:opacity-30 blur transition-all duration-500"></div>
+            <div className="relative bg-white/90 backdrop-blur-xl p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-xl border border-slate-200/60 hover:shadow-2xl transition-all duration-500">
+              <div className="flex items-center justify-between mb-4 md:mb-8">
+                <div className="flex items-center gap-2 md:gap-4">
+                  <div className="w-7 h-7 md:w-9 md:h-9 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center shadow">
+                    <FileText className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
                   </div>
-                  <h2 className="text-2xl font-semibold text-slate-900">Recent Prescriptions</h2>
+                  <h2 className="text-lg md:text-2xl font-semibold text-slate-900">Recent Prescriptions</h2>
                 </div>
-                <span className="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-xl text-sm font-bold">
+                <span className="px-3 py-1 md:px-4 md:py-2 bg-emerald-50 text-emerald-700 rounded-lg md:rounded-xl text-[10px] md:text-sm font-bold">
                   {prescriptions.length} Total
                 </span>
               </div>
               
-              <div className="space-y-3 max-h-[380px] overflow-y-auto scrollbar-thin pr-2">
+              <div className="space-y-2 md:space-y-3 max-h-[380px] overflow-y-auto scrollbar-thin pr-1 md:pr-2">
                 {[...prescriptions]
                   .slice()
                   .sort((a, b) => new Date((b as any).createdAt || b.date || 0).getTime() - new Date((a as any).createdAt || a.date || 0).getTime())
                   .map((prescription) => (
-                  <div key={prescription.id} className="group/item relative p-4 border border-slate-100 rounded-xl hover:border-emerald-300/60 transition-all duration-300 bg-gradient-to-br from-white via-slate-50/30 to-emerald-50/20 hover:shadow-md hover:scale-[1.01]">
-                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-teal-500/5 rounded-2xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-300"></div>
+                  <div key={prescription.id} className="group/item relative p-3 md:p-4 border border-slate-100 rounded-xl hover:border-emerald-300/60 transition-all duration-300 bg-gradient-to-br from-white via-slate-50/30 to-emerald-50/20 hover:shadow-md hover:scale-[1.01]">
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-teal-500/5 rounded-xl md:rounded-2xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-300"></div>
                     
-                    <div className="relative flex justify-between items-start gap-6">
-                      <div className="flex-1 space-y-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-md flex items-center justify-center font-bold text-emerald-700 text-xs">
+                    <div className="relative flex justify-between items-start gap-3 md:gap-6">
+                      <div className="flex-1 space-y-2 md:space-y-3">
+                        <div className="flex items-center gap-2 md:gap-3">
+                          <div className="w-7 h-7 md:w-8 md:h-8 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-md flex items-center justify-center font-bold text-emerald-700 text-[10px] md:text-xs">
                             {prescription.patientName?.charAt(0)}
                           </div>
-                          <div>
-                            <p className="text-lg font-semibold text-slate-900">{prescription.patientName}</p>
-                            <p className="text-xs text-slate-500 mt-0.5">{formatToDD_MM_YYYY((prescription as any).createdAt || prescription.date)} • Dr. {prescription.dentist}</p>
+                          <div className="min-w-0">
+                            <p className="text-sm md:text-lg font-semibold text-slate-900 truncate">{prescription.patientName}</p>
+                            <p className="text-[9px] md:text-xs text-slate-500 mt-0.5">{formatToDD_MM_YYYY((prescription as any).createdAt || prescription.date)} • Dr. {prescription.dentist}</p>
                           </div>
                         </div>
                         
-                        <div className="flex items-center gap-2 pl-1">
-                          <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
-                          <p className="text-sm text-slate-700 font-medium">{prescription.medications.length} medication(s) prescribed</p>
+                        <div className="flex items-center gap-1.5 md:gap-2 pl-0.5 md:pl-1">
+                          <span className="w-1 md:w-1.5 h-1 md:h-1.5 bg-emerald-500 rounded-full flex-shrink-0"></span>
+                          <p className="text-[11px] md:text-sm text-slate-700 font-medium">{prescription.medications.length} medication(s)</p>
                         </div>
                       </div>
                       
-                      <div className="flex gap-3">
+                      <div className="flex flex-col gap-1.5 md:gap-3 flex-shrink-0">
                         <button
                           onClick={() => setViewingPrescription(prescription)}
-                          className="group/btn px-4 py-2 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white rounded-lg hover:shadow-md hover:shadow-emerald-500/30 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 font-semibold text-xs duration-300"
+                          className="group/btn px-3 py-1.5 md:px-4 md:py-2 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white rounded-lg hover:shadow-md hover:shadow-emerald-500/30 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-1.5 md:gap-2 font-semibold text-[10px] md:text-xs duration-300"
                         >
-                          <FileText className="w-4 h-4" />
+                          <FileText className="w-3 h-3 md:w-4 md:h-4" />
                           View
                         </button>
                         <button
                           onClick={() => printPrescription(prescription)}
-                          className="px-3 py-2 bg-gradient-to-br from-slate-600 to-slate-700 text-white rounded-lg hover:shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-2 font-semibold text-xs duration-300"
+                          className="px-2 py-1.5 md:px-3 md:py-2 bg-gradient-to-br from-slate-600 to-slate-700 text-white rounded-lg hover:shadow-md hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-1.5 md:gap-2 font-semibold text-[10px] md:text-xs duration-300"
                           title="Print Prescription"
                         >
-                          <Download className="w-4 h-4" />
+                          <Download className="w-3 h-3 md:w-4 md:h-4" />
                         </button>
                       </div>
                     </div>
                   </div>
                 ))}
                 {prescriptions.length === 0 && (
-                  <div className="text-center py-16">
-                    <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <FileText className="w-10 h-10 text-slate-400" />
+                  <div className="text-center py-10 md:py-16">
+                    <div className="w-14 h-14 md:w-20 md:h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
+                      <FileText className="w-7 h-7 md:w-10 md:h-10 text-slate-400" />
                     </div>
-                    <p className="text-slate-500 text-lg font-medium">No prescriptions created yet</p>
-                    <p className="text-slate-400 text-sm mt-2">Click "Create Prescription" to start</p>
+                    <p className="text-slate-500 text-base md:text-lg font-medium">No prescriptions created</p>
+                    <p className="text-slate-400 text-xs md:text-sm mt-1 md:mt-2">Click "Prescription" to start</p>
                   </div>
                 )}
               </div>
@@ -612,29 +612,29 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
 
       {/* Add Receipt Modal - Premium Design */}
       {activeForm === 'service' && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="relative bg-white backdrop-blur-2xl rounded-3xl p-10 max-w-3xl w-full max-h-[90vh] overflow-y-auto overflow-x-hidden scrollbar-thin shadow-2xl border border-slate-200/60">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-2 md:p-4">
+          <div className="relative bg-white backdrop-blur-2xl rounded-2xl md:rounded-3xl p-4 md:p-10 max-w-3xl w-full max-h-[95vh] md:max-h-[90vh] overflow-y-auto overflow-x-hidden scrollbar-thin shadow-2xl border border-slate-200/60">
             <div className="absolute -top-20 -right-20 w-60 h-60 bg-cyan-500/20 rounded-full blur-3xl"></div>
             <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-teal-500/20 rounded-full blur-3xl"></div>
             
             <div className="relative">
-              <div className="flex justify-between items-center mb-8 pb-6 border-b-2 border-slate-200/60">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
-                    <CreditCard className="w-7 h-7 text-white" />
+              <div className="flex justify-between items-center mb-4 md:mb-8 pb-3 md:pb-6 border-b-2 border-slate-200/60">
+                <div className="flex items-center gap-2 md:gap-4">
+                  <div className="w-8 h-8 md:w-14 md:h-14 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-lg md:rounded-2xl flex items-center justify-center shadow-lg">
+                    <CreditCard className="w-4 h-4 md:w-7 md:h-7 text-white" />
                   </div>
-                  <h2 className="text-4xl font-extrabold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">Record Receipt</h2>
+                  <h2 className="text-xl md:text-4xl font-extrabold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">Record Receipt</h2>
                 </div>
                 {!isFromAppointment && (
-                  <button onClick={() => setActiveForm(null)} className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full p-2 transition-all">
-                    <X className="w-7 h-7" />
+                  <button onClick={() => setActiveForm(null)} className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full p-1.5 md:p-2 transition-all">
+                    <X className="w-5 h-5 md:w-7 md:h-7" />
                   </button>
                 )}
               </div>
-              <form onSubmit={handleCreateService} className="space-y-6 relative">
+              <form onSubmit={handleCreateService} className="space-y-4 md:space-y-6 relative">
               <div>
-                <label className="block text-xs font-extrabold uppercase tracking-widest mb-4 text-slate-700 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
+                <label className="block text-[10px] md:text-xs font-extrabold uppercase tracking-widest mb-2 md:mb-4 text-slate-700 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-teal-500 rounded-full"></span>
                   Patient *
                 </label>
                 <div className="relative">
@@ -655,10 +655,10 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                     }}
                     onBlur={() => setTimeout(() => setShowReceiptSuggestions(false), 200)}
                     readOnly={isFromAppointment}
-                    className={`w-full px-5 py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-cyan-400/30 focus:border-cyan-400 transition-all text-base font-medium placeholder:text-slate-400 ${isFromAppointment ? 'bg-slate-100/70 cursor-not-allowed' : ''}`}
+                    className={`w-full px-4 py-3 md:px-5 md:py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-xl md:rounded-2xl focus:outline-none focus:ring-4 focus:ring-cyan-400/30 focus:border-cyan-400 transition-all text-sm md:text-base font-medium placeholder:text-slate-400 ${isFromAppointment ? 'bg-slate-100/70 cursor-not-allowed' : ''}`}
                   />
                   {patientSearch && showReceiptSuggestions && !isFromAppointment && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white/98 backdrop-blur-xl border-2 border-slate-200 rounded-2xl shadow-2xl z-10 max-h-64 overflow-y-auto scrollbar-thin">
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white/98 backdrop-blur-xl border-2 border-slate-200 rounded-xl md:rounded-2xl shadow-2xl z-10 max-h-64 overflow-y-auto scrollbar-thin">
                       {patients.filter(p => p.name.toLowerCase().includes(patientSearch.toLowerCase())).map(patient => (
                         <div
                           key={patient.id}
@@ -667,30 +667,22 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                             setPatientSearch(patient.name);
                             setShowReceiptSuggestions(false);
                           }}
-                          className="px-5 py-4 hover:bg-gradient-to-r hover:from-cyan-50 hover:to-teal-50 cursor-pointer border-b border-slate-100 last:border-b-0 transition-all"
+                          className="px-4 py-3 md:px-5 md:py-4 hover:bg-gradient-to-r hover:from-cyan-50 hover:to-teal-50 cursor-pointer border-b border-slate-100 last:border-b-0 transition-all"
                         >
-                          <p className="font-bold text-slate-900">{patient.name}</p>
-                          <p className="text-sm text-slate-500 mt-1">{patient.phone}</p>
+                          <p className="font-bold text-sm md:text-base text-slate-900">{patient.name}</p>
+                          <p className="text-[11px] md:text-sm text-slate-500 mt-1">{patient.phone}</p>
                         </div>
                       ))}
-                      {patients.filter(p => p.name.toLowerCase().includes(patientSearch.toLowerCase())).length === 0 && (
-                        <div className="px-5 py-4 text-slate-500 text-center">No patients found</div>
-                      )}
                     </div>
                   )}
                 </div>
-                <input
-                  type="hidden"
-                  name="patientId"
-                  value={selectedPatient}
-                  required
-                />
+                <input type="hidden" name="patientId" value={selectedPatient} required />
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div>
-                  <label className="block text-xs font-extrabold uppercase tracking-widest mb-4 text-slate-700 flex items-center gap-2">
-                    <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
+                  <label className="block text-[10px] md:text-xs font-extrabold uppercase tracking-widest mb-2 md:mb-4 text-slate-700 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-teal-500 rounded-full"></span>
                     Date *
                   </label>
                   <input
@@ -699,17 +691,17 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                     required
                     defaultValue={formatToDD_MM_YYYY(new Date())}
                     placeholder="DD/MM/YYYY"
-                    className="w-full px-5 py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-cyan-400/30 focus:border-cyan-400 transition-all text-base font-medium placeholder:text-slate-400"
+                    className="w-full px-4 py-3 md:px-5 md:py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-xl md:rounded-2xl focus:outline-none focus:ring-4 focus:ring-cyan-400/30 focus:border-cyan-400 transition-all text-sm md:text-base font-medium placeholder:text-slate-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-extrabold uppercase tracking-widest mb-4 text-slate-700 flex items-center gap-2">
-                    <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
+                  <label className="block text-[10px] md:text-xs font-extrabold uppercase tracking-widest mb-2 md:mb-4 text-slate-700 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-teal-500 rounded-full"></span>
                     Service Types *
                   </label>
-                  <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-teal-400 scrollbar-track-slate-100 p-2">
+                  <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-1.5 md:gap-2 max-h-48 md:max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-teal-400 scrollbar-track-slate-100 p-2 border-2 border-slate-100 rounded-xl">
                     {dentalServices.map(service => (
-                      <label key={service} className="flex items-center gap-2 bg-white border border-slate-200 rounded px-2 py-1 cursor-pointer hover:bg-slate-50 transition">
+                      <label key={service} className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-2 py-1.5 cursor-pointer hover:bg-slate-50 transition group">
                         <input
                           type="checkbox"
                           value={service}
@@ -718,132 +710,122 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                             if (e.target.checked) setSelectedServices(prev => [...prev, service]);
                             else setSelectedServices(prev => prev.filter(s => s !== service));
                           }}
-                          className="w-4 h-4 accent-teal-500"
+                          className="w-3.5 h-3.5 md:w-4 md:h-4 accent-teal-500"
                         />
-                        <span className="text-sm">{service}</span>
+                        <span className="text-[11px] md:text-sm font-medium text-slate-700 group-hover:text-teal-600">{service}</span>
                       </label>
                     ))}
                   </div>
-                  {/* Hidden inputs for form submission fallback (keeps existing handler working) */}
                   {selectedServices.map((service, idx) => (
                     <input key={service + idx} type="hidden" name="services" value={service} />
                   ))}
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-extrabold uppercase tracking-widest mb-4 text-slate-700 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-slate-400 rounded-full"></span>
-                  Tooth (Optional)
-                </label>
-                <input
-                  type="text"
-                  name="tooth"
-                  placeholder="e.g., #14, Upper Right"
-                  className="w-full px-5 py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-cyan-400/30 focus:border-cyan-400 transition-all text-base font-medium placeholder:text-slate-400"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-extrabold uppercase tracking-widest mb-4 text-slate-700 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
-                  Cost (₱) *
-                </label>
-                <input
-                  type="number"
-                  name="cost"
-                  required
-                  step="1"
-                  placeholder="0"
-                  onWheel={(e) => e.currentTarget.blur()}
-                  className="w-full px-5 py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-cyan-400/30 focus:border-cyan-400 transition-all text-base font-medium placeholder:text-slate-400 no-spinners"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                <div>
+                  <label className="block text-[10px] md:text-xs font-extrabold uppercase tracking-widest mb-2 md:mb-4 text-slate-700 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-slate-400 rounded-full"></span>
+                    Tooth (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    name="tooth"
+                    placeholder="e.g., #14, Upper Right"
+                    className="w-full px-4 py-3 md:px-5 md:py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-xl md:rounded-2xl focus:outline-none focus:ring-4 focus:ring-cyan-400/30 focus:border-cyan-400 transition-all text-sm md:text-base font-medium placeholder:text-slate-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] md:text-xs font-extrabold uppercase tracking-widest mb-2 md:mb-4 text-slate-700 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-teal-500 rounded-full"></span>
+                    Cost (₱) *
+                  </label>
+                  <input
+                    type="number"
+                    name="cost"
+                    required
+                    step="1"
+                    placeholder="0"
+                    onWheel={(e) => e.currentTarget.blur()}
+                    className="w-full px-4 py-3 md:px-5 md:py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-xl md:rounded-2xl focus:outline-none focus:ring-4 focus:ring-cyan-400/30 focus:border-cyan-400 transition-all text-sm md:text-base font-medium placeholder:text-slate-400 no-spinners"
+                  />
+                </div>
               </div>
 
               {/* Payment Type Selection */}
-              <div className="p-6 bg-gradient-to-br from-cyan-50 via-teal-50 to-blue-50 border-2 border-cyan-200/60 rounded-2xl backdrop-blur-sm shadow-inner">
-                <label className="block text-xs font-extrabold uppercase tracking-widest mb-5 text-slate-700 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-cyan-500 rounded-full"></span>
+              <div className="p-4 md:p-6 bg-gradient-to-br from-cyan-50 via-teal-50 to-blue-50 border-2 border-cyan-200/60 rounded-xl md:rounded-2xl backdrop-blur-sm shadow-inner">
+                <label className="block text-[10px] md:text-xs font-extrabold uppercase tracking-widest mb-3 md:mb-5 text-slate-700 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-cyan-500 rounded-full"></span>
                   Payment Method *
                 </label>
-                <div className="space-y-4">
-                  <label className="flex items-center cursor-pointer p-4 bg-white/70 rounded-xl hover:bg-white transition-all border border-transparent hover:border-cyan-300">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+                  <label className="flex items-center cursor-pointer p-3 md:p-4 bg-white/70 rounded-xl hover:bg-white transition-all border border-transparent hover:border-cyan-300">
                     <input
                       type="radio"
                       name="paymentType"
                       value="full"
                       checked={paymentType === 'full'}
                       onChange={(e) => setPaymentType(e.target.value as 'full' | 'installment')}
-                      className="mr-4 w-5 h-5 cursor-pointer accent-teal-500"
+                      className="mr-3 md:mr-4 w-4 h-4 md:w-5 md:h-5 cursor-pointer accent-teal-500"
                     />
-                    <span className="text-base font-bold text-slate-900">Full Payment</span>
+                    <span className="text-sm md:text-base font-bold text-slate-900">Full</span>
                   </label>
-                  <label className="flex items-center cursor-pointer p-4 bg-white/70 rounded-xl hover:bg-white transition-all border border-transparent hover:border-cyan-300">
+                  <label className="flex items-center cursor-pointer p-3 md:p-4 bg-white/70 rounded-xl hover:bg-white transition-all border border-transparent hover:border-cyan-300">
                     <input
                       type="radio"
                       name="paymentType"
                       value="installment"
                       checked={paymentType === 'installment'}
                       onChange={(e) => setPaymentType(e.target.value as 'full' | 'installment')}
-                      className="mr-4 w-5 h-5 cursor-pointer accent-teal-500"
+                      className="mr-3 md:mr-4 w-4 h-4 md:w-5 md:h-5 cursor-pointer accent-teal-500"
                     />
-                    <span className="text-base font-bold text-slate-900">Installment Plan</span>
+                    <span className="text-sm md:text-base font-bold text-slate-900">Installment</span>
                   </label>
                 </div>
               </div>
 
-              {/* Payment Amount */}
-              <div>
-                <label className="block text-xs font-extrabold uppercase tracking-widest mb-4 text-slate-700 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
-                  Amount Paid (₱)
-                </label>
-                <input
-                  type="number"
-                  name="amountPaid"
-                  step="0.01"
-                  placeholder="0"
-                  value={amountPaid === 0 ? '' : amountPaid}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    const parsed = parseFloat(value) || 0;
-                    setAmountPaid(parsed);
-                  }}
-                  onWheel={(e) => e.currentTarget.blur()}
-                  className="w-full px-5 py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all text-base font-medium placeholder:text-slate-400 no-spinners"
-                />
-                <p className="text-sm text-slate-500 mt-3 font-medium flex items-center gap-2">
-                  <span className="text-emerald-500">ℹ️</span>
-                  Leave empty or 0 if no payment yet
-                </p>
-              </div>
-
-              {/* Number of Installments */}
-              {paymentType === 'installment' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div>
-                  <label className="block text-xs font-extrabold uppercase tracking-widest mb-4 text-slate-700 flex items-center gap-2">
-                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                    Number of Installments
+                  <label className="block text-[10px] md:text-xs font-extrabold uppercase tracking-widest mb-2 md:mb-4 text-slate-700 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-emerald-500 rounded-full"></span>
+                    Amount Paid (₱)
                   </label>
-                  <select
-                    name="numberOfInstallments"
-                    value={numberOfInstallments}
-                    onChange={(e) => setNumberOfInstallments(parseInt(e.target.value))}
-                    className="w-full px-5 py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-400 transition-all text-base font-medium"
-                  >
-                    <option value="2">2 months</option>
-                    <option value="3">3 months</option>
-                    <option value="4">4 months</option>
-                    <option value="6">6 months</option>
-                    <option value="12">12 months (1 year)</option>
-                    <option value="24">24 months (2 years)</option>
-                  </select>
+                  <input
+                    type="number"
+                    name="amountPaid"
+                    step="0.01"
+                    placeholder="0"
+                    value={amountPaid === 0 ? '' : amountPaid}
+                    onChange={(e) => setAmountPaid(parseFloat(e.target.value) || 0)}
+                    onWheel={(e) => e.currentTarget.blur()}
+                    className="w-full px-4 py-3 md:px-5 md:py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-xl md:rounded-2xl focus:outline-none focus:ring-4 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all text-sm md:text-base font-medium placeholder:text-slate-400 no-spinners"
+                  />
                 </div>
-              )}
+                {paymentType === 'installment' && (
+                  <div>
+                    <label className="block text-[10px] md:text-xs font-extrabold uppercase tracking-widest mb-2 md:mb-4 text-slate-700 flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-blue-500 rounded-full"></span>
+                      Installments
+                    </label>
+                    <select
+                      name="numberOfInstallments"
+                      value={numberOfInstallments}
+                      onChange={(e) => setNumberOfInstallments(parseInt(e.target.value))}
+                      className="w-full px-4 py-3 md:px-5 md:py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-xl md:rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-400 transition-all text-sm md:text-base font-medium"
+                    >
+                      <option value="2">2 months</option>
+                      <option value="3">3 months</option>
+                      <option value="4">4 months</option>
+                      <option value="6">6 months</option>
+                      <option value="12">1 year</option>
+                    </select>
+                  </div>
+                )}
+              </div>
 
               <div>
-                <label className="block text-xs font-extrabold uppercase tracking-widest mb-4 text-slate-700 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
+                <label className="block text-[10px] md:text-xs font-extrabold uppercase tracking-widest mb-2 md:mb-4 text-slate-700 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-teal-500 rounded-full"></span>
                   Dentist *
                 </label>
                 <input
@@ -851,54 +833,36 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                   name="dentist"
                   required
                   placeholder="Dr. Name"
-                  className="w-full px-5 py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-cyan-400/30 focus:border-cyan-400 transition-all text-base font-medium placeholder:text-slate-400"
+                  className="w-full px-4 py-3 md:px-5 md:py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-xl md:rounded-2xl focus:outline-none focus:ring-4 focus:ring-cyan-400/30 focus:border-cyan-400 transition-all text-sm md:text-base font-medium placeholder:text-slate-400"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-extrabold uppercase tracking-widest mb-4 text-slate-700 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-slate-400 rounded-full"></span>
+                <label className="block text-[10px] md:text-xs font-extrabold uppercase tracking-widest mb-2 md:mb-4 text-slate-700 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-slate-400 rounded-full"></span>
                   Notes
                 </label>
                 <textarea
                   name="notes"
-                  rows={3}
-                  placeholder="Receipt details and observations"
-                  className="w-full px-5 py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-cyan-400/30 focus:border-cyan-400 transition-all resize-none text-base font-medium placeholder:text-slate-400"
+                  rows={2}
+                  placeholder="Observation notes"
+                  className="w-full px-4 py-3 md:px-5 md:py-4 bg-slate-50/50 backdrop-blur-sm border-2 border-slate-200 rounded-xl md:rounded-2xl focus:outline-none focus:ring-4 focus:ring-cyan-400/30 focus:border-cyan-400 transition-all resize-none text-sm md:text-base font-medium placeholder:text-slate-400"
                 />
               </div>
 
-              {selectedService === 'Extraction' && (
-                <div className="p-5 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300/60 rounded-2xl backdrop-blur-sm shadow-sm">
-                  <p className="text-base text-amber-900 font-bold flex items-center gap-2">
-                    <span className="text-2xl">💊</span>
-                    After recording this extraction, you will be prompted to create a prescription for the patient.
-                  </p>
-                </div>
-              )}
-
-              {selectedService === 'Braces' && (
-                <div className="p-5 bg-gradient-to-r from-cyan-50 to-blue-50 border-2 border-cyan-300/60 rounded-2xl backdrop-blur-sm shadow-sm">
-                  <p className="text-base text-cyan-900 font-bold flex items-center gap-2">
-                    <span className="text-2xl">📋</span>
-                    Braces treatment plan and progress recording.
-                  </p>
-                </div>
-              )}
-
-              <div className="flex gap-4 justify-end pt-8 border-t-2 border-slate-200/60">
+              <div className="flex gap-2 md:gap-4 justify-end pt-4 md:pt-8 border-t-2 border-slate-200/60">
                 {!isFromAppointment && (
                   <button
                     type="button"
                     onClick={() => setActiveForm(null)}
-                    className="px-8 py-4 border-2 border-slate-200 rounded-2xl hover:bg-slate-50 transition-all font-bold text-slate-900 duration-300 hover:scale-105 active:scale-95"
+                    className="px-4 py-2 md:px-8 md:py-4 border-2 border-slate-200 rounded-lg md:rounded-2xl hover:bg-slate-50 transition-all font-bold text-[10px] md:text-base text-slate-900 duration-300 active:scale-95"
                   >
                     Cancel
                   </button>
                 )}
                 <button
                   type="submit"
-                  className="px-10 py-4 bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white rounded-2xl hover:shadow-2xl hover:shadow-cyan-500/40 hover:scale-105 active:scale-95 transition-all font-bold duration-300"
+                  className="px-4 py-2 md:px-10 md:py-4 bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-white rounded-lg md:rounded-2xl hover:shadow-2xl hover:shadow-cyan-500/40 transition-all font-bold text-[10px] md:text-base duration-300 active:scale-95"
                 >
                   Record Receipt
                 </button>
@@ -911,22 +875,22 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
 
       {/* Create Prescription Modal - Premium Design */}
       {activeForm === 'prescription' && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="relative bg-white backdrop-blur-2xl rounded-3xl p-10 max-w-4xl w-full max-h-[90vh] overflow-y-auto overflow-x-hidden scrollbar-thin shadow-2xl border border-slate-200/60">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-2 md:p-4">
+          <div className="relative bg-white backdrop-blur-2xl rounded-2xl md:rounded-3xl p-4 md:p-10 max-w-4xl w-full max-h-[95vh] md:max-h-[90vh] overflow-y-auto overflow-x-hidden scrollbar-thin shadow-2xl border border-slate-200/60">
             <div className="absolute -top-20 -right-20 w-60 h-60 bg-emerald-500/20 rounded-full blur-3xl"></div>
             <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-teal-500/20 rounded-full blur-3xl"></div>
             
             <div className="relative">
-              <div className="flex justify-end mb-6">
-                <button onClick={() => setActiveForm(null)} className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full p-2 transition-all">
-                  <X className="w-7 h-7" />
+              <div className="flex justify-end mb-4 md:mb-6">
+                <button onClick={() => setActiveForm(null)} className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full p-1.5 md:p-2 transition-all">
+                  <X className="w-5 h-5 md:w-7 md:h-7" />
                 </button>
               </div>
-            <form onSubmit={handleCreatePrescription} className="space-y-8 relative">
+            <form onSubmit={handleCreatePrescription} className="space-y-6 md:space-y-8 relative">
               {/* Patient Search Bar - Premium Style */}
-              <div className="mb-8 p-6 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 rounded-2xl border-2 border-emerald-200/60">
-                <label className="block text-xs font-extrabold uppercase tracking-widest mb-4 text-slate-700 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+              <div className="mb-4 md:mb-8 p-4 md:p-6 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 rounded-xl md:rounded-2xl border-2 border-emerald-200/60">
+                <label className="block text-[10px] md:text-xs font-extrabold uppercase tracking-widest mb-2 md:mb-4 text-slate-700 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-emerald-500 rounded-full"></span>
                   Search Patient *
                 </label>
                 <div className="relative">
@@ -940,21 +904,21 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                     }}
                     onFocus={() => setShowPrescriptionSuggestions(true)}
                     onBlur={() => setTimeout(() => setShowPrescriptionSuggestions(false), 200)}
-                    className="w-full px-5 py-4 bg-white backdrop-blur-sm border-2 border-emerald-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all text-base font-medium placeholder:text-slate-400"
+                    className="w-full px-4 py-3 md:px-5 md:py-4 bg-white backdrop-blur-sm border-2 border-emerald-200 rounded-xl md:rounded-2xl focus:outline-none focus:ring-4 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all text-sm md:text-base font-medium placeholder:text-slate-400"
                   />
                   {prescriptionPatientSearch && showPrescriptionSuggestions && (
-                    <div className="absolute z-10 w-full bg-white/98 backdrop-blur-xl border-2 border-emerald-200 rounded-2xl mt-2 max-h-56 overflow-y-auto scrollbar-thin shadow-2xl">
+                    <div className="absolute z-10 w-full bg-white/98 backdrop-blur-xl border-2 border-emerald-200 rounded-xl md:rounded-2xl mt-2 max-h-56 overflow-y-auto scrollbar-thin shadow-2xl">
                       {patients
                         .filter(p => p.name.toLowerCase().includes(prescriptionPatientSearch.toLowerCase()))
                         .map(patient => (
                           <div
                             key={patient.id}
-                            onClick={() => {
+                            onMouseDown={() => {
                               setPrescriptionPatientId(String(patient.id));
                               setPrescriptionPatientSearch(patient.name);
                               setShowPrescriptionSuggestions(false);
                             }}
-                            className="px-5 py-4 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 cursor-pointer border-b border-slate-100 last:border-b-0 transition-all font-medium"
+                            className="px-4 py-3 md:px-5 md:py-4 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 cursor-pointer border-b border-slate-100 last:border-b-0 transition-all font-medium text-sm md:text-base"
                           >
                             {patient.name}
                           </div>
@@ -965,243 +929,231 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
               </div>
 
               {/* Header Section */}
-              <div className="text-center border-b-4 border-double border-gray-800 pb-4 mb-6">
-                <h1 className="text-2xl font-bold text-gray-900">JOSEPH E. MAAÑO, D.M.D</h1>
-                <p className="text-sm font-semibold text-gray-700">GENERAL DENTISTRY / ORTHODONTICS</p>
-                <p className="text-sm text-gray-600">#29 Emilio Jacinto St. San Diego Zone 2</p>
-                <p className="text-sm text-gray-600">Tayabas City 4327</p>
-                <p className="text-sm text-gray-600 mt-1">Tel # (042)7171156 &nbsp;&nbsp; Cp # 09773651397</p>
+              <div className="text-center border-b-4 border-double border-gray-800 pb-2 md:pb-4 mb-4 md:mb-6">
+                <h1 className="text-lg md:text-2xl font-bold text-gray-900">JOSEPH E. MAAÑO, D.M.D</h1>
+                <p className="text-[10px] md:text-sm font-semibold text-gray-700 uppercase">General Dentistry / Orthodontics</p>
+                <p className="text-[9px] md:text-sm text-gray-600">#29 Emilio Jacinto St. San Diego Zone 2, Tayabas City 4327</p>
+                <p className="text-[9px] md:text-sm text-gray-600 mt-0.5">Tel # (042)7171156 • Cp # 09773651397</p>
               </div>
 
               {/* Patient Information Section */}
-              <div className="space-y-3 mb-6">
-                <div className="grid grid-cols-12 gap-2 items-center">
-                  <label className="col-span-1 text-sm font-semibold text-gray-900">NAME:</label>
-                  <input
-                    type="text"
-                    value={prescriptionPatientId ? patients.find(p => String(p.id) === String(prescriptionPatientId))?.name || '' : ''}
-                    readOnly
-                    className="col-span-5 border-b border-gray-400 focus:outline-none bg-transparent px-2 py-1"
-                  />
-                  <label className="col-span-1 text-sm font-semibold text-gray-900 text-right">AGE:</label>
-                  <input
-                    type="text"
-                    value={prescriptionPatientId ? calculateAge(patients.find(p => String(p.id) === String(prescriptionPatientId))?.dateOfBirth || '') : ''}
-                    readOnly
-                    className="col-span-2 border-b border-gray-400 focus:outline-none bg-transparent px-2 py-1"
-                  />
-                  <label className="col-span-1 text-sm font-semibold text-gray-900 text-right">SEX:</label>
-                  <input
-                    type="text"
-                    value={prescriptionPatientId ? patients.find(p => String(p.id) === String(prescriptionPatientId))?.sex || '' : ''}
-                    readOnly
-                    className="col-span-2 border-b border-gray-400 focus:outline-none bg-transparent px-2 py-1"
-                  />
+              <div className="space-y-2 md:space-y-3 mb-4 md:mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-2 items-start md:items-center">
+                  <div className="col-span-1 md:col-span-1 flex items-center gap-2">
+                    <label className="text-[10px] md:text-sm font-semibold text-gray-900">NAME:</label>
+                    <input
+                      type="text"
+                      value={prescriptionPatientId ? patients.find(p => String(p.id) === String(prescriptionPatientId))?.name || '' : ''}
+                      readOnly
+                      className="flex-1 border-b border-gray-400 focus:outline-none bg-transparent px-1 md:px-2 py-0.5 md:py-1 text-[11px] md:text-base font-bold"
+                    />
+                  </div>
+                  <div className="hidden md:block md:col-span-5 border-b border-gray-400 h-px self-end mb-1"></div>
+                  <div className="col-span-1 md:col-span-6 flex items-center gap-2 justify-between">
+                    <div className="flex items-center gap-2">
+                      <label className="text-[10px] md:text-sm font-semibold text-gray-900">AGE:</label>
+                      <input
+                        type="text"
+                        value={prescriptionPatientId ? calculateAge(patients.find(p => String(p.id) === String(prescriptionPatientId))?.dateOfBirth || '') : ''}
+                        readOnly
+                        className="w-12 border-b border-gray-400 focus:outline-none bg-transparent px-1 md:px-2 py-0.5 md:py-1 text-[11px] md:text-base font-bold"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="text-[10px] md:text-sm font-semibold text-gray-900">SEX:</label>
+                      <input
+                        type="text"
+                        value={prescriptionPatientId ? patients.find(p => String(p.id) === String(prescriptionPatientId))?.sex || '' : ''}
+                        readOnly
+                        className="w-12 border-b border-gray-400 focus:outline-none bg-transparent px-1 md:px-2 py-0.5 md:py-1 text-[11px] md:text-base font-bold"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="grid grid-cols-12 gap-2 items-center">
-                  <label className="col-span-2 text-sm font-semibold text-gray-900">ADDRESS:</label>
-                  <input
-                    type="text"
-                    value={prescriptionPatientId ? patients.find(p => String(p.id) === String(prescriptionPatientId))?.address || '' : ''}
-                    readOnly
-                    className="col-span-6 border-b border-gray-400 focus:outline-none bg-transparent px-2 py-1"
-                  />
-                  <label className="col-span-1 text-sm font-semibold text-gray-900 text-right">DATE:</label>
-                  <input
-                    type="text"
-                    name="date"
-                    defaultValue={formatToDD_MM_YYYY(new Date())}
-                    className="col-span-3 border-b border-gray-400 focus:outline-none bg-transparent px-2 py-1"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-2 items-start md:items-center">
+                  <div className="col-span-1 md:col-span-8 flex items-center gap-2">
+                    <label className="text-[10px] md:text-sm font-semibold text-gray-900">ADDRESS:</label>
+                    <input
+                      type="text"
+                      value={prescriptionPatientId ? patients.find(p => String(p.id) === String(prescriptionPatientId))?.address || '' : ''}
+                      readOnly
+                      className="flex-1 border-b border-gray-400 focus:outline-none bg-transparent px-1 md:px-2 py-0.5 md:py-1 text-[10px] md:text-sm"
+                    />
+                  </div>
+                  <div className="col-span-1 md:col-span-4 flex items-center gap-2">
+                    <label className="text-[10px] md:text-sm font-semibold text-gray-900">DATE:</label>
+                    <input
+                      type="text"
+                      name="date"
+                      defaultValue={formatToDD_MM_YYYY(new Date())}
+                      className="flex-1 border-b border-gray-400 focus:outline-none bg-transparent px-1 md:px-2 py-0.5 md:py-1 text-[11px] md:text-base"
+                    />
+                  </div>
                 </div>
               </div>
 
               {/* RX Section */}
-              <div className="mb-4">
-                <h2 className="text-6xl font-serif text-gray-800 mb-2">℞</h2>
+              <div className="mb-2 md:mb-4">
+                <h2 className="text-4xl md:text-6xl font-serif text-gray-800 leading-none">℞</h2>
               </div>
 
               {/* Medicine Options */}
-              <div className="space-y-6 ml-8">
+              <div className="space-y-4 md:space-y-6 ml-2 md:ml-8">
                 {/* Mefenamic Acid */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-4">
+                <div className="space-y-2 border-l-2 border-emerald-100 pl-3 md:pl-4">
+                  <div className="flex flex-wrap items-center gap-2 md:gap-4">
                     <input
                       type="checkbox"
                       id="med_mefenamic"
                       name="med_mefenamic"
-                      className="w-5 h-5 rounded-full border-2 border-gray-400"
+                      className="w-4 h-4 md:w-5 md:h-5 rounded-full border-2 border-gray-400 accent-emerald-500"
                     />
-                    <label htmlFor="med_mefenamic" className="text-base font-semibold text-gray-900">
+                    <label htmlFor="med_mefenamic" className="text-sm md:text-base font-bold text-gray-900">
                       Mefenamic Acid
                     </label>
-                    <div className="flex items-center gap-4 ml-8">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="mefenamic_dosage"
-                          value="500mg"
-                          className="w-4 h-4"
-                        />
-                        <span className="text-sm">500mg</span>
+                    <div className="flex items-center gap-3 md:gap-4 ml-2 md:ml-8">
+                      <label className="flex items-center gap-1.5 cursor-pointer">
+                        <input type="radio" name="mefenamic_dosage" value="500mg" className="w-3.5 h-3.5 md:w-4 md:h-4 accent-emerald-500" />
+                        <span className="text-[11px] md:text-sm font-medium">500mg</span>
                       </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="mefenamic_dosage"
-                          value="250mg"
-                          className="w-4 h-4"
-                        />
-                        <span className="text-sm">250mg</span>
+                      <label className="flex items-center gap-1.5 cursor-pointer">
+                        <input type="radio" name="mefenamic_dosage" value="250mg" className="w-3.5 h-3.5 md:w-4 md:h-4 accent-emerald-500" />
+                        <span className="text-[11px] md:text-sm font-medium">250mg</span>
                       </label>
                     </div>
                   </div>
-                  <div className="ml-12 flex items-center gap-2">
-                    <span className="text-sm text-gray-700">#</span>
-                    <input
-                      type="number"
-                      name="mefenamic_quantity"
-                      placeholder="0"
-                      className="w-20 border-b border-gray-400 focus:outline-none bg-transparent px-2 py-1"
-                    />
-                  </div>
-                  <div className="ml-12">
-                    <span className="text-sm italic text-gray-700">Sig. </span>
-                    <input
-                      type="text"
-                      name="mefenamic_sig"
-                      defaultValue="Take 1 cap 3x a day"
-                      className="w-full border-b border-gray-400 focus:outline-none bg-transparent px-2 py-1 text-sm"
-                    />
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 md:gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] md:text-sm font-bold text-gray-700">#</span>
+                      <input
+                        type="number"
+                        name="mefenamic_quantity"
+                        placeholder="Qty"
+                        className="w-16 md:w-20 border-b border-gray-400 focus:outline-none bg-transparent px-1 md:px-2 py-0.5 md:py-1 text-[11px] md:text-base font-bold"
+                      />
+                    </div>
+                    <div className="flex-1 flex items-baseline gap-2">
+                      <span className="text-[11px] md:text-sm italic font-bold text-gray-700">Sig.</span>
+                      <input
+                        type="text"
+                        name="mefenamic_sig"
+                        defaultValue="Take 1 cap 3x a day"
+                        className="flex-1 border-b border-gray-400 focus:outline-none bg-transparent px-1 md:px-2 py-0.5 md:py-1 text-[11px] md:text-sm"
+                      />
+                    </div>
                   </div>
                 </div>
 
                 {/* Amoxicilin */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-4">
+                <div className="space-y-2 border-l-2 border-teal-100 pl-3 md:pl-4">
+                  <div className="flex flex-wrap items-center gap-2 md:gap-4">
                     <input
                       type="checkbox"
                       id="med_amoxicillin"
                       name="med_amoxicillin"
-                      className="w-5 h-5 rounded-full border-2 border-gray-400"
+                      className="w-4 h-4 md:w-5 md:h-5 rounded-full border-2 border-gray-400 accent-teal-500"
                     />
-                    <label htmlFor="med_amoxicillin" className="text-base font-semibold text-gray-900">
+                    <label htmlFor="med_amoxicillin" className="text-sm md:text-base font-bold text-gray-900">
                       Amoxicilin
                     </label>
-                    <div className="flex items-center gap-4 ml-8">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="amoxicillin_dosage"
-                          value="500mg"
-                          className="w-4 h-4"
-                        />
-                        <span className="text-sm">500mg</span>
+                    <div className="flex items-center gap-3 md:gap-4 ml-2 md:ml-8">
+                      <label className="flex items-center gap-1.5 cursor-pointer">
+                        <input type="radio" name="amoxicillin_dosage" value="500mg" className="w-3.5 h-3.5 md:w-4 md:h-4 accent-teal-500" />
+                        <span className="text-[11px] md:text-sm font-medium">500mg</span>
                       </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="amoxicillin_dosage"
-                          value="250mg"
-                          className="w-4 h-4"
-                        />
-                        <span className="text-sm">250mg</span>
+                      <label className="flex items-center gap-1.5 cursor-pointer">
+                        <input type="radio" name="amoxicillin_dosage" value="250mg" className="w-3.5 h-3.5 md:w-4 md:h-4 accent-teal-500" />
+                        <span className="text-[11px] md:text-sm font-medium">250mg</span>
                       </label>
                     </div>
                   </div>
-                  <div className="ml-12 flex items-center gap-2">
-                    <span className="text-sm text-gray-700">#</span>
-                    <input
-                      type="number"
-                      name="amoxicillin_quantity"
-                      placeholder="0"
-                      className="w-20 border-b border-gray-400 focus:outline-none bg-transparent px-2 py-1"
-                    />
-                  </div>
-                  <div className="ml-12">
-                    <span className="text-sm italic text-gray-700">Sig. </span>
-                    <input
-                      type="text"
-                      name="amoxicillin_sig"
-                      defaultValue="Take 1 cap 3x a day"
-                      className="w-full border-b border-gray-400 focus:outline-none bg-transparent px-2 py-1 text-sm"
-                    />
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 md:gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] md:text-sm font-bold text-gray-700">#</span>
+                      <input
+                        type="number"
+                        name="amoxicillin_quantity"
+                        placeholder="Qty"
+                        className="w-16 md:w-20 border-b border-gray-400 focus:outline-none bg-transparent px-1 md:px-2 py-0.5 md:py-1 text-[11px] md:text-base font-bold"
+                      />
+                    </div>
+                    <div className="flex-1 flex items-baseline gap-2">
+                      <span className="text-[11px] md:text-sm italic font-bold text-gray-700">Sig.</span>
+                      <input
+                        type="text"
+                        name="amoxicillin_sig"
+                        defaultValue="Take 1 cap 3x a day"
+                        className="flex-1 border-b border-gray-400 focus:outline-none bg-transparent px-1 md:px-2 py-0.5 md:py-1 text-[11px] md:text-sm"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                {/* Tranexamic Acid (third entry) */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-4">
+                {/* Tranexamic Acid */}
+                <div className="space-y-2 border-l-2 border-cyan-100 pl-3 md:pl-4">
+                  <div className="flex flex-wrap items-center gap-2 md:gap-4">
                     <input
                       type="checkbox"
                       id="med_mefenamic_2"
                       name="med_mefenamic_2"
-                      className="w-5 h-5 rounded-full border-2 border-gray-400"
+                      className="w-4 h-4 md:w-5 md:h-5 rounded-full border-2 border-gray-400 accent-cyan-500"
                     />
-                    <label htmlFor="med_mefenamic_2" className="text-base font-semibold text-gray-900">
+                    <label htmlFor="med_mefenamic_2" className="text-sm md:text-base font-bold text-gray-900">
                       Tranexamic Acid
                     </label>
-                    <div className="flex items-center gap-4 ml-8">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="mefenamic2_dosage"
-                          value="500mg"
-                          className="w-4 h-4"
-                        />
-                        <span className="text-sm">500mg</span>
+                    <div className="flex items-center gap-3 md:gap-4 ml-2 md:ml-8">
+                      <label className="flex items-center gap-1.5 cursor-pointer">
+                        <input type="radio" name="mefenamic2_dosage" value="500mg" className="w-3.5 h-3.5 md:w-4 md:h-4 accent-cyan-500" />
+                        <span className="text-[11px] md:text-sm font-medium">500mg</span>
                       </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="mefenamic2_dosage"
-                          value="250mg"
-                          className="w-4 h-4"
-                        />
-                        <span className="text-sm">250mg</span>
+                      <label className="flex items-center gap-1.5 cursor-pointer">
+                        <input type="radio" name="mefenamic2_dosage" value="250mg" className="w-3.5 h-3.5 md:w-4 md:h-4 accent-cyan-500" />
+                        <span className="text-[11px] md:text-sm font-medium">250mg</span>
                       </label>
                     </div>
                   </div>
-                  <div className="ml-12 flex items-center gap-2">
-                    <span className="text-sm text-gray-700">#</span>
-                    <input
-                      type="number"
-                      name="mefenamic2_quantity"
-                      placeholder="0"
-                      className="w-20 border-b border-gray-400 focus:outline-none bg-transparent px-2 py-1"
-                    />
-                  </div>
-                  <div className="ml-12">
-                    <span className="text-sm italic text-gray-700">Sig. </span>
-                    <input
-                      type="text"
-                      name="mefenamic2_sig"
-                      defaultValue="Take 1 cap 3x a day"
-                      className="w-full border-b border-gray-400 focus:outline-none bg-transparent px-2 py-1 text-sm"
-                    />
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 md:gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] md:text-sm font-bold text-gray-700">#</span>
+                      <input
+                        type="number"
+                        name="mefenamic2_quantity"
+                        placeholder="Qty"
+                        className="w-16 md:w-20 border-b border-gray-400 focus:outline-none bg-transparent px-1 md:px-2 py-0.5 md:py-1 text-[11px] md:text-base font-bold"
+                      />
+                    </div>
+                    <div className="flex-1 flex items-baseline gap-2">
+                      <span className="text-[11px] md:text-sm italic font-bold text-gray-700">Sig.</span>
+                      <input
+                        type="text"
+                        name="mefenamic2_sig"
+                        defaultValue="Take 1 cap 3x a day"
+                        className="flex-1 border-b border-gray-400 focus:outline-none bg-transparent px-1 md:px-2 py-0.5 md:py-1 text-[11px] md:text-sm"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Doctor Signature Section */}
-              <div className="flex justify-end mt-12 pt-8 border-t-2 border-gray-300">
-                <div className="text-center space-y-2">
-                  <h3 className="text-base font-bold text-gray-900">JOSEPH E. MAAÑO, D.M.D</h3>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-gray-700">LIC NO.</span>
+              <div className="flex justify-end mt-8 md:mt-12 pt-4 md:pt-8 border-t-2 border-gray-300">
+                <div className="text-center space-y-1.5 md:space-y-2">
+                  <h3 className="text-sm md:text-base font-bold text-gray-900">JOSEPH E. MAAÑO, D.M.D</h3>
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-[10px] md:text-sm font-semibold text-gray-700">LIC NO.</span>
                     <input
                       type="text"
                       name="license_number"
                       defaultValue="0031129"
-                      className="w-32 border-b border-gray-400 focus:outline-none bg-transparent px-2 py-1 text-sm text-center"
+                      className="w-24 md:w-32 border-b border-gray-400 focus:outline-none bg-transparent px-1 md:px-2 py-0.5 md:py-1 text-[10px] md:text-sm text-center font-bold"
                     />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-gray-700">PTR.</span>
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-[10px] md:text-sm font-semibold text-gray-700">PTR.</span>
                     <input
                       type="text"
                       name="ptr_number"
-                      className="w-32 border-b border-gray-400 focus:outline-none bg-transparent px-2 py-1 text-sm text-center"
+                      className="w-24 md:w-32 border-b border-gray-400 focus:outline-none bg-transparent px-1 md:px-2 py-0.5 md:py-1 text-[10px] md:text-sm text-center font-bold"
                     />
                   </div>
                 </div>
@@ -1211,17 +1163,17 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
               <input type="hidden" name="dentist" value="Joseph E. Maaño" />
               <input type="hidden" name="notes" value="" />
 
-              <div className="flex gap-3 justify-end pt-6 border-t border-slate-200/60">
+              <div className="flex gap-2 justify-end pt-4 md:pt-6 border-t border-slate-200/60">
                 <button
                   type="button"
                   onClick={() => setActiveForm(null)}
-                  className="px-6 py-3 border border-slate-200/60 rounded-xl hover:bg-slate-100/50 transition-all font-semibold text-slate-900 duration-300"
+                  className="px-4 py-2 border-2 border-slate-200 rounded-lg md:rounded-xl hover:bg-slate-50 transition-all font-bold text-[10px] md:text-sm text-slate-900 duration-300 active:scale-95"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl hover:shadow-lg hover:scale-105 active:scale-95 transition-all font-semibold duration-300"
+                  className="px-4 py-2 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white rounded-lg md:rounded-xl hover:shadow-xl hover:shadow-emerald-500/40 transition-all font-bold text-[10px] md:text-sm duration-300 active:scale-95"
                 >
                   Create Prescription
                 </button>
@@ -1234,50 +1186,50 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
 
       {/* View Prescription Modal */}
       {viewingPrescription && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto overflow-x-hidden scrollbar-thin shadow-2xl">
-            <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-300">
-              <h2 className="text-3xl font-bold text-gray-900">Prescription</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 md:p-4 p-2">
+          <div className="bg-white rounded-xl md:p-8 p-4 max-w-2xl w-full max-h-[95vh] overflow-y-auto overflow-x-hidden scrollbar-thin shadow-2xl">
+            <div className="flex justify-between items-center md:mb-6 mb-3 md:pb-4 pb-2 border-b-2 border-gray-300">
+              <h2 className="md:text-3xl text-xl font-bold text-gray-900">Prescription</h2>
               <button onClick={() => setViewingPrescription(null)} className="text-gray-500 hover:text-gray-700">
-                <X className="w-6 h-6" />
+                <X className="md:w-6 md:h-6 w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-6">
-              <div className="text-center border-b-4 border-double border-gray-800 pb-4">
-                <h1 className="text-2xl font-bold text-gray-900">JOSEPH E. MAAÑO, D.M.D</h1>
-                <p className="text-sm font-semibold text-gray-700">GENERAL DENTISTRY / ORTHODONTICS</p>
-                <p className="text-sm text-gray-600">#29 Emilio Jacinto St. San Diego Zone 2</p>
-                <p className="text-sm text-gray-600">Tayabas City 4327</p>
-                <p className="text-sm text-gray-600 mt-1">Tel # (042)7171156 &nbsp;&nbsp; Cp # 09773651397</p>
+            <div className="md:space-y-6 space-y-4">
+              <div className="text-center border-b-4 border-double border-gray-800 md:pb-4 pb-2">
+                <h1 className="md:text-2xl text-lg font-bold text-gray-900">JOSEPH E. MAAÑO, D.M.D</h1>
+                <p className="md:text-sm text-[10px] font-semibold text-gray-700 uppercase">GENERAL DENTISTRY / ORTHODONTICS</p>
+                <p className="md:text-sm text-[10px] text-gray-600">#29 Emilio Jacinto St. San Diego Zone 2</p>
+                <p className="md:text-sm text-[10px] text-gray-600">Tayabas City 4327</p>
+                <p className="md:text-sm text-[10px] text-gray-600 mt-1">Tel # (042)7171156 &nbsp;&nbsp; Cp # 09773651397</p>
               </div>
 
               {(() => {
                 const patient = patients.find(p => String(p.id) === String(viewingPrescription.patientId));
                 const age = patient?.dateOfBirth ? calculateAge(patient.dateOfBirth) : '';
                 return (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-12 gap-2 items-center">
-                      <label className="col-span-1 text-sm font-semibold text-gray-900">NAME:</label>
-                      <div className="col-span-5 border-b border-gray-400 px-2 py-1 text-sm text-gray-900">
+                  <div className="md:space-y-3 space-y-2">
+                    <div className="grid grid-cols-12 gap-1 items-center">
+                      <label className="col-span-2 md:col-span-1 md:text-sm text-[10px] font-semibold text-gray-900">NAME:</label>
+                      <div className="col-span-10 md:col-span-5 border-b border-gray-400 px-1 py-0.5 md:text-sm text-[10px] text-gray-900 truncate">
                         {patient?.name || ''}
                       </div>
-                      <label className="col-span-1 text-sm font-semibold text-gray-900 text-right">AGE:</label>
-                      <div className="col-span-2 border-b border-gray-400 px-2 py-1 text-sm text-gray-900">
+                      <label className="col-span-2 md:col-span-1 md:text-sm text-[10px] font-semibold text-gray-900 md:text-right">AGE:</label>
+                      <div className="col-span-4 md:col-span-2 border-b border-gray-400 px-1 py-0.5 md:text-sm text-[10px] text-gray-900">
                         {age}
                       </div>
-                      <label className="col-span-1 text-sm font-semibold text-gray-900 text-right">SEX:</label>
-                      <div className="col-span-2 border-b border-gray-400 px-2 py-1 text-sm text-gray-900">
+                      <label className="col-span-2 md:col-span-1 md:text-sm text-[10px] font-semibold text-gray-900 md:text-right">SEX:</label>
+                      <div className="col-span-4 md:col-span-2 border-b border-gray-400 px-1 py-0.5 md:text-sm text-[10px] text-gray-900">
                         {patient?.sex || ''}
                       </div>
                     </div>
-                    <div className="grid grid-cols-12 gap-2 items-center">
-                      <label className="col-span-2 text-sm font-semibold text-gray-900">ADDRESS:</label>
-                      <div className="col-span-6 border-b border-gray-400 px-2 py-1 text-sm text-gray-900">
+                    <div className="grid grid-cols-12 gap-1 items-center">
+                      <label className="col-span-2 md:text-sm text-[10px] font-semibold text-gray-900">ADDRESS:</label>
+                      <div className="col-span-10 md:col-span-6 border-b border-gray-400 px-1 py-0.5 md:text-sm text-[10px] text-gray-900 truncate">
                         {patient?.address || ''}
                       </div>
-                      <label className="col-span-1 text-sm font-semibold text-gray-900 text-right">DATE:</label>
-                      <div className="col-span-3 border-b border-gray-400 px-2 py-1 text-sm text-gray-900">
+                      <label className="col-span-2 md:col-span-1 md:text-sm text-[10px] font-semibold text-gray-900 md:text-right">DATE:</label>
+                      <div className="col-span-10 md:col-span-3 border-b border-gray-400 px-1 py-0.5 md:text-sm text-[10px] text-gray-900">
                         {formatToDD_MM_YYYY(viewingPrescription.date)}
                       </div>
                     </div>
@@ -1286,10 +1238,10 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
               })()}
 
               <div>
-                <h2 className="text-6xl font-serif text-gray-800">℞</h2>
+                <h2 className="md:text-6xl text-4xl font-serif text-gray-800">℞</h2>
               </div>
 
-              <div className="space-y-6 ml-8">
+              <div className="md:space-y-6 space-y-4 md:ml-8 ml-4">
                 {(() => {
                   const meds = viewingPrescription.medications || [];
                   const used = new Set<number>();
@@ -1319,23 +1271,23 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                     const quantity = quantityMatch?.[1] || '';
                     const isSelected = Boolean(med && (med.dosage || quantity || med.frequency));
                     return (
-                      <div key={`${row.key}-${index}`} className="space-y-2">
-                        <div className="flex items-center gap-4">
-                          <span className="text-base font-semibold text-gray-900">
+                      <div key={`${row.key}-${index}`} className="md:space-y-2 space-y-1">
+                        <div className="flex items-center gap-2 md:gap-4">
+                          <span className="md:text-base text-xs font-semibold text-gray-900">
                             {isSelected ? '●' : '○'} {row.label}
                           </span>
-                          <div className="flex items-center gap-4 ml-8">
-                            <span className="text-sm">{med?.dosage === '500mg' ? '●' : '○'} 500mg</span>
-                            <span className="text-sm">{med?.dosage === '250mg' ? '●' : '○'} 250mg</span>
+                          <div className="flex items-center gap-2 md:gap-4 md:ml-8 ml-2">
+                            <span className="md:text-sm text-[10px]">{med?.dosage === '500mg' ? '●' : '○'} 500mg</span>
+                            <span className="md:text-sm text-[10px]">{med?.dosage === '250mg' ? '●' : '○'} 250mg</span>
                           </div>
                         </div>
-                        <div className="ml-12 flex items-center gap-2">
-                          <span className="text-sm text-gray-700">#</span>
-                          <span className="w-20 border-b border-gray-400 px-2 py-1 text-sm text-gray-900">{quantity}</span>
+                        <div className="md:ml-12 ml-6 flex items-center gap-1">
+                          <span className="md:text-sm text-[10px] text-gray-700">#</span>
+                          <span className="md:w-20 w-12 border-b border-gray-400 px-1 py-0.5 md:text-sm text-[10px] text-gray-900">{quantity}</span>
                         </div>
-                        <div className="ml-12">
-                          <span className="text-sm italic text-gray-700">Sig. </span>
-                          <span className="text-sm text-gray-900 border-b border-gray-400 inline-block min-w-[260px] px-2 py-1">
+                        <div className="md:ml-12 ml-6">
+                          <span className="md:text-sm text-[10px] italic text-gray-700">Sig. </span>
+                          <span className="md:text-sm text-[10px] text-gray-900 border-b border-gray-400 inline-block md:min-w-[260px] min-w-[150px] px-1 py-0.5">
                             {med?.frequency || ''}
                           </span>
                         </div>
@@ -1345,35 +1297,35 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
                 })()}
               </div>
 
-              <div className="flex justify-end mt-10 pt-6 border-t-2 border-gray-300">
-                <div className="text-center space-y-2">
-                  <h3 className="text-base font-bold text-gray-900">JOSEPH E. MAAÑO, D.M.D</h3>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-gray-700">LIC NO.</span>
-                    <span className="w-32 border-b border-gray-400 px-2 py-1 text-sm text-center text-gray-900">
+              <div className="flex justify-end md:mt-10 mt-6 md:pt-6 pt-4 border-t-2 border-gray-300">
+                <div className="text-center space-y-1">
+                  <h3 className="md:text-base text-xs font-bold text-gray-900">JOSEPH E. MAAÑO, D.M.D</h3>
+                  <div className="flex items-center gap-1">
+                    <span className="md:text-sm text-[10px] font-semibold text-gray-700">LIC NO.</span>
+                    <span className="md:w-32 w-24 border-b border-gray-400 px-1 py-0.5 md:text-sm text-[10px] text-center text-gray-900">
                       {viewingPrescription.licenseNumber || ''}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-gray-700">PTR.</span>
-                    <span className="w-32 border-b border-gray-400 px-2 py-1 text-sm text-center text-gray-900">
+                  <div className="flex items-center gap-1">
+                    <span className="md:text-sm text-[10px] font-semibold text-gray-700">PTR.</span>
+                    <span className="md:w-32 w-24 border-b border-gray-400 px-1 py-0.5 md:text-sm text-[10px] text-center text-gray-900">
                       {viewingPrescription.ptrNumber || ''}
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex gap-3 justify-end pt-6 border-t-2 border-gray-200">
+              <div className="flex md:gap-3 gap-2 justify-end md:pt-6 pt-4 border-t-2 border-gray-200">
                 <button
                   onClick={() => printPrescription(viewingPrescription)}
-                  className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-2 font-semibold"
+                  className="md:px-6 md:py-3 px-3 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-1 md:gap-2 md:text-base text-xs font-semibold"
                 >
-                  <Printer className="w-5 h-5" />
-                  Print Prescription
+                  <Printer className="md:w-5 md:h-5 w-4 h-4" />
+                  Print
                 </button>
                 <button
                   onClick={() => setViewingPrescription(null)}
-                  className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors font-semibold text-gray-900"
+                  className="md:px-6 md:py-3 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors md:text-base text-xs font-semibold text-gray-900"
                 >
                   Close
                 </button>
@@ -1385,80 +1337,80 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
 
       {/* View Receipt Modal */}
       {viewingReceipt && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto overflow-x-hidden scrollbar-thin shadow-2xl">
-            <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-300">
-              <h2 className="text-3xl font-bold text-gray-900">Official Receipt</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 md:p-4 p-2">
+          <div className="bg-white rounded-xl md:p-8 p-4 max-w-2xl w-full max-h-[95vh] overflow-y-auto overflow-x-hidden scrollbar-thin shadow-2xl">
+            <div className="flex justify-between items-center md:mb-6 mb-3 md:pb-4 pb-2 border-b-2 border-gray-300">
+              <h2 className="md:text-3xl text-xl font-bold text-gray-900">Official Receipt</h2>
               <button onClick={() => setViewingReceipt(null)} className="text-gray-500 hover:text-gray-700">
-                <X className="w-6 h-6" />
+                <X className="md:w-6 md:h-6 w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+            <div className="md:space-y-6 space-y-4">
+              <div className="grid grid-cols-2 gap-2 md:gap-4 bg-gray-50 md:p-4 p-2 rounded-lg">
                 <div>
-                  <p className="text-sm text-gray-700 font-semibold mb-2">Receipt No.</p>
-                  <p className="text-gray-900 font-medium">{viewingReceipt.id}</p>
+                  <p className="md:text-sm text-[10px] text-gray-700 font-semibold mb-1">Receipt No.</p>
+                  <p className="md:text-base text-xs text-gray-900 font-medium">{viewingReceipt.id}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-700 font-semibold mb-2">Date</p>
-                  <p className="text-gray-900 font-medium">{formatToDD_MM_YYYY(viewingReceipt.date)}</p>
+                  <p className="md:text-sm text-[10px] text-gray-700 font-semibold mb-1">Date</p>
+                  <p className="md:text-base text-xs text-gray-900 font-medium">{formatToDD_MM_YYYY(viewingReceipt.date)}</p>
                 </div>
               </div>
 
-              <div className="pt-4 border-t-2 border-gray-200">
-                <h3 className="text-lg font-bold text-gray-900 mb-3">Patient Information</h3>
+              <div className="md:pt-4 pt-2 border-t-2 border-gray-200">
+                <h3 className="md:text-lg text-sm font-bold text-gray-900 md:mb-3 mb-2">Patient Information</h3>
                 {(() => {
                   const patient = patients.find(p => String(p.id) === String(viewingReceipt.patientId));
                   return patient ? (
-                    <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
-                      <p className="text-gray-900"><strong className="text-gray-700">Name:</strong> {patient.name}</p>
-                      <p className="text-gray-900"><strong className="text-gray-700">Age:</strong> {calculateAge(patient.dateOfBirth)}</p>
-                      <p className="text-gray-900"><strong className="text-gray-700">Sex:</strong> {patient.sex}</p>
-                      <p className="text-gray-900"><strong className="text-gray-700">Address:</strong> {patient.address}</p>
-                      <p className="text-gray-900"><strong className="text-gray-700">Phone:</strong> {patient.phone}</p>
-                      <p className="text-gray-900"><strong className="text-gray-700">Email:</strong> {patient.email}</p>
+                    <div className="md:space-y-3 space-y-1.5 bg-gray-50 md:p-4 p-2 rounded-lg">
+                      <p className="md:text-base text-xs text-gray-900"><strong className="text-gray-700">Name:</strong> {patient.name}</p>
+                      <p className="md:text-base text-xs text-gray-900"><strong className="text-gray-700">Age:</strong> {calculateAge(patient.dateOfBirth)}</p>
+                      <p className="md:text-base text-xs text-gray-900"><strong className="text-gray-700">Sex:</strong> {patient.sex}</p>
+                      <p className="md:text-base text-xs text-gray-900"><strong className="text-gray-700">Address:</strong> {patient.address}</p>
+                      <p className="md:text-base text-xs text-gray-900"><strong className="text-gray-700">Phone:</strong> {patient.phone}</p>
+                      <p className="md:text-base text-xs text-gray-900"><strong className="text-gray-700">Email:</strong> {patient.email}</p>
                     </div>
                   ) : null;
                 })()}
               </div>
 
-              <div className="pt-4 border-t-2 border-gray-200">
-                <h3 className="text-lg font-bold text-gray-900 mb-3">Service Details</h3>
-                <div className="space-y-3 bg-blue-50 p-4 rounded-lg">
-                  <p className="text-gray-900"><strong className="text-gray-700">Service:</strong> {viewingReceipt.treatment}</p>
-                  {viewingReceipt.tooth && <p className="text-gray-900"><strong className="text-gray-700">Tooth Number:</strong> {viewingReceipt.tooth}</p>}
-                  <p className="text-gray-900"><strong className="text-gray-700">Performed by:</strong> Dr. {viewingReceipt.dentist}</p>
+              <div className="md:pt-4 pt-2 border-t-2 border-gray-200">
+                <h3 className="md:text-lg text-sm font-bold text-gray-900 md:mb-3 mb-2">Service Details</h3>
+                <div className="md:space-y-3 space-y-1.5 bg-blue-50 md:p-4 p-2 rounded-lg">
+                  <p className="md:text-base text-xs text-gray-900"><strong className="text-gray-700">Service:</strong> {viewingReceipt.treatment}</p>
+                  {viewingReceipt.tooth && <p className="md:text-base text-xs text-gray-900"><strong className="text-gray-700">Tooth Number:</strong> {viewingReceipt.tooth}</p>}
+                  <p className="md:text-base text-xs text-gray-900"><strong className="text-gray-700">Performed by:</strong> Dr. {viewingReceipt.dentist}</p>
                 </div>
               </div>
 
-              <div className="pt-4 border-t-2 border-gray-200">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Amount</h3>
-                <div className="space-y-3 bg-gradient-to-br from-gray-50 to-yellow-50 p-5 rounded-lg border border-yellow-200">
-                  <div className="flex justify-between text-gray-900">
-                    <span className="font-semibold">Total Billed (Service Fee):</span>
+              <div className="md:pt-4 pt-2 border-t-2 border-gray-200">
+                <h3 className="md:text-lg text-sm font-bold text-gray-900 md:mb-4 mb-2">Amount</h3>
+                <div className="md:space-y-3 space-y-2 bg-gradient-to-br from-gray-50 to-yellow-50 md:p-5 p-3 rounded-lg border border-yellow-200">
+                  <div className="flex justify-between md:text-base text-xs text-gray-900">
+                    <span className="font-semibold">Total Billed:</span>
                     <span className="font-bold">₱{Number(viewingReceipt.cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
-                  <div className="flex justify-between text-green-700 font-semibold">
+                  <div className="flex justify-between md:text-base text-xs text-green-700 font-semibold">
                     <span>Total Paid:</span>
                     <span>₱{Number(viewingReceipt.amountPaid || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
-                  <div className="flex justify-between border-t-2 border-gray-300 pt-3 font-bold text-lg">
-                    <span className="text-gray-900">Current Balance:</span>
+                  <div className="flex justify-between border-t-2 border-gray-300 md:pt-3 pt-2 font-bold md:text-lg text-sm">
+                    <span className="text-gray-900">Balance:</span>
                     <span className={(viewingReceipt.remainingBalance !== undefined ? Number(viewingReceipt.remainingBalance) : Number(viewingReceipt.cost || 0)) > 0 ? 'text-red-600' : 'text-green-600'}>₱{Number(viewingReceipt.remainingBalance !== undefined ? viewingReceipt.remainingBalance : (viewingReceipt.cost || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                 </div>
               </div>
 
               {viewingReceipt.paymentType && (
-                <div className="pt-4 border-t-2 border-gray-200">
-                  <h3 className="text-lg font-bold text-gray-900 mb-3">Payment Information</h3>
-                  <div className="space-y-2 bg-purple-50 p-4 rounded-lg">
-                    <p className="text-gray-900"><strong className="text-gray-700">Payment Type:</strong> {viewingReceipt.paymentType === 'full' ? 'Full Payment' : 'Installment Plan'}</p>
+                <div className="md:pt-4 pt-2 border-t-2 border-gray-200">
+                  <h3 className="md:text-lg text-sm font-bold text-gray-900 md:mb-3 mb-2">Payment Info</h3>
+                  <div className="md:space-y-2 space-y-1 bg-purple-50 md:p-4 p-2 rounded-lg">
+                    <p className="md:text-base text-xs text-gray-900"><strong className="text-gray-700">Type:</strong> {viewingReceipt.paymentType === 'full' ? 'Full Payment' : 'Installment Plan'}</p>
                     {viewingReceipt.paymentType === 'installment' && viewingReceipt.installmentPlan && (
                       <>
-                        <p className="text-gray-900"><strong className="text-gray-700">Number of Installments:</strong> {viewingReceipt.installmentPlan.installments}</p>
-                        <p className="text-gray-900"><strong className="text-gray-700">Per Installment:</strong> ₱{Math.round(viewingReceipt.installmentPlan.amountPerInstallment)}</p>
+                        <p className="md:text-base text-xs text-gray-900"><strong className="text-gray-700">Installments:</strong> {viewingReceipt.installmentPlan.installments}</p>
+                        <p className="md:text-base text-xs text-gray-900"><strong className="text-gray-700">Per Installment:</strong> ₱{Math.round(viewingReceipt.installmentPlan.amountPerInstallment)}</p>
                       </>
                     )}
                   </div>
@@ -1466,23 +1418,23 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
               )}
 
               {viewingReceipt.notes && (
-                <div className="pt-4 border-t-2 border-gray-200">
-                  <h3 className="text-lg font-bold text-gray-900 mb-3">Notes</h3>
-                  <p className="text-gray-800 leading-relaxed">{viewingReceipt.notes}</p>
+                <div className="md:pt-4 pt-2 border-t-2 border-gray-200">
+                  <h3 className="md:text-lg text-sm font-bold text-gray-900 md:mb-3 mb-2">Notes</h3>
+                  <p className="md:text-base text-xs text-gray-800 leading-relaxed">{viewingReceipt.notes}</p>
                 </div>
               )}
 
-              <div className="flex gap-3 justify-end pt-6 border-t-2 border-gray-200">
+              <div className="flex md:gap-3 gap-2 justify-end md:pt-6 pt-4 border-t-2 border-gray-200">
                 <button
                   onClick={() => printReceipt(viewingReceipt)}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-2 font-semibold"
+                  className="md:px-6 md:py-3 px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-1 md:gap-2 md:text-base text-xs font-semibold"
                 >
-                  <Printer className="w-5 h-5" />
-                  Print Receipt
+                  <Printer className="md:w-5 md:h-5 w-4 h-4" />
+                  Print
                 </button>
                 <button
                   onClick={() => setViewingReceipt(null)}
-                  className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors font-semibold text-gray-900"
+                  className="md:px-6 md:py-3 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors md:text-base text-xs font-semibold text-gray-900"
                 >
                   Close
                 </button>
