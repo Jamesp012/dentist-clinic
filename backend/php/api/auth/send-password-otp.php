@@ -52,15 +52,20 @@ try {
     $smsResult = sendSMS($phone, "Your verification code for password change is: $otp. Valid for 10 minutes.");
 
     if ($smsResult['success']) {
+        $msg = isset($smsResult['simulated']) && $smsResult['simulated'] 
+            ? "OTP simulation: $otp (Check logs)" 
+            : "OTP sent successfully";
+        
         echo json_encode([
             "success" => true,
-            "message" => "OTP sent successfully",
+            "message" => $msg,
             "phone" => $maskedPhone,
             "otp_debug" => $otp // For development only
         ]);
     } else {
+        error_log("OTP send failed for $phone: " . json_encode($smsResult));
         http_response_code(500);
-        echo json_encode(["error" => "Failed to send OTP via SMS", "details" => $smsResult['error']]);
+        echo json_encode(["error" => "Failed to send OTP via SMS. Please contact support.", "details" => $smsResult['error'] ?? 'Unknown error']);
     }
 
 } catch (Exception $e) {

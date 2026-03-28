@@ -10,17 +10,22 @@
 function sendSMS($phone, $message) {
     if (empty($phone)) return ['success' => false, 'error' => 'Phone number is required'];
 
-    $apiToken = getenv('PHILSMS_API_TOKEN');
-    $senderName = getenv('PHILSMS_SENDER_NAME') ?: 'PhilSMS';
+    $apiToken = getenv('PHILSMS_API_TOKEN') ?: ($_ENV['PHILSMS_API_TOKEN'] ?? $_SERVER['PHILSMS_API_TOKEN'] ?? null);
+    $senderName = (getenv('PHILSMS_SENDER_NAME') ?: ($_ENV['PHILSMS_SENDER_NAME'] ?? $_SERVER['PHILSMS_SENDER_NAME'] ?? null)) ?: 'PhilSMS';
 
     if (empty($apiToken)) {
         // Log simulation
-        error_log("[SIMULATED SMS] To $phone: $message");
+        error_log("[SIMULATED SMS] To $phone: $message (API Token missing)");
         return ['success' => true, 'simulated' => true];
     }
 
     $cleanPhone = preg_replace('/\D/', '', $phone);
-    $recipient = (strpos($cleanPhone, '63') === 0) ? $cleanPhone : '63' . ltrim($cleanPhone, '0');
+    // Ensure it starts with 63 and remove leading 0 if present after 63 or at start
+    if (strpos($cleanPhone, '63') === 0) {
+        $recipient = $cleanPhone;
+    } else {
+        $recipient = '63' . ltrim($cleanPhone, '0');
+    }
 
     $data = [
         'recipient' => $recipient,
@@ -28,6 +33,8 @@ function sendSMS($phone, $message) {
         'type' => 'plain',
         'message' => $message
     ];
+
+    error_log("Attempting to send SMS to $recipient via PhilSMS");
 
     $ch = curl_init('https://dashboard.philsms.com/api/v3/sms/send');
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);

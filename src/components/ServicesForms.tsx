@@ -399,15 +399,28 @@ export function ServicesForms({ patients, treatmentRecords, setTreatmentRecords,
     generateDetailedReceiptPDF(patient, record, payments);
   };
 
-  const calculateAge = (dob: string) => {
-    const birthDate = new Date(dob);
+  const calculateAge = (dob: string | null | undefined) => {
+    if (!dob || dob === '0000-00-00' || dob === '00/00/0000' || dob === '1899-11-30') return 'N/A';
+    
+    // Parse date safely
+    let birthDate: Date;
+    if (dob.includes('/')) {
+      const [day, month, year] = dob.split('/').map(Number);
+      birthDate = new Date(year, month - 1, day);
+    } else {
+      birthDate = new Date(dob);
+    }
+
+    if (isNaN(birthDate.getTime()) || birthDate.getFullYear() <= 1900) return 'N/A';
+    
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
+    
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
       age--;
     }
-    return age;
+    return age.toString();
   };
 
   return (

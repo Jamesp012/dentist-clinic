@@ -53,11 +53,11 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
     return { first, middle: '', last };
   };
 
-  // Format patient name as: LASTNAME, Firstname Middlename M.I.
+  // Format patient name as: Firstname Middlename Lastname
   const formatPatientName = (fullName: string): string => {
     const { first, middle, last } = splitName(fullName);
-    const lastNameUpper = last.trim().toUpperCase();
     const firstName = first.trim();
+    const lastName = last.trim();
     const middleInitial = middle.trim() ? middle.trim().charAt(0).toUpperCase() + '.' : '';
     
     // Build the formatted name
@@ -65,9 +65,11 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
     if (middleInitial) {
       parts.push(middleInitial);
     }
-    const displayName = parts.join(' ');
+    if (lastName) {
+      parts.push(lastName);
+    }
     
-    return `${lastNameUpper}, ${displayName}`;
+    return parts.join(' ');
   };
 
   // Display name for sidebar (first and last only)
@@ -90,34 +92,35 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
     );
   });
 
-  // Sort by last name, then by first name
+  // Sort by full name (first name first)
   const sortedPatients = [...filteredPatients].sort((a, b) => {
-    const aName = splitName(a.name);
-    const bName = splitName(b.name);
-    const aLast = aName.last.toLowerCase();
-    const bLast = bName.last.toLowerCase();
-    
-    // First sort by last name
-    const lastNameCompare = aLast.localeCompare(bLast);
-    if (lastNameCompare !== 0) {
-      return lastNameCompare;
-    }
-    
-    // If last names are the same, sort by first name
-    const aFirst = aName.first.toLowerCase();
-    const bFirst = bName.first.toLowerCase();
-    return aFirst.localeCompare(bFirst);
+    const nameA = formatPatientName(a.name).toLowerCase();
+    const nameB = formatPatientName(b.name).toLowerCase();
+    return nameA.localeCompare(nameB);
   });
 
-  const calculateAge = (dob: string) => {
-    const birthDate = new Date(dob);
+  const calculateAge = (dob: string | null | undefined) => {
+    if (!dob || dob === '0000-00-00' || dob === '00/00/0000' || dob === '1899-11-30') return 'N/A';
+    
+    // Parse date safely
+    let birthDate: Date;
+    if (dob.includes('/')) {
+      const [day, month, year] = dob.split('/').map(Number);
+      birthDate = new Date(year, month - 1, day);
+    } else {
+      birthDate = new Date(dob);
+    }
+
+    if (isNaN(birthDate.getTime()) || birthDate.getFullYear() <= 1900) return 'N/A';
+    
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
+    
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
       age--;
     }
-    return age;
+    return age.toString();
   };
 
   const handleAddPatient = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -272,8 +275,8 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
                   </thead>
                   <tbody className="text-[11px] md:text-sm text-slate-700">
                     {sortedPatients.map((patient) => {
-                      const ageValue = patient.dateOfBirth ? calculateAge(patient.dateOfBirth) : NaN;
-                      const hasAge = Number.isFinite(ageValue);
+                      const ageDisplay = calculateAge(patient.dateOfBirth);
+                      const hasAge = ageDisplay !== 'N/A';
                       const dobLabel = patient.dateOfBirth ? formatToDD_MM_YYYY(patient.dateOfBirth) : 'N/A';
                       const sexLabel = patient.sex || 'N/A';
 
@@ -296,7 +299,7 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
                           <td className="px-3 md:px-5 py-2 md:py-3 text-center align-middle">
                             {hasAge ? (
                               <div className="flex items-baseline justify-center gap-0.5">
-                                <span className="text-[11px] md:text-sm font-semibold">{ageValue}</span>
+                                <span className="text-[11px] md:text-sm font-semibold">{ageDisplay}</span>
                                 <span className="text-[9px] md:text-[10px] text-slate-400">yr</span>
                               </div>
                             ) : (
@@ -749,7 +752,12 @@ export function PatientManagement({ patients, setPatients, onDataChanged }: Pati
               {/* Age Card */}
               <div className="group bg-gradient-to-br from-blue-50/80 to-cyan-50/80 backdrop-blur-sm p-6 rounded-2xl border border-cyan-200/40 hover:border-cyan-300/60 transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-cyan-500/10">
                 <label className="text-xs font-bold text-blue-700 uppercase tracking-widest mb-2 block">Age</label>
-                <p className="text-2xl font-bold text-slate-900">{calculateAge(viewingPatient.dateOfBirth)}<span className="text-sm text-slate-600 ml-2 font-normal">years old</span></p>
+                <p className="text-2xl font-bold text-slate-900">
+                  {calculateAge(viewingPatient.dateOfBirth)}
+                  {calculateAge(viewingPatient.dateOfBirth) !== 'N/A' && (
+                    <span className="text-sm text-slate-600 ml-2 font-normal">years old</span>
+                  )}
+                </p>
               </div>
               
               {/* Date of Birth Card */}

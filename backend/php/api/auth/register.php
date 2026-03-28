@@ -1,5 +1,6 @@
 <?php
 // backend/php/api/auth/register.php
+require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../utils/email_helper.php';
 
@@ -31,6 +32,10 @@ try {
 
     $hashedPassword = password_hash($data->password, PASSWORD_BCRYPT);
     $accessLevel = 'Default Accounts';
+    
+    $dob = !empty($data->dateOfBirth) ? formatDateForDB($data->dateOfBirth) : null;
+    $email = !empty($data->email) ? $data->email : null;
+    $phone = !empty($data->phone) ? $data->phone : null;
 
     $query = "INSERT INTO users (username, password, fullName, email, role, phone, dateOfBirth, isFirstLogin, accessLevel) 
               VALUES (:username, :password, :fullName, :email, :role, :phone, :dateOfBirth, FALSE, :accessLevel)";
@@ -38,10 +43,10 @@ try {
     $stmt->bindParam(':username', $data->username);
     $stmt->bindParam(':password', $hashedPassword);
     $stmt->bindParam(':fullName', $data->fullName);
-    $stmt->bindParam(':email', $data->email);
+    $stmt->bindParam(':email', $email);
     $stmt->bindParam(':role', $data->role);
-    $stmt->bindParam(':phone', $data->phone);
-    $stmt->bindParam(':dateOfBirth', $data->dateOfBirth);
+    $stmt->bindParam(':phone', $phone);
+    $stmt->bindParam(':dateOfBirth', $dob);
     $stmt->bindParam(':accessLevel', $accessLevel);
     $stmt->execute();
     $userId = $db->lastInsertId();
@@ -52,9 +57,9 @@ try {
         $stmt = $db->prepare($query);
         $stmt->bindParam(':userId', $userId);
         $stmt->bindParam(':name', $data->fullName);
-        $stmt->bindParam(':dob', $data->dateOfBirth);
-        $stmt->bindParam(':phone', $data->phone);
-        $stmt->bindParam(':email', $data->email);
+        $stmt->bindParam(':dob', $dob);
+        $stmt->bindParam(':phone', $phone);
+        $stmt->bindParam(':email', $email);
         $stmt->bindParam(':sex', $data->sex);
         $stmt->bindParam(':address', $data->address);
         $stmt->execute();
@@ -62,9 +67,9 @@ try {
 
     $db->commit();
 
-    // Send credentials email - do not fail the registration if email fails
+    // Send welcome email - do not fail the registration if email fails
     if (!empty($data->email) && $data->role === 'patient') {
-        EmailHelper::sendPatientCredentials($data->email, $data->fullName, $data->username, $data->password);
+        EmailHelper::sendPatientWelcome($data->email, $data->fullName, $data->username);
     }
 
     echo json_encode(["message" => "User registered successfully"]);

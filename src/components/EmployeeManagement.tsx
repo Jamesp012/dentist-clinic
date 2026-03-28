@@ -88,17 +88,22 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
   };
 
   const filteredEmployees = employees.filter((employee) => {
+    if (!employee) return false;
     const term = searchTerm.trim().toLowerCase();
     if (!term) return true;
 
-    const nameMatch = formatEmployeeName(employee.name).toLowerCase().includes(term);
+    const nameMatch = formatEmployeeName(employee.name || '').toLowerCase().includes(term);
     const positionMatch = (employee.position || '').toLowerCase().includes(term);
     const emailMatch = (employee.email || '').toLowerCase().includes(term);
     return nameMatch || positionMatch || emailMatch;
   });
 
   // Sorted view of employees
-  const sortedEmployees = filteredEmployees.slice().sort((a, b) => a.name.localeCompare(b.name));
+  const sortedEmployees = filteredEmployees.slice().sort((a, b) => {
+    const nameA = formatEmployeeName(a.name || '').toLowerCase();
+    const nameB = formatEmployeeName(b.name || '').toLowerCase();
+    return nameA.localeCompare(nameB);
+  });
 
   // Fetch employees from API
   const fetchEmployees = async () => {
@@ -214,12 +219,19 @@ export function EmployeeManagement({ token }: EmployeeManagementProps) {
   const canEditName = currentUser && currentUser.role === 'doctor';
 
   const splitName = (fullName: string) => {
-    const parts = (fullName || '').split('\n').map(p => p || '');
+    if (!fullName) return { first: '', middle: '', last: '' };
+    const parts = fullName.split('\n').map(p => p || '');
     if (parts.length >= 3) {
       return { first: parts[0], middle: parts.slice(1, parts.length - 1).join(' '), last: parts[parts.length - 1] };
     }
-    const [first = '', last = ''] = parts;
-    return { first, last };
+    if (parts.length === 2) {
+      return { first: parts[0], middle: '', last: parts[1] };
+    }
+    // Fallback for space-separated format
+    const nameParts = fullName.trim().split(/\s+/).filter(Boolean);
+    const first = nameParts.length > 0 ? nameParts[0] : '';
+    const last = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+    return { first, middle: '', last };
   };
 
   const handleDeleteEmployee = async () => {

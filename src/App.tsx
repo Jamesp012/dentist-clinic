@@ -476,11 +476,14 @@ export default function App() {
       const response = await authAPI.register(signupData);
       if (response.message) {
         toast.success('Account created successfully! Please log in with your credentials.');
+        return true;
       } else {
         toast.error(response.error || 'Signup failed');
+        return false;
       }
     } catch (error) {
       toast.error('Signup failed - cannot connect to server');
+      return false;
     }
   };
 

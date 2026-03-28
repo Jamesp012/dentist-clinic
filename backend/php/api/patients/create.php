@@ -5,6 +5,7 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../middleware/auth_middleware.php';
 require_once __DIR__ . '/../../utils/email_helper.php';
@@ -28,44 +29,7 @@ if (empty($data->name)) {
     exit();
 }
 
-// Helper to generate random password
-function generateRandomPassword($length = 8) {
-    $charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    $retVal = '';
-    for ($i = 0, $n = strlen($charset); $i < $length; ++$i) {
-        $retVal .= $charset[rand(0, $n - 1)];
-    }
-    return $retVal;
-}
-
-// Helper to generate unique username
-function generateUsername($db, $fullName, $email) {
-    if ($email) {
-        $baseUsername = strtolower(preg_replace('/[^a-z0-9]/', '', explode('@', $email)[0]));
-    } else {
-        $baseUsername = substr(strtolower(preg_replace('/[^a-z0-9]/', '', $fullName)), 0, 10);
-    }
-
-    if (empty($baseUsername)) $baseUsername = 'user';
-
-    $username = $baseUsername;
-    $counter = 1;
-    $isUnique = false;
-
-    while (!$isUnique) {
-        $query = "SELECT id FROM users WHERE username = :username LIMIT 1";
-        $stmt = $db->prepare($query);
-        $stmt->bindValue(':username', $username);
-        $stmt->execute();
-        if ($stmt->rowCount() === 0) {
-            $isUnique = true;
-        } else {
-            $username = $baseUsername . $counter;
-            $counter++;
-        }
-    }
-    return $username;
-}
+// ... existing helpers ...
 
 try {
     $db->beginTransaction();
@@ -82,7 +46,7 @@ try {
     
     $email = !empty($data->email) ? $data->email : null;
     $phone = !empty($data->phone) ? $data->phone : null;
-    $dob = !empty($data->dateOfBirth) ? $data->dateOfBirth : null;
+    $dob = !empty($data->dateOfBirth) ? formatDateForDB($data->dateOfBirth) : null;
 
     $userStmt->bindValue(':username', $username);
     $userStmt->bindValue(':password', $hashedPassword);
@@ -103,7 +67,6 @@ try {
     
     $patientStmt = $db->prepare($patientQuery);
     
-    $dob = !empty($data->dateOfBirth) ? $data->dateOfBirth : null;
     $address = !empty($data->address) ? $data->address : null;
     $sex = !empty($data->sex) ? $data->sex : null;
     $medHistory = !empty($data->medicalHistory) ? $data->medicalHistory : '';

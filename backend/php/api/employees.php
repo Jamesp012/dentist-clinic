@@ -50,19 +50,6 @@ if ($empIndex !== false) {
     }
 }
 
-function normalizeDate($val) {
-    if (empty($val)) return null;
-    $val = trim($val);
-    if (strpos($val, '/') !== false) {
-        $parts = explode('/', $val);
-        if (count($parts) === 3) {
-            return sprintf('%04d-%02d-%02d', $parts[2], $parts[1], $parts[0]);
-        }
-    }
-    $d = date_create($val);
-    return $d ? $d->format('Y-m-d') : null;
-}
-
 // Seeding logic
 function seedEmployeesIfEmpty($db) {
     $count = $db->query("SELECT COUNT(*) FROM employees")->fetchColumn();
@@ -162,14 +149,14 @@ try {
                 exit();
             }
             $stmt = $db->prepare("INSERT INTO employees (name, position, phone, email, address, dateOfBirth, dateHired, accessLevel) VALUES (?,?,?,?,?,?,?,?)");
-            $stmt->execute([$data->name, $data->position ?? '', $data->phone ?? '', $data->email ?? '', $data->address ?? '', normalizeDate($data->dateOfBirth ?? null), normalizeDate($data->dateHired ?? null), $data->accessLevel ?? 'Default Accounts']);
+            $stmt->execute([$data->name, $data->position ?? '', $data->phone ?? '', $data->email ?? '', $data->address ?? '', formatDateForDB($data->dateOfBirth ?? null), formatDateForDB($data->dateHired ?? null), $data->accessLevel ?? 'Default Accounts']);
             echo json_encode(["message" => "Employee added", "id" => $db->lastInsertId()]);
         }
     }
     elseif ($method === 'PUT' && $id) {
         $data = json_decode(file_get_contents("php://input"));
         $db->prepare("UPDATE employees SET name=?, position=?, phone=?, email=?, address=?, dateOfBirth=?, dateHired=?, accessLevel=? WHERE id=?")
-           ->execute([$data->name, $data->position, $data->phone, $data->email, $data->address, normalizeDate($data->dateOfBirth), normalizeDate($data->dateHired), $data->accessLevel, $id]);
+           ->execute([$data->name, $data->position, $data->phone, $data->email, $data->address, formatDateForDB($data->dateOfBirth), formatDateForDB($data->dateHired), $data->accessLevel, $id]);
         echo json_encode(["message" => "Employee updated"]);
     }
     elseif ($method === 'DELETE' && $id) {

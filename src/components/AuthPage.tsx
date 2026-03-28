@@ -44,6 +44,7 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
   const [isLoginView, setIsLoginView] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -165,6 +166,55 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
     setCooldown(0);
   };
 
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!username || !password) return setError('Please enter both username and password');
+    setError('');
+    setIsLoading(true);
+    onLogin(username, password);
+    // Note: App.tsx will handle the response and state change
+    setTimeout(() => setIsLoading(false), 2000);
+  };
+
+  const handleSignupChange = (field: keyof SignupData, value: any) => {
+    setSignupData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSignupSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const passError = validatePassword(signupData.password);
+    if (passError) return setError(passError);
+
+    if (signupData.password !== confirmPassword) {
+      return setError("Passwords do not match");
+    }
+    
+    setError('');
+    setIsLoading(true);
+    try {
+      // We'll modify App.tsx to return the response or use authAPI directly if needed
+      // but following the current pattern, we call onSignup
+      await onSignup(signupData);
+      
+      // If no error was thrown, we assume success or check for a message
+      // For now, let's assume we want to redirect to login view
+      setIsLoginView(true);
+      toast.success('Account created! Please sign in.');
+    } catch (err: any) {
+      setError(err.message || 'Signup failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const toggleView = () => {
+    setIsLoginView(!isLoginView);
+    setError('');
+    setUsername('');
+    setPassword('');
+    setConfirmPassword('');
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
       <div className="max-w-2xl w-full bg-white rounded-xl shadow p-6">
@@ -173,7 +223,7 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
             {isLoginView ? 'Welcome Back! Sign In' : 'Create Account / Sign Up'}
           </h2>
           <button 
-            onClick={() => setIsLoginView(!isLoginView)}
+            onClick={toggleView}
             className="text-sm font-semibold text-teal-600 hover:text-teal-700 transition-colors"
           >
             {isLoginView ? 'Need an account? Sign Up' : 'Already have an account? Sign In'}
@@ -232,7 +282,7 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
               <div className="flex justify-center items-center px-1">
                 <button 
                   type="button" 
-                  onClick={() => setIsLoginView(false)} 
+                  onClick={toggleView} 
                   className="text-sm text-teal-600 hover:text-teal-700 font-semibold"
                 >
                   Don't have an account? Sign Up
@@ -292,12 +342,13 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
-              <input 
+              <textarea 
                 value={signupData.address} 
                 onChange={e => handleSignupChange('address', e.target.value)} 
                 className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-teal-500 outline-none"
-                placeholder="Enter your address"
+                placeholder="Enter your complete address"
                 required
+                rows={2}
               />
             </div>
 
@@ -312,6 +363,9 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
                   required
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
                 <PasswordInput 
@@ -320,6 +374,25 @@ export function AuthPage({ onLogin, onSignup }: AuthPageProps) {
                   placeholder="Choose a password" 
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Confirm Password</label>
+                <PasswordInput 
+                  value={confirmPassword} 
+                  onChange={e => setConfirmPassword(e.target.value)} 
+                  placeholder="Confirm your password" 
+                />
+              </div>
+            </div>
+
+            <div className="text-xs text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-100 space-y-1">
+              <p className="font-semibold text-slate-700">Password requirements:</p>
+              <ul className="list-disc list-inside grid grid-cols-1 md:grid-cols-2 gap-x-4">
+                <li>At least 8 characters</li>
+                <li>One uppercase letter</li>
+                <li>One lowercase letter</li>
+                <li>One number</li>
+                <li>One special character</li>
+              </ul>
             </div>
 
             {error && (

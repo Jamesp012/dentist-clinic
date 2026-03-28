@@ -55,4 +55,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
+
+/**
+ * Helper to format date from DD/MM/YYYY to YYYY-MM-DD for MySQL
+ */
+function formatDateForDB($dateStr) {
+    if (empty($dateStr)) return null;
+    
+    // If it's already YYYY-MM-DD, return as is
+    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateStr)) {
+        return $dateStr;
+    }
+    
+    // Handle DD/MM/YYYY
+    if (strpos($dateStr, '/') !== false) {
+        $parts = explode('/', $dateStr);
+        if (count($parts) === 3) {
+            // Check if year is first or last
+            if (strlen($parts[0]) === 4) {
+                // YYYY/MM/DD
+                return $parts[0] . '-' . str_pad($parts[1], 2, '0', STR_PAD_LEFT) . '-' . str_pad($parts[2], 2, '0', STR_PAD_LEFT);
+            } else {
+                // DD/MM/YYYY
+                return $parts[2] . '-' . str_pad($parts[1], 2, '0', STR_PAD_LEFT) . '-' . str_pad($parts[0], 2, '0', STR_PAD_LEFT);
+            }
+        }
+    }
+    
+    // Fallback attempt with strtotime
+    $time = strtotime($dateStr);
+    return $time ? date('Y-m-d', $time) : $dateStr;
+}
 ?>

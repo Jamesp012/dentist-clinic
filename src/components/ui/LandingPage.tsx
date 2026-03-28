@@ -8,7 +8,7 @@ import { authAPI } from '../../api';
 export type LandingPageProps = {
   onGetStarted?: () => void;
   onLogin?: (username: string, password: string) => void;
-  onSignup?: (signupData: any) => void;
+  onSignup?: (signupData: any) => Promise<boolean>;
 };
 
 export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProps) {
@@ -285,7 +285,20 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
         ) : (
           /* Signup Form - Scrollable */
           <div className="overflow-y-auto pr-2 -mr-2 scrollbar-light" style={{ maxHeight: '100%' }}>
-            <form onSubmit={(e) => { e.preventDefault(); onSignup?.(signupData); }} className="space-y-4 sm:space-y-5">
+            <form onSubmit={async (e) => { 
+              e.preventDefault(); 
+              const passError = validatePassword(signupData.password);
+              if (passError) return toast.error(passError);
+              if (signupData.password !== confirmPassword) return toast.error('Passwords do not match');
+              
+              const success = await onSignup?.(signupData);
+              if (success) {
+                setIsLoginMode(true);
+                setUsername(signupData.username);
+                setPassword('');
+                setConfirmPassword('');
+              }
+            }} className="space-y-4 sm:space-y-5">
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <label className="block text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 text-slate-700">First Name</label>
@@ -331,6 +344,18 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
               </div>
 
               <div>
+                <label className="block text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 text-slate-700">Address</label>
+                <textarea 
+                  value={signupData.address} 
+                  onChange={(e) => setSignupData({ ...signupData, address: e.target.value })} 
+                  required 
+                  placeholder="Enter your complete address" 
+                  rows={2}
+                  className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm transition-all resize-none" 
+                />
+              </div>
+
+              <div>
                 <label className="block text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 text-slate-700">Username</label>
                 <div className="relative">
                   <User className="w-3.5 sm:w-4 h-3.5 sm:h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
@@ -355,6 +380,17 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
                     <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600">{showConfirmPassword ? <EyeOff className="w-3.5 sm:w-4 h-3.5 sm:h-4" /> : <Eye className="w-3.5 sm:w-4 h-3.5 sm:h-4" />}</button>
                   </div>
                 </div>
+              </div>
+
+              <div className="text-[10px] sm:text-xs text-slate-500 bg-slate-50 p-2.5 sm:p-3 rounded-lg border border-slate-100 space-y-1">
+                <p className="font-semibold text-slate-700">Password requirements:</p>
+                <ul className="list-disc list-inside grid grid-cols-1 sm:grid-cols-2 gap-x-2">
+                  <li>At least 8 characters</li>
+                  <li>One uppercase letter</li>
+                  <li>One lowercase letter</li>
+                  <li>One number</li>
+                  <li>One special character</li>
+                </ul>
               </div>
 
               <button type="submit" className="w-full py-3 sm:py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl font-semibold mt-4 sm:mt-6 text-sm sm:text-base"><UserPlus className="w-4 sm:w-5 h-4 sm:h-5" />Create Account</button>

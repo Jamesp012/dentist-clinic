@@ -1,5 +1,6 @@
 <?php
 // backend/php/api/patients/update.php
+require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../middleware/auth_middleware.php';
 
@@ -19,6 +20,8 @@ if (!$data) {
 try {
     $db->beginTransaction();
 
+    $dob = !empty($data->dateOfBirth) ? formatDateForDB($data->dateOfBirth) : null;
+
     $query = "UPDATE patients SET 
                 name = :name, 
                 dateOfBirth = :dob, 
@@ -31,7 +34,7 @@ try {
     
     $params = [
         ':name' => $data->name,
-        ':dob' => $data->dateOfBirth ?? null,
+        ':dob' => $dob,
         ':phone' => $data->phone ?? null,
         ':email' => $data->email ?? null,
         ':address' => $data->address ?? null,
@@ -68,7 +71,7 @@ try {
             $data->name,
             $data->email ?? null,
             $data->phone ?? null,
-            $data->dateOfBirth ?? null,
+            $dob,
             $patient['user_id']
         ]);
     }

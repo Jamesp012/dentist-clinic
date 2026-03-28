@@ -583,18 +583,29 @@ export function PatientPortal({
     return aptDate < today;
   });
 
-  const calculateAge = (dob: string) => {
+  const calculateAge = (dob: string | null | undefined) => {
+    if (!dob || dob === '0000-00-00' || dob === '00/00/0000' || dob === '1899-11-30') return 'N/A';
     // Parse date string as local date to avoid timezone issues
     const dateStr = dob.includes('T') ? dob.split('T')[0] : dob;
-    const [year, month, day] = dateStr.split('-').map(Number);
+    const parts = dateStr.includes('-') ? dateStr.split('-') : dateStr.split('/');
+    
+    let year, month, day;
+    if (dateStr.includes('-')) {
+      [year, month, day] = parts.map(Number);
+    } else {
+      [day, month, year] = parts.map(Number);
+    }
+
     const birthDate = new Date(year, month - 1, day);
+    if (isNaN(birthDate.getTime()) || birthDate.getFullYear() <= 1900) return 'N/A';
+    
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
       age--;
     }
-    return age;
+    return age.toString();
   };
 
   // Default services
@@ -1398,7 +1409,12 @@ export function PatientPortal({
                       <div className="group relative overflow-hidden rounded-3xl border border-slate-100/80 bg-white/95 p-6 shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_25px_55px_rgba(15,23,42,0.12)]">
                         <div className="absolute inset-0 -z-10 pointer-events-none bg-gradient-to-br from-blue-50 to-indigo-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Age</label>
-                        <p className="text-lg font-semibold text-slate-900">{isEditing ? calculateAge(editedPatient.dateOfBirth) : calculateAge(patient.dateOfBirth)} years old</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-lg font-semibold text-slate-900">
+                          {isEditing ? calculateAge(editedPatient.dateOfBirth) : calculateAge(patient.dateOfBirth)}
+                          {(isEditing ? calculateAge(editedPatient.dateOfBirth) : calculateAge(patient.dateOfBirth)) !== 'N/A' && ' years old'}
+                        </p>
+                      </div>
                       </div>
 
                       <div className="group relative overflow-hidden rounded-3xl border border-slate-100/80 bg-white/95 p-6 shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_25px_55px_rgba(15,23,42,0.12)]">
