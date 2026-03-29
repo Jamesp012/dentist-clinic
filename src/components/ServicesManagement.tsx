@@ -156,10 +156,6 @@ export default function ServicesManagement({ services = [], setServices, onDataC
   return (
     <div className="m-6">
       <div className="flex justify-between items-center mb-8 bg-white p-6 rounded-2xl border border-cyan-100 shadow-sm">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Services Offered</h2>
-          <p className="text-sm text-gray-500">Manage and customize your clinic's service catalog</p>
-        </div>
         <button 
           onClick={() => handleOpenServiceEditor(null)}
           className="px-6 py-3 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-xl font-bold flex items-center gap-2 hover:shadow-lg hover:scale-105 transition-all duration-300"
