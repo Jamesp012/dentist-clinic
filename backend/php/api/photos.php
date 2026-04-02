@@ -45,13 +45,13 @@ try {
         $data = json_decode(file_get_contents("php://input"));
         $uploadedBy = $payload['id'] ?? null;
         $stmt = $db->prepare("INSERT INTO photos (patientId, type, url, date, notes, treatmentId, uploadedBy) VALUES (?,?,?,?,?,?,?)");
-        $stmt->execute([$data->patientId, $data->type, $data->url, $data->date ?? date('Y-m-d'), $data->notes ?? '', $data->treatmentId ?? null, $uploadedBy]);
+        $stmt->execute([$data->patientId, $data->type, $data->url, formatDateForDB($data->date ?? date('Y-m-d')), $data->notes ?? '', $data->treatmentId ?? null, $uploadedBy]);
         echo json_encode(["message" => "Photo added", "id" => $db->lastInsertId()]);
     }
     elseif ($method === 'PUT' && $id) {
         $data = json_decode(file_get_contents("php://input"));
         $db->prepare("UPDATE photos SET type=?, date=?, notes=? WHERE id=?")
-           ->execute([$data->type, $data->date, $data->notes, $id]);
+           ->execute([$data->type, formatDateForDB($data->date), $data->notes, $id]);
         echo json_encode(["message" => "Photo updated"]);
     }
     elseif ($method === 'DELETE' && $id) {

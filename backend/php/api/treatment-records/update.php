@@ -31,7 +31,7 @@ try {
               WHERE id = :id";
     
     $stmt = $db->prepare($query);
-    $stmt->bindValue(':date', $data->date ?? null);
+    $stmt->bindValue(':date', formatDateForDB($data->date ?? null));
     $stmt->bindValue(':treatment', $data->treatment ?? null);
     $stmt->bindValue(':tooth', $data->tooth ?? null);
     $stmt->bindValue(':notes', $data->notes ?? null);

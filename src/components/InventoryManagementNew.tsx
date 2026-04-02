@@ -228,47 +228,84 @@ export function InventoryManagement({ inventory, setInventory, onDataChanged }: 
       {activeTab === 'overview' && (
         <div className="md:space-y-8 space-y-4 animate-in fade-in duration-500">
           {/* Summary Stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
-            <div className="bg-white p-3 md:p-6 rounded-2xl md:rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-3 md:gap-6 group hover:border-cyan-200 transition-all duration-500">
-               <div className="p-2.5 md:p-4 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-xl md:rounded-2xl shadow-lg shadow-cyan-200 group-hover:scale-110 transition-transform duration-500">
-                 <Package className="w-4 h-4 md:w-6 md:h-6 text-white" />
-               </div>
-               <div>
-                 <p className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5 md:mb-1">Total Items</p>
-                 <p className="text-lg md:text-3xl font-black text-gray-900 leading-none">{inventory.length}</p>
-               </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div className="bg-white p-2 rounded-xl border border-gray-100 shadow flex items-center gap-2 group hover:border-cyan-200">
+            <div className="p-2 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-xl shadow group-hover:scale-105 transition-transform">
+              <Package className="w-4 h-4 text-white" />
             </div>
-
-            <div className="bg-white p-3 md:p-6 rounded-2xl md:rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-3 md:gap-6 group hover:border-emerald-200 transition-all duration-500">
-               <div className="p-2.5 md:p-4 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl md:rounded-2xl shadow-lg shadow-emerald-200 group-hover:scale-110 transition-transform duration-500">
-                 <TrendingUp className="w-4 h-4 md:w-6 md:h-6 text-white" />
-               </div>
-               <div>
-                 <p className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5 md:mb-1">In Stock</p>
-                 <p className="text-lg md:text-3xl font-black text-gray-900 leading-none">{inventory.filter(i => getBaseQuantity(i) > 0).length}</p>
-               </div>
-            </div>
-
-            <div className="bg-white p-3 md:p-6 rounded-2xl md:rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-3 md:gap-6 group hover:border-amber-200 transition-all duration-500">
-               <div className="p-2.5 md:p-4 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl md:rounded-2xl shadow-lg shadow-amber-200 group-hover:scale-110 transition-transform duration-500">
-                 <AlertCircle className="w-4 h-4 md:w-6 md:h-6 text-white" />
-               </div>
-               <div>
-                 <p className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5 md:mb-1">Low Stock</p>
-                 <p className="text-lg md:text-3xl font-black text-gray-900 leading-none">{criticalItems.length}</p>
-               </div>
-            </div>
-
-            <div className="bg-white p-3 md:p-6 rounded-2xl md:rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-3 md:gap-6 group hover:border-red-200 transition-all duration-500">
-               <div className="p-2.5 md:p-4 bg-gradient-to-br from-red-500 to-red-600 rounded-xl md:rounded-2xl shadow-lg shadow-red-200 group-hover:scale-110 transition-transform duration-500">
-                 <X className="w-4 h-4 md:w-6 md:h-6 text-white" />
-               </div>
-               <div>
-                 <p className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5 md:mb-1">Out of Stock</p>
-                 <p className="text-lg md:text-3xl font-black text-gray-900 leading-none">{outOfStockItems.length}</p>
-               </div>
+            <div>
+              <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Total Items</p>
+              <p className="text-lg font-black text-gray-900">{inventory.length}</p>
             </div>
           </div>
+
+          <div className="bg-white p-2 rounded-xl border border-gray-100 shadow flex items-center gap-2 group hover:border-emerald-200">
+            <div className="p-2 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow group-hover:scale-105 transition-transform">
+              <TrendingUp className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">In Stock</p>
+              <p className="text-lg font-black text-gray-900">{inventory.filter(i => getBaseQuantity(i) > 0).length}</p>
+            </div>
+          </div>
+
+          <div className="bg-white p-2 rounded-xl border border-gray-100 shadow flex items-center gap-2 group hover:border-amber-200">
+            <div className="p-2 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl shadow group-hover:scale-105 transition-transform">
+              <AlertCircle className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Low Stock</p>
+              <p className="text-lg font-black text-gray-900">{criticalItems.length}</p>
+            </div>
+          </div>
+
+          <div className="bg-white p-2 rounded-xl border border-gray-100 shadow flex items-center gap-2 group hover:border-red-200">
+            <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow group-hover:scale-105 transition-transform">
+              <X className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Out of Stock</p>
+              <p className="text-lg font-black text-gray-900">{outOfStockItems.length}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Inventory Table - Compact */}
+        <div className="overflow-auto max-h-[50vh] w-full border rounded">
+          <table className="w-full table-fixed border-collapse text-[10px]">
+            <thead className="bg-gray-50 border-b border-gray-100 sticky top-0 z-10">
+              <tr>
+                <th className="px-2 py-2 text-left font-black text-gray-400 uppercase tracking-widest">Item</th>
+                <th className="px-2 py-2 text-left font-black text-gray-400 uppercase tracking-widest">Stock</th>
+                <th className="px-2 py-2 text-left font-black text-gray-400 uppercase tracking-widest hidden md:table-cell">Status</th>
+                <th className="px-2 py-2 text-right font-black text-gray-400 uppercase tracking-widest">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {filteredInventory.map(item => (
+                <tr key={item.id} className="group hover:bg-gray-50 transition-all duration-200">
+                  <td className="px-2 py-2 flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-white border flex items-center justify-center shadow-sm">
+                      <Package className="w-4 h-4 text-cyan-600" />
+                    </div>
+                    <span className="font-black text-gray-900 truncate">{item.name}</span>
+                  </td>
+                  <td className="px-2 py-2">{formatQuantityDisplay(item)}</td>
+                  <td className="px-2 py-2 hidden md:table-cell">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border bg-emerald-50 text-emerald-600">
+                      In Stock
+                    </span>
+                  </td>
+                  <td className="px-2 py-2 text-right flex gap-1 justify-end">
+                    <button className="p-1 bg-cyan-50 text-cyan-600 rounded-lg"><Plus className="w-3 h-3" /></button>
+                    <button className="p-1 bg-blue-50 text-blue-600 rounded-lg"><Edit className="w-3 h-3" /></button>
+                    <button className="p-1 bg-red-50 text-red-600 rounded-lg"><Trash2 className="w-3 h-3" /></button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
           <div className="bg-white rounded-2xl md:rounded-[2.5rem] border border-gray-100 shadow-sm h-auto md:h-[65vh] transition-all duration-500 hover:shadow-xl">
             <div className="p-4 md:p-8 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-8 bg-gradient-to-b from-gray-50/50 to-white">

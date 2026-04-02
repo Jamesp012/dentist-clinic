@@ -331,7 +331,7 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
                   <label className="block text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 text-slate-700">Date of Birth</label>
                   <div className="relative group">
                     <Calendar className="w-3.5 sm:w-4 h-3.5 sm:h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors pointer-events-none z-10" />
-                    <input ref={birthdatePickerRef} type="date" value={convertToDBDate(signupData.dateOfBirth)} onChange={(e) => setSignupData({ ...signupData, dateOfBirth: convertToDisplayDate(e.target.value) })} required className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm transition-all appearance-none cursor-pointer" />
+                    <input ref={birthdatePickerRef} type="date" value={signupData.dateOfBirth} onChange={(e) => setSignupData({ ...signupData, dateOfBirth: e.target.value })} required className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm transition-all appearance-none cursor-pointer" />
                   </div>
                 </div>
                 <div>

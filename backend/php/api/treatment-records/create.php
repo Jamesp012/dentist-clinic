@@ -27,7 +27,7 @@ try {
     
     $stmt = $db->prepare($query);
     $stmt->bindValue(':patientId', (!empty($data->patientId)) ? $data->patientId : null);
-    $stmt->bindValue(':date', $data->date ?? date('Y-m-d'));
+    $stmt->bindValue(':date', formatDateForDB($data->date ?? date('Y-m-d')));
     $stmt->bindValue(':treatment', $data->treatment ?? null);
     $stmt->bindValue(':tooth', $data->tooth ?? null);
     $stmt->bindValue(':notes', $data->notes ?? null);

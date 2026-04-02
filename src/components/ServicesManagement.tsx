@@ -155,10 +155,10 @@ export default function ServicesManagement({ services = [], setServices, onDataC
 
   return (
     <div className="m-6">
-      <div className="flex justify-between items-center mb-8 bg-white p-6 rounded-2xl border border-cyan-100 shadow-sm">
+      <div className="flex items-center mb-8 bg-white p-6 rounded-2xl border border-cyan-100 shadow-sm">
         <button 
           onClick={() => handleOpenServiceEditor(null)}
-          className="px-6 py-3 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-xl font-bold flex items-center gap-2 hover:shadow-lg hover:scale-105 transition-all duration-300"
+          className="ml-auto px-6 py-3 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-xl font-bold flex items-center gap-2 hover:shadow-lg hover:scale-105 transition-all duration-300"
         >
           <Plus className="w-5 h-5" />
           Add New Service

@@ -50,9 +50,14 @@ try {
         exit();
     }
 
-    $appointmentDateTime = parseAppointmentDateTime($data->date ?? null, $data->time ?? null) ?: $oldApt['appointmentDateTime'];
+    $newDateTimeStr = ($data->date ?? null) ? ($data->date . ' ' . ($data->time ?? '09:00')) : null;
+    $appointmentDateTime = $newDateTimeStr ? formatDateTimeForDB($newDateTimeStr) : $oldApt['appointmentDateTime'];
     $roleValue = ($data->createdByRole ?? '') === 'patient' ? 'patient' : 'staff';
     $status = $data->status ?? $oldApt['status'];
+
+    if ($newDateTimeStr && !$appointmentDateTime) {
+        throw new Exception("Invalid date or time format provided");
+    }
 
     $query = "UPDATE appointments SET 
                 patientId = :patientId, 

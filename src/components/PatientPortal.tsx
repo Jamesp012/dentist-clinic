@@ -1140,17 +1140,18 @@ export function PatientPortal({
               {activeTab === 'home' && (
                 <div className="p-6 space-y-4 flex-1">
                   {/* Hero Banner */}
-                  <motion.div
+                  {/* <motion.div
                     initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.35 }}
                     className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-cyan-600 via-teal-500 to-emerald-500 p-6 text-white shadow-xl"
-                  >
-                    <div className="absolute inset-0 pointer-events-none">
+                  > */}
+                    {/* <div className="absolute inset-0 pointer-events-none">
                       <div className="absolute -right-16 -top-12 h-56 w-56 rounded-full bg-white/20 blur-3xl opacity-60"></div>
                       <div className="absolute -left-12 bottom-0 h-48 w-48 rounded-full bg-emerald-300/30 blur-2xl opacity-50"></div>
-                    </div>
-                    <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                    </div> */}
+
+                    {/* <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                       <div className="max-w-2xl space-y-3">
                         <h3 className="text-2xl font-semibold leading-tight">Personalized care brief</h3>
                         <p className="text-sm text-white/80 md:text-base">
@@ -1162,8 +1163,9 @@ export function PatientPortal({
                           {getDisplayName(patient.name)}
                         </span>
                       </div>
-                    </div>
-                    <div className="relative z-10 mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    </div> */}
+
+                    {/* <div className="relative z-10 mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
                       <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
                         <p className="text-xs font-semibold uppercase tracking-wide text-white/70">Next visit</p>
                         <p className="mt-1 text-lg font-semibold">
@@ -1195,8 +1197,8 @@ export function PatientPortal({
                           {patientPhotos.length} photo{patientPhotos.length === 1 ? '' : 's'} archived
                         </p>
                       </div>
-                    </div>
-                  </motion.div>
+                    </div> */}
+                  {/* </motion.div> */}
 
                   {/* Two-Column Layout for TODAY'S SCHEDULE and APPOINTMENT STATUS */}
                   <div className="grid grid-cols-2 gap-4">
@@ -1294,7 +1296,7 @@ export function PatientPortal({
                         <div className="absolute inset-0 flex justify-center -z-10">
                           <div className="w-56 h-10 rounded-full bg-gradient-to-br from-white to-slate-50 opacity-60 blur-sm"></div>
                         </div>
-                        <h3 className="text-lg font-bold uppercase tracking-wide z-10" style={{ color: 'var(--dental-primary-dark)' }}>CLINIC NEWS</h3>
+                        <h3 className="text-lg font-bold uppercase tracking-wide z-10" style={{ color: 'var(--dental-primary-dark)' }}>CLINIC ANNOUNCEMENT</h3>
                       </div>
 
                       {/* Content */}
@@ -2466,13 +2468,6 @@ export function PatientPortal({
             {/* Photos Tab */}
             {activeTab === 'photos' && (
               <div className="p-6 space-y-4 flex flex-col h-full overflow-hidden">
-                <div className="flex-shrink-0">
-                  <h2 className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-cyan-500 bg-clip-text text-transparent mb-2">
-                    Treatment Photos & X-Rays
-                  </h2>
-                  <p className="text-sm text-gray-600">View your dental treatment photos and X-rays</p>
-                </div>
-
                 {/* Photos Grid Container */}
                 {patientPhotos.length > 0 ? (
                   <div className="flex-1 scrollbar-accent rounded-2xl bg-gradient-to-br from-white via-cyan-50/30 to-teal-50/20 border border-cyan-200/60 p-6 overflow-y-auto">

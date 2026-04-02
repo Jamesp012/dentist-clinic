@@ -38,7 +38,7 @@ try {
     $stmt->bindValue(':specialty', $data->specialty ?? null);
     $stmt->bindValue(':reason', $data->reason ?? null);
     $stmt->bindValue(':selectedServices', isset($data->selectedServices) ? json_encode($data->selectedServices) : null);
-    $stmt->bindValue(':date', $data->date ?? date('Y-m-d'));
+    $stmt->bindValue(':date', formatDateForDB($data->date ?? date('Y-m-d')));
     $stmt->bindValue(':urgency', $data->urgency ?? 'routine');
     $stmt->bindValue(':createdByRole', $data->createdByRole ?? 'staff');
     $stmt->bindValue(':referralType', $data->referralType ?? 'outgoing');

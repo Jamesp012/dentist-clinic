@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 /**
- * Helper to format date from DD/MM/YYYY to YYYY-MM-DD for MySQL
+ * Helper to format date from various formats to YYYY-MM-DD for MySQL
  */
 function formatDateForDB($dateStr) {
     if (empty($dateStr)) return null;
@@ -67,22 +67,31 @@ function formatDateForDB($dateStr) {
         return $dateStr;
     }
     
-    // Handle DD/MM/YYYY
+    // Handle DD/MM/YYYY vs MM/DD/YYYY
     if (strpos($dateStr, '/') !== false) {
         $parts = explode('/', $dateStr);
         if (count($parts) === 3) {
-            // Check if year is first or last
+            // Check if year is first (YYYY/MM/DD)
             if (strlen($parts[0]) === 4) {
-                // YYYY/MM/DD
                 return $parts[0] . '-' . str_pad($parts[1], 2, '0', STR_PAD_LEFT) . '-' . str_pad($parts[2], 2, '0', STR_PAD_LEFT);
-            } else {
-                // DD/MM/YYYY
+            }
+            // Check if middle part is > 12 (DD/MM/YYYY)
+            if (intval($parts[1]) > 12) {
+                // middle is day, first is month (MM/DD/YYYY)
+                return $parts[2] . '-' . str_pad($parts[0], 2, '0', STR_PAD_LEFT) . '-' . str_pad($parts[1], 2, '0', STR_PAD_LEFT);
+            }
+            // Check if first part is > 12 (DD/MM/YYYY)
+            if (intval($parts[0]) > 12) {
+                // first is day, middle is month (DD/MM/YYYY)
                 return $parts[2] . '-' . str_pad($parts[1], 2, '0', STR_PAD_LEFT) . '-' . str_pad($parts[0], 2, '0', STR_PAD_LEFT);
             }
+            
+            // Ambiguous (e.g. 01/02/2000) - strtotime will treat / as MM/DD/YYYY
         }
     }
     
     // Fallback attempt with strtotime
+    // Note: strtotime treats slashes as MM/DD/YYYY and dashes as DD-MM-YYYY
     $time = strtotime($dateStr);
     return $time ? date('Y-m-d', $time) : $dateStr;
 }

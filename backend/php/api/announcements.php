@@ -35,7 +35,7 @@ try {
             $data->title, 
             $data->message, 
             $data->type ?? 'general',
-            $data->date ?? date('Y-m-d'),
+            formatDateForDB($data->date ?? date('Y-m-d')),
             $data->createdBy ?? 'Admin'
         ]);
         

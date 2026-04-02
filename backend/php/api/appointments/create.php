@@ -33,10 +33,14 @@ function extractDateTime($dateTimeStr) {
 }
 
 try {
-    $appointmentDateTime = parseAppointmentDateTime($data->date, $data->time ?? null);
+    $appointmentDateTime = formatDateTimeForDB($data->date . ' ' . ($data->time ?? '09:00'));
     $roleValue = ($data->createdByRole ?? '') === 'patient' ? 'patient' : 'staff';
     $duration = $data->duration ?? 60;
     $status = 'scheduled';
+
+    if (!$appointmentDateTime) {
+        throw new Exception("Invalid date or time format provided");
+    }
 
     $query = "INSERT INTO appointments (patientId, patientName, appointmentDateTime, type, duration, status, notes, createdByRole) 
               VALUES (:patientId, :patientName, :appointmentDateTime, :type, :duration, :status, :notes, :createdByRole)";

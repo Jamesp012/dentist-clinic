@@ -59,7 +59,7 @@ try {
         $stmt->bindValue(':ptrNumber', $data->ptrNumber ?? null);
         $stmt->bindValue(':medications', json_encode($data->medications));
         $stmt->bindValue(':notes', $data->notes ?? '');
-        $stmt->bindValue(':date', $data->date ?? date('Y-m-d'));
+        $stmt->bindValue(':date', formatDateForDB($data->date ?? date('Y-m-d')));
         
         if ($stmt->execute()) {
             echo json_encode(["success" => true, "id" => $db->lastInsertId()]);
@@ -92,7 +92,7 @@ try {
             $stmt->bindValue(':ptrNumber', $data->ptrNumber ?? null);
             $stmt->bindValue(':medications', json_encode($data->medications));
             $stmt->bindValue(':notes', $data->notes ?? '');
-            $stmt->bindValue(':date', $data->date ?? date('Y-m-d'));
+            $stmt->bindValue(':date', formatDateForDB($data->date ?? date('Y-m-d')));
             $stmt->bindValue(':id', $id);
             
             if ($stmt->execute()) {

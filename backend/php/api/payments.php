@@ -82,7 +82,7 @@ try {
         $stmt->bindValue(':patientId', $data->patientId);
         $stmt->bindValue(':treatmentRecordId', $data->treatmentRecordId ?? null);
         $stmt->bindValue(':amount', $data->amount);
-        $stmt->bindValue(':paymentDate', $data->paymentDate ?? date('Y-m-d'));
+        $stmt->bindValue(':paymentDate', formatDateForDB($data->paymentDate ?? date('Y-m-d')));
         $stmt->bindValue(':paymentMethod', $data->paymentMethod ?? 'cash');
         $stmt->bindValue(':status', $data->status ?? 'pending');
         $stmt->bindValue(':notes', $data->notes ?? null);

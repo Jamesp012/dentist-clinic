@@ -303,87 +303,89 @@ export function AnnouncementsManagement({ announcements, setAnnouncements, servi
             </button>
           </div>
 
-          <div className="space-y-3 max-h-[60vh] overflow-y-auto scrollbar-visible pr-2">
-            {announcements && announcements.length > 0 ? (
-              announcements.map(announcement => (
-                <motion.div
-                  key={announcement.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  whileHover={{ y: -2 }}
-                  className="bg-white rounded-xl border border-cyan-200/60 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden group"
-                >
-                  <div className={`h-1.5 bg-gradient-to-r`} style={{
-                    backgroundImage: announcement.type === 'important' 
-                      ? 'linear-gradient(to right, #005461, #003a47)' :
-                      announcement.type === 'promo' 
-                      ? 'linear-gradient(to right, #6AECE1, #52d4d1)' :
-                      announcement.type === 'closure' 
-                      ? 'linear-gradient(to right, #A7E399, #94d975)' :
-                      'linear-gradient(to right, #3BC1A8, #2aaa95)'
-                  }} />
-                  <div className="p-6">
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex items-start gap-4 flex-1">
-                        <div className="text-3xl mt-1">{getAnnouncementIcon(announcement.type)}</div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-teal-700 transition-colors">{announcement.title}</h3>
-                          <div className="flex flex-wrap gap-4 items-center text-sm">
-                            <span className="text-gray-600 font-medium flex items-center gap-1">
-                              📅 {timeAgo(announcement.date)}
-                            </span>
-                            <span className="text-gray-600 font-medium flex items-center gap-1">
-                              👤 {announcement.createdBy}
-                            </span>
+          {announcements && announcements.length > 0 ? (
+            <div className='h-[70vh] overflow-y-auto pr-2'>
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+
+                {announcements.map((announcement) => (
+                  <motion.div
+                    key={announcement.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-gradient-to-br from-white via-cyan-50/30 to-teal-50/20 rounded-2xl border border-cyan-200/60 shadow-md hover:shadow-2xl hover:border-teal-300 transition-all duration-300 p-7 group overflow-hidden relative flex flex-col h-full"
+                  >
+                    {/* Hover Glow */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-teal-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                    <div className="relative flex flex-col flex-1">
+
+                      {/* HEADER */}
+                      <div className="flex justify-between items-start mb-5">
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          <div className="text-2xl">
+                            {getAnnouncementIcon(announcement.type)}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-xl font-bold text-gray-900 mb-2 break-words leading-snug group-hover:text-teal-700 transition-colors">
+                              {announcement.title}
+                            </h3>
+
+                            <div className="flex gap-2 mb-1">
+                              <span className="px-4 py-1.5 bg-gradient-to-r from-cyan-100 to-teal-100 text-teal-700 rounded-full text-xs font-semibold border border-teal-200 capitalize">
+                                {announcement.type}
+                              </span>
+                            </div>
+
+                            <div className="flex gap-3 text-xs text-gray-500 mt-2">
+                              <span>📅 {timeAgo(announcement.date)}</span>
+                              <span>👤 {announcement.createdBy}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleShowDeleteConfirmation(announcement.id)}
-                        className="p-2 rounded-lg transition-all duration-200 flex-shrink-0 hover:bg-red-50 text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
+
+                      {/* MESSAGE (like Service Includes) */}
+                      <div className="mb-6 bg-gradient-to-br from-cyan-50/40 to-teal-50/40 rounded-xl p-5 border border-cyan-200/60">
+                        <p className="text-xs font-bold text-teal-700 mb-3 uppercase tracking-widest">
+                          Announcement Details
+                        </p>
+
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap break-words leading-relaxed line-clamp-5">
+                          {announcement.message}
+                        </p>
+                      </div>
+
+                      {/* FOOTER ACTIONS (same as services) */}
+                      <div className="mt-auto flex justify-end pt-4 border-t border-cyan-200/50">
+                        <button
+                          onClick={() => handleShowDeleteConfirmation(announcement.id)}
+                          className="px-4 py-2 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-lg transition-all duration-200 font-semibold text-sm hover:from-red-600 hover:to-pink-600 hover:shadow-md flex items-center gap-2"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete
+                        </button>
+                      </div>
+
                     </div>
-                    <p className="text-gray-700 leading-relaxed mb-4 text-sm whitespace-pre-wrap">{announcement.message}</p>
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-200/50">
-                      <span className="px-3 py-1 rounded-full text-xs font-bold capitalize" style={{
-                        backgroundColor: announcement.type === 'important' 
-                          ? '#E8F0F2' :
-                          announcement.type === 'promo' 
-                          ? '#E0FCFA' :
-                          announcement.type === 'closure' 
-                          ? '#F0F7E0' :
-                          '#E6F5F1',
-                        color: announcement.type === 'important' 
-                          ? '#005461' :
-                          announcement.type === 'promo' 
-                          ? '#6AECE1' :
-                          announcement.type === 'closure' 
-                          ? '#A7E399' :
-                          '#3BC1A8'
-                      }}>
-                        {announcement.type}
-                      </span>
-                      <span className="text-xs text-gray-500 font-medium hidden">ID: {String(announcement.id).substring(0, 8)}</span>
-                    </div>
-                  </div>
-                </motion.div>
-              ))
-            ) : (
-              <div className="text-center py-16 px-8 bg-gradient-to-br from-cyan-50/40 to-teal-50/40 rounded-2xl border-2 border-dashed border-cyan-300/50 shadow-sm">
-                <div className="text-6xl mb-4 drop-shadow-sm">📢</div>
-                <p className="text-lg font-bold text-teal-900 mb-2">No Announcements Yet</p>
-                <p className="text-teal-700 text-sm mb-8">Start sharing important updates with your clinic team</p>
-                <button
-                  onClick={() => setShowAddAnnouncement(true)}
-                  className="px-6 py-3 bg-gradient-to-r from-teal-600 to-cyan-500 text-white rounded-xl hover:shadow-lg font-semibold transition-all duration-300 hover:scale-105"
-                >
-                  Create First Announcement
-                </button>
+                  </motion.div>
+                ))}
+
               </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="text-center py-16 px-8 bg-gradient-to-br from-cyan-50/40 to-teal-50/40 rounded-2xl border-2 border-dashed border-cyan-300/50 shadow-sm">
+              <div className="text-6xl mb-4 drop-shadow-sm">📢</div>
+              <p className="text-lg font-bold text-teal-900 mb-2">No Announcements Yet</p>
+              <p className="text-teal-700 text-sm mb-8">Start sharing important updates with your clinic team</p>
+              <button
+                onClick={() => setShowAddAnnouncement(true)}
+                className="px-6 py-3 bg-gradient-to-r from-teal-600 to-cyan-500 text-white rounded-xl hover:shadow-lg font-semibold transition-all duration-300 hover:scale-105"
+              >
+                Create First Announcement
+              </button>
+            </div>
+          )}
 
           {/* Add Announcement Modal */}
           {showAddAnnouncement && (

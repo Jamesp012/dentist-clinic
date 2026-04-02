@@ -23,7 +23,7 @@ export function convertToDBDate(dateStr: string): string {
  * Convert YYYY-MM-DD to DD/MM/YYYY for display
  */
 export function convertToDisplayDate(dateStr: string): string {
-  if (!dateStr) return '';
+  if (!dateStr || dateStr.startsWith('0000-00-00')) return '';
   
   // If already in DD/MM/YYYY format, return as is
   if (dateStr.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
@@ -141,7 +141,7 @@ export function parseDateString(dateStr: string): Date | null {
  * Accepts Date object, ISO string, or YYYY-MM-DD string
  */
 export function formatToDD_MM_YYYY(date: Date | string | null | undefined): string {
-  if (!date) return '';
+  if (!date || date === '0000-00-00' || date === '0000-00-00 00:00:00') return '';
   
   let dateObj: Date;
   
@@ -181,7 +181,7 @@ export function formatToDD_MM_YYYY(date: Date | string | null | undefined): stri
  * Accepts Date object, ISO string, YYYY-MM-DD, or DD/MM/YYYY
  */
 export function formatToMonthDayYear(date: Date | string | null | undefined): string {
-  if (!date) return '';
+  if (!date || date === '0000-00-00' || date === '0000-00-00 00:00:00') return '';
 
   let dateObj: Date;
 
@@ -216,7 +216,7 @@ export function formatToMonthDayYear(date: Date | string | null | undefined): st
  * Accepts Date object, ISO string, or YYYY-MM-DD string
  */
 export function formatToWordedDate(date: Date | string | null | undefined): string {
-  if (!date) return '';
+  if (!date || date === '0000-00-00' || date === '0000-00-00 00:00:00') return '';
   
   let dateObj: Date;
   

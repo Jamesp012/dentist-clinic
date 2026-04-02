@@ -228,15 +228,15 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
   };
 
   return (
-    <div className="p-6 md:p-8 bg-gradient-to-br from-slate-50 via-white to-blue-50 min-h-screen">
-      <div className="max-w-7xl mx-auto">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-blue-50 overflow-hidden">
+      <div className="flex-1 min-h-0 max-w-7xl w-full mx-auto px-4 py-2 flex flex-col">
         {/* Header Section */}
         <div className="mb-4">
           {/* Premium Tab Navigation */}
-          <div className="flex gap-2 p-1 bg-white rounded-2xl shadow-lg border border-gray-100 w-full">
+          <div className="flex gap-1 p-1 bg-white rounded-xl shadow-sm border w-full text-xs">
             <button
               onClick={() => setViewType('summary')}
-              className={`flex-1 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
+              className={`flex-1 px-3 py-2 text-xs rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
                 viewType === 'summary'
                   ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-200'
                   : 'text-gray-600 hover:text-emerald-600 hover:bg-emerald-50'
@@ -247,7 +247,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
             </button>
             <button
               onClick={() => setViewType('details')}
-              className={`flex-1 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
+              className={`flex-1 px-6 py-2 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
                 viewType === 'details'
                   ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-200'
                   : 'text-gray-600 hover:text-emerald-600 hover:bg-emerald-50'
@@ -258,7 +258,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
             </button>
             <button
               onClick={() => setViewType('patients')}
-              className={`flex-1 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
+              className={`flex-1 px-6 py-2 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
                 viewType === 'patients'
                   ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-200'
                   : 'text-gray-600 hover:text-emerald-600 hover:bg-emerald-50'
@@ -269,7 +269,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
             </button>
             <button
               onClick={() => setViewType('payments')}
-              className={`flex-1 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
+              className={`flex-1 px-6 py-2 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
                 viewType === 'payments'
                   ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-200'
                   : 'text-gray-600 hover:text-emerald-600 hover:bg-emerald-50'
@@ -283,14 +283,14 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
 
         {/* Summary View */}
         {viewType === 'summary' && (
-          <div className="space-y-8">
+          <div className="flex flex-col gap-3 h-full min-h-0">
             {/* Key Metrics - Premium Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2">
               {/* Card */}
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-xl border shadow-sm hover:shadow-md transition-all p-4 flex items-center justify-between"
+                className="bg-white rounded-xl border shadow-sm hover:shadow-md transition-all p-3 flex items-center justify-between"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
@@ -298,7 +298,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                   </div>
                   <div>
                     <p className="text-[10px] font-semibold text-gray-500 uppercase">Revenue</p>
-                    <p className="text-lg font-bold text-gray-900">₱{totalRevenue.toLocaleString()}</p>
+                    <p className="text-base font-bold text-gray-900">₱{totalRevenue.toLocaleString()}</p>
                   </div>
                 </div>
                 <span className="text-xs font-semibold text-emerald-600">+12%</span>
@@ -316,7 +316,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                   </div>
                   <div>
                     <p className="text-[10px] font-semibold text-gray-500 uppercase">Billed</p>
-                    <p className="text-lg font-bold text-gray-900">₱{totalBilled.toLocaleString()}</p>
+                    <p className="text-sm font-bold text-gray-900">₱{totalBilled.toLocaleString()}</p>
                   </div>
                 </div>
                 <span className="text-xs text-teal-600 font-semibold">
@@ -331,12 +331,12 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                 className="bg-white rounded-xl border shadow-sm hover:shadow-md transition-all p-4 flex items-center justify-between"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center">
+                  <div className="w-8 h-8 bg-cyan-100 rounded-lg flex items-center justify-center">
                     <TrendingDown className="w-5 h-5 text-cyan-600" />
                   </div>
                   <div>
                     <p className="text-[10px] font-semibold text-gray-500 uppercase">Balance</p>
-                    <p className="text-lg font-bold text-gray-900">₱{totalOutstanding.toLocaleString()}</p>
+                    <p className="text-sm font-bold text-gray-900">₱{totalOutstanding.toLocaleString()}</p>
                   </div>
                 </div>
                 <span className="text-xs text-cyan-600 font-semibold">
@@ -356,7 +356,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                   </div>
                   <div>
                     <p className="text-[10px] font-semibold text-gray-500 uppercase">Monthly</p>
-                    <p className="text-lg font-bold text-gray-900">₱{monthlyRevenue.toLocaleString()}</p>
+                    <p className="text-sm font-bold text-gray-900">₱{monthlyRevenue.toLocaleString()}</p>
                   </div>
                 </div>
                 <span className="text-xs text-emerald-600 font-semibold">
@@ -366,7 +366,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
             </div>
 
             {/* Controls Section */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white border rounded-xl px-4 py-3 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2 bg-white border rounded-lg px-3 py-2 shadow-sm">
   
             {/* Left: Month Picker */}
               <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -404,18 +404,19 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl shadow-md p-6 sm:p-8 border border-gray-100"
+              className="bg-white rounded-2xl shadow-md p-4 border border-gray-100 flex flex-col max-h-[400px]" // max height
             >
-              <div className="flex items-center gap-3 mb-8">
-                <div className="w-12 h-12 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-xl flex items-center justify-center">
-                  <BarChart3 className="w-6 h-6 text-emerald-600" />
-                </div>
+              {/* Header */}
+              <div className="flex items-center gap-3 mb-4">
+                <BarChart3 className="w-5 h-5 text-emerald-600" />
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Treatment Revenue Breakdown</h2>
-                  <p className="text-sm text-gray-500">Revenue by service type</p>
+                  <h2 className="text-lg font-bold text-gray-900">Treatment Revenue Breakdown</h2>
+                  <p className="text-xs text-gray-500">Revenue by service type</p>
                 </div>
               </div>
-              <div className="space-y-4 max-h-[50vh] overflow-y-auto scrollbar-thin">
+
+              {/* Scrollable list */}
+              <div className="flex-1 overflow-y-auto space-y-2">
                 {Object.entries(treatmentBreakdown)
                   .sort(([, a], [, b]) => b.revenue - a.revenue)
                   .map(([treatment, data], index) => {
@@ -423,26 +424,27 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                     return (
                       <motion.div
                         key={treatment}
-                        initial={{ opacity: 0, x: -20 }}
+                        initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="group p-5 bg-gradient-to-r from-slate-50 to-blue-50 rounded-xl hover:from-emerald-50 hover:to-teal-50 transition-all duration-300 border border-gray-100 hover:border-emerald-200 cursor-default"
+                        transition={{ delay: index * 0.03 }}
+                        className="group p-3 bg-slate-50 rounded-lg border border-gray-100 hover:border-emerald-200 cursor-default"
                       >
-                        <div className="flex items-start justify-between mb-4">
-                          <div>
-                            <p className="font-bold text-gray-900 text-lg">{treatment}</p>
-                            <p className="text-sm text-gray-600 mt-1">{data.count} procedure{data.count !== 1 ? 's' : ''} • {percentage.toFixed(1)}% of total</p>
+                        <div className="flex justify-between items-center mb-2">
+                          <div className="min-w-0">
+                            <p className="font-semibold text-gray-900 text-sm truncate">{treatment}</p>
+                            <p className="text-xs text-gray-600 truncate">
+                              {data.count} procedure{data.count !== 1 ? 's' : ''} • {percentage.toFixed(1)}%
+                            </p>
                           </div>
-                          <div className="text-right">
-                            <p className="font-bold text-emerald-600 text-xl">₱{data.revenue.toLocaleString('en-US')}</p>
-                            <p className="text-xs text-gray-500 mt-1">Total revenue</p>
-                          </div>
+                          <p className="font-semibold text-emerald-600 text-sm whitespace-nowrap">
+                            ₱{data.revenue.toLocaleString('en-US')}
+                          </p>
                         </div>
-                        <div className="relative h-3 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
                           <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${percentage}%` }}
-                            transition={{ duration: 0.8, ease: 'easeOut' }}
+                            transition={{ duration: 0.6, ease: 'easeOut' }}
                             className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
                           />
                         </div>
@@ -456,11 +458,11 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
 
         {/* Details View */}
         {viewType === 'details' && (
-          <div className="space-y-6">
+          <div className="flex flex-col h-full min-h-0">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl shadow-md p-4 sm:p-6 border border-gray-100"
+              className="bg-white rounded-xl border shadow-sm p-3 flex flex-col flex-1 min-h-0"
             >
               <div className="flex items-center gap-3 mb-8">
                 <div className="w-12 h-12 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-xl flex items-center justify-center">
@@ -471,11 +473,11 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                   <p className="text-sm text-gray-500">Complete record of all procedures</p>
                 </div>
               </div>
-              <div className="space-y-3 max-h-[70vh] overflow-y-auto scrollbar-thin">
+              <div className="space-y-3 flex-1 overflow-y-auto min-h-0 overflow-y-auto scrollbar-thin">
                 {treatmentRecords.length === 0 ? (
                   <div className="text-center py-16 text-gray-500">
                     <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                    <p className="text-lg font-medium">No transaction records available</p>
+                    <p className="text-sm font-medium">No transaction records available</p>
                   </div>
                 ) : (
                   treatmentRecords
@@ -544,16 +546,16 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
             <div className="flex-shrink-0 p-4 space-y-4">
               
               {/* Example: Your compact controls */}
-              <div className="bg-white border rounded-xl px-4 py-3 shadow-sm flex justify-between items-center">
+              <div className="bg-white border rounded-xl px-4 2 shadow-sm flex justify-between items-center">
                 <span className="text-sm font-semibold text-gray-600">Dashboard</span>
               </div>
 
               {/* Example: Stats row */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="bg-white p-3 rounded-lg shadow-sm">Card 1</div>
-                <div className="bg-white p-3 rounded-lg shadow-sm">Card 2</div>
-                <div className="bg-white p-3 rounded-lg shadow-sm">Card 3</div>
-                <div className="bg-white p-3 rounded-lg shadow-sm">Card 4</div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <div className="bg-white p-2 rounded-lg shadow-sm">Card 1</div>
+                <div className="bg-white p-2 rounded-lg shadow-sm">Card 2</div>
+                <div className="bg-white p-2 rounded-lg shadow-sm">Card 3</div>
+                <div className="bg-white p-2 rounded-lg shadow-sm">Card 4</div>
               </div>
 
             </div>
@@ -572,7 +574,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                       <FileText className="w-5 h-5 text-emerald-600" />
                     </div>
                     <div className="min-w-0">
-                      <h2 className="text-lg font-bold text-gray-900 truncate">
+                      <h2 className="text-xs font-bold text-gray-900 truncate">
                         Patient Balances
                       </h2>
                       <p className="text-xs text-gray-500 truncate">
@@ -587,7 +589,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                     {patientBalances.filter(pb => pb.balance > 0).length === 0 ? (
                       <div className="text-center py-10 text-gray-500">
                         <FileText className="w-10 h-10 mx-auto mb-2 text-gray-300" />
-                        <p className="text-sm">No outstanding balances</p>
+                        <p className="text-xs">No outstanding balances</p>
                       </div>
                     ) : (
                       patientBalances
@@ -684,12 +686,12 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
 
         {/* Payments View */}
         {viewType === 'payments' && (
-          <div className="space-y-8">
+          <div className="flex flex-col gap-3 h-full min-h-0">
             {/* Record Payment Form */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl shadow-md p-6 sm:p-8 border border-gray-100"
+              className="bg-white rounded-xl border shadow-sm p-4 flex flex-col gap-4"
             >
               <div className="flex items-center gap-3 mb-8">
                 <div className="w-12 h-12 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-xl flex items-center justify-center">
@@ -702,7 +704,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
               </div>
 
               <form onSubmit={handleRecordPayment} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {/* Patient Selection */}
                   <div>
                     <label className="block text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">
@@ -728,7 +730,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                     <select
                       value={selectedTreatmentId}
                       onChange={(e) => setSelectedTreatmentId(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:outline-none transition-all duration-300"
+                      className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:outline-none transition-all duration-300"
                       disabled={!selectedPatientId}
                     >
                       <option value="">-- Select a procedure --</option>
@@ -766,7 +768,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                     <select
                       value={paymentMethod}
                       onChange={(e) => setPaymentMethod(e.target.value as any)}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:outline-none transition-all duration-300"
+                      className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:outline-none transition-all duration-300"
                     >
                       <option value="cash">💵 Cash</option>
                       <option value="card">💳 Card</option>
@@ -789,7 +791,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                         onChange={(e) => setPaymentAmount(e.target.value)}
                         onWheel={(e) => e.currentTarget.blur()}
                         placeholder="0.00"
-                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:outline-none transition-all duration-300 text-lg no-spinners"
+                        className="w-full pl-10 pr-4 py-2 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:outline-none transition-all duration-300 text-sm no-spinners"
                       />
                     </div>
                   </div>
@@ -804,7 +806,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                       value={paymentNotes}
                       onChange={(e) => setPaymentNotes(e.target.value)}
                       placeholder="Add any payment notes or reference..."
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:outline-none transition-all duration-300"
+                      className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:outline-none transition-all duration-300"
                     />
                   </div>
                 </div>
@@ -813,7 +815,7 @@ export function FinancialReport({ patients, treatmentRecords, setTreatmentRecord
                   type="submit"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full px-6 py-4 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 text-white rounded-xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-2xl uppercase tracking-wider"
+                  className="w-full px-6 py-4 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 text-white rounded-xl font-bold text-sm transition-all duration-300 shadow-lg hover:shadow-2xl uppercase tracking-wider"
                 >
                   ✓ Record Payment
                 </motion.button>

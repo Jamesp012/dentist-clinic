@@ -11,11 +11,13 @@ $db = $database->getConnection();
 
 $data = json_decode(file_get_contents("php://input"));
 
-if (!$data) {
+if (!$data || !isset($data->id)) {
     http_response_code(400);
-    echo json_encode(["error" => "Invalid JSON input"]);
+    echo json_encode(["error" => "Invalid JSON input or ID missing"]);
     exit();
 }
+
+$id = $data->id;
 
 try {
     $db->beginTransaction();
