@@ -7,7 +7,7 @@ import { AuthPage, User as AuthUser, SignupData } from './components/AuthPage';
 import { PasswordChangePage } from './components/PasswordChangePage';
 import { LandingPage } from './components/ui/LandingPage';
 import { Toaster, toast } from 'sonner';
-import { authAPI, setAuthToken, photoAPI, patientAPI } from './api';
+import { authAPI, setAuthToken, photoAPI, patientAPI, API_BASE } from './api';
 import { useDataSync } from './hooks/useDataSync';
 import './styles/scrollbar.css';
 
@@ -471,9 +471,36 @@ export default function App() {
     }
   };
 
+  // const handleSignup = async (signupData: SignupData) => {
+    
+  //   try {
+  //     const response = await authAPI.register(signupData);
+  //     if (response.message) {
+  //       toast.success('Account created successfully! Please log in with your credentials.');
+  //       return true;
+  //     } else {
+  //       toast.error(response.error || 'Signup failed');
+  //       return false;
+  //     }
+  //   } catch (error) {
+  //     toast.error('Signup failed - cannot connect to server');
+  //     return false;
+  //   }
+  // };
+
   const handleSignup = async (signupData: SignupData) => {
+
+    // Combine first and last name into fullName for DB
+    const payload = {
+      ...signupData,
+      fullName: `${signupData.firstName} ${signupData.lastName}`
+    };
+
+    console.log("FINAL PAYLOAD:", payload); // Debugging
+
     try {
-      const response = await authAPI.register(signupData);
+      const response = await authAPI.register(payload);
+
       if (response.message) {
         toast.success('Account created successfully! Please log in with your credentials.');
         return true;

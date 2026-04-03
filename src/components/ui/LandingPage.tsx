@@ -287,6 +287,11 @@ export function LandingPage({ onGetStarted, onLogin, onSignup }: LandingPageProp
           <div className="overflow-y-auto pr-2 -mr-2 scrollbar-light" style={{ maxHeight: '100%' }}>
             <form onSubmit={async (e) => { 
               e.preventDefault(); 
+
+              //Debugging: Log the signup data before validation
+              
+              console.log("SIGNUP DATA:", signupData); //
+
               const passError = validatePassword(signupData.password);
               if (passError) return toast.error(passError);
               if (signupData.password !== confirmPassword) return toast.error('Passwords do not match');
